@@ -3,250 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Stream | Admin Dashboard</title>
+    <title>F1 Stream | Mission Control</title>
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <style>
+        /* --- PREMIUM F1 STYLING --- */
         :root {
-            --f1-red: #e10600;
-            --bg-dark: #15151e;
-            --card-bg: #1f1f29;
-            --border: #333;
-            --text: #eee;
+            --primary: #ff1801;
+            --primary-bright: #ff3b26;
+            --bg-deep: #0b0b0d;
+            --bg-surface: #15151e;
+            --bg-card: #1e1e26;
+            --text-main: #ffffff;
+            --text-muted: #8a8a95;
+            --border: #2f2f38;
+            --glow: 0 0 20px rgba(255, 24, 1, 0.4);
         }
+
         body {
-            background: var(--bg-dark);
-            color: var(--text);
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(circle at 50% 0%, #2a2a35 0%, transparent 70%);
+            color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
-            margin: 0; padding: 20px;
+            margin: 0; padding-bottom: 50px;
+            -webkit-font-smoothing: antialiased;
         }
-        h2, h3 { color: white; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .container { max-width: 1200px; margin: 0 auto; }
-        
+
+        h2, h3 { 
+            font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; 
+            margin: 0 0 20px 0; border-left: 4px solid var(--primary);
+            padding-left: 15px; line-height: 1;
+        }
+        h2 { font-size: 24px; }
+        h3 { font-size: 18px; color: #ddd; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         /* Action Bar */
         .action-bar {
             position: sticky; top: 20px; z-index: 100;
-            display: flex; justify-content: space-between;
-            background: rgba(20,20,20,0.9);
-            padding: 15px; border-radius: 8px;
-            border: 1px solid var(--f1-red);
-            backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(21, 21, 30, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 15px 25px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
+            margin: 20px 0 40px 0;
         }
-        
+
+        .brand-logo { font-size: 22px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 15px; }
+        .brand-logo i { color: var(--primary); }
+
+        .status-badge {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            padding: 4px 12px; border-radius: 20px; display: none;
+        }
+        .status-badge.success { display: block; background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
+        .status-badge.loading { display: block; background: rgba(255, 183, 0, 0.15); color: #ffb700; border: 1px solid #ffb700; }
+        .status-badge.error { display: block; background: rgba(255, 24, 1, 0.15); color: #ff1801; border: 1px solid #ff1801; }
+
+        /* --- NEW UPGRADED BUTTONS --- */
         button {
-            background: var(--f1-red); color: white; border: none;
-            padding: 10px 20px; border-radius: 4px; font-weight: bold;
-            cursor: pointer; text-transform: uppercase; font-family: inherit;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            color: white; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 24px; 
+            border-radius: 8px; 
+            font-weight: 700; font-size: 12px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            font-family: inherit;
+            display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+            overflow: hidden;
+            /* Smooth Physics Transition */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        button:hover { opacity: 0.9; }
-        button.secondary { background: #444; }
-        button.remove { background: transparent; border: 1px solid #555; color: #888; padding: 5px 10px; font-size: 12px; }
-        button.remove:hover { border-color: var(--f1-red); color: var(--f1-red); }
 
-        .admin-section {
-            background: var(--card-bg);
-            padding: 20px; border-radius: 8px;
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
+        /* Hover Effect: Lift and Glow */
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        label { display: block; font-size: 12px; color: #888; margin-bottom: 5px; text-transform: uppercase; }
-        input, select, textarea {
-            width: 100%; background: #111; border: 1px solid #444;
-            color: white; padding: 10px; border-radius: 4px;
-            margin-bottom: 15px; font-family: inherit;
-            box-sizing: border-box;
+        /* Click Effect: Press Down */
+        button:active {
+            transform: translateY(0) scale(0.98);
         }
-        input:focus { outline: none; border-color: var(--f1-red); }
 
-        /* UPDATED DRIVER ROW GRID to include arrows column */
-        .driver-row {
-            display: grid;
-            /* columns: [Arrows] [Img] [Name] [Team] [Pts] [Url] [Delete] */
-            grid-template-columns: 25px 35px 1fr 1fr 0.5fr 2fr 40px;
-            gap: 10px;
-            align-items: center;
-            background: #252530;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            border-left: 3px solid transparent;
+        /* PRIMARY BUTTON (F1 Red with Shine) */
+        button.primary-btn { 
+            background: var(--primary); 
+            border: 1px solid var(--primary); 
+            box-shadow: 0 0 15px rgba(255, 24, 1, 0.3);
+            color: white;
         }
-        .driver-row:hover { border-left-color: var(--f1-red); }
+
+        /* The Shine Animation Bar */
+        button.primary-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        button.primary-btn:hover { 
+            background: var(--primary-bright); 
+            box-shadow: 0 0 25px rgba(255, 24, 1, 0.6);
+            border-color: var(--primary-bright);
+            transform: translateY(-3px);
+        }
+
+        button.primary-btn:hover::before {
+            left: 100%; /* Move shine across button */
+        }
+
+        /* SECONDARY / DASHED BUTTON */
+        button.dashed-btn {
+            background: transparent;
+            border: 1px dashed #555;
+            color: #888;
+        }
+        button.dashed-btn:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-2px);
+        }
+
+        /* ICON BUTTONS (Trash, Arrows) */
+        button.icon-btn { 
+            padding: 8px; width: 32px; height: 32px; 
+            border-radius: 50%; /* Circular */
+            border: 1px solid transparent;
+            background: transparent;
+            color: #666;
+        }
+        button.icon-btn:hover { 
+            color: white; 
+            background: rgba(255,255,255,0.1); 
+            border-color: rgba(255,255,255,0.2);
+        }
         
-        .img-preview {
-            width: 30px; height: 30px; border-radius: 50%; background: #000; object-fit: cover;
-            border: 1px solid #555;
+        button.delete-btn:hover { 
+            color: var(--primary); 
+            background: rgba(255, 24, 1, 0.15); 
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(255, 24, 1, 0.2);
         }
 
-        /* Styles for Move Buttons */
-        .move-controls {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-        }
-        .move-btn {
+        button.arrow-btn {
+            padding: 0; width: 100%; height: auto;
+            border-radius: 4px;
+            color: #444;
+            font-size: 10px;
             background: transparent;
             border: none;
-            color: #555;
-            font-size: 10px;
-            cursor: pointer;
-            padding: 2px 0;
-            line-height: 1;
-            width: 100%;
         }
-        .move-btn:hover { color: var(--f1-red); background: rgba(255,255,255,0.1); }
+        button.arrow-btn:hover {
+            color: var(--primary);
+            transform: scale(1.2);
+            background: transparent;
+            box-shadow: none;
+        }
 
 
+        /* Admin Sections */
+        .admin-section {
+            background: var(--bg-card); padding: 30px; border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Forms */
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .status-msg { padding: 10px; border-radius: 4px; display: none; }
-        .status-msg.success { display: block; background: rgba(0, 255, 0, 0.2); border: 1px solid green; color: #8f8; }
-        .status-msg.loading { display: block; background: rgba(255, 255, 0, 0.1); border: 1px solid orange; color: #ff9; }
-        .status-msg.error { display: block; background: rgba(255, 0, 0, 0.2); border: 1px solid red; color: #f88; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 600; }
+        input {
+            width: 100%; background: rgba(0,0,0,0.2); 
+            border: 1px solid var(--border); border-left: 2px solid var(--border);
+            color: white; padding: 12px 15px; border-radius: 4px;
+            font-family: 'Titillium Web', sans-serif; font-size: 14px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input:focus { outline: none; border-color: #555; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
+        /* Driver List */
+        .driver-list-header {
+            display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
+            gap: 15px; padding: 0 15px 10px; margin-bottom: 5px;
+            border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px;
+        }
+        .driver-row {
+            display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
+            gap: 15px; align-items: center; background: #25252e;
+            padding: 10px 15px; margin-bottom: 8px; border-radius: 6px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .driver-row:hover { transform: translateX(5px); background: #2b2b35; border-color: rgba(255,255,255,0.1); }
+        .driver-row input { border: none; background: transparent; padding: 5px; }
+        .driver-row input:focus { background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--primary); }
+        .img-preview { width: 36px; height: 36px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
+        
         /* Login Overlay */
         .login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0f0f15; z-index: 999;
+            background: rgba(0,0,0,0.9); z-index: 999;
             display: flex; justify-content: center; align-items: center;
         }
         .login-box {
-            background: var(--card-bg); padding: 40px; border-radius: 8px;
-            border: 1px solid var(--f1-red); width: 300px; text-align: center;
+            background: var(--bg-surface); padding: 50px; border-radius: 16px;
+            border: 1px solid var(--border); width: 350px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;
         }
+        .login-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); }
     </style>
 </head>
 <body ng-controller="AdminController">
 
-    <div class="login-overlay" ng-if="!isLoggedIn">
+    <div class="login-overlay animate-in" ng-if="!isLoggedIn">
         <div class="login-box">
-            <h2 style="margin-top:0;">Admin Login</h2>
-            <p style="color:#888; font-size:12px;">Enter credentials created in Firebase Console</p>
-            <input type="email" ng-model="loginEmail" placeholder="Email">
-            <input type="password" ng-model="loginPass" placeholder="Password">
-            <button ng-click="login()" style="width:100%">LOGIN</button>
-            <p style="color: red; font-size: 12px; margin-top: 10px;">{{loginError}}</p>
+            <div style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"><i class="fa-solid fa-flag-checkered"></i></div>
+            <h2 style="border:none; padding:0; margin-bottom: 10px;">Access Control</h2>
+            
+            <div class="input-group">
+                <input type="email" id="loginEmailRaw" placeholder="Mission Control Email">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassRaw" placeholder="Password">
+            </div>
+            
+            <button ng-click="login()" class="primary-btn" style="width:100%; justify-content: center; margin-top: 10px;">
+                Initialize Session <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <p style="color: var(--primary); font-size: 12px; margin-top: 20px;">{{loginError}}</p>
         </div>
     </div>
 
-    <div class="container" ng-if="isLoggedIn">
+    <div class="container animate-in" ng-if="isLoggedIn">
         
         <div class="action-bar">
-            <div style="font-size: 20px; font-weight: 800; display:flex; align-items:center;">
-                F1 ADMIN PANEL
-                <div class="status-msg" ng-class="statusType" style="margin-left: 20px; font-size: 12px; padding: 5px 10px;">{{statusText}}</div>
+            <div class="brand-logo">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <div>F1 ADMIN <span style="font-size: 10px; color: var(--text-muted); font-weight: 400;">LIVE</span></div>
+                <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
             <div style="display:flex; gap:10px;">
-                <button ng-click="saveConfig()">SAVE CHANGES TO LIVE</button>
-                <button class="secondary" ng-click="logout()">Logout</button>
+                <button class="primary-btn" ng-click="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> Push to Live</button>
+                <button class="icon-btn" ng-click="logout()" title="Logout"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </div>
 
-        <div class="admin-section">
-            <h3>Current Session Info</h3>
-            <div class="grid-row">
-                <div>
-                    <label>Round Number</label>
-                    <input type="text" ng-model="config.raceData.round">
-                </div>
-                <div>
-                    <label>Race Name</label>
-                    <input type="text" ng-model="config.raceData.name">
-                </div>
-            </div>
-            <div class="grid-row">
-                <div>
-                    <label>Circuit Name</label>
-                    <input type="text" ng-model="config.raceData.circuit">
-                </div>
-                <div>
-                    <label>Location</label>
-                    <input type="text" ng-model="config.raceData.location">
-                </div>
-            </div>
-            <div class="grid-row">
-                <div>
-                    <label>Date String</label>
-                    <input type="text" ng-model="config.raceData.date">
-                </div>
-                <div>
-                    <label>Laps / Duration</label>
-                    <input type="text" ng-model="config.raceData.laps">
-                </div>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <h3>Championship Standings</h3>
-                <div>
-                    <button class="secondary" ng-click="sortDrivers()" style="font-size:12px; margin-right: 5px;">⬇ Sort by Points</button>
-                    <button class="secondary" ng-click="addDriver()" style="font-size:12px;">+ Add Driver</button>
-                </div>
-            </div>
-            
-            <div style="font-size: 10px; color: #666; margin-bottom: 10px; display: grid; grid-template-columns: 25px 35px 1fr 1fr 0.5fr 2fr 40px; padding: 0 10px;">
-                <span>POS</span>
-                <span>IMG</span>
-                <span>NAME</span>
-                <span>TEAM</span>
-                <span>PTS</span>
-                <span>IMAGE URL</span>
-                <span>DEL</span>
-            </div>
-
-            <div ng-repeat="driver in config.standings" class="driver-row">
-                <div class="move-controls">
-                    <button class="move-btn" ng-click="moveUp($index)" ng-if="!$first">▲</button>
-                    <button class="move-btn" ng-click="moveDown($index)" ng-if="!$last">▼</button>
-                </div>
-
-                <img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
-                <input type="text" ng-model="driver.name" placeholder="Driver Name" style="margin-bottom:0;">
-                <input type="text" ng-model="driver.team" placeholder="Team" style="margin-bottom:0;">
-                <input type="number" ng-model="driver.points" placeholder="0" style="margin-bottom:0;">
-                <input type="text" ng-model="driver.image" placeholder="https://..." style="margin-bottom:0; font-size: 11px; color: var(--f1-red);">
-                <button class="remove" ng-click="removeDriver($index)">X</button>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h3>Stream Sources</h3>
-            <div ng-repeat="link in config.streamLinks" style="background: #222; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+        <div class="grid-row">
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Session Details</h3>
                 <div class="grid-row">
-                    <input type="text" ng-model="link.name" placeholder="Source Name (e.g. SkySports)" style="margin-bottom: 5px;">
-                    <input type="text" ng-model="link.id" placeholder="Unique ID (e.g. stream1)" style="margin-bottom: 5px;">
+                    <div class="input-group"><label>Round</label><input type="text" ng-model="config.raceData.round"></div>
+                    <div class="input-group"><label>Grand Prix Name</label><input type="text" ng-model="config.raceData.name"></div>
                 </div>
-                <input type="text" ng-model="link.url" placeholder="Iframe URL" style="margin-bottom: 0;">
-                <button class="remove" ng-click="removeStream($index)" style="margin-top: 5px; width: 100%;">Remove Source</button>
+                <div class="grid-row">
+                    <div class="input-group"><label>Circuit Name</label><input type="text" ng-model="config.raceData.circuit"></div>
+                    <div class="input-group"><label>Location</label><input type="text" ng-model="config.raceData.location"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
+                    <div class="input-group"><label>Laps / Duration</label><input type="text" ng-model="config.raceData.laps"></div>
+                </div>
             </div>
-            <button class="secondary" ng-click="addStream()">+ Add Stream Source</button>
+
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next</h3>
+                <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
+                <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
+                <div class="grid-row">
+                    <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
+                    <div class="input-group"><label>Circuit</label><input type="text" ng-model="config.nextRace.circuit"></div>
+                </div>
+            </div>
         </div>
 
         <div class="admin-section">
-            <h3>"Up Next" Widget</h3>
-            <label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label>
-            <div class="grid-row">
-                <input type="text" ng-model="config.nextRace.name" placeholder="Event Name">
-                <input type="text" ng-model="config.nextRace.date" placeholder="Date">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+                <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Live Standings</h3>
+                <div>
+                    <button ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort</button>
+                    <button ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
             </div>
-            <input type="text" ng-model="config.nextRace.circuit" placeholder="Circuit">
+            <div class="driver-list-header">
+                <span style="text-align: center;">ORD</span> <span style="text-align: center;">IMG</span> <span>NAME</span> <span>TEAM</span> <span>PTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
+            </div>
+            <div ng-repeat="driver in config.standings" class="driver-row">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <button class="arrow-btn" ng-click="moveUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button class="arrow-btn" ng-click="moveDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                </div>
+                <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
+                <input type="text" ng-model="driver.name" placeholder="Driver">
+                <input type="text" ng-model="driver.team" placeholder="Team">
+                <input type="number" ng-model="driver.points" placeholder="0">
+                <input type="text" ng-model="driver.image" placeholder="https://..." style="font-size: 10px; color: #555;">
+                <button class="icon-btn delete-btn" ng-click="removeDriver($index)"><i class="fa-solid fa-trash"></i></button>
+            </div>
         </div>
 
+        <div class="admin-section">
+            <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
+            <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                <div class="grid-row" style="margin-bottom: 10px;">
+                    <input type="text" ng-model="link.name" placeholder="Name">
+                    <input type="text" ng-model="link.id" readonly style="color: #666;">
+                </div>
+                <input type="text" ng-model="link.url" placeholder="Embed URL">
+                <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:5px 10px; margin-top: 10px;">
+                    <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove
+                </button>
+            </div>
+            <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
+        </div>
     </div>
 
     <script>
-        // YOUR FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
             authDomain: "f1-stream-live.firebaseapp.com",
@@ -256,7 +348,8 @@
             appId: "1:426806288804:web:f8ee225776596ebc39e131",
             measurementId: "G-50FMFWY32X"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
@@ -265,136 +358,76 @@
         app.controller('AdminController', function($scope, $timeout) {
             $scope.config = {};
             $scope.isLoggedIn = false;
-            $scope.loginError = "";
-            $scope.statusText = "";
             
-            // Check if already logged in
-            auth.onAuthStateChanged(function(user) {
-                if (user) {
-                    $scope.$apply(() => {
-                        $scope.isLoggedIn = true;
-                        $scope.loadData();
-                    });
-                } else {
-                    $scope.$apply(() => {
-                        $scope.isLoggedIn = false;
-                        $scope.config = {}; // Clear sensitive data on logout
-                    });
-                }
+            auth.onAuthStateChanged(user => {
+                $scope.$apply(() => {
+                    $scope.isLoggedIn = !!user;
+                    if(user) $scope.loadData();
+                });
             });
 
+            // --- DIRECT DOM ACCESS (NO TOUCH) ---
             $scope.login = function() {
-                $scope.loginError = "Signing in...";
-                auth.signInWithEmailAndPassword($scope.loginEmail, $scope.loginPass)
-                    .catch((error) => {
+                $scope.loginError = "Authenticating...";
+                var email = document.getElementById('loginEmailRaw').value;
+                var pass = document.getElementById('loginPassRaw').value;
+
+                if(!email || !pass) {
+                    $scope.loginError = "Please enter email and password.";
+                    return;
+                }
+
+                auth.signInWithEmailAndPassword(email, pass)
+                    .catch(error => {
                         $scope.$apply(() => $scope.loginError = error.message);
                     });
             };
 
-            $scope.logout = function() {
-                auth.signOut();
-            };
+            $scope.logout = () => auth.signOut();
 
             $scope.loadData = function() {
-                $scope.statusText = "Loading data...";
-                $scope.statusType = "loading";
-
-                db.collection("app_data").doc("live_config").get().then((doc) => {
-                    if (doc.exists) {
-                        $scope.$apply(() => {
-                            $scope.config = doc.data();
-                            // Init Arrays
-                            if (!$scope.config.standings) $scope.config.standings = [];
-                            if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
-                            if (!$scope.config.raceData) $scope.config.raceData = {};
-                            if (!$scope.config.nextRace) $scope.config.nextRace = {};
-                            
-                            $scope.statusText = "Connected as Admin";
-                            $timeout(() => $scope.statusType = "", 2000);
-                        });
-                    } else {
-                        // Initialize default structure if DB is empty
-                        $scope.$apply(() => {
-                            $scope.config = { standings: [], streamLinks: [], raceData: {}, nextRace: {} };
-                            $scope.statusText = "New Database Initialized";
-                        });
-                    }
-                }).catch((err) => {
-                    console.error(err);
+                $scope.statusText = "SYNCING..."; $scope.statusType = "loading";
+                db.collection("app_data").doc("live_config").get().then(doc => {
                     $scope.$apply(() => {
-                        $scope.statusText = "Error Loading Data";
-                        $scope.statusType = "error";
+                        if(doc.exists) {
+                            $scope.config = doc.data();
+                            $scope.statusText = "LIVE"; $scope.statusType = "success";
+                        } else {
+                            $scope.config = { standings: [], streamLinks: [], raceData: {}, nextRace: {} };
+                            $scope.statusText = "NEW DB"; $scope.statusType = "loading";
+                        }
+                        if (!$scope.config.standings) $scope.config.standings = [];
+                        if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
                     });
+                }).catch(err => {
+                    $scope.$apply(() => { $scope.statusText = "ERROR"; $scope.statusType = "error"; });
                 });
             };
 
             $scope.saveConfig = function() {
                 if(!$scope.isLoggedIn) return;
-                
-                $scope.statusText = "Saving...";
-                $scope.statusType = "loading";
-
-                var cleanData = JSON.parse(angular.toJson($scope.config));
-
+                $scope.statusText = "SAVING..."; $scope.statusType = "loading";
+                let cleanData = JSON.parse(angular.toJson($scope.config));
                 db.collection("app_data").doc("live_config").set(cleanData)
-                .then(() => {
-                    $scope.$apply(() => {
-                        $scope.statusText = "Saved Live!";
-                        $scope.statusType = "success";
-                        $timeout(() => $scope.statusType = "", 3000);
+                    .then(() => {
+                        $scope.$apply(() => {
+                            $scope.statusText = "PUBLISHED"; $scope.statusType = "success";
+                            $timeout(() => $scope.statusText = "LIVE", 3000);
+                        });
+                    })
+                    .catch(err => {
+                        $scope.$apply(() => { $scope.statusText = "FAILED"; $scope.statusType = "error"; });
                     });
-                })
-                .catch((error) => {
-                    console.error("Error writing document: ", error);
-                    $scope.$apply(() => {
-                        $scope.statusText = "Save Failed: " + error.message;
-                        $scope.statusType = "error";
-                    });
-                });
             };
 
-            // UI Helpers
-            $scope.addDriver = function() {
-                $scope.config.standings.push({ name: "New Driver", team: "Team", points: 0, image: "" });
-            };
-            
-            $scope.removeDriver = function(index) {
-                if(confirm("Remove driver?")) $scope.config.standings.splice(index, 1);
-            };
-            
-            // NEW: Move Driver Up
-            $scope.moveUp = function(index) {
-                if (index > 0) {
-                    var temp = $scope.config.standings[index];
-                    $scope.config.standings[index] = $scope.config.standings[index - 1];
-                    $scope.config.standings[index - 1] = temp;
-                }
-            };
-
-            // NEW: Move Driver Down
-            $scope.moveDown = function(index) {
-                if (index < $scope.config.standings.length - 1) {
-                    var temp = $scope.config.standings[index];
-                    $scope.config.standings[index] = $scope.config.standings[index + 1];
-                    $scope.config.standings[index + 1] = temp;
-                }
-            };
-
-            // NEW: Sort by Points
-            $scope.sortDrivers = function() {
-                if(confirm("Auto-sort all drivers by points?")) {
-                    $scope.config.standings.sort(function(a, b) {
-                        return b.points - a.points;
-                    });
-                }
-            };
-
-            $scope.addStream = function() {
-                $scope.config.streamLinks.push({ name: "Source", id: "src"+Date.now(), url: "" });
-            };
-            $scope.removeStream = function(index) {
-                $scope.config.streamLinks.splice(index, 1);
-            };
+            // Helpers
+            $scope.addDriver = () => $scope.config.standings.push({ name: "New Driver", team: "Team", points: 0, image: "" });
+            $scope.removeDriver = (i) => { if(confirm("Delete?")) $scope.config.standings.splice(i, 1); };
+            $scope.moveUp = (i) => { if(i>0) [$scope.config.standings[i], $scope.config.standings[i-1]] = [$scope.config.standings[i-1], $scope.config.standings[i]]; };
+            $scope.moveDown = (i) => { if(i<$scope.config.standings.length-1) [$scope.config.standings[i], $scope.config.standings[i+1]] = [$scope.config.standings[i+1], $scope.config.standings[i]]; };
+            $scope.sortDrivers = () => { if(confirm("Sort?")) $scope.config.standings.sort((a,b) => b.points - a.points); };
+            $scope.addStream = () => $scope.config.streamLinks.push({ name: "", id: "src_"+Date.now(), url: "" });
+            $scope.removeStream = (i) => { if(confirm("Delete?")) $scope.config.streamLinks.splice(i, 1); };
         });
     </script>
 </body>
