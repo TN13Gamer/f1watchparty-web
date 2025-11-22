@@ -71,7 +71,7 @@
         .status-badge.loading { display: block; background: rgba(255, 183, 0, 0.15); color: #ffb700; border: 1px solid #ffb700; }
         .status-badge.error { display: block; background: rgba(255, 24, 1, 0.15); color: #ff1801; border: 1px solid #ff1801; }
 
-        /* --- NEW UPGRADED BUTTONS --- */
+        /* --- BUTTONS --- */
         button {
             position: relative;
             background: rgba(255, 255, 255, 0.05);
@@ -84,101 +84,45 @@
             font-family: inherit;
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
             overflow: hidden;
-            /* Smooth Physics Transition */
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-
-        /* Hover Effect: Lift and Glow */
         button:hover {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
+        button:active { transform: translateY(0) scale(0.98); }
 
-        /* Click Effect: Press Down */
-        button:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        /* PRIMARY BUTTON (F1 Red with Shine) */
         button.primary-btn { 
             background: var(--primary); 
             border: 1px solid var(--primary); 
             box-shadow: 0 0 15px rgba(255, 24, 1, 0.3);
             color: white;
         }
-
-        /* The Shine Animation Bar */
         button.primary-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
+            content: ''; position: absolute; top: 0; left: -100%;
             width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             transition: 0.5s;
         }
-
         button.primary-btn:hover { 
             background: var(--primary-bright); 
             box-shadow: 0 0 25px rgba(255, 24, 1, 0.6);
             border-color: var(--primary-bright);
             transform: translateY(-3px);
         }
+        button.primary-btn:hover::before { left: 100%; }
 
-        button.primary-btn:hover::before {
-            left: 100%; /* Move shine across button */
-        }
+        button.dashed-btn { background: transparent; border: 1px dashed #555; color: #888; }
+        button.dashed-btn:hover { border-color: var(--text-main); color: var(--text-main); background: rgba(255,255,255,0.05); transform: translateY(-2px); }
 
-        /* SECONDARY / DASHED BUTTON */
-        button.dashed-btn {
-            background: transparent;
-            border: 1px dashed #555;
-            color: #888;
-        }
-        button.dashed-btn:hover {
-            border-color: var(--text-main);
-            color: var(--text-main);
-            background: rgba(255,255,255,0.05);
-            transform: translateY(-2px);
-        }
+        button.icon-btn { padding: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #666; }
+        button.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        button.delete-btn:hover { color: var(--primary); background: rgba(255, 24, 1, 0.15); border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 24, 1, 0.2); }
 
-        /* ICON BUTTONS (Trash, Arrows) */
-        button.icon-btn { 
-            padding: 8px; width: 32px; height: 32px; 
-            border-radius: 50%; /* Circular */
-            border: 1px solid transparent;
-            background: transparent;
-            color: #666;
-        }
-        button.icon-btn:hover { 
-            color: white; 
-            background: rgba(255,255,255,0.1); 
-            border-color: rgba(255,255,255,0.2);
-        }
-        
-        button.delete-btn:hover { 
-            color: var(--primary); 
-            background: rgba(255, 24, 1, 0.15); 
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(255, 24, 1, 0.2);
-        }
-
-        button.arrow-btn {
-            padding: 0; width: 100%; height: auto;
-            border-radius: 4px;
-            color: #444;
-            font-size: 10px;
-            background: transparent;
-            border: none;
-        }
-        button.arrow-btn:hover {
-            color: var(--primary);
-            transform: scale(1.2);
-            background: transparent;
-            box-shadow: none;
-        }
-
+        button.arrow-btn { padding: 0; width: 100%; height: auto; border-radius: 4px; color: #444; font-size: 10px; background: transparent; border: none; }
+        button.arrow-btn:hover { color: var(--primary); transform: scale(1.2); background: transparent; box-shadow: none; }
 
         /* Admin Sections */
         .admin-section {
@@ -196,8 +140,7 @@
             border: 1px solid var(--border); border-left: 2px solid var(--border);
             color: white; padding: 12px 15px; border-radius: 4px;
             font-family: 'Titillium Web', sans-serif; font-size: 14px;
-            box-sizing: border-box;
-            transition: 0.3s;
+            box-sizing: border-box; transition: 0.3s;
         }
         input:focus { outline: none; border-color: #555; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
@@ -211,8 +154,7 @@
             display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
             gap: 15px; align-items: center; background: #25252e;
             padding: 10px 15px; margin-bottom: 8px; border-radius: 6px;
-            border: 1px solid transparent;
-            transition: 0.2s;
+            border: 1px solid transparent; transition: 0.2s;
         }
         .driver-row:hover { transform: translateX(5px); background: #2b2b35; border-color: rgba(255,255,255,0.1); }
         .driver-row input { border: none; background: transparent; padding: 5px; }
@@ -240,16 +182,18 @@
             <div style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"><i class="fa-solid fa-flag-checkered"></i></div>
             <h2 style="border:none; padding:0; margin-bottom: 10px;">Access Control</h2>
             
-            <div class="input-group">
-                <input type="email" id="loginEmailRaw" placeholder="Mission Control Email">
-            </div>
-            <div class="input-group">
-                <input type="password" id="loginPassRaw" placeholder="Password">
-            </div>
-            
-            <button ng-click="login()" class="primary-btn" style="width:100%; justify-content: center; margin-top: 10px;">
-                Initialize Session <i class="fa-solid fa-arrow-right"></i>
-            </button>
+            <form ng-submit="login()">
+                <div class="input-group">
+                    <input type="email" id="loginEmail" ng-model="creds.email" placeholder="Mission Control Email" required autocomplete="email">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="loginPass" ng-model="creds.pass" placeholder="Password" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="primary-btn" style="width:100%; justify-content: center; margin-top: 10px;">
+                    Initialize Session <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
             
             <p style="color: var(--primary); font-size: 12px; margin-top: 20px;">{{loginError}}</p>
         </div>
@@ -358,6 +302,7 @@
         app.controller('AdminController', function($scope, $timeout) {
             $scope.config = {};
             $scope.isLoggedIn = false;
+            $scope.creds = { email: "", pass: "" }; // Initialize Object
             
             auth.onAuthStateChanged(user => {
                 $scope.$apply(() => {
@@ -366,18 +311,24 @@
                 });
             });
 
-            // --- DIRECT DOM ACCESS (NO TOUCH) ---
+            // --- HYBRID LOGIN FIX: Angular + DOM Access ---
             $scope.login = function() {
                 $scope.loginError = "Authenticating...";
-                var email = document.getElementById('loginEmailRaw').value;
-                var pass = document.getElementById('loginPassRaw').value;
+                
+                // 1. Try to get data from Angular Model
+                let e = $scope.creds.email;
+                let p = $scope.creds.pass;
 
-                if(!email || !pass) {
+                // 2. FALLBACK: If Angular missed it (Autofill bug), read DOM directly
+                if(!e) e = document.getElementById('loginEmail').value;
+                if(!p) p = document.getElementById('loginPass').value;
+
+                if(!e || !p) {
                     $scope.loginError = "Please enter email and password.";
                     return;
                 }
 
-                auth.signInWithEmailAndPassword(email, pass)
+                auth.signInWithEmailAndPassword(e, p)
                     .catch(error => {
                         $scope.$apply(() => $scope.loginError = error.message);
                     });
