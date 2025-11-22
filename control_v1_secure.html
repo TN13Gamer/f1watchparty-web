@@ -2,7 +2,7 @@
 <html lang="en" ng-app="adminApp">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>F1 Stream | Mission Control</title>
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
@@ -32,7 +32,7 @@
             background-image: radial-gradient(circle at 50% 0%, #2a2a35 0%, transparent 70%);
             color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
-            margin: 0; padding-bottom: 50px;
+            margin: 0; padding-bottom: 80px; /* Extra padding for mobile scroll */
             -webkit-font-smoothing: antialiased;
         }
 
@@ -48,24 +48,26 @@
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Action Bar */
+        /* --- ACTION BAR (Sticky Header) --- */
         .action-bar {
-            position: sticky; top: 20px; z-index: 100;
+            position: sticky; top: 10px; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(21, 21, 30, 0.95);
             backdrop-filter: blur(12px);
-            padding: 15px 25px; border-radius: 12px;
+            padding: 15px 20px; border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin: 20px 0 40px 0;
+            margin: 10px 0 30px 0;
+            transition: 0.3s;
         }
 
-        .brand-logo { font-size: 22px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 15px; }
+        .brand-logo { font-size: 20px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 12px; }
         .brand-logo i { color: var(--primary); }
 
         .status-badge {
-            font-size: 11px; font-weight: 600; text-transform: uppercase;
-            padding: 4px 12px; border-radius: 20px; display: none;
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            padding: 4px 10px; border-radius: 20px; display: none;
+            white-space: nowrap;
         }
         .status-badge.success { display: block; background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
         .status-badge.loading { display: block; background: rgba(255, 183, 0, 0.15); color: #ffb700; border: 1px solid #ffb700; }
@@ -77,9 +79,9 @@
             background: rgba(255, 255, 255, 0.05);
             color: white; 
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 24px; 
+            padding: 10px 20px; 
             border-radius: 8px; 
-            font-weight: 700; font-size: 12px;
+            font-weight: 700; font-size: 11px;
             cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
             font-family: inherit;
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
@@ -90,7 +92,6 @@
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         button:active { transform: translateY(0) scale(0.98); }
 
@@ -100,65 +101,51 @@
             box-shadow: 0 0 15px rgba(255, 24, 1, 0.3);
             color: white;
         }
-        button.primary-btn::before {
-            content: ''; position: absolute; top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: 0.5s;
-        }
         button.primary-btn:hover { 
             background: var(--primary-bright); 
-            box-shadow: 0 0 25px rgba(255, 24, 1, 0.6);
-            border-color: var(--primary-bright);
             transform: translateY(-3px);
         }
-        button.primary-btn:hover::before { left: 100%; }
 
         button.dashed-btn { background: transparent; border: 1px dashed #555; color: #888; }
-        button.dashed-btn:hover { border-color: var(--text-main); color: var(--text-main); background: rgba(255,255,255,0.05); transform: translateY(-2px); }
-
         button.icon-btn { padding: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #666; }
         button.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-        button.delete-btn:hover { color: var(--primary); background: rgba(255, 24, 1, 0.15); border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 24, 1, 0.2); }
+        button.delete-btn:hover { color: var(--primary); background: rgba(255, 24, 1, 0.15); border-color: var(--primary); }
 
-        button.arrow-btn { padding: 0; width: 100%; height: auto; border-radius: 4px; color: #444; font-size: 10px; background: transparent; border: none; }
-        button.arrow-btn:hover { color: var(--primary); transform: scale(1.2); background: transparent; box-shadow: none; }
-
-        /* Admin Sections */
+        /* --- LAYOUT & FORMS --- */
         .admin-section {
-            background: var(--bg-card); padding: 30px; border-radius: 12px;
+            background: var(--bg-card); padding: 25px; border-radius: 12px;
             border: 1px solid var(--border); margin-bottom: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        /* Forms */
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 600; }
+        
+        .input-group { margin-bottom: 15px; width: 100%; }
+        label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
         input {
             width: 100%; background: rgba(0,0,0,0.2); 
             border: 1px solid var(--border); border-left: 2px solid var(--border);
-            color: white; padding: 12px 15px; border-radius: 4px;
+            color: white; padding: 12px; border-radius: 4px;
             font-family: 'Titillium Web', sans-serif; font-size: 14px;
             box-sizing: border-box; transition: 0.3s;
         }
-        input:focus { outline: none; border-color: #555; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
+        input:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
-        /* Driver List */
+        /* --- DRIVER LIST (Desktop View) --- */
         .driver-list-header {
             display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
-            gap: 15px; padding: 0 15px 10px; margin-bottom: 5px;
+            gap: 10px; padding: 0 10px 10px; margin-bottom: 5px;
             border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px;
         }
         .driver-row {
             display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
-            gap: 15px; align-items: center; background: #25252e;
-            padding: 10px 15px; margin-bottom: 8px; border-radius: 6px;
+            gap: 10px; align-items: center; background: #25252e;
+            padding: 10px; margin-bottom: 8px; border-radius: 6px;
             border: 1px solid transparent; transition: 0.2s;
         }
         .driver-row:hover { transform: translateX(5px); background: #2b2b35; border-color: rgba(255,255,255,0.1); }
-        .driver-row input { border: none; background: transparent; padding: 5px; }
-        .driver-row input:focus { background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--primary); }
+        .driver-row input { border: none; background: transparent; padding: 5px; margin: 0; }
+        .driver-row input:focus { background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--primary); border-radius: 0; }
         .img-preview { width: 36px; height: 36px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
         
         /* Login Overlay */
@@ -168,11 +155,79 @@
             display: flex; justify-content: center; align-items: center;
         }
         .login-box {
-            background: var(--bg-surface); padding: 50px; border-radius: 16px;
-            border: 1px solid var(--border); width: 350px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+            background: var(--bg-surface); padding: 40px 30px; border-radius: 16px;
+            border: 1px solid var(--border); width: 90%; max-width: 350px; text-align: center;
         }
-        .login-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); }
+        .login-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); border-radius: 16px 16px 0 0; }
+
+
+        /* ========================================= */
+        /* === MOBILE RESPONSIVE ENGINE (MAGIC) === */
+        /* ========================================= */
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; }
+            
+            /* Stack Grid Rows */
+            .grid-row { grid-template-columns: 1fr; gap: 15px; }
+
+            /* Adjust Action Bar */
+            .action-bar { 
+                flex-direction: column; gap: 15px; align-items: stretch; text-align: center; 
+                padding: 15px; margin-bottom: 20px;
+            }
+            .brand-logo { justify-content: center; margin-bottom: 5px; }
+            .action-bar > div:last-child { display: flex; justify-content: space-between; }
+            .action-bar button { flex: 1; }
+
+            /* --- DRIVER ROW TRANSFORMATION --- */
+            .driver-list-header { display: none; } /* Hide headers on mobile */
+            
+            .driver-row {
+                /* Transform to Flexbox for card layout */
+                display: flex; flex-wrap: wrap; 
+                position: relative;
+                padding: 15px; gap: 10px;
+                border: 1px solid #333;
+            }
+            .driver-row:hover { transform: none; }
+
+            /* 1. Arrows (Absolute Top Left) */
+            .driver-row > div:nth-child(1) {
+                position: absolute; top: 10px; left: 10px;
+                display: flex; flex-direction: row !important; gap: 10px;
+            }
+            
+            /* 2. Image (Centered Top) */
+            .driver-row > div:nth-child(2) {
+                width: 100%; text-align: center; margin-bottom: 10px;
+            }
+            .img-preview { width: 60px; height: 60px; }
+
+            /* 3. Inputs (Full Width Stack) */
+            /* Driver Name */
+            .driver-row input:nth-of-type(1) { 
+                width: 100%; font-size: 16px; font-weight: bold; text-align: center;
+                border-bottom: 1px solid #444; margin-bottom: 5px;
+            }
+            /* Team Name */
+            .driver-row input:nth-of-type(2) { 
+                width: 60%; font-size: 12px; color: var(--text-muted);
+            }
+            /* Points */
+            .driver-row input:nth-of-type(3) { 
+                width: 35%; text-align: right; background: rgba(255,255,255,0.05);
+                border-radius: 4px; color: var(--primary-bright); font-weight: bold;
+            }
+            /* Image URL (Small at bottom) */
+            .driver-row input:nth-of-type(4) { 
+                width: 100%; font-size: 9px; opacity: 0.5; margin-top: 5px;
+            }
+
+            /* 4. Delete Button (Absolute Top Right) */
+            .driver-row button.delete-btn {
+                position: absolute; top: 10px; right: 10px;
+            }
+        }
     </style>
 </head>
 <body ng-controller="AdminController">
@@ -204,12 +259,12 @@
         <div class="action-bar">
             <div class="brand-logo">
                 <i class="fa-solid fa-tower-broadcast"></i>
-                <div>Live Admin Panel<span style="font-size: 10px; color: var(--text-muted); font-weight: 400;"></span></div>
+                <div>F1 ADMIN <span style="font-size: 10px; color: var(--text-muted); font-weight: 400;">LIVE</span></div>
                 <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button class="primary-btn" ng-click="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> Push to Live</button>
-                <button class="icon-btn" ng-click="logout()" title="Logout"><i class="fa-solid fa-power-off"></i></button>
+            <div>
+                <button class="primary-btn" ng-click="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> <span class="mobile-hide">Push to </span>Live</button>
+                <button class="icon-btn" ng-click="logout()" title="Logout" style="border: 1px solid #444;"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </div>
 
@@ -243,25 +298,29 @@
 
         <div class="admin-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
-                <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Live Standings</h3>
+                <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Standings</h3>
                 <div>
-                    <button ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort</button>
+                    <button ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i></button>
                     <button ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add</button>
                 </div>
             </div>
+            
             <div class="driver-list-header">
                 <span style="text-align: center;">ORD</span> <span style="text-align: center;">IMG</span> <span>NAME</span> <span>TEAM</span> <span>PTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
             </div>
+            
             <div ng-repeat="driver in config.standings" class="driver-row">
                 <div style="display:flex; flex-direction:column; gap:2px;">
-                    <button class="arrow-btn" ng-click="moveUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                    <button class="arrow-btn" ng-click="moveDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
                 </div>
                 <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
-                <input type="text" ng-model="driver.name" placeholder="Driver">
+                
+                <input type="text" ng-model="driver.name" placeholder="Driver Name">
                 <input type="text" ng-model="driver.team" placeholder="Team">
                 <input type="number" ng-model="driver.points" placeholder="0">
-                <input type="text" ng-model="driver.image" placeholder="https://..." style="font-size: 10px; color: #555;">
+                <input type="text" ng-model="driver.image" placeholder="Image URL">
+                
                 <button class="icon-btn delete-btn" ng-click="removeDriver($index)"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
@@ -274,7 +333,7 @@
                     <input type="text" ng-model="link.id" readonly style="color: #666;">
                 </div>
                 <input type="text" ng-model="link.url" placeholder="Embed URL">
-                <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:5px 10px; margin-top: 10px;">
+                <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
                     <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove
                 </button>
             </div>
@@ -302,7 +361,7 @@
         app.controller('AdminController', function($scope, $timeout) {
             $scope.config = {};
             $scope.isLoggedIn = false;
-            $scope.creds = { email: "", pass: "" }; // Initialize Object
+            $scope.creds = { email: "", pass: "" };
             
             auth.onAuthStateChanged(user => {
                 $scope.$apply(() => {
@@ -311,15 +370,15 @@
                 });
             });
 
-            // --- HYBRID LOGIN FIX: Angular + DOM Access ---
+            // --- DOUBLE CHECK LOGIN (Fixes GitHub Pages/Mobile Autofill) ---
             $scope.login = function() {
                 $scope.loginError = "Authenticating...";
                 
-                // 1. Try to get data from Angular Model
+                // 1. Angular Check
                 let e = $scope.creds.email;
                 let p = $scope.creds.pass;
 
-                // 2. FALLBACK: If Angular missed it (Autofill bug), read DOM directly
+                // 2. DOM Force Check
                 if(!e) e = document.getElementById('loginEmail').value;
                 if(!p) p = document.getElementById('loginPass').value;
 
@@ -383,4 +442,3 @@
     </script>
 </body>
 </html>
-
