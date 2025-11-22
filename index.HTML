@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="f1App">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Live Stream | Experience</title>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --f1-red: #e10600;
+            --f1-green: #00d26a;
+            --bg-dark: #0b0b0f;
+            --glass-bg: rgba(23, 23, 29, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --text-gray: #aeb0b8;
+            --glow-color: rgba(225, 6, 0, 0.15);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Titillium Web', sans-serif;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            overflow-x: hidden;
+            
+            background-image: radial-gradient(
+                800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                var(--glow-color), 
+                transparent 40%
+            );
+            background-attachment: fixed;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(11, 11, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 30px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            height: 70px;
+            transition: all 0.3s ease;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 20px; transition: all 0.3s ease; }
+        .f1-real-logo { height: 28px; width: auto; filter: brightness(0) invert(1); transition: all 0.3s ease; }
+        .header-divider { height: 20px; width: 1px; background: rgba(255,255,255,0.2); }
+        .gemini-real-logo { height: 32px; filter: brightness(0) invert(1); opacity: 0.8; transition: all 0.3s ease; }
+
+        .live-pill {
+            background: var(--f1-red);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(225, 6, 0, 0.4);
+            animation: pulse 2s infinite;
+            transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 3.5fr 1.2fr;
+            gap: 30px;
+            flex: 1;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        /* Tablet Breakpoint */
+        @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } }
+
+        /* --- Video Section --- */
+        .video-wrapper {
+            background: #000;
+            border-radius: 12px 12px 0 0; 
+            overflow: hidden;
+            border: 1px solid #222;
+            border-bottom: none; 
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-wrapper::before {
+            content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px;
+            background: var(--f1-red); filter: blur(40px); opacity: 0.15; z-index: -1;
+        }
+        .video-responsive { position: relative; padding-bottom: 56.25%; height: 0; width: 100%; background: #111; }
+        .video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+        /* --- Toolbar --- */
+        .video-toolbar {
+            background: #141419;
+            border: 1px solid #222;
+            border-top: none;
+            border-radius: 0 0 12px 12px; 
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* --- Cards --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stream-controls { margin-top: 0px; transition: all 0.3s ease; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
+        .event-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
+        .event-round { font-size: 11px; color: var(--f1-red); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; display: block; }
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; font-size: 13px; color: var(--text-gray); }
+        .meta-item strong { display: block; color: #fff; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
+
+        /* --- Buttons --- */
+        .stream-btn {
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: #aaa;
+            padding: 6px 14px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            cursor: pointer; 
+            transition: all 0.2s; 
+            min-width: auto;
+        }
+        .stream-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; }
+        .stream-btn.active { background: var(--f1-red); color: white; border-color: var(--f1-red); box-shadow: 0 0 10px rgba(225, 6, 0, 0.2); }
+        
+        .spacer { flex: 1; }
+
+        /* Sidebar & Standings Styles */
+        .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-gray); margin-bottom: 15px; letter-spacing: 1px; }
+
+        .schedule-row {
+            display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; transition: background 0.2s;
+        }
+        .schedule-row:hover { background: rgba(255,255,255,0.03); }
+        .schedule-row.live { background: linear-gradient(90deg, rgba(225,6,0,0.1), transparent); border-left: 3px solid var(--f1-red); }
+        .schedule-row.upcoming { border-left: 3px solid #fff; }
+        .schedule-row.ended { opacity: 0.4; }
+        .sess-name { font-weight: 600; font-size: 14px; }
+        .sess-status { font-size: 10px; font-weight: 800; color: var(--f1-red); margin-top: 2px; text-transform: uppercase; }
+        .sess-time { font-weight: 700; font-size: 14px; color: #fff; }
+        .sess-day { font-size: 11px; color: var(--text-gray); }
+
+        /* --- Standings with Photos & Scroll --- */
+        .standings-list {
+            transition: all 0.4s ease;
+            max-height: auto;
+        }
+
+        .standings-list.expanded {
+            max-height: 400px; 
+            overflow-y: auto;
+            padding-right: 5px; 
+        }
+        .standings-list.expanded::-webkit-scrollbar { width: 4px; }
+        .standings-list.expanded::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        .standings-list.expanded::-webkit-scrollbar-thumb { background: var(--f1-red); border-radius: 2px; }
+
+        .standing-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .standing-row:last-child { border-bottom: none; }
+        
+        .st-pos { font-size: 16px; font-weight: 900; font-style: italic; margin-right: 10px; color: #fff; width: 20px; text-align: center; }
+        .st-pos.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .st-pos.p2 { color: #c0c0c0; }
+        .st-pos.p3 { color: #cd7f32; }
+        
+        .st-img-wrapper {
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            background: #333; 
+            margin-right: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .st-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+        
+        .st-info { flex: 1; }
+        .st-name { font-weight: 700; font-size: 14px; }
+        .st-team { font-size: 11px; color: var(--text-gray); text-transform: uppercase; }
+        .st-pts { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+        .view-more-btn {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-gray);
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin-top: 5px;
+        }
+        .view-more-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
+
+        /* Footer */
+        footer { margin-top: 40px; padding: 20px; text-align: center; color: var(--text-gray); font-size: 11px; border-top: 1px solid var(--glass-border); }
+
+        /* --- THEATER MODE --- */
+        body.theater-active header { height: 40px; padding: 0 20px; background: #000; border-bottom: 1px solid #333; }
+        body.theater-active .f1-real-logo { height: 16px; }
+        body.theater-active .gemini-real-logo { height: 20px; }
+        body.theater-active .header-divider { height: 12px; }
+        body.theater-active .live-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active footer, body.theater-active .sidebar { display: none !important; }
+        body.theater-active { height: 100vh; overflow: hidden; background: #000; }
+        body.theater-active .container { max-width: 100%; margin: 0; padding: 0; height: calc(100vh - 40px); display: flex; flex-direction: column; }
+        body.theater-active .main-column { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        
+        body.theater-active .video-wrapper { 
+            flex: 1; 
+            border-radius: 0; border: none; 
+            display: flex; align-items: center; 
+        }
+        body.theater-active .video-wrapper::before { display: none; }
+        body.theater-active .video-responsive { height: 100%; padding-bottom: 0; }
+        
+        /* THEATER: Toolbar Styles */
+        body.theater-active .video-toolbar { 
+            margin-bottom: 0; 
+            border-radius: 0; 
+            border: none; border-top: 1px solid #333;
+            background: #111;
+            padding: 5px 15px; 
+            height: 40px;
+        } 
+
+        body.theater-active .stream-btn { padding: 3px 8px; font-size: 9px; border-radius: 3px; }
+        body.theater-active .source-label { font-size: 9px !important; }
+        body.theater-active .stream-controls { display: none; }
+        
+        /* --- LOADER --- */
+        .loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
+        .loader.hide { opacity: 0; pointer-events: none; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--f1-red); animation: spin 0.8s ease-in-out infinite; margin-bottom: 20px; box-shadow: 0 0 20px rgba(225, 6, 0, 0.2); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #666; animation: fadeText 1.5s infinite alternate; }
+        @keyframes fadeText { from { opacity: 0.5; } to { opacity: 1; } }
+
+        /* ------------------------------------------------ */
+        /* --- MOBILE PHONE RESPONSIVENESS FIXES (NEW) --- */
+        /* ------------------------------------------------ */
+        @media (max-width: 768px) {
+            /* 1. Compact Header */
+            header {
+                padding: 10px 15px;
+                height: 60px;
+            }
+            .header-left { gap: 10px; }
+            .f1-real-logo { height: 20px; }
+            .gemini-real-logo { height: 22px; }
+            .header-divider { height: 15px; }
+            
+            /* 2. Maximize Screen Width */
+            .container {
+                margin: 15px auto;
+                padding: 0 10px; /* Reduce padding significantly */
+                gap: 20px;
+                width: 100%;
+            }
+
+            /* 3. Fix Video Toolbar Overflow */
+            .video-toolbar {
+                flex-wrap: wrap; /* Allow buttons to stack */
+                justify-content: center;
+                padding: 10px;
+            }
+            .spacer { display: none; } /* Hide spacer on mobile so buttons center */
+            .stream-btn {
+                flex: 1 1 auto; /* Make buttons grow to fill space */
+                text-align: center;
+                margin-bottom: 5px;
+                font-size: 10px;
+            }
+
+            /* 4. Adjust Info Cards text size */
+            .event-header {
+                flex-direction: column; /* Stack title and feed status */
+                gap: 10px;
+            }
+            .event-title { font-size: 18px; }
+            .meta-grid {
+                grid-template-columns: 1fr 1fr; /* Force 2 columns */
+                gap: 10px;
+            }
+
+            /* 5. Sidebar Adjustments */
+            .schedule-row { padding: 8px; }
+            .sess-name { font-size: 12px; }
+            .sess-time { font-size: 12px; }
+            
+            /* 6. Theater Mode on Mobile */
+            body.theater-active header { display: none; } 
+            body.theater-active .container { height: 100vh; }
+            body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater}">
+
+    <div class="loader" ng-class="{'hide': dataLoaded}">
+        <div class="spinner"></div>
+        <div class="loading-text">Welcome Back!</div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" class="f1-real-logo">
+            <div class="header-divider"></div>
+            <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" class="gemini-real-logo">
+        </div>
+        
+        <div class="live-pill" ng-if="nextUp">
+            <span style="opacity: 0.8; font-weight: 400; font-size: 90%;">{{nextUp.name}}:</span> 
+            {{nextUp.timer}}
+        </div>
+        <div class="live-pill" ng-if="!nextUp">LIVE NOW</div>
+    </header>
+
+    <div class="container">
+        
+        <div class="main-column">
+            
+            <div class="video-wrapper">
+                <div class="video-responsive">
+                    <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen scrolling="no"></iframe>
+                </div>
+            </div>
+
+            <div class="video-toolbar">
+                <span class="source-label" style="font-size:10px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
+                
+                <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)" ng-class="{'active': currentStream.id === link.id}">
+                    {{link.name}}
+                </button>
+                
+                <div class="spacer"></div>
+
+                <button class="stream-btn" ng-click="toggleTheater()">
+                    {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                </button>
+            </div>
+
+            <div class="glass-card stream-controls">
+                <div class="event-header">
+                    <div>
+                        <span class="event-round">ROUND {{raceData.round}}</span>
+                        <div class="event-title">{{raceData.name}}</div>
+                    </div>
+                    
+                    <div style="font-size:12px; color:white; display:flex; align-items:center; gap:8px;">
+                        <span style="width:8px; height:8px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 8px var(--f1-green);"></span>
+                        <span style="opacity:0.7;">FEED:</span> {{currentStream.name}}
+                    </div>
+                </div>
+
+                <div class="meta-grid">
+                    <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
+                    <div class="meta-item"><strong>Circuit</strong>{{raceData.circuit}}</div>
+                    <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
+                    <div class="meta-item"><strong>Laps</strong>{{raceData.laps}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            
+            <div class="glass-card" ng-if="nextRace && nextRace.isVisible">
+                <div class="card-title">Up Next</div>
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">{{nextRace.name}}</div>
+                <div style="font-size: 13px; color: var(--text-gray);">{{nextRace.circuit}}</div>
+                <div style="margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--f1-red);">{{nextRace.date}}</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title">Weekend Schedule</div>
+                <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
+                    <div class="sess-info">
+                        <span class="sess-name">{{session.name}}</span>
+                        <span class="sess-status" ng-if="session.status === 'live'">TRACK LIVE</span>
+                    </div>
+                    <div class="sess-time-box">
+                        <div class="sess-time">{{session.time}}</div>
+                        <div class="sess-day">{{session.day}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding-bottom: 10px;">
+                <div class="card-title">Championship Standings</div>
+                
+                <div class="standings-list" ng-class="{'expanded': showAllStandings}">
+                    <div class="standing-row" ng-repeat="driver in standings | limitTo: (showAllStandings ? standings.length : 3)">
+                        <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
+                        
+                        <div class="st-img-wrapper">
+                            <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}" class="st-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
+                        </div>
+
+                        <div class="st-info">
+                            <div class="st-name">{{driver.name}}</div>
+                            <div class="st-team">{{driver.team}}</div>
+                        </div>
+                        <div class="st-pts">{{driver.points}} PTS</div>
+                    </div>
+                </div>
+
+                <button class="view-more-btn" ng-click="toggleStandings()" ng-if="standings.length > 3">
+                    {{ showAllStandings ? 'View Top 3' : 'View Full Standings' }}
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <p>This website does not create, host, or share any video content. All video streams are from external websites that are freely available online.</p>
+        <p style="opacity: 0.5;font-size: 12px;">Engineered with Gemini · Backed by Firebase · Live on Netlify</p>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', e => {
+            requestAnimationFrame(() => {
+                document.body.style.setProperty('--mouse-x', e.clientX + 'px');
+                document.body.style.setProperty('--mouse-y', e.clientY + 'px');
+            });
+        });
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
+            authDomain: "f1-stream-live.firebaseapp.com",
+            projectId: "f1-stream-live",
+            storageBucket: "f1-stream-live.firebasestorage.app",
+            messagingSenderId: "426806288804",
+            appId: "1:426806288804:web:f8ee225776596ebc39e131",
+            measurementId: "G-50FMFWY32X"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        var app = angular.module('f1App', []);
+
+        app.config(function($sceDelegateProvider) {
+            $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']);
+        });
+
+        app.controller('MainController', function($scope, $sce, $interval) {
+            $scope.isTheater = false;
+            $scope.toggleTheater = function() { $scope.isTheater = !$scope.isTheater; };
+            
+            // Standings Toggle Logic
+            $scope.showAllStandings = false;
+            $scope.toggleStandings = function() {
+                $scope.showAllStandings = !$scope.showAllStandings;
+            };
+
+            $scope.dataLoaded = false; 
+
+            $scope.streamLinks = [];
+            $scope.currentStream = {};
+            $scope.raceData = {};
+            $scope.nextRace = {};
+            $scope.standings = [];
+            
+            $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
+            $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
+
+            function processData(data) {
+                $scope.raceData = data.raceData;
+                $scope.nextRace = data.nextRace;
+                $scope.streamLinks = data.streamLinks;
+                $scope.standings = data.standings || [];
+                
+                if(data.schedule) {
+                    $scope.schedule = data.schedule.map(function(s) {
+                        return { ...s, start: new Date(s.startIso).getTime() };
+                    });
+                }
+                if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
+                    $scope.currentStream = $scope.streamLinks[0];
+                }
+                updateStatusAndTimer();
+            }
+
+            var cachedData = localStorage.getItem('f1_local_cache');
+            if (cachedData) {
+                try {
+                    var parsed = JSON.parse(cachedData);
+                    processData(parsed);
+                    $scope.dataLoaded = true;
+                } catch(e) { console.log("Cache invalid"); }
+            }
+
+            db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    localStorage.setItem('f1_local_cache', JSON.stringify(data));
+                    $scope.$apply(function() {
+                        processData(data);
+                        $scope.dataLoaded = true;
+                    });
+                }
+            });
+
+            $scope.nextUp = null;
+            var updateStatusAndTimer = function() {
+                if(!$scope.schedule) return;
+                var now = new Date().getTime();
+                var foundNext = false;
+                $scope.schedule.forEach(function(session) {
+                    var endTime = session.start + (session.duration * 60 * 1000);
+                    if (now < session.start) session.status = 'upcoming';
+                    else if (now >= session.start && now < endTime) session.status = 'live';
+                    else session.status = 'ended';
+                    if (session.status === 'upcoming' && !foundNext) {
+                        $scope.nextUp = session;
+                        foundNext = true;
+                    }
+                });
+                if ($scope.nextUp) {
+                    var distance = $scope.nextUp.start - now;
+                    if (distance < 0) $scope.nextUp.timer = "STARTING";
+                    else {
+                        var h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        var s = Math.floor((distance % (1000 * 60)) / 1000);
+                        $scope.nextUp.timer = (h<10?"0"+h:h) + "h " + (m<10?"0"+m:m) + "m " + (s<10?"0"+s:s) + "s";
+                    }
+                } else { $scope.nextUp = null; }
+            };
+            $interval(updateStatusAndTimer, 1000);
+        });
+    </script>
+</body>
+</html>
