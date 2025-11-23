@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Live Stream | Experience</title>
+    <title>Formula 1| Live Stream</title>
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -59,19 +59,53 @@
         .header-divider { height: 20px; width: 1px; background: rgba(255,255,255,0.2); }
         .gemini-real-logo { height: 32px; filter: brightness(0) invert(1); opacity: 0.8; transition: all 0.3s ease; }
 
-        .live-pill {
-            background: var(--f1-red);
-            color: white;
+        /* --- Right Side Status Area --- */
+        .status-area {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between timer and offline badge */
+        }
+
+        /* 1. The Timer Pill (Neutral/Info) */
+        .timer-pill {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex; 
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        /* 2. The Stream Status Pill (Offline vs Live) */
+        .status-pill {
             padding: 5px 15px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 800;
             letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.offline {
+            background: #222;
+            color: #555;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 5px #000;
+        }
+
+        .status-pill.live {
+            background: var(--f1-red);
+            color: white;
             box-shadow: 0 0 15px rgba(225, 6, 0, 0.4);
             animation: pulse 2s infinite;
-            transition: all 0.3s ease;
-            display: flex; align-items: center; gap: 8px;
         }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         /* --- Layout --- */
@@ -208,12 +242,13 @@
 
         footer { margin-top: 40px; padding: 20px; text-align: center; color: var(--text-gray); font-size: 11px; border-top: 1px solid var(--glass-border); }
 
-        /* --- THEATER & MOBILE STYLES (Unchanged) --- */
+        /* --- THEATER & MOBILE STYLES --- */
         body.theater-active header { height: 40px; padding: 0 20px; background: #000; border-bottom: 1px solid #333; }
         body.theater-active .f1-real-logo { height: 16px; }
         body.theater-active .gemini-real-logo { height: 20px; }
         body.theater-active .header-divider { height: 12px; }
-        body.theater-active .live-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active .status-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active .timer-pill { padding: 2px 8px; font-size: 10px; }
         body.theater-active footer, body.theater-active .sidebar { display: none !important; }
         body.theater-active { height: 100vh; overflow: hidden; background: #000; }
         body.theater-active .container { max-width: 100%; margin: 0; padding: 0; height: calc(100vh - 40px); display: flex; flex-direction: column; }
@@ -252,6 +287,10 @@
             body.theater-active header { display: none; } 
             body.theater-active .container { height: 100vh; }
             body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; }
+            
+            .status-area { gap: 5px; }
+            .timer-pill { font-size: 9px; padding: 4px 8px; }
+            .status-pill { font-size: 9px; padding: 4px 10px; }
         }
     </style>
 </head>
@@ -269,17 +308,19 @@
             <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" class="gemini-real-logo">
         </div>
         
-        <div class="live-pill" ng-if="activeSession">
-            LIVE NOW: {{activeSession.name}}
-        </div>
-        
-        <div class="live-pill" ng-if="!activeSession && nextUp">
-            <span style="opacity: 0.8; font-weight: 400; font-size: 90%; margin-right:5px;">{{nextUp.name}}:</span> 
-            {{nextUp.timerStr}}
-        </div>
+        <div class="status-area">
+            <div class="timer-pill" ng-if="!activeSession && nextUp">
+                <span style="opacity: 0.6; margin-right: 6px; text-transform: uppercase;">{{nextUp.name}}:</span>
+                <span style="color: #fff;">{{nextUp.timerStr}}</span>
+            </div>
 
-        <div class="live-pill" ng-if="!activeSession && !nextUp" style="background: #333; animation: none;">
-            OFFLINE
+            <div class="status-pill live" ng-if="activeSession">
+                LIVE: {{activeSession.name}}
+            </div>
+
+            <div class="status-pill offline" ng-if="!activeSession">
+                OFFLINE
+            </div>
         </div>
     </header>
 
@@ -495,7 +536,7 @@
                     } else if (now >= session.start && now < session.end) {
                         session.status = 'live';
                         $scope.activeSession = session; 
-                        $scope.nextUp = null;
+                        $scope.nextUp = null; // Hide timer if we are currently live
                     } else {
                         session.status = 'ended';
                     }
@@ -523,4 +564,3 @@
     </script>
 </body>
 </html>
-
