@@ -32,7 +32,7 @@
             background-image: radial-gradient(circle at 50% 0%, #2a2a35 0%, transparent 70%);
             color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
-            margin: 0; padding-bottom: 80px; /* Extra padding for mobile scroll */
+            margin: 0; padding-bottom: 80px;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -48,7 +48,7 @@
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- ACTION BAR (Sticky Header) --- */
+        /* --- ACTION BAR --- */
         .action-bar {
             position: sticky; top: 10px; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center;
@@ -119,6 +119,7 @@
         }
 
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-row-4 { display: grid; grid-template-columns: 0.5fr 1.5fr 1fr 1fr; gap: 10px; }
         
         .input-group { margin-bottom: 15px; width: 100%; }
         label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
@@ -131,7 +132,7 @@
         }
         input:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
-        /* --- DRIVER LIST (Desktop View) --- */
+        /* --- DRIVER LIST --- */
         .driver-list-header {
             display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
             gap: 10px; padding: 0 10px 10px; margin-bottom: 5px;
@@ -161,16 +162,12 @@
         .login-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); border-radius: 16px 16px 0 0; }
 
 
-        /* ========================================= */
-        /* === MOBILE RESPONSIVE ENGINE (MAGIC) === */
-        /* ========================================= */
+        /* === MOBILE RESPONSIVE ENGINE === */
         @media (max-width: 768px) {
             .container { padding: 0 15px; }
-            
-            /* Stack Grid Rows */
             .grid-row { grid-template-columns: 1fr; gap: 15px; }
+            .grid-row-4 { grid-template-columns: 1fr 1fr; gap: 10px; } /* Stack session inputs 2x2 */
 
-            /* Adjust Action Bar */
             .action-bar { 
                 flex-direction: column; gap: 15px; align-items: stretch; text-align: center; 
                 padding: 15px; margin-bottom: 20px;
@@ -179,54 +176,21 @@
             .action-bar > div:last-child { display: flex; justify-content: space-between; }
             .action-bar button { flex: 1; }
 
-            /* --- DRIVER ROW TRANSFORMATION --- */
-            .driver-list-header { display: none; } /* Hide headers on mobile */
-            
+            /* Driver List Mobile Transform */
+            .driver-list-header { display: none; }
             .driver-row {
-                /* Transform to Flexbox for card layout */
-                display: flex; flex-wrap: wrap; 
-                position: relative;
-                padding: 15px; gap: 10px;
-                border: 1px solid #333;
+                display: flex; flex-wrap: wrap; position: relative;
+                padding: 15px; gap: 10px; border: 1px solid #333;
             }
             .driver-row:hover { transform: none; }
-
-            /* 1. Arrows (Absolute Top Left) */
-            .driver-row > div:nth-child(1) {
-                position: absolute; top: 10px; left: 10px;
-                display: flex; flex-direction: row !important; gap: 10px;
-            }
-            
-            /* 2. Image (Centered Top) */
-            .driver-row > div:nth-child(2) {
-                width: 100%; text-align: center; margin-bottom: 10px;
-            }
+            .driver-row > div:nth-child(1) { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: row !important; gap: 10px; }
+            .driver-row > div:nth-child(2) { width: 100%; text-align: center; margin-bottom: 10px; }
             .img-preview { width: 60px; height: 60px; }
-
-            /* 3. Inputs (Full Width Stack) */
-            /* Driver Name */
-            .driver-row input:nth-of-type(1) { 
-                width: 100%; font-size: 16px; font-weight: bold; text-align: center;
-                border-bottom: 1px solid #444; margin-bottom: 5px;
-            }
-            /* Team Name */
-            .driver-row input:nth-of-type(2) { 
-                width: 60%; font-size: 12px; color: var(--text-muted);
-            }
-            /* Points */
-            .driver-row input:nth-of-type(3) { 
-                width: 35%; text-align: right; background: rgba(255,255,255,0.05);
-                border-radius: 4px; color: var(--primary-bright); font-weight: bold;
-            }
-            /* Image URL (Small at bottom) */
-            .driver-row input:nth-of-type(4) { 
-                width: 100%; font-size: 9px; opacity: 0.5; margin-top: 5px;
-            }
-
-            /* 4. Delete Button (Absolute Top Right) */
-            .driver-row button.delete-btn {
-                position: absolute; top: 10px; right: 10px;
-            }
+            .driver-row input:nth-of-type(1) { width: 100%; font-size: 16px; font-weight: bold; text-align: center; border-bottom: 1px solid #444; margin-bottom: 5px; }
+            .driver-row input:nth-of-type(2) { width: 60%; font-size: 12px; color: var(--text-muted); }
+            .driver-row input:nth-of-type(3) { width: 35%; text-align: right; background: rgba(255,255,255,0.05); border-radius: 4px; color: var(--primary-bright); font-weight: bold; }
+            .driver-row input:nth-of-type(4) { width: 100%; font-size: 9px; opacity: 0.5; margin-top: 5px; }
+            .driver-row button.delete-btn { position: absolute; top: 10px; right: 10px; }
         }
     </style>
 </head>
@@ -259,7 +223,7 @@
         <div class="action-bar">
             <div class="brand-logo">
                 <i class="fa-solid fa-tower-broadcast"></i>
-                <div>Live Admin Panel<span style="font-size: 10px; color: var(--text-muted); font-weight: 400;"></span></div>
+                <div>Live Admin Panel</div>
                 <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
             <div>
@@ -299,27 +263,32 @@
         <div class="admin-section">
             <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
             
-            <div ng-repeat="session in config.schedule" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; align-items: center; gap: 15px;">
+            <div ng-repeat="session in config.schedule" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative;">
                 
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveSessionUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveSessionDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px;">
+                    <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-down"></i></button>
+                    <button class="icon-btn delete-btn" ng-click="removeSession($index)" title="Remove" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-trash"></i></button>
                 </div>
-        
-                <div style="flex-grow: 1;" class="grid-row">
+
+                <div class="grid-row-4" style="margin-top: 10px;">
                     <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first">Session Name</label>
-                        <input type="text" ng-model="session.name" placeholder="e.g. FP1 / Qualifying">
+                        <label ng-if="$first"><i class="fa-solid fa-calendar"></i> Day</label>
+                        <input type="text" ng-model="session.day" placeholder="FRI">
                     </div>
                     <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first">Time / Date</label>
-                        <input type="text" ng-model="session.time" placeholder="e.g. Fri 14:00">
+                        <label ng-if="$first"><i class="fa-solid fa-flag"></i> Session Name</label>
+                        <input type="text" ng-model="session.name" placeholder="Practice 1">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label ng-if="$first"><i class="fa-solid fa-clock"></i> Time</label>
+                        <input type="text" ng-model="session.time" placeholder="14:00">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label ng-if="$first"><i class="fa-solid fa-hourglass"></i> Timer ISO</label>
+                        <input type="text" ng-model="session.timer" placeholder="2024-03-02T14:00">
                     </div>
                 </div>
-        
-                <button class="icon-btn delete-btn" ng-click="removeSession($index)" style="height: 40px; width: 40px; align-self: flex-end;">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
             </div>
         
             <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
@@ -400,17 +369,10 @@
                 });
             });
 
-            // --- DOUBLE CHECK LOGIN (Fixes GitHub Pages/Mobile Autofill) ---
             $scope.login = function() {
                 $scope.loginError = "Authenticating...";
-                
-                // 1. Angular Check
-                let e = $scope.creds.email;
-                let p = $scope.creds.pass;
-
-                // 2. DOM Force Check
-                if(!e) e = document.getElementById('loginEmail').value;
-                if(!p) p = document.getElementById('loginPass').value;
+                let e = $scope.creds.email || document.getElementById('loginEmail').value;
+                let p = $scope.creds.pass || document.getElementById('loginPass').value;
 
                 if(!e || !p) {
                     $scope.loginError = "Please enter email and password.";
@@ -436,10 +398,10 @@
                             $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {} };
                             $scope.statusText = "NEW DB"; $scope.statusType = "loading";
                         }
-                        // Initialize arrays if missing
+                        // Array Init Safety
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
-                        if (!$scope.config.schedule) $scope.config.schedule = []; // NEW: Init schedule
+                        if (!$scope.config.schedule) $scope.config.schedule = [];
                     });
                 }).catch(err => {
                     $scope.$apply(() => { $scope.statusText = "ERROR"; $scope.statusType = "error"; });
@@ -469,8 +431,8 @@
             $scope.moveDown = (i) => { if(i<$scope.config.standings.length-1) [$scope.config.standings[i], $scope.config.standings[i+1]] = [$scope.config.standings[i+1], $scope.config.standings[i]]; };
             $scope.sortDrivers = () => { if(confirm("Sort?")) $scope.config.standings.sort((a,b) => b.points - a.points); };
             
-            // Schedule Helpers (NEW)
-            $scope.addSession = () => $scope.config.schedule.push({ name: "", time: "" });
+            // Schedule Helpers (Includes DAY and TIMER fields)
+            $scope.addSession = () => $scope.config.schedule.push({ day: "FRI", name: "", time: "", timer: "" });
             $scope.removeSession = (i) => { if(confirm("Delete Session?")) $scope.config.schedule.splice(i, 1); };
             $scope.moveSessionUp = (i) => { if(i>0) [$scope.config.schedule[i], $scope.config.schedule[i-1]] = [$scope.config.schedule[i-1], $scope.config.schedule[i]]; };
             $scope.moveSessionDown = (i) => { if(i<$scope.config.schedule.length-1) [$scope.config.schedule[i], $scope.config.schedule[i+1]] = [$scope.config.schedule[i+1], $scope.config.schedule[i]]; };
