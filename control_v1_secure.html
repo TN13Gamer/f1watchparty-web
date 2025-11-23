@@ -297,6 +297,36 @@
         </div>
 
         <div class="admin-section">
+            <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
+            
+            <div ng-repeat="session in config.schedule" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; align-items: center; gap: 15px;">
+                
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveSessionUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveSessionDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                </div>
+        
+                <div style="flex-grow: 1;" class="grid-row">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label ng-if="$first">Session Name</label>
+                        <input type="text" ng-model="session.name" placeholder="e.g. FP1 / Qualifying">
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label ng-if="$first">Time / Date</label>
+                        <input type="text" ng-model="session.time" placeholder="e.g. Fri 14:00">
+                    </div>
+                </div>
+        
+                <button class="icon-btn delete-btn" ng-click="removeSession($index)" style="height: 40px; width: 40px; align-self: flex-end;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        
+            <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
+                <i class="fa-solid fa-plus"></i> Add Session
+            </button>
+        </div>
+        <div class="admin-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
                 <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Standings</h3>
                 <div>
@@ -403,11 +433,13 @@
                             $scope.config = doc.data();
                             $scope.statusText = "LIVE"; $scope.statusType = "success";
                         } else {
-                            $scope.config = { standings: [], streamLinks: [], raceData: {}, nextRace: {} };
+                            $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {} };
                             $scope.statusText = "NEW DB"; $scope.statusType = "loading";
                         }
+                        // Initialize arrays if missing
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
+                        if (!$scope.config.schedule) $scope.config.schedule = []; // NEW: Init schedule
                     });
                 }).catch(err => {
                     $scope.$apply(() => { $scope.statusText = "ERROR"; $scope.statusType = "error"; });
@@ -436,10 +468,16 @@
             $scope.moveUp = (i) => { if(i>0) [$scope.config.standings[i], $scope.config.standings[i-1]] = [$scope.config.standings[i-1], $scope.config.standings[i]]; };
             $scope.moveDown = (i) => { if(i<$scope.config.standings.length-1) [$scope.config.standings[i], $scope.config.standings[i+1]] = [$scope.config.standings[i+1], $scope.config.standings[i]]; };
             $scope.sortDrivers = () => { if(confirm("Sort?")) $scope.config.standings.sort((a,b) => b.points - a.points); };
+            
+            // Schedule Helpers (NEW)
+            $scope.addSession = () => $scope.config.schedule.push({ name: "", time: "" });
+            $scope.removeSession = (i) => { if(confirm("Delete Session?")) $scope.config.schedule.splice(i, 1); };
+            $scope.moveSessionUp = (i) => { if(i>0) [$scope.config.schedule[i], $scope.config.schedule[i-1]] = [$scope.config.schedule[i-1], $scope.config.schedule[i]]; };
+            $scope.moveSessionDown = (i) => { if(i<$scope.config.schedule.length-1) [$scope.config.schedule[i], $scope.config.schedule[i+1]] = [$scope.config.schedule[i+1], $scope.config.schedule[i]]; };
+
             $scope.addStream = () => $scope.config.streamLinks.push({ name: "", id: "src_"+Date.now(), url: "" });
             $scope.removeStream = (i) => { if(confirm("Delete?")) $scope.config.streamLinks.splice(i, 1); };
         });
     </script>
 </body>
 </html>
-
