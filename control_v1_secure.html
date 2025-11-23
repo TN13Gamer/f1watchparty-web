@@ -26,7 +26,7 @@
             --border: #2f2f38;
             --glow: 0 0 20px rgba(255, 24, 1, 0.4);
             --live-green: #00d26a;
-            --upcoming-orange: #ffb700; /* Bright Orange/Yellow */
+            --upcoming-orange: #ffb700;
         }
 
         body {
@@ -169,6 +169,15 @@
             border-radius: 4px; text-transform: uppercase;
             box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
         }
+        
+        /* TIMER BADGE (ADDED) */
+        .timer-badge {
+            position: absolute; top: -10px; left: 70px; /* Sits next to Upcoming/Live badge */
+            background: #111; color: #fff; border: 1px solid #444;
+            font-size: 9px; font-weight: 700; padding: 2px 8px;
+            border-radius: 4px; font-family: monospace; letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
+        }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
@@ -300,6 +309,8 @@
                 <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
 
                 <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
+                
+                <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
 
                 <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
                     <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
@@ -467,6 +478,7 @@
                 $scope.config.schedule.forEach(function(s) {
                     s.isLive = false;
                     s.isUpcoming = false;
+                    s.countdown = "";
                 });
 
                 // Second loop: Determine Status
@@ -503,7 +515,18 @@
 
                 // Apply Up Next tag to the single closest event
                 if (upcomingIndex !== -1) {
-                    $scope.config.schedule[upcomingIndex].isUpcoming = true;
+                    let s = $scope.config.schedule[upcomingIndex];
+                    s.isUpcoming = true;
+                    
+                    // Calculate Countdown
+                    let diff = new Date(s.timer).getTime() - now;
+                    if (diff > 0) {
+                        let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        let sec = Math.floor((diff % (1000 * 60)) / 1000);
+                        s.countdown = (d>0 ? d+"d " : "") + (h<10?"0"+h:h) + "h " + (m<10?"0"+m:m) + "m " + (sec<10?"0"+sec:sec) + "s";
+                    }
                 }
             }
             
@@ -517,7 +540,7 @@
                 // Remove UI flags before saving
                 let dataToSave = angular.copy($scope.config);
                 if(dataToSave.schedule) {
-                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; });
+                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
                 }
                 let cleanData = JSON.parse(angular.toJson(dataToSave));
 
