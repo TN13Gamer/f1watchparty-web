@@ -345,11 +345,18 @@
             <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" class="gemini-real-logo">
         </div>
         
-        <div class="live-pill" ng-if="nextUp">
-            <span style="opacity: 0.8; font-weight: 400; font-size: 90%;">{{nextUp.name}}:</span> 
-            {{nextUp.timer}}
+        <div class="live-pill" ng-if="activeSession">
+            LIVE NOW: {{activeSession.name}}
         </div>
-        <div class="live-pill" ng-if="!nextUp">LIVE NOW</div>
+        
+        <div class="live-pill" ng-if="!activeSession && nextUp">
+            <span style="opacity: 0.8; font-weight: 400; font-size: 90%; margin-right:5px;">{{nextUp.name}}:</span> 
+            {{nextUp.timerStr}}
+        </div>
+
+        <div class="live-pill" ng-if="!activeSession && !nextUp" style="background: #333; animation: none;">
+            OFFLINE
+        </div>
     </header>
 
     <div class="container">
@@ -470,7 +477,8 @@
             appId: "1:426806288804:web:f8ee225776596ebc39e131",
             measurementId: "G-50FMFWY32X"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         var app = angular.module('f1App', []);
@@ -483,53 +491,64 @@
             $scope.isTheater = false;
             $scope.toggleTheater = function() { $scope.isTheater = !$scope.isTheater; };
             
-            // Standings Toggle Logic
             $scope.showAllStandings = false;
-            $scope.toggleStandings = function() {
-                $scope.showAllStandings = !$scope.showAllStandings;
-            };
+            $scope.toggleStandings = function() { $scope.showAllStandings = !$scope.showAllStandings; };
 
             $scope.dataLoaded = false; 
-
             $scope.streamLinks = [];
             $scope.currentStream = {};
             $scope.raceData = {};
             $scope.nextRace = {};
             $scope.standings = [];
+            $scope.schedule = [];
+            $scope.nextUp = null; 
+            $scope.activeSession = null; 
             
             $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
 
             function processData(data) {
-                $scope.raceData = data.raceData;
-                $scope.nextRace = data.nextRace;
-                $scope.streamLinks = data.streamLinks;
+                $scope.raceData = data.raceData || {};
+                $scope.nextRace = data.nextRace || {};
+                $scope.streamLinks = data.streamLinks || [];
                 $scope.standings = data.standings || [];
                 
                 if(data.schedule) {
                     $scope.schedule = data.schedule.map(function(s) {
-                        return { ...s, start: new Date(s.startIso).getTime() };
+                        // 1. Get Start Time from 'timer' (ISO String from Admin)
+                        var startDate = new Date(s.timer);
+                        var startTime = startDate.getTime();
+                        
+                        // 2. Calculate End Time based on 'endTime' string (e.g. "15:00")
+                        var endTime = startTime + (2 * 60 * 60 * 1000); // Default 2 hours fallback if string is missing
+                        if (s.endTime && s.endTime.includes(':')) {
+                            var parts = s.endTime.split(':');
+                            var endDate = new Date(startDate);
+                            endDate.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                            endTime = endDate.getTime();
+                            // Handle case where end time is next day (e.g. start 23:00, end 01:00)
+                            if(endTime < startTime) endTime += (24 * 60 * 60 * 1000);
+                        }
+
+                        return { 
+                            ...s, 
+                            start: startTime, 
+                            end: endTime,
+                            status: 'upcoming' 
+                        };
                     });
                 }
+
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];
                 }
-                updateStatusAndTimer();
-            }
-
-            var cachedData = localStorage.getItem('f1_local_cache');
-            if (cachedData) {
-                try {
-                    var parsed = JSON.parse(cachedData);
-                    processData(parsed);
-                    $scope.dataLoaded = true;
-                } catch(e) { console.log("Cache invalid"); }
+                
+                updateStatusAndTimer(); // Run immediately
             }
 
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
-                    localStorage.setItem('f1_local_cache', JSON.stringify(data));
                     $scope.$apply(function() {
                         processData(data);
                         $scope.dataLoaded = true;
@@ -537,32 +556,40 @@
                 }
             });
 
-            $scope.nextUp = null;
             var updateStatusAndTimer = function() {
-                if(!$scope.schedule) return;
+                if(!$scope.schedule || $scope.schedule.length === 0) return;
+                
                 var now = new Date().getTime();
-                var foundNext = false;
+                $scope.nextUp = null;
+                $scope.activeSession = null;
+
                 $scope.schedule.forEach(function(session) {
-                    var endTime = session.start + (session.duration * 60 * 1000);
-                    if (now < session.start) session.status = 'upcoming';
-                    else if (now >= session.start && now < endTime) session.status = 'live';
-                    else session.status = 'ended';
-                    if (session.status === 'upcoming' && !foundNext) {
-                        $scope.nextUp = session;
-                        foundNext = true;
+                    // Determine Status
+                    if (now < session.start) {
+                        session.status = 'upcoming';
+                        // Find the *soonest* upcoming session
+                        if (!$scope.nextUp || session.start < $scope.nextUp.start) {
+                            $scope.nextUp = session;
+                        }
+                    } else if (now >= session.start && now < session.end) {
+                        session.status = 'live';
+                        $scope.activeSession = session; // Mark this as currently live
+                        $scope.nextUp = null; // Clear countdown if we are live
+                    } else {
+                        session.status = 'ended';
                     }
                 });
+
+                // Calculate Countdown String
                 if ($scope.nextUp) {
                     var distance = $scope.nextUp.start - now;
-                    if (distance < 0) $scope.nextUp.timer = "STARTING";
-                    else {
-                        var h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        var m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        var s = Math.floor((distance % (1000 * 60)) / 1000);
-                        $scope.nextUp.timer = (h<10?"0"+h:h) + "h " + (m<10?"0"+m:m) + "m " + (s<10?"0"+s:s) + "s";
-                    }
-                } else { $scope.nextUp = null; }
+                    var h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var s = Math.floor((distance % (1000 * 60)) / 1000);
+                    $scope.nextUp.timerStr = (h<10?"0"+h:h) + "h " + (m<10?"0"+m:m) + "m " + (s<10?"0"+s:s) + "s";
+                }
             };
+
             $interval(updateStatusAndTimer, 1000);
         });
     </script>
