@@ -25,6 +25,8 @@
             --text-muted: #8a8a95;
             --border: #2f2f38;
             --glow: 0 0 20px rgba(255, 24, 1, 0.4);
+            --live-green: #00d26a;
+            --upcoming-orange: #ffb700; /* Bright Orange/Yellow */
         }
 
         body {
@@ -120,7 +122,6 @@
 
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         
-        /* New Schedule Grid Layout */
         .schedule-grid-top { display: grid; grid-template-columns: 0.5fr 0.8fr 2fr; gap: 10px; margin-bottom: 10px; }
         .schedule-grid-bot { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; }
         
@@ -134,6 +135,42 @@
             box-sizing: border-box; transition: 0.3s;
         }
         input:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
+
+        /* === SESSION CARD STYLES === */
+        .session-card {
+            background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative;
+            border: 1px solid transparent; transition: 0.3s;
+        }
+
+        /* LIVE STATE */
+        .session-card.is-live {
+            border-color: var(--live-green);
+            background: rgba(0, 210, 106, 0.05);
+            box-shadow: 0 0 15px rgba(0, 210, 106, 0.1);
+        }
+        .live-indicator {
+            position: absolute; top: -10px; left: 10px;
+            background: var(--live-green); color: #000;
+            font-size: 9px; font-weight: 800; padding: 2px 8px;
+            border-radius: 4px; text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
+            animation: pulse 2s infinite;
+        }
+
+        /* UPCOMING STATE */
+        .session-card.is-upcoming {
+            border-color: var(--upcoming-orange);
+            background: rgba(255, 183, 0, 0.05);
+        }
+        .upcoming-indicator {
+            position: absolute; top: -10px; left: 10px;
+            background: var(--upcoming-orange); color: #000;
+            font-size: 9px; font-weight: 800; padding: 2px 8px;
+            border-radius: 4px; text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         /* --- DRIVER LIST --- */
         .driver-list-header {
@@ -169,24 +206,13 @@
         @media (max-width: 768px) {
             .container { padding: 0 15px; }
             .grid-row { grid-template-columns: 1fr; gap: 15px; }
-
-            /* Mobile Schedule: Stack Everything */
             .schedule-grid-top, .schedule-grid-bot { grid-template-columns: 1fr; gap: 10px; }
-
-            .action-bar { 
-                flex-direction: column; gap: 15px; align-items: stretch; text-align: center; 
-                padding: 15px; margin-bottom: 20px;
-            }
+            .action-bar { flex-direction: column; gap: 15px; align-items: stretch; text-align: center; padding: 15px; margin-bottom: 20px; }
             .brand-logo { justify-content: center; margin-bottom: 5px; }
             .action-bar > div:last-child { display: flex; justify-content: space-between; }
             .action-bar button { flex: 1; }
-
-            /* Driver List Mobile Transform */
             .driver-list-header { display: none; }
-            .driver-row {
-                display: flex; flex-wrap: wrap; position: relative;
-                padding: 15px; gap: 10px; border: 1px solid #333;
-            }
+            .driver-row { display: flex; flex-wrap: wrap; position: relative; padding: 15px; gap: 10px; border: 1px solid #333; }
             .driver-row:hover { transform: none; }
             .driver-row > div:nth-child(1) { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: row !important; gap: 10px; }
             .driver-row > div:nth-child(2) { width: 100%; text-align: center; margin-bottom: 10px; }
@@ -267,9 +293,14 @@
 
         <div class="admin-section">
             <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
+            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
             
-            <div ng-repeat="session in config.schedule" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative;">
+            <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
                 
+                <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
+
+                <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
+
                 <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
                     <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
                     <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-down"></i></button>
@@ -302,16 +333,16 @@
                     </div>
                     <div class="input-group" style="margin-bottom:0;">
                         <label ng-if="$first"><i class="fa-solid fa-hourglass"></i> Timer ISO</label>
-                        <input type="text" ng-model="session.timer" placeholder="2024-11-24T14:00">
+                        <input type="text" ng-model="session.timer" placeholder="YYYY-MM-DDTHH:MM:00">
                     </div>
                 </div>
-
             </div>
         
             <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
                 <i class="fa-solid fa-plus"></i> Add Session
             </button>
         </div>
+
         <div class="admin-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
                 <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Standings</h3>
@@ -374,7 +405,7 @@
 
         var app = angular.module('adminApp', []);
 
-        app.controller('AdminController', function($scope, $timeout) {
+        app.controller('AdminController', function($scope, $timeout, $interval) {
             $scope.config = {};
             $scope.isLoggedIn = false;
             $scope.creds = { email: "", pass: "" };
@@ -415,7 +446,6 @@
                             $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {} };
                             $scope.statusText = "NEW DB"; $scope.statusType = "loading";
                         }
-                        // Array Init Safety
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
                         if (!$scope.config.schedule) $scope.config.schedule = [];
@@ -425,10 +455,72 @@
                 });
             };
 
+            // === LIVE & UPCOMING LOGIC ===
+            function checkLiveStatus() {
+                if(!$scope.config.schedule) return;
+                var now = new Date().getTime();
+                
+                let closestFutureTime = Infinity;
+                let upcomingIndex = -1;
+                
+                // First loop: Clear previous states
+                $scope.config.schedule.forEach(function(s) {
+                    s.isLive = false;
+                    s.isUpcoming = false;
+                });
+
+                // Second loop: Determine Status
+                $scope.config.schedule.forEach(function(s, index) {
+                    if(!s.timer) return; 
+                    
+                    var start = new Date(s.timer).getTime();
+                    // Basic valid date check
+                    if(isNaN(start)) return;
+
+                    var end = start + (2 * 60 * 60 * 1000); // Default 2 hours
+
+                    // Precise end time calculation
+                    if (s.endTime && s.endTime.includes(':')) {
+                        var parts = s.endTime.split(':');
+                        var d = new Date(s.timer);
+                        d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                        end = d.getTime();
+                        if(end < start) end += 86400000;
+                    }
+                    
+                    // Check LIVE status
+                    if (now >= start && now < end) {
+                        s.isLive = true;
+                    } 
+                    // Check UPCOMING status (find closest future event)
+                    else if (now < start) {
+                        if (start < closestFutureTime) {
+                            closestFutureTime = start;
+                            upcomingIndex = index;
+                        }
+                    }
+                });
+
+                // Apply Up Next tag to the single closest event
+                if (upcomingIndex !== -1) {
+                    $scope.config.schedule[upcomingIndex].isUpcoming = true;
+                }
+            }
+            
+            // Run check every 1 second
+            $interval(checkLiveStatus, 1000);
+
             $scope.saveConfig = function() {
                 if(!$scope.isLoggedIn) return;
                 $scope.statusText = "SAVING..."; $scope.statusType = "loading";
-                let cleanData = JSON.parse(angular.toJson($scope.config));
+                
+                // Remove UI flags before saving
+                let dataToSave = angular.copy($scope.config);
+                if(dataToSave.schedule) {
+                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; });
+                }
+                let cleanData = JSON.parse(angular.toJson(dataToSave));
+
                 db.collection("app_data").doc("live_config").set(cleanData)
                     .then(() => {
                         $scope.$apply(() => {
@@ -441,22 +533,13 @@
                     });
             };
 
-            // Helpers
             $scope.addDriver = () => $scope.config.standings.push({ name: "New Driver", team: "Team", points: 0, image: "" });
             $scope.removeDriver = (i) => { if(confirm("Delete?")) $scope.config.standings.splice(i, 1); };
             $scope.moveUp = (i) => { if(i>0) [$scope.config.standings[i], $scope.config.standings[i-1]] = [$scope.config.standings[i-1], $scope.config.standings[i]]; };
             $scope.moveDown = (i) => { if(i<$scope.config.standings.length-1) [$scope.config.standings[i], $scope.config.standings[i+1]] = [$scope.config.standings[i+1], $scope.config.standings[i]]; };
             $scope.sortDrivers = () => { if(confirm("Sort?")) $scope.config.standings.sort((a,b) => b.points - a.points); };
             
-            // Schedule Helpers (UPDATED DATA STRUCTURE)
-            $scope.addSession = () => $scope.config.schedule.push({ 
-                day: "FRI", 
-                date: "",     // New Date field
-                name: "", 
-                time: "",     // Start Time
-                endTime: "",  // New End Time field
-                timer: "" 
-            });
+            $scope.addSession = () => $scope.config.schedule.push({ day: "FRI", date: "", name: "", time: "", endTime: "", timer: "" });
             $scope.removeSession = (i) => { if(confirm("Delete Session?")) $scope.config.schedule.splice(i, 1); };
             $scope.moveSessionUp = (i) => { if(i>0) [$scope.config.schedule[i], $scope.config.schedule[i-1]] = [$scope.config.schedule[i-1], $scope.config.schedule[i]]; };
             $scope.moveSessionDown = (i) => { if(i<$scope.config.schedule.length-1) [$scope.config.schedule[i], $scope.config.schedule[i+1]] = [$scope.config.schedule[i+1], $scope.config.schedule[i]]; };
