@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formula 1 | Live Stream</title>
     
+    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+    
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
@@ -46,7 +48,7 @@
         header {
             background: rgba(11, 11, 15, 0.8);
             backdrop-filter: blur(10px);
-            /* CHANGED: Red line at bottom */
+            /* Red line at bottom */
             border-bottom: 2px solid var(--f1-red);
             box-shadow: 0 5px 20px rgba(225, 6, 0, 0.15);
             padding: 15px 30px;
@@ -68,7 +70,7 @@
             gap: 10px; 
         }
 
-        /* NEW: Weather Pill Styles */
+        /* Weather Pill Styles */
         .weather-pill {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -186,7 +188,7 @@
             margin-bottom: 20px;
         }
 
-        /* NEW: Glow Animation for 'Up Next' */
+        /* Glow Animation for 'Up Next' */
         @keyframes cardPulse {
             0% { box-shadow: 0 0 0 rgba(225, 6, 0, 0); border-color: rgba(255,255,255,0.1); }
             50% { box-shadow: 0 0 25px rgba(225, 6, 0, 0.25); border-color: var(--f1-red); }
