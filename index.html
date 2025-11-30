@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formula 1| Live Stream</title>
+    <title>Formula 1 | Live Stream</title>
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -63,10 +63,30 @@
         .status-area {
             display: flex;
             align-items: center;
-            gap: 10px; /* Space between timer and offline badge */
+            gap: 10px; 
         }
 
-        /* 1. The Timer Pill (Neutral/Info) */
+        /* NEW: Weather Pill Styles */
+        .weather-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex; 
+            align-items: center;
+            gap: 12px;
+            margin-right: 5px;
+        }
+        .w-group { display: flex; align-items: center; gap: 4px; }
+        .w-icon { font-size: 14px; margin-right: 2px; }
+        .w-label { color: var(--text-gray); font-size: 9px; font-weight: 700; margin-right: 2px; }
+        .w-val { color: #fff; font-weight: 700; }
+        .w-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.2); }
+
         .timer-pill {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -81,7 +101,6 @@
             white-space: nowrap;
         }
 
-        /* 2. The Stream Status Pill (Offline vs Live) */
         .status-pill {
             padding: 5px 15px;
             border-radius: 20px;
@@ -249,6 +268,7 @@
         body.theater-active .header-divider { height: 12px; }
         body.theater-active .status-pill { padding: 2px 8px; font-size: 10px; }
         body.theater-active .timer-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active .weather-pill { padding: 2px 8px; font-size: 9px; }
         body.theater-active footer, body.theater-active .sidebar { display: none !important; }
         body.theater-active { height: 100vh; overflow: hidden; background: #000; }
         body.theater-active .container { max-width: 100%; margin: 0; padding: 0; height: calc(100vh - 40px); display: flex; flex-direction: column; }
@@ -289,6 +309,9 @@
             body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; }
             
             .status-area { gap: 5px; }
+            /* Hide Weather labels on mobile, just show icons/temps */
+            .weather-pill .w-label { display: none; } 
+            .weather-pill { padding: 4px 8px; gap: 6px; }
             .timer-pill { font-size: 9px; padding: 4px 8px; }
             .status-pill { font-size: 9px; padding: 4px 10px; }
         }
@@ -309,6 +332,22 @@
         </div>
         
         <div class="status-area">
+            <div class="weather-pill" ng-if="weather && weather.air">
+                <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
+                
+                <div class="w-group">
+                    <span class="w-label">AIR</span>
+                    <span class="w-val">{{weather.air}}°C</span>
+                </div>
+                
+                <div class="w-divider"></div>
+                
+                <div class="w-group">
+                    <span class="w-label">TRACK</span>
+                    <span class="w-val">{{weather.track}}°C</span>
+                </div>
+            </div>
+
             <div class="timer-pill" ng-if="!activeSession && nextUp">
                 <span style="opacity: 0.6; margin-right: 6px; text-transform: uppercase;">{{nextUp.name}}:</span>
                 <span style="color: #fff;">{{nextUp.timerStr}}</span>
@@ -448,11 +487,23 @@
             $scope.nextRace = {};
             $scope.standings = [];
             $scope.schedule = [];
+            $scope.weather = null; // Initialize Weather
             $scope.nextUp = null; 
             $scope.activeSession = null; 
             
             $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
+
+            // Helper to get Weather Icon
+            $scope.getWeatherIcon = function(condition) {
+                if(!condition) return '🌤️';
+                var c = condition.toLowerCase();
+                if(c.includes('rain') || c.includes('wet')) return '🌧️';
+                if(c.includes('cloud')) return '☁️';
+                if(c.includes('night')) return '🌙';
+                if(c.includes('storm')) return '⛈️';
+                return '☀️'; // Default to sun
+            };
 
             // 12h Time Converter
             $scope.formatTime12 = function(time24) {
@@ -471,6 +522,7 @@
                 $scope.nextRace = data.nextRace || {};
                 $scope.streamLinks = data.streamLinks || [];
                 $scope.standings = data.standings || [];
+                $scope.weather = data.weather || null; // Process Weather Data
                 
                 if(data.schedule) {
                     $scope.schedule = data.schedule.map(function(s) {
