@@ -127,14 +127,15 @@
         
         .input-group { margin-bottom: 15px; width: 100%; }
         label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
-        input {
+        input, select {
             width: 100%; background: rgba(0,0,0,0.2); 
             border: 1px solid var(--border); border-left: 2px solid var(--border);
             color: white; padding: 12px; border-radius: 4px;
             font-family: 'Titillium Web', sans-serif; font-size: 14px;
             box-sizing: border-box; transition: 0.3s;
         }
-        input:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
+        select { -webkit-appearance: none; cursor: pointer; }
+        input:focus, select:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
         /* === SESSION CARD STYLES === */
         .session-card {
@@ -170,9 +171,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
         }
         
-        /* TIMER BADGE (ADDED) */
         .timer-badge {
-            position: absolute; top: -10px; left: 70px; /* Sits next to Upcoming/Live badge */
+            position: absolute; top: -10px; left: 70px; 
             background: #111; color: #fff; border: 1px solid #444;
             font-size: 9px; font-weight: 700; padding: 2px 8px;
             border-radius: 4px; font-family: monospace; letter-spacing: 1px;
@@ -263,7 +263,7 @@
         <div class="action-bar">
             <div class="brand-logo">
                 <i class="fa-solid fa-tower-broadcast"></i>
-                <div>WatchParty Web Admin Panel Panel</div>
+                <div>WatchParty Web Admin Panel</div>
                 <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
             <div>
@@ -281,7 +281,11 @@
                 </div>
                 <div class="grid-row">
                     <div class="input-group"><label>Circuit Name</label><input type="text" ng-model="config.raceData.circuit"></div>
-                    <div class="input-group"><label>Location</label><input type="text" ng-model="config.raceData.location"></div>
+                    
+                    <div class="input-group">
+                        <label style="color:var(--primary-bright);">Location (For Auto Weather)</label>
+                        <input type="text" ng-model="config.raceData.location" placeholder="e.g. Las Vegas">
+                    </div>
                 </div>
                 <div class="grid-row">
                     <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
@@ -290,13 +294,38 @@
             </div>
 
             <div class="admin-section">
-                <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next</h3>
-                <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
-                <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
-                <div class="grid-row">
-                    <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
-                    <div class="input-group"><label>Circuit</label><input type="text" ng-model="config.nextRace.circuit"></div>
+                <h3><i class="fa-solid fa-cloud-sun-rain" style="color: var(--primary); margin-right: 10px;"></i> Manual Weather</h3>
+                <p style="font-size:10px; color:#666; margin-bottom:10px;">Only used if Location is empty or API fails.</p>
+                <div class="input-group">
+                    <label>Condition</label>
+                    <select ng-model="config.weather.condition" style="background: rgba(0,0,0,0.2); color:white;">
+                        <option value="sunny">Sunny / Clear</option>
+                        <option value="cloudy">Cloudy</option>
+                        <option value="rain">Rain / Wet</option>
+                        <option value="storm">Thunderstorm</option>
+                        <option value="night">Clear Night</option>
+                    </select>
                 </div>
+                <div class="grid-row">
+                    <div class="input-group">
+                        <label>Air Temp (°C)</label>
+                        <input type="number" ng-model="config.weather.air" placeholder="24">
+                    </div>
+                    <div class="input-group">
+                        <label>Track Temp (°C)</label>
+                        <input type="number" ng-model="config.weather.track" placeholder="32">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
+            <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
+            <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
+            <div class="grid-row">
+                <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
+                <div class="input-group"><label>Circuit</label><input type="text" ng-model="config.nextRace.circuit"></div>
             </div>
         </div>
 
@@ -348,7 +377,7 @@
                     </div>
                 </div>
             </div>
-        
+            
             <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
                 <i class="fa-solid fa-plus"></i> Add Session
             </button>
@@ -454,12 +483,15 @@
                             $scope.config = doc.data();
                             $scope.statusText = "LIVE"; $scope.statusType = "success";
                         } else {
-                            $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {} };
+                            $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {}, weather: {} };
                             $scope.statusText = "NEW DB"; $scope.statusType = "loading";
                         }
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
                         if (!$scope.config.schedule) $scope.config.schedule = [];
+                        
+                        // INITIALIZE WEATHER IF MISSING
+                        if (!$scope.config.weather) $scope.config.weather = { air: 0, track: 0, condition: 'sunny' };
                     });
                 }).catch(err => {
                     $scope.$apply(() => { $scope.statusText = "ERROR"; $scope.statusType = "error"; });
@@ -573,5 +605,3 @@
     </script>
 </body>
 </html>
-
-
