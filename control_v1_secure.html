@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>F1 Stream | Admin Panel</title>
+    <title>F1 Admin | Admin Panel</title>
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <style>
-        /* --- PREMIUM F1 STYLING --- */
+        /* --- STYLING --- */
         :root {
             --primary: #ff1801;
             --primary-bright: #ff3b26;
@@ -24,7 +24,6 @@
             --text-main: #ffffff;
             --text-muted: #8a8a95;
             --border: #2f2f38;
-            --glow: 0 0 20px rgba(255, 24, 1, 0.4);
             --live-green: #00d26a;
             --upcoming-orange: #ffb700;
         }
@@ -35,7 +34,6 @@
             color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
             margin: 0; padding-bottom: 80px;
-            -webkit-font-smoothing: antialiased;
         }
 
         h2, h3 { 
@@ -59,177 +57,111 @@
             padding: 15px 20px; border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin: 10px 0 30px 0;
-            transition: 0.3s;
+            margin: 10px 0 20px 0;
         }
-
         .brand-logo { font-size: 20px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 12px; }
         .brand-logo i { color: var(--primary); }
 
-        .status-badge {
-            font-size: 10px; font-weight: 600; text-transform: uppercase;
-            padding: 4px 10px; border-radius: 20px; display: none;
-            white-space: nowrap;
-        }
+        .status-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; display: none; }
         .status-badge.success { display: block; background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
         .status-badge.loading { display: block; background: rgba(255, 183, 0, 0.15); color: #ffb700; border: 1px solid #ffb700; }
         .status-badge.error { display: block; background: rgba(255, 24, 1, 0.15); color: #ff1801; border: 1px solid #ff1801; }
 
+        /* --- TABS --- */
+        .tab-container {
+            display: flex; gap: 10px; margin-bottom: 25px;
+            background: #111; padding: 5px; border-radius: 8px; border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1; background: transparent; border: none; color: #666; padding: 12px;
+            font-weight: 700; text-transform: uppercase; cursor: pointer; border-radius: 6px;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--bg-card); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+        .tab-btn:hover:not(.active) { color: #aaa; background: rgba(255,255,255,0.05); }
+
         /* --- BUTTONS --- */
         button {
-            position: relative;
-            background: rgba(255, 255, 255, 0.05);
-            color: white; 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            font-weight: 700; font-size: 11px;
+            position: relative; background: rgba(255, 255, 255, 0.05); color: white; 
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 20px; 
+            border-radius: 8px; font-weight: 700; font-size: 11px;
             cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            font-family: inherit;
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: all 0.3s;
         }
-        button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-        button:active { transform: translateY(0) scale(0.98); }
-
-        button.primary-btn { 
-            background: var(--primary); 
-            border: 1px solid var(--primary); 
-            box-shadow: 0 0 15px rgba(255, 24, 1, 0.3);
-            color: white;
-        }
-        button.primary-btn:hover { 
-            background: var(--primary-bright); 
-            transform: translateY(-3px);
-        }
-
+        button:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        
+        button.primary-btn { background: var(--primary); border: 1px solid var(--primary); box-shadow: 0 0 15px rgba(255, 24, 1, 0.3); color: white; }
+        button.primary-btn:hover { background: var(--primary-bright); }
+        
         button.dashed-btn { background: transparent; border: 1px dashed #555; color: #888; }
         button.icon-btn { padding: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #666; }
         button.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
         button.delete-btn:hover { color: var(--primary); background: rgba(255, 24, 1, 0.15); border-color: var(--primary); }
 
-        /* --- LAYOUT & FORMS --- */
+        /* --- LOADING SPINNER --- */
+        .loading-spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- FORMS --- */
         .admin-section {
             background: var(--bg-card); padding: 25px; border-radius: 12px;
             border: 1px solid var(--border); margin-bottom: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .schedule-grid-top { display: grid; grid-template-columns: 0.5fr 0.8fr 2fr; gap: 10px; margin-bottom: 10px; }
-        .schedule-grid-bot { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; }
-        
         .input-group { margin-bottom: 15px; width: 100%; }
         label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
-        input, select {
+        input, select, textarea {
             width: 100%; background: rgba(0,0,0,0.2); 
             border: 1px solid var(--border); border-left: 2px solid var(--border);
             color: white; padding: 12px; border-radius: 4px;
             font-family: 'Titillium Web', sans-serif; font-size: 14px;
             box-sizing: border-box; transition: 0.3s;
         }
-        select { -webkit-appearance: none; cursor: pointer; }
-        input:focus, select:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
 
-        /* === SESSION CARD STYLES === */
-        .session-card {
-            background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative;
-            border: 1px solid transparent; transition: 0.3s;
-        }
-
-        /* LIVE STATE */
-        .session-card.is-live {
-            border-color: var(--live-green);
-            background: rgba(0, 210, 106, 0.05);
-            box-shadow: 0 0 15px rgba(0, 210, 106, 0.1);
-        }
-        .live-indicator {
-            position: absolute; top: -10px; left: 10px;
-            background: var(--live-green); color: #000;
-            font-size: 9px; font-weight: 800; padding: 2px 8px;
-            border-radius: 4px; text-transform: uppercase;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
-            animation: pulse 2s infinite;
-        }
-
-        /* UPCOMING STATE */
-        .session-card.is-upcoming {
-            border-color: var(--upcoming-orange);
-            background: rgba(255, 183, 0, 0.05);
-        }
-        .upcoming-indicator {
-            position: absolute; top: -10px; left: 10px;
-            background: var(--upcoming-orange); color: #000;
-            font-size: 9px; font-weight: 800; padding: 2px 8px;
-            border-radius: 4px; text-transform: uppercase;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
-        }
+        /* --- SCHEDULE & DRIVER LISTS --- */
+        .session-card { background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative; border: 1px solid transparent; transition: 0.3s; }
+        .session-card.is-live { border-color: var(--live-green); background: rgba(0, 210, 106, 0.05); }
+        .session-card.is-upcoming { border-color: var(--upcoming-orange); background: rgba(255, 183, 0, 0.05); }
         
-        .timer-badge {
-            position: absolute; top: -10px; left: 70px; 
-            background: #111; color: #fff; border: 1px solid #444;
-            font-size: 9px; font-weight: 700; padding: 2px 8px;
-            border-radius: 4px; font-family: monospace; letter-spacing: 1px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.8); z-index: 20;
+        .live-indicator, .upcoming-indicator, .timer-badge {
+            position: absolute; top: -10px; left: 10px; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; z-index: 20;
         }
-
+        .live-indicator { background: var(--live-green); color: #000; animation: pulse 2s infinite; }
+        .upcoming-indicator { background: var(--upcoming-orange); color: #000; }
+        .timer-badge { left: 70px; background: #111; color: #fff; border: 1px solid #444; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        /* --- DRIVER LIST --- */
-        .driver-list-header {
-            display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
-            gap: 10px; padding: 0 10px 10px; margin-bottom: 5px;
-            border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px;
-        }
-        .driver-row {
-            display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px;
-            gap: 10px; align-items: center; background: #25252e;
-            padding: 10px; margin-bottom: 8px; border-radius: 6px;
-            border: 1px solid transparent; transition: 0.2s;
-        }
-        .driver-row:hover { transform: translateX(5px); background: #2b2b35; border-color: rgba(255,255,255,0.1); }
-        .driver-row input { border: none; background: transparent; padding: 5px; margin: 0; }
-        .driver-row input:focus { background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--primary); border-radius: 0; }
+        .schedule-grid-top { display: grid; grid-template-columns: 0.5fr 0.8fr 2fr; gap: 10px; margin-bottom: 10px; }
+        .schedule-grid-bot { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; }
+
+        .driver-list-header { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; }
+        .driver-row { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; align-items: center; background: #25252e; padding: 10px; margin-bottom: 8px; border-radius: 6px; transition:0.2s; }
+        .driver-row:hover { background: #2b2b35; transform:translateX(5px); }
         .img-preview { width: 36px; height: 36px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
-        
+        .lg-preview { width: 100px; height: 100px; border-radius: 50%; margin: 10px auto; display: block; border: 4px solid var(--border); }
+
         /* Login Overlay */
-        .login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 999;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .login-box {
-            background: var(--bg-surface); padding: 40px 30px; border-radius: 16px;
-            border: 1px solid var(--border); width: 90%; max-width: 350px; text-align: center;
-        }
-        .login-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); border-radius: 16px 16px 0 0; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: var(--bg-surface); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 350px; text-align: center; }
 
-
-        /* === MOBILE RESPONSIVE ENGINE === */
         @media (max-width: 768px) {
-            .container { padding: 0 15px; }
-            .grid-row { grid-template-columns: 1fr; gap: 15px; }
-            .schedule-grid-top, .schedule-grid-bot { grid-template-columns: 1fr; gap: 10px; }
-            .action-bar { flex-direction: column; gap: 15px; align-items: stretch; text-align: center; padding: 15px; margin-bottom: 20px; }
-            .brand-logo { justify-content: center; margin-bottom: 5px; }
-            .action-bar > div:last-child { display: flex; justify-content: space-between; }
-            .action-bar button { flex: 1; }
             .driver-list-header { display: none; }
-            .driver-row { display: flex; flex-wrap: wrap; position: relative; padding: 15px; gap: 10px; border: 1px solid #333; }
-            .driver-row:hover { transform: none; }
-            .driver-row > div:nth-child(1) { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: row !important; gap: 10px; }
-            .driver-row > div:nth-child(2) { width: 100%; text-align: center; margin-bottom: 10px; }
-            .img-preview { width: 60px; height: 60px; }
-            .driver-row input:nth-of-type(1) { width: 100%; font-size: 16px; font-weight: bold; text-align: center; border-bottom: 1px solid #444; margin-bottom: 5px; }
-            .driver-row input:nth-of-type(2) { width: 60%; font-size: 12px; color: var(--text-muted); }
-            .driver-row input:nth-of-type(3) { width: 35%; text-align: right; background: rgba(255,255,255,0.05); border-radius: 4px; color: var(--primary-bright); font-weight: bold; }
-            .driver-row input:nth-of-type(4) { width: 100%; font-size: 9px; opacity: 0.5; margin-top: 5px; }
+            .driver-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; padding:15px; border:1px solid #333; }
+            .driver-row input { width: 100%; }
+            .schedule-grid-top, .schedule-grid-bot { grid-template-columns: 1fr; }
             .driver-row button.delete-btn { position: absolute; top: 10px; right: 10px; }
         }
     </style>
@@ -240,20 +172,11 @@
         <div class="login-box">
             <div style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"><i class="fa-solid fa-flag-checkered"></i></div>
             <h2 style="border:none; padding:0; margin-bottom: 10px;">Admin Login</h2>
-            
             <form ng-submit="login()">
-                <div class="input-group">
-                    <input type="email" id="loginEmail" ng-model="creds.email" placeholder="Enter Admin Email" required autocomplete="email">
-                </div>
-                <div class="input-group">
-                    <input type="password" id="loginPass" ng-model="creds.pass" placeholder="Password" required autocomplete="current-password">
-                </div>
-                
-                <button type="submit" class="primary-btn" style="width:100%; justify-content: center; margin-top: 10px;">
-                    Login <i class="fa-solid fa-arrow-right"></i>
-                </button>
+                <div class="input-group"><input type="email" ng-model="creds.email" placeholder="Email" required></div>
+                <div class="input-group"><input type="password" ng-model="creds.pass" placeholder="Password" required></div>
+                <button type="submit" class="primary-btn" style="width:100%;">Login</button>
             </form>
-            
             <p style="color: var(--primary); font-size: 12px; margin-top: 20px;">{{loginError}}</p>
         </div>
     </div>
@@ -263,169 +186,225 @@
         <div class="action-bar">
             <div class="brand-logo">
                 <i class="fa-solid fa-tower-broadcast"></i>
-                <div>WatchParty Web Admin Panel</div>
+                <div>F1 Admin Panel</div>
                 <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
             <div>
-                <button class="primary-btn" ng-click="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> <span class="mobile-hide">Push to </span>Live</button>
                 <button class="icon-btn" ng-click="logout()" title="Logout" style="border: 1px solid #444;"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </div>
 
-        <div class="grid-row">
-            <div class="admin-section">
-                <h3><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Session Details</h3>
-                <div class="grid-row">
-                    <div class="input-group"><label>Round</label><input type="text" ng-model="config.raceData.round"></div>
-                    <div class="input-group"><label>Grand Prix Name</label><input type="text" ng-model="config.raceData.name"></div>
-                </div>
-                <div class="grid-row">
-                    <div class="input-group"><label>Circuit Name</label><input type="text" ng-model="config.raceData.circuit"></div>
+        <div class="tab-container">
+            <button class="tab-btn" ng-class="{'active': currentView === 'live'}" ng-click="currentView = 'live'"><i class="fa-solid fa-video"></i> Stream Control</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'maint'}" ng-click="currentView = 'maint'"><i class="fa-solid fa-wrench"></i> Maintenance Mode</button>
+        </div>
+
+        <div ng-show="currentView === 'live'">
+            
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button class="primary-btn" ng-click="saveLiveConfig()" ng-disabled="savingLive">
+                    <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingLive"></i>
+                    <div class="loading-spinner" ng-if="savingLive"></div>
                     
-                    <div class="input-group">
-                        <label style="color:var(--primary-bright);">Location (For Auto Weather)</label>
-                        <input type="text" ng-model="config.raceData.location" placeholder="e.g. Las Vegas">
-                    </div>
-                </div>
-                <div class="grid-row">
-                    <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
-                    <div class="input-group"><label>Laps / Duration</label><input type="text" ng-model="config.raceData.laps"></div>
-                </div>
-            </div>
-
-            <div class="admin-section">
-                <h3><i class="fa-solid fa-cloud-sun-rain" style="color: var(--primary); margin-right: 10px;"></i> Manual Weather</h3>
-                <p style="font-size:10px; color:#666; margin-bottom:10px;">Only used if Location is empty or API fails.</p>
-                <div class="input-group">
-                    <label>Condition</label>
-                    <select ng-model="config.weather.condition" style="background: rgba(0,0,0,0.2); color:white;">
-                        <option value="sunny">Sunny / Clear</option>
-                        <option value="cloudy">Cloudy</option>
-                        <option value="rain">Rain / Wet</option>
-                        <option value="storm">Thunderstorm</option>
-                        <option value="night">Clear Night</option>
-                    </select>
-                </div>
-                <div class="grid-row">
-                    <div class="input-group">
-                        <label>Air Temp (°C)</label>
-                        <input type="number" ng-model="config.weather.air" placeholder="24">
-                    </div>
-                    <div class="input-group">
-                        <label>Track Temp (°C)</label>
-                        <input type="number" ng-model="config.weather.track" placeholder="32">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
-            <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
-            <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
-            <div class="grid-row">
-                <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
-                <div class="input-group"><label>Circuit</label><input type="text" ng-model="config.nextRace.circuit"></div>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
-            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
-            
-            <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
-                
-                <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
-
-                <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
-                
-                <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
-
-                <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
-                    <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
-                    <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-down"></i></button>
-                    <button class="icon-btn delete-btn" ng-click="removeSession($index)" title="Remove" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-trash"></i></button>
-                </div>
-
-                <div class="schedule-grid-top">
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-calendar"></i> Day</label>
-                        <input type="text" ng-model="session.day" placeholder="FRI">
-                    </div>
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-calendar-days"></i> Date</label>
-                        <input type="text" ng-model="session.date" placeholder="24 NOV">
-                    </div>
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-flag"></i> Session Name</label>
-                        <input type="text" ng-model="session.name" placeholder="Practice 1">
-                    </div>
-                </div>
-
-                <div class="schedule-grid-bot">
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-play"></i> Start</label>
-                        <input type="text" ng-model="session.time" placeholder="14:00">
-                    </div>
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-stop"></i> End</label>
-                        <input type="text" ng-model="session.endTime" placeholder="15:00">
-                    </div>
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label ng-if="$first"><i class="fa-solid fa-hourglass"></i> Timer ISO</label>
-                        <input type="text" ng-model="session.timer" placeholder="YYYY-MM-DDTHH:MM:00">
-                    </div>
-                </div>
-            </div>
-            
-            <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
-                <i class="fa-solid fa-plus"></i> Add Session
-            </button>
-        </div>
-
-        <div class="admin-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
-                <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Standings</h3>
-                <div>
-                    <button ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i></button>
-                    <button ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add</button>
-                </div>
-            </div>
-            
-            <div class="driver-list-header">
-                <span style="text-align: center;">ORD</span> <span style="text-align: center;">IMG</span> <span>NAME</span> <span>TEAM</span> <span>PTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
-            </div>
-            
-            <div ng-repeat="driver in config.standings" class="driver-row">
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                    <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
-                </div>
-                <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
-                
-                <input type="text" ng-model="driver.name" placeholder="Driver Name">
-                <input type="text" ng-model="driver.team" placeholder="Team">
-                <input type="number" ng-model="driver.points" placeholder="0">
-                <input type="text" ng-model="driver.image" placeholder="Image URL">
-                
-                <button class="icon-btn delete-btn" ng-click="removeDriver($index)"><i class="fa-solid fa-trash"></i></button>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
-            <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px;">
-                <div class="grid-row" style="margin-bottom: 10px;">
-                    <input type="text" ng-model="link.name" placeholder="Name">
-                    <input type="text" ng-model="link.id" readonly style="color: #666;">
-                </div>
-                <input type="text" ng-model="link.url" placeholder="Embed URL">
-                <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
-                    <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove
+                    <span>{{ savingLive ? 'Saving...' : 'Save Live Settings' }}</span>
                 </button>
             </div>
-            <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
+
+            <div class="grid-row">
+                <div class="admin-section">
+                    <h3><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Session Details</h3>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Round</label><input type="text" ng-model="config.raceData.round"></div>
+                        <div class="input-group"><label>Grand Prix Name</label><input type="text" ng-model="config.raceData.name"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Circuit Name</label><input type="text" ng-model="config.raceData.circuit"></div>
+                        
+                        <div class="input-group">
+                            <label style="color:var(--primary-bright);">Location (For Auto Weather)</label>
+                            <input type="text" ng-model="config.raceData.location" placeholder="e.g. Las Vegas">
+                        </div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
+                        <div class="input-group"><label>Laps / Duration</label><input type="text" ng-model="config.raceData.laps"></div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3><i class="fa-solid fa-cloud-sun-rain" style="color: var(--primary); margin-right: 10px;"></i> Manual Weather</h3>
+                    <p style="font-size:10px; color:#666; margin-bottom:10px;">Only used if Location is empty or API fails.</p>
+                    <div class="input-group">
+                        <label>Condition</label>
+                        <select ng-model="config.weather.condition" style="background: rgba(0,0,0,0.2); color:white;">
+                            <option value="sunny">Sunny / Clear</option>
+                            <option value="cloudy">Cloudy</option>
+                            <option value="rain">Rain / Wet</option>
+                            <option value="storm">Thunderstorm</option>
+                            <option value="night">Clear Night</option>
+                        </select>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group">
+                            <label>Air Temp (°C)</label>
+                            <input type="number" ng-model="config.weather.air" placeholder="24">
+                        </div>
+                        <div class="input-group">
+                            <label>Track Temp (°C)</label>
+                            <input type="number" ng-model="config.weather.track" placeholder="32">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
+                <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
+                <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
+                <div class="grid-row">
+                    <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
+                    <div class="input-group"><label>Circuit</label><input type="text" ng-model="config.nextRace.circuit"></div>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
+                <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
+                
+                <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
+                    
+                    <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
+                    <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
+                    <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
+
+                    <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
+                        <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button class="icon-btn delete-btn" ng-click="removeSession($index)" title="Remove" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+
+                    <div class="schedule-grid-top">
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-calendar"></i> Day</label>
+                            <input type="text" ng-model="session.day" placeholder="FRI">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-calendar-days"></i> Date</label>
+                            <input type="text" ng-model="session.date" placeholder="24 NOV">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-flag"></i> Session Name</label>
+                            <input type="text" ng-model="session.name" placeholder="Practice 1">
+                        </div>
+                    </div>
+
+                    <div class="schedule-grid-bot">
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-play"></i> Start</label>
+                            <input type="text" ng-model="session.time" placeholder="14:00">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-stop"></i> End</label>
+                            <input type="text" ng-model="session.endTime" placeholder="15:00">
+                        </div>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <label ng-if="$first"><i class="fa-solid fa-hourglass"></i> Timer ISO</label>
+                            <input type="text" ng-model="session.timer" placeholder="YYYY-MM-DDTHH:MM:00">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
+                    <i class="fa-solid fa-plus"></i> Add Session
+                </button>
+            </div>
+
+            <div class="admin-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+                    <h3><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 10px;"></i> Standings</h3>
+                    <div>
+                        <button ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i></button>
+                        <button ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
+                </div>
+                
+                <div class="driver-list-header">
+                    <span style="text-align: center;">ORD</span> <span style="text-align: center;">IMG</span> <span>NAME</span> <span>TEAM</span> <span>PTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
+                </div>
+                
+                <div ng-repeat="driver in config.standings" class="driver-row">
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveUp($index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveDown($index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                    </div>
+                    <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
+                    
+                    <input type="text" ng-model="driver.name" placeholder="Driver Name">
+                    <input type="text" ng-model="driver.team" placeholder="Team">
+                    <input type="number" ng-model="driver.points" placeholder="0">
+                    <input type="text" ng-model="driver.image" placeholder="Image URL">
+                    
+                    <button class="icon-btn delete-btn" ng-click="removeDriver($index)"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
+                <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                    <div class="grid-row" style="margin-bottom: 10px;">
+                        <input type="text" ng-model="link.name" placeholder="Name">
+                        <input type="text" ng-model="link.id" readonly style="color: #666;">
+                    </div>
+                    <input type="text" ng-model="link.url" placeholder="Embed URL">
+                    <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
+                        <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove
+                    </button>
+                </div>
+                <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
+            </div>
         </div>
+
+
+        <div ng-show="currentView === 'maint'">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button class="primary-btn" ng-click="saveMaintConfig()" ng-disabled="savingMaint">
+                    <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingMaint"></i>
+                    <div class="loading-spinner" ng-if="savingMaint"></div>
+                    
+                    <span>{{ savingMaint ? 'Saving...' : 'Save Maintenance' }}</span>
+                </button>
+            </div>
+            <div class="admin-section">
+                <h3>Winner Profile</h3>
+                <div class="grid-row">
+                    <div>
+                        <div class="input-group"><label>Winner Name</label><input type="text" ng-model="maintConfig.winnerName"></div>
+                        <div class="input-group"><label>Team Name</label><input type="text" ng-model="maintConfig.winnerTeam"></div>
+                        <div class="input-group"><label>Image URL</label><input type="text" ng-model="maintConfig.winnerImage"></div>
+                    </div>
+                    <div style="text-align: center;"><label>Preview</label><img ng-src="{{maintConfig.winnerImage}}" class="lg-preview"></div>
+                </div>
+            </div>
+            <div class="admin-section">
+                <h3>Theme & Timer</h3>
+                <div class="grid-row">
+                    <div class="input-group">
+                        <label>Theme Color (Hex)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="color" ng-model="maintConfig.themeColor" style="height: 45px; width: 60px; padding: 0;">
+                            <input type="text" ng-model="maintConfig.themeColor">
+                        </div>
+                    </div>
+                    <div class="input-group"><label>Target Date (Ex: March 1, 2026 12:00:00)</label><input type="text" ng-model="maintConfig.targetDate"></div>
+                </div>
+            </div>
+            <div class="admin-section">
+                <h3>Messaging</h3>
+                <div class="input-group"><label>Title</label><input type="text" ng-model="maintConfig.msgTitle"></div>
+                <div class="input-group"><label>Subtitle</label><textarea ng-model="maintConfig.msgSub" rows="3"></textarea></div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -446,84 +425,126 @@
         var app = angular.module('adminApp', []);
 
         app.controller('AdminController', function($scope, $timeout, $interval) {
-            $scope.config = {};
+            $scope.currentView = 'live'; // Default to Live View
             $scope.isLoggedIn = false;
             $scope.creds = { email: "", pass: "" };
+            $scope.config = {}; // Live Data
+            $scope.maintConfig = {}; // Maintenance Data
             
+            // Saving States
+            $scope.savingLive = false;
+            $scope.savingMaint = false;
+
+            // --- AUTH ---
             auth.onAuthStateChanged(user => {
                 $scope.$apply(() => {
                     $scope.isLoggedIn = !!user;
-                    if(user) $scope.loadData();
+                    if(user) $scope.loadAllData();
                 });
             });
 
             $scope.login = function() {
                 $scope.loginError = "Authenticating...";
-                let e = $scope.creds.email || document.getElementById('loginEmail').value;
-                let p = $scope.creds.pass || document.getElementById('loginPass').value;
-
-                if(!e || !p) {
-                    $scope.loginError = "Please enter email and password.";
-                    return;
-                }
-
-                auth.signInWithEmailAndPassword(e, p)
-                    .catch(error => {
-                        $scope.$apply(() => $scope.loginError = error.message);
-                    });
+                auth.signInWithEmailAndPassword($scope.creds.email, $scope.creds.pass)
+                    .catch(e => $scope.$apply(() => $scope.loginError = e.message));
             };
-
             $scope.logout = () => auth.signOut();
 
-            $scope.loadData = function() {
-                $scope.statusText = "SYNCING..."; $scope.statusType = "loading";
+            // --- DATA LOADING ---
+            $scope.loadAllData = function() {
+                // 1. Load Live Config
                 db.collection("app_data").doc("live_config").get().then(doc => {
                     $scope.$apply(() => {
-                        if(doc.exists) {
-                            $scope.config = doc.data();
-                            $scope.statusText = "LIVE"; $scope.statusType = "success";
-                        } else {
-                            $scope.config = { standings: [], streamLinks: [], schedule: [], raceData: {}, nextRace: {}, weather: {} };
-                            $scope.statusText = "NEW DB"; $scope.statusType = "loading";
-                        }
+                        $scope.config = doc.exists ? doc.data() : {};
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
                         if (!$scope.config.schedule) $scope.config.schedule = [];
-                        
-                        // INITIALIZE WEATHER IF MISSING
                         if (!$scope.config.weather) $scope.config.weather = { air: 0, track: 0, condition: 'sunny' };
+                        if (!$scope.config.raceData) $scope.config.raceData = {};
+                        if (!$scope.config.nextRace) $scope.config.nextRace = {};
                     });
-                }).catch(err => {
-                    $scope.$apply(() => { $scope.statusText = "ERROR"; $scope.statusType = "error"; });
+                });
+
+                // 2. Load Maintenance Config
+                db.collection("app_data").doc("maintenance_config").get().then(doc => {
+                    $scope.$apply(() => {
+                        $scope.maintConfig = doc.exists ? doc.data() : {
+                            winnerName: "LANDO NORRIS",
+                            winnerTeam: "McLAREN FORMULA 1 TEAM",
+                            themeColor: "#FF8700",
+                            targetDate: "March 1, 2026 12:00:00",
+                            winnerImage: "",
+                            msgTitle: "Website Under Maintenance",
+                            msgSub: "Preparing for the new season"
+                        };
+                    });
                 });
             };
 
-            // === LIVE & UPCOMING LOGIC ===
+            // --- SAVE FUNCTIONS ---
+            $scope.saveLiveConfig = function() {
+                $scope.savingLive = true; // Start Spinner
+                $scope.statusText = "SAVING..."; 
+                $scope.statusType = "loading";
+
+                // Clean internal flags before saving
+                let dataToSave = angular.copy($scope.config);
+                if(dataToSave.schedule) {
+                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
+                }
+                
+                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
+                    .then(() => {
+                        $scope.$apply(() => { 
+                            $scope.savingLive = false; // Stop Spinner
+                            $scope.statusText = "LIVE"; 
+                            $scope.statusType = "success"; 
+                            alert("Live Settings Saved!"); 
+                        });
+                    })
+                    .catch(e => {
+                        $scope.$apply(() => {
+                            $scope.savingLive = false; // Stop Spinner
+                            alert("Error: " + e.message);
+                        });
+                    });
+            };
+
+            $scope.saveMaintConfig = function() {
+                $scope.savingMaint = true; // Start Spinner
+
+                db.collection("app_data").doc("maintenance_config").set(JSON.parse(angular.toJson($scope.maintConfig)))
+                    .then(() => {
+                        $scope.$apply(() => {
+                            $scope.savingMaint = false; // Stop Spinner
+                            alert("Maintenance Page Updated!");
+                        });
+                    })
+                    .catch(e => {
+                        $scope.$apply(() => {
+                            $scope.savingMaint = false; // Stop Spinner
+                            alert("Error: " + e.message);
+                        });
+                    });
+            };
+
+            // --- LIVE SCHEDULE LOGIC (Preview in Admin) ---
             function checkLiveStatus() {
                 if(!$scope.config.schedule) return;
                 var now = new Date().getTime();
-                
                 let closestFutureTime = Infinity;
                 let upcomingIndex = -1;
                 
-                // First loop: Clear previous states
                 $scope.config.schedule.forEach(function(s) {
-                    s.isLive = false;
-                    s.isUpcoming = false;
-                    s.countdown = "";
+                    s.isLive = false; s.isUpcoming = false; s.countdown = "";
                 });
 
-                // Second loop: Determine Status
                 $scope.config.schedule.forEach(function(s, index) {
                     if(!s.timer) return; 
-                    
                     var start = new Date(s.timer).getTime();
-                    // Basic valid date check
                     if(isNaN(start)) return;
+                    var end = start + (2 * 60 * 60 * 1000); 
 
-                    var end = start + (2 * 60 * 60 * 1000); // Default 2 hours
-
-                    // Precise end time calculation
                     if (s.endTime && s.endTime.includes(':')) {
                         var parts = s.endTime.split(':');
                         var d = new Date(s.timer);
@@ -532,25 +553,15 @@
                         if(end < start) end += 86400000;
                     }
                     
-                    // Check LIVE status
-                    if (now >= start && now < end) {
-                        s.isLive = true;
-                    } 
-                    // Check UPCOMING status (find closest future event)
+                    if (now >= start && now < end) { s.isLive = true; } 
                     else if (now < start) {
-                        if (start < closestFutureTime) {
-                            closestFutureTime = start;
-                            upcomingIndex = index;
-                        }
+                        if (start < closestFutureTime) { closestFutureTime = start; upcomingIndex = index; }
                     }
                 });
 
-                // Apply Up Next tag to the single closest event
                 if (upcomingIndex !== -1) {
                     let s = $scope.config.schedule[upcomingIndex];
                     s.isUpcoming = true;
-                    
-                    // Calculate Countdown
                     let diff = new Date(s.timer).getTime() - now;
                     if (diff > 0) {
                         let d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -561,41 +572,17 @@
                     }
                 }
             }
-            
-            // Run check every 1 second
             $interval(checkLiveStatus, 1000);
 
-            $scope.saveConfig = function() {
-                if(!$scope.isLoggedIn) return;
-                $scope.statusText = "SAVING..."; $scope.statusType = "loading";
-                
-                // Remove UI flags before saving
-                let dataToSave = angular.copy($scope.config);
-                if(dataToSave.schedule) {
-                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
-                }
-                let cleanData = JSON.parse(angular.toJson(dataToSave));
-
-                db.collection("app_data").doc("live_config").set(cleanData)
-                    .then(() => {
-                        $scope.$apply(() => {
-                            $scope.statusText = "PUBLISHED"; $scope.statusType = "success";
-                            $timeout(() => $scope.statusText = "LIVE", 3000);
-                        });
-                    })
-                    .catch(err => {
-                        $scope.$apply(() => { $scope.statusText = "FAILED"; $scope.statusType = "error"; });
-                    });
-            };
-
-            $scope.addDriver = () => $scope.config.standings.push({ name: "New Driver", team: "Team", points: 0, image: "" });
+            // --- HELPER FUNCTIONS ---
+            $scope.addDriver = () => $scope.config.standings.push({ name: "Driver", team: "Team", points: 0, image: "" });
             $scope.removeDriver = (i) => { if(confirm("Delete?")) $scope.config.standings.splice(i, 1); };
             $scope.moveUp = (i) => { if(i>0) [$scope.config.standings[i], $scope.config.standings[i-1]] = [$scope.config.standings[i-1], $scope.config.standings[i]]; };
             $scope.moveDown = (i) => { if(i<$scope.config.standings.length-1) [$scope.config.standings[i], $scope.config.standings[i+1]] = [$scope.config.standings[i+1], $scope.config.standings[i]]; };
             $scope.sortDrivers = () => { if(confirm("Sort?")) $scope.config.standings.sort((a,b) => b.points - a.points); };
             
             $scope.addSession = () => $scope.config.schedule.push({ day: "FRI", date: "", name: "", time: "", endTime: "", timer: "" });
-            $scope.removeSession = (i) => { if(confirm("Delete Session?")) $scope.config.schedule.splice(i, 1); };
+            $scope.removeSession = (i) => { if(confirm("Delete?")) $scope.config.schedule.splice(i, 1); };
             $scope.moveSessionUp = (i) => { if(i>0) [$scope.config.schedule[i], $scope.config.schedule[i-1]] = [$scope.config.schedule[i-1], $scope.config.schedule[i]]; };
             $scope.moveSessionDown = (i) => { if(i<$scope.config.schedule.length-1) [$scope.config.schedule[i], $scope.config.schedule[i+1]] = [$scope.config.schedule[i+1], $scope.config.schedule[i]]; };
 
