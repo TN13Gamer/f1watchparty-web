@@ -314,23 +314,24 @@
         .m-card {
             background: linear-gradient(180deg, rgba(25, 25, 30, 0.95) 0%, rgba(10, 10, 15, 1) 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 4px solid var(--f1-red);
+            border-top: 4px solid var(--f1-red); /* DEFAULT, Overridden by ng-style */
             padding: 40px;
             width: 100%; max-width: 480px;
             text-align: center;
             border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            /* Default Glow Fallback */
+            box-shadow: 0 0 40px rgba(225, 6, 0, 0.3), 0 20px 60px rgba(0,0,0,0.6);
             position: relative;
         }
 
-        /* --- MARQUEE / TRAIN EFFECT (Added) --- */
+        /* --- MARQUEE / TRAIN EFFECT --- */
         .marquee-track {
             width: 100%;
             overflow: hidden;       /* Hides text when outside the box */
             white-space: nowrap;    /* Forces text onto one line */
             background: rgba(0, 0, 0, 0.4);
-            border-top: 2px solid var(--f1-red);     /* The rails (Top) */
-            border-bottom: 2px solid var(--f1-red);  /* The rails (Bottom) */
+            border-top: 2px solid var(--f1-red);      /* The rails (Top) */
+            border-bottom: 2px solid var(--f1-red);   /* The rails (Bottom) */
             padding: 10px 0;
             margin: 15px 0;
             position: relative;
@@ -420,10 +421,13 @@
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}">
 
     <div class="m-overlay" ng-if="maint.active">
-        <div class="m-card">
-            <div class="m-tag">Status Update</div>
+        <div class="m-card" ng-style="{
+            'border-top-color': maint.themeColor,
+            'box-shadow': '0 0 50px ' + getTransparentColor(maint.themeColor, 0.4) + ', 0 20px 60px rgba(0,0,0,0.8)'
+        }">
+            <div class="m-tag" ng-style="{'color': maint.themeColor, 'background': getTransparentColor(maint.themeColor)}">Status Update</div>
             
-            <div class="marquee-track">
+            <div class="marquee-track" ng-style="{'border-top-color': maint.themeColor, 'border-bottom-color': maint.themeColor}">
                 <div class="marquee-train">
                     {{ maint.msgTitle || 'WEBSITE UNDER MAINTENANCE' }}
                 </div>
@@ -447,7 +451,7 @@
             </div>
 
             <div class="season-timer">
-                <div class="timer-label">Countdown to 2026 Season</div>
+                <div class="timer-label">{{maint.timerTitle}}</div>
                 <div class="timer-val">{{maint.timer2026}}</div>
             </div>
         </div>
@@ -629,7 +633,7 @@
             // Maintenance Object (Default values)
             $scope.maint = {
                 active: true,
-                showWinner: false, // Default hidden
+                showWinner: false, 
                 winnerName: "Max Verstappen",
                 winnerImage: "",
                 statsPoints: 0,
@@ -637,12 +641,29 @@
                 statsPodiums: 0,
                 timer2026: "00d 00h 00m 00s",
                 msgTitle: "WEBSITE UNDER MAINTENANCE", 
-                msgSub: "The servers are currently being updated." 
+                msgSub: "The servers are currently being updated.",
+                timerTitle: "Season Starts In", // Default
+                themeColor: "#e10600" // Default Red
             };
 
             $scope.closeMaintenance = function() { $scope.maint.active = false; };
             $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
+
+            // Helper for converting hex to rgba for the maintenance badge background
+            $scope.getTransparentColor = function(hex, alpha) {
+                // Set default alpha if not provided
+                if(!alpha) alpha = 0.15;
+
+                if(!hex) return 'rgba(225, 6, 0, ' + alpha + ')';
+                
+                // Remove hash if present
+                hex = hex.replace('#', '');
+                var r = parseInt(hex.substring(0,2), 16);
+                var g = parseInt(hex.substring(2,4), 16);
+                var b = parseInt(hex.substring(4,6), 16);
+                return 'rgba(' + r + ',' + g + ',' + b + ', ' + alpha + ')';
+            };
 
             // --- 1. LOAD LIVE CONFIG ---
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
@@ -663,9 +684,9 @@
                         // TOGGLE LOGIC
                         if (data.isActive !== undefined) $scope.maint.active = data.isActive;
                         
-                        // NEW: Show Winner Logic
+                        // Show Winner Logic
                         if (data.showWinner !== undefined) $scope.maint.showWinner = data.showWinner;
-                        else $scope.maint.showWinner = false; // Safety fallback
+                        else $scope.maint.showWinner = false;
 
                         if(data.msgTitle) $scope.maint.msgTitle = data.msgTitle;
                         if(data.msgSub) $scope.maint.msgSub = data.msgSub;
@@ -680,8 +701,10 @@
                         $scope.maint.statsWins = data.statsWins || 0;
                         $scope.maint.statsPodiums = data.statsPodiums || 0;
                         
-                        // Map Target Date
-                        $scope.maint.targetDate = data.targetDate; // "March 1, 2026 13:00:00"
+                        // Map Target Date & Custom Title & Theme
+                        $scope.maint.targetDate = data.targetDate; 
+                        if(data.timerTitle) $scope.maint.timerTitle = data.timerTitle;
+                        if(data.themeColor) $scope.maint.themeColor = data.themeColor;
                     });
                 }
             });
