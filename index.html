@@ -323,6 +323,35 @@
             position: relative;
         }
 
+        /* --- MARQUEE / TRAIN EFFECT (Added) --- */
+        .marquee-track {
+            width: 100%;
+            overflow: hidden;       /* Hides text when outside the box */
+            white-space: nowrap;    /* Forces text onto one line */
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 2px solid var(--f1-red);     /* The rails (Top) */
+            border-bottom: 2px solid var(--f1-red);  /* The rails (Bottom) */
+            padding: 10px 0;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .marquee-train {
+            display: inline-block;
+            font-size: 24px;        /* Large text */
+            font-weight: 800;       /* Bold F1 font */
+            text-transform: uppercase;
+            color: #ffffff;
+            padding-left: 100%;     /* Starts off-screen to the right */
+            animation: scroll-left 12s linear infinite; /* The Engine */
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        /* ------------------------------------- */
+
         .m-tag {
             background: rgba(225, 6, 0, 0.15); color: var(--f1-red);
             font-size: 11px; font-weight: 800; letter-spacing: 2px;
@@ -392,11 +421,18 @@
 
     <div class="m-overlay" ng-if="maint.active">
         <div class="m-card">
-            <div class="m-tag">Website Under Maintenance</div>
-            <h2 style="margin: 0; font-size: 22px;">Stream Offline</h2>
-            <p style="color: var(--text-gray); font-size: 13px; margin-top: 10px;">The servers are currently being updated for the off-season.</p>
+            <div class="m-tag">Status Update</div>
+            
+            <div class="marquee-track">
+                <div class="marquee-train">
+                    {{ maint.msgTitle || 'WEBSITE UNDER MAINTENANCE' }}
+                </div>
+            </div>
+            <p style="color: var(--text-gray); font-size: 13px; margin-top: 5px; margin-bottom: 20px;">
+                {{ maint.msgSub || 'The servers are currently being updated.' }}
+            </p>
 
-            <div class="winner-section">
+            <div class="winner-section" ng-if="maint.showWinner">
                 <div class="winner-title">2025 World Champion</div>
                 
                 <img ng-src="{{maint.winnerImage}}" class="winner-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
@@ -414,8 +450,6 @@
                 <div class="timer-label">Countdown to 2026 Season</div>
                 <div class="timer-val">{{maint.timer2026}}</div>
             </div>
-
-            
         </div>
     </div>
 
@@ -592,15 +626,18 @@
             $scope.schedule = [];
             $scope.weather = null;
             
-            // Maintenance Object (Default values so it looks okay before loading)
+            // Maintenance Object (Default values)
             $scope.maint = {
-                active: true, 
+                active: true,
+                showWinner: false, // Default hidden
                 winnerName: "Max Verstappen",
                 winnerImage: "",
                 statsPoints: 0,
                 statsWins: 0,
                 statsPodiums: 0,
-                timer2026: "00d 00h 00m 00s"
+                timer2026: "00d 00h 00m 00s",
+                msgTitle: "WEBSITE UNDER MAINTENANCE", 
+                msgSub: "The servers are currently being updated." 
             };
 
             $scope.closeMaintenance = function() { $scope.maint.active = false; };
@@ -618,11 +655,21 @@
                 }
             });
 
-            // --- 2. LOAD MAINTENANCE CONFIG (The Missing Link) ---
+            // --- 2. LOAD MAINTENANCE CONFIG ---
             db.collection("app_data").doc("maintenance_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     $scope.$apply(function() {
+                        // TOGGLE LOGIC
+                        if (data.isActive !== undefined) $scope.maint.active = data.isActive;
+                        
+                        // NEW: Show Winner Logic
+                        if (data.showWinner !== undefined) $scope.maint.showWinner = data.showWinner;
+                        else $scope.maint.showWinner = false; // Safety fallback
+
+                        if(data.msgTitle) $scope.maint.msgTitle = data.msgTitle;
+                        if(data.msgSub) $scope.maint.msgSub = data.msgSub;
+                        
                         // Merge DB data into scope
                         if(data.winnerName) $scope.maint.winnerName = data.winnerName;
                         if(data.winnerTeam) $scope.maint.winnerTeam = data.winnerTeam;
@@ -677,7 +724,7 @@
                 updateTimers();
             }
 
-            // --- 3. TIMERS (2026 Countdown + Session Countdown) ---
+            // --- 3. TIMERS ---
             var updateTimers = function() {
                 var now = new Date().getTime();
 
@@ -729,10 +776,9 @@
 
             $interval(updateTimers, 1000);
             
-            // Helper for pads
+            // Helpers
             function pad(num) { return num < 10 ? '0' + num : num; }
 
-            // Helper for 12h time
             $scope.formatTime12 = function(t) {
                 if(!t) return "";
                 var p = t.split(':');
@@ -744,7 +790,6 @@
                 return h + ':' + m + ' ' + a;
             };
             
-            // Helper for Weather Icons
             $scope.getWeatherIcon = function(c) {
                 if(!c) return '☀️';
                 c = c.toLowerCase();
@@ -757,4 +802,3 @@
     </script>
 </body>
 </html>
-
