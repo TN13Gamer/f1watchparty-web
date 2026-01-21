@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <script src="config.js"></script> 
+    <script src="config.js"></script>
 
     <style>
         :root {
@@ -456,8 +456,6 @@
                 <div class="timer-label">{{maint.timerTitle}}</div>
                 <div class="timer-val">{{maint.timer2026}}</div>
             </div>
-            
-            <button class="close-m-btn" ng-click="closeMaintenance()">Enter Site</button>
         </div>
     </div>
 
@@ -598,14 +596,9 @@
             });
         });
 
-        // ⚠️ FIREBASE CONFIG ⚠️
-        // The variable 'firebaseConfig' is now loaded from config.js
-        // We check if it exists to prevent errors if the file is missing
-        if (typeof firebaseConfig === 'undefined') {
-            console.error("Firebase Config not found! Make sure config.js exists.");
-            // Optional: fallback or alert
-        }
-
+        // ⚠️ FIREBASE CONFIG IS NOW LOADED FROM config.js ⚠️
+        // Ensure config.js defines 'const firebaseConfig = { ... }'
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
