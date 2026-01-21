@@ -13,8 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <script src="config.js"></script>
-
     <style>
         :root {
             --f1-red: #e10600;
@@ -514,7 +512,7 @@
 
             <div class="video-toolbar">
                 <span class="source-label" style="font-size:10px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
-                <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)" ng-class="{'active': currentStream.id === link.id}">{{link.name}}</button>
+                <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)" ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
                 <div class="spacer"></div>
                 <button class="stream-btn" ng-click="toggleTheater()">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</button>
             </div>
@@ -596,8 +594,16 @@
             });
         });
 
-        // ⚠️ FIREBASE CONFIG IS NOW LOADED FROM config.js ⚠️
-        // Ensure config.js defines 'const firebaseConfig = { ... }'
+        // ⚠️ REPLACE WITH YOUR FIREBASE CONFIG FROM CONSOLE ⚠️
+        const firebaseConfig = {
+            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
+            authDomain: "f1-stream-live.firebaseapp.com",
+            projectId: "f1-stream-live",
+            storageBucket: "f1-stream-live.firebasestorage.app",
+            messagingSenderId: "426806288804",
+            appId: "1:426806288804:web:f8ee225776596ebc39e131",
+            measurementId: "G-50FMFWY32X"
+        };
         
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -641,7 +647,10 @@
             };
 
             $scope.closeMaintenance = function() { $scope.maint.active = false; };
-            $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
+            $scope.trustSrc = function(src) { 
+                if(!src) return ""; 
+                return $sce.trustAsResourceUrl(src); 
+            };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
 
             // Helper for converting hex to rgba for the maintenance badge background
@@ -653,11 +662,29 @@
                 
                 // Remove hash if present
                 hex = hex.replace('#', '');
+                
+                // Fix: Handle 3-digit hex codes (e.g. #f00)
+                if (hex.length === 3) {
+                    hex = hex.split('').map(function(char) { return char + char; }).join('');
+                }
+
                 var r = parseInt(hex.substring(0,2), 16);
                 var g = parseInt(hex.substring(2,4), 16);
                 var b = parseInt(hex.substring(4,6), 16);
+                
+                if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(225, 6, 0, ' + alpha + ')';
+
                 return 'rgba(' + r + ',' + g + ',' + b + ', ' + alpha + ')';
             };
+
+            // Helper: Safe date parsing (handles Firestore Timestamps & Strings)
+            function safeDate(val) {
+                if (!val) return null;
+                if (typeof val === 'object' && typeof val.toDate === 'function') {
+                    return val.toDate(); // Firestore Timestamp
+                }
+                return new Date(val); // String
+            }
 
             // --- 1. LOAD LIVE CONFIG ---
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
@@ -712,12 +739,12 @@
                 
                 if(data.schedule) {
                     $scope.schedule = data.schedule.map(function(s) {
-                        var startDate = new Date(s.timer);
-                        var startTime = startDate.getTime();
+                        var startDate = safeDate(s.timer);
+                        var startTime = startDate ? startDate.getTime() : NaN;
                         
                         // Determine End Time
-                        var endTime = startTime + (2 * 60 * 60 * 1000);
-                        if (s.endTime && s.endTime.includes(':')) {
+                        var endTime = startTime + (2 * 60 * 60 * 1000); // Default +2 hours
+                        if (s.endTime && s.endTime.includes(':') && !isNaN(startTime)) {
                             var parts = s.endTime.split(':');
                             var endDate = new Date(startDate);
                             endDate.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
@@ -742,21 +769,26 @@
             }
 
             // --- 3. TIMERS ---
-            var updateTimers = function() {
+            // Changed from var to function to avoid hoisting issues
+            function updateTimers() {
                 var now = new Date().getTime();
 
                 // Maintenance Timer
                 if($scope.maint.targetDate) {
-                    var target = new Date($scope.maint.targetDate).getTime();
-                    var diff = target - now;
-                    if (diff > 0) {
-                        var d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                        var s = Math.floor((diff % (1000 * 60)) / 1000);
-                        $scope.maint.timer2026 = d + "d " + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
-                    } else {
-                        $scope.maint.timer2026 = "SEASON STARTED";
+                    var targetDateObj = safeDate($scope.maint.targetDate);
+                    
+                    if (targetDateObj && !isNaN(targetDateObj.getTime())) {
+                        var target = targetDateObj.getTime();
+                        var diff = target - now;
+                        if (diff > 0) {
+                            var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((diff % (1000 * 60)) / 1000);
+                            $scope.maint.timer2026 = d + "d " + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                        } else {
+                            $scope.maint.timer2026 = "SEASON STARTED";
+                        }
                     }
                 }
 
