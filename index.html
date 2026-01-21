@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="f1App">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formula 1 | Live Stream</title>
+    
+    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script src="config.js"></script> 
+
+    <style>
+        :root {
+            --f1-red: #e10600;
+            --f1-green: #00d26a;
+            --bg-dark: #0b0b0f;
+            --glass-bg: rgba(23, 23, 29, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-white: #ffffff;
+            --text-gray: #aeb0b8;
+            --glow-color: rgba(225, 6, 0, 0.15);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Titillium Web', sans-serif;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            overflow-x: hidden;
+            
+            background-image: radial-gradient(
+                800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                var(--glow-color), 
+                transparent 40%
+            );
+            background-attachment: fixed;
+        }
+
+        /* --- Header --- */
+        header {
+            background: rgba(11, 11, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--f1-red);
+            box-shadow: 0 5px 20px rgba(225, 6, 0, 0.15);
+            padding: 15px 30px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            height: 70px;
+            transition: all 0.3s ease;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 20px; transition: all 0.3s ease; }
+        .f1-real-logo { height: 28px; width: auto; filter: brightness(0) invert(1); transition: all 0.3s ease; }
+        .header-divider { height: 20px; width: 1px; background: rgba(255,255,255,0.2); }
+        .gemini-real-logo { height: 32px; filter: brightness(0) invert(1); opacity: 0.8; transition: all 0.3s ease; }
+
+        /* --- Right Side Status Area --- */
+        .status-area {
+            display: flex;
+            align-items: center;
+            gap: 10px; 
+        }
+
+        .weather-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex; 
+            align-items: center;
+            gap: 12px;
+            margin-right: 5px;
+        }
+        .w-group { display: flex; align-items: center; gap: 4px; }
+        .w-icon { font-size: 14px; margin-right: 2px; }
+        .w-label { color: var(--text-gray); font-size: 9px; font-weight: 700; margin-right: 2px; }
+        .w-val { color: #fff; font-weight: 700; }
+        .w-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.2); }
+
+        .timer-pill {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex; 
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .status-pill {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex; align-items: center; gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.offline {
+            background: #222;
+            color: #555;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 5px #000;
+        }
+
+        .status-pill.live {
+            background: var(--f1-red);
+            color: white;
+            box-shadow: 0 0 15px rgba(225, 6, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 3.5fr 1.2fr;
+            gap: 30px;
+            flex: 1;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } }
+
+        /* --- Video Section --- */
+        .video-wrapper {
+            background: #000;
+            border-radius: 12px 12px 0 0; 
+            overflow: hidden;
+            border: 1px solid #222;
+            border-bottom: none; 
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-wrapper::before {
+            content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px;
+            background: var(--f1-red); filter: blur(40px); opacity: 0.15; z-index: -1;
+        }
+        .video-responsive { position: relative; padding-bottom: 56.25%; height: 0; width: 100%; background: #111; }
+        .video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+        /* --- Toolbar --- */
+        .video-toolbar {
+            background: #141419;
+            border: 1px solid #222;
+            border-top: none;
+            border-radius: 0 0 12px 12px; 
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* --- Cards --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        @keyframes cardPulse {
+            0% { box-shadow: 0 0 0 rgba(225, 6, 0, 0); border-color: rgba(255,255,255,0.1); }
+            50% { box-shadow: 0 0 25px rgba(225, 6, 0, 0.25); border-color: var(--f1-red); }
+            100% { box-shadow: 0 0 0 rgba(225, 6, 0, 0); border-color: rgba(255,255,255,0.1); }
+        }
+
+        .up-next-glow {
+            animation: cardPulse 3s infinite ease-in-out;
+            position: relative;
+        }
+
+        .stream-controls { margin-top: 0px; transition: all 0.3s ease; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
+        .event-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
+        .event-round { font-size: 11px; color: var(--f1-red); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; display: block; }
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; font-size: 13px; color: var(--text-gray); }
+        .meta-item strong { display: block; color: #fff; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
+
+        /* --- Buttons --- */
+        .stream-btn {
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: #aaa;
+            padding: 6px 14px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            cursor: pointer; 
+            transition: all 0.2s; 
+            min-width: auto;
+        }
+        .stream-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; }
+        .stream-btn.active { background: var(--f1-red); color: white; border-color: var(--f1-red); box-shadow: 0 0 10px rgba(225, 6, 0, 0.2); }
+        
+        .spacer { flex: 1; }
+
+        /* Sidebar & Standings Styles */
+        .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-gray); margin-bottom: 15px; letter-spacing: 1px; }
+
+        .schedule-row {
+            display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; transition: background 0.2s;
+        }
+        .schedule-row:hover { background: rgba(255,255,255,0.03); }
+        .schedule-row.live { background: linear-gradient(90deg, rgba(225,6,0,0.1), transparent); border-left: 3px solid var(--f1-red); }
+        .schedule-row.upcoming { border-left: 3px solid #fff; }
+        .schedule-row.ended { opacity: 0.4; }
+        .sess-name { font-weight: 600; font-size: 14px; }
+        .sess-status { font-size: 10px; font-weight: 800; color: var(--f1-red); margin-top: 2px; text-transform: uppercase; }
+        .sess-time { font-weight: 700; font-size: 14px; color: #fff; }
+        .sess-day { font-size: 11px; color: var(--text-gray); }
+
+        /* --- Standings --- */
+        .standings-list { transition: all 0.4s ease; max-height: auto; }
+        .standings-list.expanded { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .standings-list.expanded::-webkit-scrollbar { width: 4px; }
+        .standings-list.expanded::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        .standings-list.expanded::-webkit-scrollbar-thumb { background: var(--f1-red); border-radius: 2px; }
+
+        .standing-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .standing-row:last-child { border-bottom: none; }
+        
+        .st-pos { font-size: 16px; font-weight: 900; font-style: italic; margin-right: 10px; color: #fff; width: 20px; text-align: center; }
+        .st-pos.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .st-pos.p2 { color: #c0c0c0; }
+        .st-pos.p3 { color: #cd7f32; }
+        
+        .st-img-wrapper {
+            width: 32px; height: 32px; border-radius: 50%; overflow: hidden; 
+            background: #333; margin-right: 12px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0;
+        }
+        .st-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+        
+        .st-info { flex: 1; }
+        .st-name { font-weight: 700; font-size: 14px; }
+        .st-team { font-size: 11px; color: var(--text-gray); text-transform: uppercase; }
+        .st-pts { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+        .view-more-btn {
+            width: 100%; background: transparent; border: none;
+            border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-gray);
+            padding: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+            cursor: pointer; transition: color 0.2s; margin-top: 5px;
+        }
+        .view-more-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
+
+        footer { margin-top: 40px; padding: 20px; text-align: center; color: var(--text-gray); font-size: 11px; border-top: 1px solid var(--glass-border); }
+
+        /* --- THEATER & MOBILE STYLES --- */
+        body.theater-active header { height: 40px; padding: 0 20px; background: #000; border-bottom: 1px solid #333; }
+        body.theater-active .f1-real-logo { height: 16px; }
+        body.theater-active .gemini-real-logo { height: 20px; }
+        body.theater-active .header-divider { height: 12px; }
+        body.theater-active .status-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active .timer-pill { padding: 2px 8px; font-size: 10px; }
+        body.theater-active .weather-pill { padding: 2px 8px; font-size: 9px; }
+        body.theater-active footer, body.theater-active .sidebar { display: none !important; }
+        body.theater-active { height: 100vh; overflow: hidden; background: #000; }
+        body.theater-active .container { max-width: 100%; margin: 0; padding: 0; height: calc(100vh - 40px); display: flex; flex-direction: column; }
+        body.theater-active .main-column { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        body.theater-active .video-wrapper { flex: 1; border-radius: 0; border: none; display: flex; align-items: center; }
+        body.theater-active .video-wrapper::before { display: none; }
+        body.theater-active .video-responsive { height: 100%; padding-bottom: 0; }
+        body.theater-active .video-toolbar { margin-bottom: 0; border-radius: 0; border: none; border-top: 1px solid #333; background: #111; padding: 5px 15px; height: 40px; }
+        body.theater-active .stream-btn { padding: 3px 8px; font-size: 9px; border-radius: 3px; }
+        body.theater-active .source-label { font-size: 9px !important; }
+        body.theater-active .stream-controls { display: none; }
+        
+        .loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
+        .loader.hide { opacity: 0; pointer-events: none; }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--f1-red); animation: spin 0.8s ease-in-out infinite; margin-bottom: 20px; box-shadow: 0 0 20px rgba(225, 6, 0, 0.2); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #666; animation: fadeText 1.5s infinite alternate; }
+        @keyframes fadeText { from { opacity: 0.5; } to { opacity: 1; } }
+
+        /* --- Maintenance Popup Styles --- */
+        .m-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .m-card {
+            background: linear-gradient(180deg, rgba(25, 25, 30, 0.95) 0%, rgba(10, 10, 15, 1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--f1-red); /* DEFAULT, Overridden by ng-style */
+            padding: 40px;
+            width: 100%; max-width: 480px;
+            text-align: center;
+            border-radius: 12px;
+            /* Default Glow Fallback */
+            box-shadow: 0 0 40px rgba(225, 6, 0, 0.3), 0 20px 60px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        /* --- MARQUEE / TRAIN EFFECT --- */
+        .marquee-track {
+            width: 100%;
+            overflow: hidden;       /* Hides text when outside the box */
+            white-space: nowrap;    /* Forces text onto one line */
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 2px solid var(--f1-red);      /* The rails (Top) */
+            border-bottom: 2px solid var(--f1-red);   /* The rails (Bottom) */
+            padding: 10px 0;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .marquee-train {
+            display: inline-block;
+            font-size: 24px;        /* Large text */
+            font-weight: 800;       /* Bold F1 font */
+            text-transform: uppercase;
+            color: #ffffff;
+            padding-left: 100%;     /* Starts off-screen to the right */
+            animation: scroll-left 12s linear infinite; /* The Engine */
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        /* ------------------------------------- */
+
+        .m-tag {
+            background: rgba(225, 6, 0, 0.15); color: var(--f1-red);
+            font-size: 11px; font-weight: 800; letter-spacing: 2px;
+            padding: 5px 10px; border-radius: 4px; text-transform: uppercase;
+            display: inline-block; margin-bottom: 20px;
+        }
+
+        .winner-section { margin: 20px 0 30px 0; }
+        .winner-img {
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+            border: 3px solid #d4af37; /* Gold border */
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            margin-bottom: 15px;
+        }
+        .winner-title { color: #d4af37; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .winner-name { font-size: 28px; font-weight: 800; line-height: 1.1; margin-bottom: 5px; }
+        .winner-stats { font-size: 13px; color: var(--text-gray); display: flex; justify-content: center; gap: 15px; }
+        .stat-box strong { color: #fff; display: block; font-size: 16px; }
+
+        .season-timer {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px; border-radius: 8px; margin-bottom: 30px;
+        }
+        .timer-val { font-family: 'Titillium Web', monospace; font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 2px; }
+        .timer-label { font-size: 10px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+
+        .close-m-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-gray); padding: 10px 25px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase;
+            cursor: pointer; transition: all 0.2s; border-radius: 4px;
+        }
+        .close-m-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            header { padding: 10px 15px; height: 60px; }
+            .header-left { gap: 10px; }
+            .f1-real-logo { height: 20px; }
+            .gemini-real-logo { height: 22px; }
+            .header-divider { height: 15px; }
+            .container { margin: 15px auto; padding: 0 10px; gap: 20px; width: 100%; }
+            .video-toolbar { flex-wrap: wrap; justify-content: center; padding: 10px; }
+            .spacer { display: none; }
+            .stream-btn { flex: 1 1 auto; text-align: center; margin-bottom: 5px; font-size: 10px; }
+            .event-header { flex-direction: column; gap: 10px; }
+            .event-title { font-size: 18px; }
+            .meta-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .schedule-row { padding: 8px; }
+            .sess-name { font-size: 12px; }
+            .sess-time { font-size: 12px; }
+            body.theater-active header { display: none; } 
+            body.theater-active .container { height: 100vh; }
+            body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; }
+            
+            .status-area { gap: 5px; }
+            .weather-pill .w-label { display: none; } 
+            .weather-pill { padding: 4px 8px; gap: 6px; }
+            .timer-pill { font-size: 9px; padding: 4px 8px; }
+            .status-pill { font-size: 9px; padding: 4px 10px; }
+        }
+    </style>
+</head>
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater}">
+
+    <div class="m-overlay" ng-if="maint.active">
+        <div class="m-card" ng-style="{
+            'border-top-color': maint.themeColor,
+            'box-shadow': '0 0 50px ' + getTransparentColor(maint.themeColor, 0.4) + ', 0 20px 60px rgba(0,0,0,0.8)'
+        }">
+            <div class="m-tag" ng-style="{'color': maint.themeColor, 'background': getTransparentColor(maint.themeColor)}">Status Update</div>
+            
+            <div class="marquee-track" ng-style="{'border-top-color': maint.themeColor, 'border-bottom-color': maint.themeColor}">
+                <div class="marquee-train">
+                    {{ maint.msgTitle || 'WEBSITE UNDER MAINTENANCE' }}
+                </div>
+            </div>
+            <p style="color: var(--text-gray); font-size: 13px; margin-top: 5px; margin-bottom: 20px;">
+                {{ maint.msgSub || 'The servers are currently being updated.' }}
+            </p>
+
+            <div class="winner-section" ng-if="maint.showWinner">
+                <div class="winner-title">2025 World Champion</div>
+                
+                <img ng-src="{{maint.winnerImage}}" class="winner-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
+                
+                <div class="winner-name">{{maint.winnerName}}</div>
+                
+                <div class="winner-stats">
+                    <div class="stat-box"><strong>{{maint.statsPoints}}</strong> POINTS</div>
+                    <div class="stat-box"><strong>{{maint.statsWins}}</strong> WINS</div>
+                    <div class="stat-box"><strong>{{maint.statsPodiums}}</strong> PODIUMS</div>
+                </div>
+            </div>
+
+            <div class="season-timer">
+                <div class="timer-label">{{maint.timerTitle}}</div>
+                <div class="timer-val">{{maint.timer2026}}</div>
+            </div>
+            
+            <button class="close-m-btn" ng-click="closeMaintenance()">Enter Site</button>
+        </div>
+    </div>
+
+    <div class="loader" ng-class="{'hide': dataLoaded}">
+        <div class="spinner"></div>
+        <div class="loading-text">Welcome Back!</div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" class="f1-real-logo">
+            <div class="header-divider"></div>
+            <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" class="gemini-real-logo">
+        </div>
+        
+        <div class="status-area">
+            <div class="weather-pill" ng-if="weather && weather.air">
+                <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
+                
+                <div class="w-group">
+                    <span class="w-label">AIR</span>
+                    <span class="w-val">{{weather.air}}°C</span>
+                </div>
+                
+                <div class="w-divider"></div>
+                
+                <div class="w-group">
+                    <span class="w-label">TRACK</span>
+                    <span class="w-val">{{weather.track}}°C</span>
+                </div>
+            </div>
+
+            <div class="timer-pill" ng-if="!activeSession && nextUp">
+                <span style="opacity: 0.6; margin-right: 6px; text-transform: uppercase;">{{nextUp.name}}:</span>
+                <span style="color: #fff;">{{nextUp.timerStr}}</span>
+            </div>
+
+            <div class="status-pill live" ng-if="activeSession">
+                LIVE: {{activeSession.name}}
+            </div>
+
+            <div class="status-pill offline" ng-if="!activeSession">
+                OFFLINE
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="main-column">
+            <div class="video-wrapper">
+                <div class="video-responsive">
+                    <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen scrolling="no"></iframe>
+                </div>
+            </div>
+
+            <div class="video-toolbar">
+                <span class="source-label" style="font-size:10px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
+                <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)" ng-class="{'active': currentStream.id === link.id}">{{link.name}}</button>
+                <div class="spacer"></div>
+                <button class="stream-btn" ng-click="toggleTheater()">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</button>
+            </div>
+
+            <div class="glass-card stream-controls">
+                <div class="event-header">
+                    <div>
+                        <span class="event-round">ROUND {{raceData.round}}</span>
+                        <div class="event-title">{{raceData.name}}</div>
+                    </div>
+                    <div style="font-size:12px; color:white; display:flex; align-items:center; gap:8px;">
+                        <span style="width:8px; height:8px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 8px var(--f1-green);"></span>
+                        <span style="opacity:0.7;">FEED:</span> {{currentStream.name}}
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
+                    <div class="meta-item"><strong>Circuit</strong>{{raceData.circuit}}</div>
+                    <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
+                    <div class="meta-item"><strong>Laps</strong>{{raceData.laps}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="glass-card up-next-glow" ng-if="nextRace && nextRace.isVisible">
+                <div class="card-title">Up Next</div>
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">{{nextRace.name}}</div>
+                <div style="font-size: 13px; color: var(--text-gray);">{{nextRace.circuit}}</div>
+                <div style="margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--f1-red);">{{nextRace.date}}</div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-title">Weekend Schedule</div>
+                <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
+                    <div class="sess-info">
+                        <span class="sess-name">{{session.name}}</span>
+                        <span class="sess-status" ng-if="session.status === 'live'">TRACK LIVE</span>
+                    </div>
+                    <div class="sess-time-box">
+                        <div class="sess-time">{{formatTime12(session.time)}}</div>
+                        <div class="sess-day">{{session.day}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding-bottom: 10px;">
+                <div class="card-title">Championship Standings</div>
+                <div class="standings-list" ng-class="{'expanded': showAllStandings}">
+                    <div class="standing-row" ng-repeat="driver in standings | limitTo: (showAllStandings ? standings.length : 3)">
+                        <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
+                        <div class="st-img-wrapper">
+                            <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}" class="st-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
+                        </div>
+                        <div class="st-info">
+                            <div class="st-name">{{driver.name}}</div>
+                            <div class="st-team">{{driver.team}}</div>
+                        </div>
+                        <div class="st-pts">{{driver.points}} PTS</div>
+                    </div>
+                </div>
+                <button class="view-more-btn" ng-click="toggleStandings()" ng-if="standings.length > 3">
+                    {{ showAllStandings ? 'View Top 3' : 'View Full Standings' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>This website does not create, host, or share any video content. All video streams are from external websites that are freely available online.</p>
+        <p style="opacity: 0.5;font-size: 12px;">· Engineered with Gemini · Backed by Firebase ·</p>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', e => {
+            requestAnimationFrame(() => {
+                document.body.style.setProperty('--mouse-x', e.clientX + 'px');
+                document.body.style.setProperty('--mouse-y', e.clientY + 'px');
+            });
+        });
+
+        // ⚠️ FIREBASE CONFIG ⚠️
+        // The variable 'firebaseConfig' is now loaded from config.js
+        // We check if it exists to prevent errors if the file is missing
+        if (typeof firebaseConfig === 'undefined') {
+            console.error("Firebase Config not found! Make sure config.js exists.");
+            // Optional: fallback or alert
+        }
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        var app = angular.module('f1App', []);
+
+        app.config(function($sceDelegateProvider) {
+            $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']);
+        });
+
+        app.controller('MainController', function($scope, $sce, $interval) {
+            $scope.isTheater = false;
+            $scope.toggleTheater = function() { $scope.isTheater = !$scope.isTheater; };
+            $scope.showAllStandings = false;
+            $scope.toggleStandings = function() { $scope.showAllStandings = !$scope.showAllStandings; };
+            $scope.dataLoaded = false; 
+            
+            // Initial Objects
+            $scope.streamLinks = [];
+            $scope.currentStream = {};
+            $scope.raceData = {};
+            $scope.nextRace = {};
+            $scope.standings = [];
+            $scope.schedule = [];
+            $scope.weather = null;
+            
+            // Maintenance Object (Default values)
+            $scope.maint = {
+                active: true,
+                showWinner: false, 
+                winnerName: "Max Verstappen",
+                winnerImage: "",
+                statsPoints: 0,
+                statsWins: 0,
+                statsPodiums: 0,
+                timer2026: "00d 00h 00m 00s",
+                msgTitle: "WEBSITE UNDER MAINTENANCE", 
+                msgSub: "The servers are currently being updated.",
+                timerTitle: "Season Starts In", // Default
+                themeColor: "#e10600" // Default Red
+            };
+
+            $scope.closeMaintenance = function() { $scope.maint.active = false; };
+            $scope.trustSrc = function(src) { return $sce.trustAsResourceUrl(src); };
+            $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
+
+            // Helper for converting hex to rgba for the maintenance badge background
+            $scope.getTransparentColor = function(hex, alpha) {
+                // Set default alpha if not provided
+                if(!alpha) alpha = 0.15;
+
+                if(!hex) return 'rgba(225, 6, 0, ' + alpha + ')';
+                
+                // Remove hash if present
+                hex = hex.replace('#', '');
+                var r = parseInt(hex.substring(0,2), 16);
+                var g = parseInt(hex.substring(2,4), 16);
+                var b = parseInt(hex.substring(4,6), 16);
+                return 'rgba(' + r + ',' + g + ',' + b + ', ' + alpha + ')';
+            };
+
+            // --- 1. LOAD LIVE CONFIG ---
+            db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    $scope.$apply(function() {
+                        processData(data);
+                        $scope.dataLoaded = true;
+                    });
+                }
+            });
+
+            // --- 2. LOAD MAINTENANCE CONFIG ---
+            db.collection("app_data").doc("maintenance_config").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    $scope.$apply(function() {
+                        // TOGGLE LOGIC
+                        if (data.isActive !== undefined) $scope.maint.active = data.isActive;
+                        
+                        // Show Winner Logic
+                        if (data.showWinner !== undefined) $scope.maint.showWinner = data.showWinner;
+                        else $scope.maint.showWinner = false;
+
+                        if(data.msgTitle) $scope.maint.msgTitle = data.msgTitle;
+                        if(data.msgSub) $scope.maint.msgSub = data.msgSub;
+                        
+                        // Merge DB data into scope
+                        if(data.winnerName) $scope.maint.winnerName = data.winnerName;
+                        if(data.winnerTeam) $scope.maint.winnerTeam = data.winnerTeam;
+                        if(data.winnerImage) $scope.maint.winnerImage = data.winnerImage;
+                        
+                        // Map Stats
+                        $scope.maint.statsPoints = data.statsPoints || 0;
+                        $scope.maint.statsWins = data.statsWins || 0;
+                        $scope.maint.statsPodiums = data.statsPodiums || 0;
+                        
+                        // Map Target Date & Custom Title & Theme
+                        $scope.maint.targetDate = data.targetDate; 
+                        if(data.timerTitle) $scope.maint.timerTitle = data.timerTitle;
+                        if(data.themeColor) $scope.maint.themeColor = data.themeColor;
+                    });
+                }
+            });
+
+            function processData(data) {
+                $scope.raceData = data.raceData || {};
+                $scope.nextRace = data.nextRace || {};
+                $scope.streamLinks = data.streamLinks || [];
+                $scope.standings = data.standings || [];
+                $scope.weather = data.weather || null;
+                
+                if(data.schedule) {
+                    $scope.schedule = data.schedule.map(function(s) {
+                        var startDate = new Date(s.timer);
+                        var startTime = startDate.getTime();
+                        
+                        // Determine End Time
+                        var endTime = startTime + (2 * 60 * 60 * 1000);
+                        if (s.endTime && s.endTime.includes(':')) {
+                            var parts = s.endTime.split(':');
+                            var endDate = new Date(startDate);
+                            endDate.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                            endTime = endDate.getTime();
+                            if(endTime < startTime) endTime += 86400000;
+                        }
+
+                        return { 
+                            ...s, 
+                            start: startTime, 
+                            end: endTime,
+                            status: 'upcoming' 
+                        };
+                    });
+                }
+
+                if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
+                    $scope.currentStream = $scope.streamLinks[0];
+                }
+                
+                updateTimers();
+            }
+
+            // --- 3. TIMERS ---
+            var updateTimers = function() {
+                var now = new Date().getTime();
+
+                // Maintenance Timer
+                if($scope.maint.targetDate) {
+                    var target = new Date($scope.maint.targetDate).getTime();
+                    var diff = target - now;
+                    if (diff > 0) {
+                        var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        var s = Math.floor((diff % (1000 * 60)) / 1000);
+                        $scope.maint.timer2026 = d + "d " + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                    } else {
+                        $scope.maint.timer2026 = "SEASON STARTED";
+                    }
+                }
+
+                // Session Timers
+                if(!$scope.schedule) return;
+                $scope.nextUp = null;
+                $scope.activeSession = null;
+
+                $scope.schedule.forEach(function(session) {
+                    if(isNaN(session.start)) return;
+
+                    if (now < session.start) {
+                        session.status = 'upcoming';
+                        if (!$scope.nextUp || session.start < $scope.nextUp.start) {
+                            $scope.nextUp = session;
+                        }
+                    } else if (now >= session.start && now < session.end) {
+                        session.status = 'live';
+                        $scope.activeSession = session; 
+                    } else {
+                        session.status = 'ended';
+                    }
+                });
+
+                if ($scope.nextUp) {
+                    var dist = $scope.nextUp.start - now;
+                    var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                    var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                    var s = Math.floor((dist % (1000 * 60)) / 1000);
+                    $scope.nextUp.timerStr = (d>0 ? d+"d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                }
+            };
+
+            $interval(updateTimers, 1000);
+            
+            // Helpers
+            function pad(num) { return num < 10 ? '0' + num : num; }
+
+            $scope.formatTime12 = function(t) {
+                if(!t) return "";
+                var p = t.split(':');
+                var h = parseInt(p[0]);
+                var m = p[1];
+                var a = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                h = h ? h : 12;
+                return h + ':' + m + ' ' + a;
+            };
+            
+            $scope.getWeatherIcon = function(c) {
+                if(!c) return '☀️';
+                c = c.toLowerCase();
+                if(c.includes('rain')) return '🌧️';
+                if(c.includes('cloud')) return '☁️';
+                if(c.includes('night')) return '🌙';
+                return '☀️';
+            };
+        });
+    </script>
+</body>
+</html>
