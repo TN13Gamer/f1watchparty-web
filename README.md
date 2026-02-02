@@ -1,204 +1,62 @@
-🏎️ WatchF1 Live — Real-Time Formula 1 Streaming Dashboard
-
-WatchF1 Live is a real-time Formula 1 streaming dashboard built with AngularJS and Firebase, featuring a cinematic live-race viewer, automatic session timers, standings, weather data, and a powerful admin control panel for live updates and maintenance mode.
-
-🌐 Live Site: https://watchf1.live/
-
-✨ Features
-🎥 Live Streaming Viewer
-
-Multiple stream sources with instant switching
-
-Theater Mode for distraction-free viewing
-
-Responsive video player (desktop & mobile)
-
-External embeds only (no hosting of video content)
-
-⏱️ Smart Session Timing
-
-Automatic LIVE / UPCOMING / ENDED session detection
-
-Real-time countdown timers
-
-Weekend schedule with visual status indicators
-
-🌦️ Race Context
-
-Air & track temperature display
-
-Dynamic weather icons
-
-Race metadata (round, circuit, laps, date)
-
-🏆 Championship Standings
-
-Live driver standings
-
-Expandable list (Top 3 → Full Grid)
-
-Driver photos, teams, points
-
-Auto-sorted via admin panel
-
-🔧 Maintenance Mode
-
-Full-screen maintenance overlay
-
-Custom title, message, theme color
-
-Countdown timer to next season/event
-
-Optional “World Champion” showcase
-
-🧠 Tech Stack
-
-Frontend
-
-AngularJS 1.8
-
-Vanilla HTML / CSS
-
-Google Fonts (Titillium Web)
-
-Backend / Realtime Data
-
-Firebase Firestore (live sync)
-
-Firebase Authentication (admin login)
-
-Firebase Hosting (optional)
-
-🗂️ Project Structure
-/
-├── index.html          # Public live streaming site
-├── admin.html          # Admin control panel
-└── README.md
-
-🔥 Firebase Data Model
-
-All app data is stored in Firestore under:
-
-app_data/
-├── live_config
-│   ├── raceData
-│   ├── streamLinks
-│   ├── schedule
-│   ├── standings
-│   ├── weather
-│   └── nextRace
-│
-└── maintenance_config
-    ├── isActive
-    ├── msgTitle
-    ├── msgSub
-    ├── timerTitle
-    ├── targetDate
-    ├── themeColor
-    ├── showWinner
-    ├── winnerName
-    ├── winnerTeam
-    ├── winnerImage
-
-
-All updates are live — no refresh required.
-
-🛠️ Admin Panel
-
-The admin dashboard (admin.html) allows authorized users to:
-
-🎛️ Stream Control
-
-Add / remove stream sources
-
-Edit race metadata
-
-Control weather display
-
-Manage weekend schedule
-
-Reorder sessions & drivers
-
-🏁 Standings Editor
-
-Add drivers
-
-Upload images
-
-Sort by points
-
-Reorder manually
-
-🚧 Maintenance Mode
-
-Enable / disable site lock
-
-Customize maintenance messaging
-
-Set season countdown
-
-Highlight championship winner
-
-🔐 Authentication
-
-Firebase Email/Password login
-
-Protected admin access
-
-Live save status & toast notifications
-
-⚠️ Disclaimer
-
-This website does not create, host, or distribute any video content.
-All streams are embedded from third-party sources that are publicly available online.
-
-🚀 Setup Instructions
-
-Clone the repository
-
-Create a Firebase project
-
-Enable:
-
-Firestore
-
-Email/Password Authentication
-
-Replace Firebase config in:
-
-index.html
-
-admin.html
-
-Deploy or open locally
-
-git clone https://github.com/yourusername/watchf1-live
-
-🧪 Local Development
-
-This project does not require a build step.
-
-Simply open:
-
-index.html for the public site
-
-admin.html for the admin panel
-
-⚠️ Firebase Auth will not work via file:// URLs — use a local server.
-
-📸 Screenshots (Optional)
-
-Add screenshots here if you want:
-
-/screenshots/home.png
-/screenshots/admin.png
-
-🏁 Credits
-
-UI & Engineering: WatchF1
-
-Backend: Firebase
-
-Fonts: Google Fonts
-
-Icons: Font Awesome
+# 🏎️ Formula 1 Watch Party Live
+
+A high-performance, real-time Formula 1 streaming dashboard. This project features a sleek, dark-themed user interface with live race status, weekend schedules, championship standings, and a dedicated administrative control panel powered by Firebase.
+
+## 🌟 Key Features
+
+* **Real-time Race Dashboard:** Dynamic live-stream switching with support for multiple sources.
+* **Theater Mode:** Immersive viewing experience that hides distractions.
+* **Live Status & Weather:** Real-time track conditions (Air/Track temp) and session status (Live/Offline).
+* **Weekend Schedule:** Interactive timeline of sessions with countdown timers for upcoming events.
+* **Live Standings:** Driver championship standings with an expandable view.
+* **Maintenance Mode:** A custom "Off-season" or maintenance overlay featuring 2026 season countdowns and World Champion spotlights.
+* **Full Admin Panel:** Secure login to manage stream links, update schedules, modify standings, and toggle site-wide maintenance settings instantly via Firestore.
+
+## 🛠️ Tech Stack
+
+* **Frontend:** AngularJS (1.8.2) for two-way data binding and state management.
+* **Backend/Database:** Firebase Firestore for real-time data synchronization.
+* **Authentication:** Firebase Auth for securing the Admin Control Center.
+* **Styling:** Modern CSS3 with Custom Variables, Glassmorphism, and Responsive Design.
+* **Icons & Fonts:** FontAwesome and Google Fonts (Titillium Web).
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+You will need a Firebase project. Create one at the [Firebase Console](https://console.firebase.google.com/).
+
+### 2. Database Setup
+Create a collection named `app_data` with two primary documents:
+* `live_config`: Stores race data, stream links, schedule, and standings.
+* `maintenance_config`: Stores maintenance status, winner profiles, and countdown dates.
+
+### 3. Configuration
+Update the `firebaseConfig` object in both `index.html` and `admin.html` with your project credentials:
+
+```javascript
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.firebasestorage.app",
+    messagingSenderId: "YOUR_ID",
+    appId: "YOUR_APP_ID"
+};
+4. Deployment
+The project is client-side only and can be hosted for free on:
+GitHub Pages
+Vercel
+Firebase Hosting
+
+📸 UI Components
+User Dashboard
+The main interface features a responsive video player followed by an "Engineered with Gemini" footer. It uses a custom mouse-tracking radial gradient for a high-tech "glow" effect.
+
+Admin Control Center
+A secure, tabbed interface that allows the admin to:
+Stream Control: Change live sources and update Grand Prix details.
+Session Management: Add/Remove sessions with ISO-formatted timers.
+Standings: Update points and driver images on the fly.
+
+⚖️ Disclaimer
+This website does not host or share any video content. All video streams are embedded from external websites that are freely available online.
