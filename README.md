@@ -42,21 +42,22 @@ const firebaseConfig = {
     messagingSenderId: "YOUR_ID",
     appId: "YOUR_APP_ID"
 };
-4. Deployment
+```
+### 4. Deployment
 The project is client-side only and can be hosted for free on:
-GitHub Pages
-Vercel
-Firebase Hosting
+* GitHub Pages
+* Vercel
+* Firebase Hosting
 
-📸 UI Components
+### 📸 UI Components
 User Dashboard
 The main interface features a responsive video player followed by an "Engineered with Gemini" footer. It uses a custom mouse-tracking radial gradient for a high-tech "glow" effect.
 
-Admin Control Center
+### Admin Control Center
 A secure, tabbed interface that allows the admin to:
-Stream Control: Change live sources and update Grand Prix details.
-Session Management: Add/Remove sessions with ISO-formatted timers.
-Standings: Update points and driver images on the fly.
+* Stream Control: Change live sources and update Grand Prix details.
+* Session Management: Add/Remove sessions with ISO-formatted timers.
+* Standings: Update points and driver images on the fly.
 
-⚖️ Disclaimer
+### ⚖️ Disclaimer
 This website does not host or share any video content. All video streams are embedded from external websites that are freely available online.
