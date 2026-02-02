@@ -1,4 +1,4 @@
-# 🏎️ Formula 1 Watch Party Live
+# 🏎️ Formula 1 Watch Party Live https://watchf1.live/
 
 A high-performance, real-time Formula 1 streaming dashboard. This project features a sleek, dark-themed user interface with live race status, weekend schedules, championship standings, and a dedicated administrative control panel powered by Firebase.
 
