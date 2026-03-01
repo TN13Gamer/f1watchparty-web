@@ -17,21 +17,26 @@
 
     <style>
         :root {
-            --primary: #ff1801;
-            --primary-bright: #ff3b26;
-            --bg-deep: #0b0b0d;
-            --bg-surface: #15151e;
-            --bg-card: #1e1e26;
-            --text-main: #ffffff;
-            --text-muted: #8a8a95;
-            --border: #2f2f38;
-            --live-green: #00d26a;
-            --upcoming-orange: #ffb700;
+            /* 2026 Theme Palette */
+            --primary: #e10600; /* True F1 Red */
+            --primary-bright: #ff2a23;
+            --bg-deep: #050505;
+            --bg-surface: #0d0d12;
+            --bg-card: #121216;
+            --text-main: #f0f0f5;
+            --text-muted: #7a7a8c;
+            --border: #24242e;
+            --live-green: #00e676;
+            --upcoming-orange: #ff9100;
+            --tech-blue: #00e5ff;
         }
 
         body {
             background-color: var(--bg-deep);
-            background-image: radial-gradient(circle at 50% 0%, #2a2a35 0%, transparent 70%);
+            background-image: 
+                linear-gradient(rgba(225, 6, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(225, 6, 0, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
             color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
             margin: 0; padding-bottom: 80px;
@@ -42,85 +47,88 @@
             margin: 0 0 20px 0; border-left: 4px solid var(--primary);
             padding-left: 15px; line-height: 1;
         }
-        h2 { font-size: 24px; }
-        h3 { font-size: 18px; color: #ddd; display: flex; align-items: center; justify-content: space-between; }
+        h2 { font-size: 26px; text-shadow: 0 0 10px rgba(225, 6, 0, 0.3); }
+        h3 { font-size: 16px; color: #eee; display: flex; align-items: center; justify-content: space-between; }
 
         .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- ACTION BAR --- */
         .action-bar {
             position: sticky; top: 10px; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(21, 21, 30, 0.95);
-            backdrop-filter: blur(12px);
-            padding: 15px 20px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: rgba(13, 13, 18, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 15px 25px; border-radius: 12px; /* Rounded corners */
+            border: 1px solid var(--border);
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             margin: 10px 0 20px 0;
         }
-        .brand-logo { font-size: 20px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 12px; }
-        .brand-logo i { color: var(--primary); }
+        .brand-logo { font-size: 20px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 12px; letter-spacing: 1px;}
+        .brand-logo i { color: var(--primary); filter: drop-shadow(0 0 8px var(--primary)); }
 
-        .status-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; display: none; }
-        .status-badge.success { display: block; background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
-        .status-badge.loading { display: block; background: rgba(255, 183, 0, 0.15); color: #ffb700; border: 1px solid #ffb700; }
-        .status-badge.error { display: block; background: rgba(255, 24, 1, 0.15); color: #ff1801; border: 1px solid #ff1801; }
+        .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; display: none; letter-spacing: 1px;}
+        .status-badge.success { display: block; background: rgba(0, 230, 118, 0.1); color: var(--live-green); border: 1px solid var(--live-green); }
+        .status-badge.loading { display: block; background: rgba(255, 145, 0, 0.1); color: var(--upcoming-orange); border: 1px solid var(--upcoming-orange); }
+        .status-badge.error { display: block; background: rgba(225, 6, 0, 0.1); color: var(--primary); border: 1px solid var(--primary); }
 
         /* --- TABS --- */
         .tab-container {
-            display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;
-            background: #111; padding: 5px; border-radius: 8px; border: 1px solid var(--border);
+            display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;
+            background: rgba(0,0,0,0.5); padding: 6px; border-radius: 10px; border: 1px solid var(--border);
         }
         .tab-btn {
-            flex: 1; min-width: 150px; background: transparent; border: none; color: #666; padding: 12px;
-            font-weight: 700; text-transform: uppercase; cursor: pointer; border-radius: 6px;
-            transition: 0.3s;
+            flex: 1; min-width: 150px; background: transparent; border: none; color: var(--text-muted); padding: 12px;
+            font-weight: 700; text-transform: uppercase; cursor: pointer; border-radius: 8px;
+            letter-spacing: 1px; transition: 0.3s;
         }
         .tab-btn.active {
-            background: var(--bg-card); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            background: var(--bg-card); color: white; 
             border: 1px solid var(--border);
+            border-bottom: 2px solid var(--primary);
         }
-        .tab-btn:hover:not(.active) { color: #aaa; background: rgba(255,255,255,0.05); }
+        .tab-btn:hover:not(.active) { color: #ccc; background: rgba(255,255,255,0.03); }
 
         /* --- BUTTONS --- */
         button {
-            position: relative; background: rgba(255, 255, 255, 0.05); color: white; 
-            border: 1px solid rgba(255, 255, 255, 0.1); padding: 10px 20px; 
+            position: relative; background: rgba(255, 255, 255, 0.03); color: white; 
+            border: 1px solid var(--border); padding: 10px 20px; 
             border-radius: 8px; font-weight: 700; font-size: 11px;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
-        button:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
-        button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        button:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        button.primary-btn { background: var(--primary); border: 1px solid var(--primary); box-shadow: 0 0 15px rgba(255, 24, 1, 0.3); color: white; }
-        button.primary-btn:hover { background: var(--primary-bright); }
-        button.action-btn { background: #3b82f6; border-color: #3b82f6; color: white; }
-        button.action-btn:hover { background: #60a5fa; }
-        button.danger-btn { background: transparent; border: 1px solid #ff4444; color: #ff4444; }
-        button.danger-btn:hover { background: rgba(255, 68, 68, 0.1); }
+        button.primary-btn { background: var(--primary); border: 1px solid var(--primary-bright); box-shadow: 0 4px 15px rgba(225, 6, 0, 0.3); color: white; }
+        button.primary-btn:hover { background: var(--primary-bright); box-shadow: 0 6px 20px rgba(225, 6, 0, 0.5); }
+        button.action-btn { background: transparent; border-color: var(--tech-blue); color: var(--tech-blue); }
+        button.action-btn:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+        button.danger-btn { background: transparent; border: 1px solid #ff3333; color: #ff3333; }
+        button.danger-btn:hover { background: rgba(255, 51, 51, 0.1); }
         
-        button.dashed-btn { background: transparent; border: 1px dashed #555; color: #888; }
-        button.icon-btn { padding: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #666; }
-        button.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-        button.delete-btn:hover { color: var(--primary); background: rgba(255, 24, 1, 0.15); border-color: var(--primary); }
+        button.dashed-btn { background: transparent; border: 1px dashed #555; color: #aaa; }
+        button.dashed-btn:hover { border-color: #888; color: #fff; }
+        button.icon-btn { padding: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-muted); }
+        button.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: #555; }
+        button.delete-btn:hover { color: var(--primary); background: rgba(225, 6, 0, 0.1); border-color: var(--primary); }
 
         /* --- LOADING SPINNER --- */
         .loading-spinner {
-            width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
-            border-top: 2px solid #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+            width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2);
+            border-top: 2px solid #fff; border-radius: 50%; animation: spin 0.6s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- TOAST NOTIFICATIONS --- */
         .toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast {
-            background: #1e1e26; border-left: 4px solid #333; padding: 15px 20px; border-radius: 4px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.6); min-width: 250px; color: #fff;
-            animation: slideIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); display: flex; align-items: center; gap: 12px; pointer-events: auto;
+            background: var(--bg-card); border-left: 4px solid #333; padding: 15px 20px; border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); min-width: 250px; color: #fff;
+            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 12px; pointer-events: auto;
         }
         .toast.success { border-color: var(--live-green); }
         .toast.success i { color: var(--live-green); }
@@ -129,62 +137,65 @@
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* --- FORMS --- */
-        .admin-section { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .admin-section { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
+        .admin-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.5; }
+        
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .input-group { margin-bottom: 15px; width: 100%; }
-        label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
+        label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;}
         input, select, textarea {
-            width: 100%; background: rgba(0,0,0,0.2); 
+            width: 100%; background: #08080a; 
             border: 1px solid var(--border); border-left: 2px solid var(--border);
-            color: white; padding: 12px; border-radius: 4px;
+            color: white; padding: 12px 15px; border-radius: 8px;
             font-family: 'Titillium Web', sans-serif; font-size: 14px;
-            box-sizing: border-box; transition: 0.3s;
+            box-sizing: border-box; transition: 0.2s;
         }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #777; border-left-color: var(--primary); background: rgba(0,0,0,0.4); }
-        .score-input { font-weight: bold; color: var(--live-green); border-left-color: var(--live-green) !important; font-size: 16px; text-align: center; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #555; border-left-color: var(--tech-blue); background: #000; box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.05); }
+        .score-input { font-weight: 800; color: var(--live-green); border-left-color: var(--live-green) !important; font-size: 16px; text-align: center; font-family: monospace; }
 
         /* --- LISTS (SCHEDULE & DRIVERS) --- */
-        .session-card { background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px; position: relative; border: 1px solid transparent; transition: 0.3s; }
-        .session-card.is-live { border-color: var(--live-green); background: rgba(0, 210, 106, 0.05); }
-        .session-card.is-upcoming { border-color: var(--upcoming-orange); background: rgba(255, 183, 0, 0.05); }
+        .session-card { background: rgba(0,0,0,0.4); padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative; border: 1px solid var(--border); transition: 0.3s; }
+        .session-card:hover { border-color: #444; }
+        .session-card.is-live { border-color: var(--live-green); background: rgba(0, 230, 118, 0.03); box-shadow: 0 0 15px rgba(0, 230, 118, 0.1); }
+        .session-card.is-upcoming { border-color: var(--upcoming-orange); background: rgba(255, 145, 0, 0.03); }
         
-        .live-indicator, .upcoming-indicator, .timer-badge { position: absolute; top: -10px; left: 10px; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; z-index: 20; }
-        .live-indicator { background: var(--live-green); color: #000; animation: pulse 2s infinite; }
+        .live-indicator, .upcoming-indicator, .timer-badge { position: absolute; top: -10px; left: 15px; font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; z-index: 20; letter-spacing: 1px;}
+        .live-indicator { background: var(--live-green); color: #000; animation: pulse 2s infinite; box-shadow: 0 0 10px var(--live-green); }
         .upcoming-indicator { background: var(--upcoming-orange); color: #000; }
-        .timer-badge { left: 70px; background: #111; color: #fff; border: 1px solid #444; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .timer-badge { left: 85px; background: #000; color: var(--tech-blue); border: 1px solid var(--tech-blue); box-shadow: 0 0 8px rgba(0, 229, 255, 0.2); }
+        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 15px var(--live-green); } 50% { opacity: 0.7; box-shadow: 0 0 5px var(--live-green); } 100% { opacity: 1; box-shadow: 0 0 15px var(--live-green); } }
 
         .schedule-grid-top { display: grid; grid-template-columns: 0.5fr 0.8fr 2fr; gap: 10px; margin-bottom: 10px; }
         .schedule-grid-bot { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; }
 
-        .driver-list-header { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; }
-        .driver-row { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; align-items: center; background: #25252e; padding: 10px; margin-bottom: 8px; border-radius: 6px; transition:0.2s; }
-        .driver-row:hover { background: #2b2b35; transform:translateX(5px); }
-        .img-preview { width: 36px; height: 36px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
-        .lg-preview { width: 100px; height: 100px; border-radius: 50%; margin: 10px auto; display: block; border: 4px solid var(--border); }
+        .driver-list-header { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; letter-spacing: 1px; font-weight: 700;}
+        .driver-row { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; align-items: center; background: #181820; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; transition:0.2s; }
+        .driver-row:hover { background: #1c1c25; border-color: var(--border); transform: translateX(4px); }
+        .img-preview { width: 38px; height: 38px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
+        .lg-preview { width: 120px; height: 120px; border-radius: 50%; margin: 10px auto; display: block; border: 4px solid var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.5); object-fit: cover; }
 
         /* Login Overlay */
-        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; }
-        .login-box { background: var(--bg-surface); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 350px; text-align: center; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,5,0.95); backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: var(--bg-surface); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); border-top: 4px solid var(--primary); width: 90%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
 
         /* Custom Toggles */
-        .toggle-label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
-        .toggle-switch { position: relative; width: 50px; height: 26px; background: #333; border-radius: 20px; transition: 0.3s; }
-        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.3s; }
-        input[type="checkbox"]:checked + .toggle-switch { background: var(--primary); }
-        input[type="checkbox"]:checked + .toggle-switch::after { left: 27px; }
+        .toggle-label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border); }
+        .toggle-switch { position: relative; width: 50px; height: 26px; background: #222; border-radius: 20px; border: 1px solid #444; transition: 0.3s; }
+        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #888; border-radius: 50%; transition: 0.3s; }
+        input[type="checkbox"]:checked + .toggle-switch { background: rgba(225, 6, 0, 0.2); border-color: var(--primary); }
+        input[type="checkbox"]:checked + .toggle-switch::after { left: 26px; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
         .small-switch { position: relative; width: 44px; height: 24px; display: inline-block; vertical-align: middle; }
         .small-switch input { opacity: 0; width: 0; height: 0; }
-        .small-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 24px; border: 1px solid #555; }
+        .small-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #222; transition: .4s; border-radius: 24px; border: 1px solid #444; }
         .small-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: #888; transition: .4s; border-radius: 50%; }
-        input:checked + .small-slider { background-color: rgba(0, 255, 136, 0.15); border-color: var(--live-green); }
-        input:checked + .small-slider:before { transform: translateX(20px); background-color: var(--live-green); box-shadow: 0 0 10px var(--live-green); }
+        input:checked + .small-slider { background-color: rgba(0, 230, 118, 0.15); border-color: var(--live-green); }
+        input:checked + .small-slider:before { transform: translateX(20px); background-color: var(--live-green); box-shadow: 0 0 8px var(--live-green); }
 
         @media (max-width: 768px) {
             .driver-list-header { display: none; }
-            .driver-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; padding:15px; border:1px solid #333; }
+            .driver-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; padding:15px; border:1px solid var(--border); }
             .driver-row input { width: 100%; }
             .schedule-grid-top, .schedule-grid-bot { grid-template-columns: 1fr; }
             .driver-row button.delete-btn { position: absolute; top: 10px; right: 10px; }
@@ -197,7 +208,7 @@
         <div ng-repeat="t in toasts" class="toast" ng-class="t.type">
             <i class="fa-solid" ng-class="t.type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'"></i>
             <div>
-                <div style="font-weight:700; font-size:12px; margin-bottom:2px; text-transform:uppercase;">{{t.title}}</div>
+                <div style="font-weight:800; font-size:12px; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px;">{{t.title}}</div>
                 <div style="font-size:11px; color:#aaa;">{{t.msg}}</div>
             </div>
         </div>
@@ -205,14 +216,15 @@
 
     <div class="login-overlay animate-in" ng-if="!isLoggedIn">
         <div class="login-box">
-            <div style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"><i class="fa-solid fa-flag-checkered"></i></div>
-            <h2 style="border:none; padding:0; margin-bottom: 10px;">Admin Login</h2>
+            <div style="font-size: 45px; color: var(--primary); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(225,6,0,0.4));"><i class="fa-solid fa-flag-checkered"></i></div>
+            <h2 style="border:none; padding:0; margin-bottom: 5px; text-shadow:none;">Admin Login</h2>
+            <p style="font-size: 11px; color: var(--tech-blue); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px;">Admin Panel</p>
             <form ng-submit="login()">
                 <div class="input-group"><input type="email" ng-model="creds.email" placeholder="Email" required></div>
                 <div class="input-group"><input type="password" ng-model="creds.pass" placeholder="Password" required></div>
-                <button type="submit" class="primary-btn" style="width:100%;">Login</button>
+                <button type="submit" class="primary-btn" style="width:100%; padding: 12px; font-size: 13px;">Login</button>
             </form>
-            <p style="color: var(--primary); font-size: 12px; margin-top: 20px;">{{loginError}}</p>
+            <p style="color: var(--primary); font-size: 12px; margin-top: 20px; font-weight: 700;">{{loginError}}</p>
         </div>
     </div>
 
@@ -221,23 +233,23 @@
         <div class="action-bar">
             <div class="brand-logo">
                 <i class="fa-solid fa-tower-broadcast"></i>
-                <div>WatchParty Web Admin Panel</div>
+                <div>Admin Panel</div>
                 <div class="status-badge" ng-class="statusType">{{statusText}}</div>
             </div>
             <div>
-                <button class="icon-btn" ng-click="logout()" title="Logout" style="border: 1px solid #444;"><i class="fa-solid fa-power-off"></i></button>
+                <button class="icon-btn" ng-click="logout()" title="Logout"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </div>
 
         <div class="tab-container">
-            <button class="tab-btn" ng-class="{'active': currentView === 'live'}" ng-click="currentView = 'live'"><i class="fa-solid fa-video"></i> Live Event</button>
-            <button class="tab-btn" ng-class="{'active': currentView === 'scores'}" ng-click="currentView = 'scores'"><i class="fa-solid fa-list-ol"></i> Driver Scores</button>
-            <button class="tab-btn" ng-class="{'active': currentView === 'maint'}" ng-click="currentView = 'maint'"><i class="fa-solid fa-wrench"></i> Maintenance</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'live'}" ng-click="currentView = 'live'"><i class="fa-solid fa-video" style="margin-right: 5px;"></i> Live Event</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'scores'}" ng-click="currentView = 'scores'"><i class="fa-solid fa-list-ol" style="margin-right: 5px;"></i> Driver Scores</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'maint'}" ng-click="currentView = 'maint'"><i class="fa-solid fa-wrench" style="margin-right: 5px;"></i> Maintenance</button>
         </div>
 
         <div ng-show="currentView === 'live'">
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; gap: 10px;">
                     <button class="danger-btn" ng-click="quickClearStreams()"><i class="fa-solid fa-link-slash"></i> Clear Links</button>
                     <button class="danger-btn" ng-click="quickResetTimers()"><i class="fa-solid fa-clock-rotate-left"></i> Reset Timers</button>
@@ -252,7 +264,7 @@
 
             <div class="grid-row">
                 <div class="admin-section">
-                    <h3><span><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Session Details</span></h3>
+                    <h3><span><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Event Details</span></h3>
                     <div class="grid-row">
                         <div class="input-group"><label>Round</label><input type="text" ng-model="config.raceData.round"></div>
                         <div class="input-group"><label>Grand Prix Name</label><input type="text" ng-model="config.raceData.name"></div>
@@ -260,7 +272,7 @@
                     <div class="grid-row">
                         <div class="input-group"><label>Circuit Name</label><input type="text" ng-model="config.raceData.circuit"></div>
                         <div class="input-group">
-                            <label style="color:var(--primary-bright);">Location (Required for Auto-Weather)</label>
+                            <label style="color:var(--tech-blue);">Location (Required for Auto-Weather)</label>
                             <input type="text" ng-model="config.raceData.location" placeholder="e.g. Melbourne">
                         </div>
                     </div>
@@ -278,10 +290,10 @@
                             {{ fetchingWeather ? 'Fetching...' : 'Auto-Fetch' }}
                         </button>
                     </h3>
-                    <p style="font-size:10px; color:#666; margin-bottom:10px;">Auto-fetch uses the Location field to grab real-time data.</p>
+                    <p style="font-size:10px; color:var(--text-muted); margin-bottom:15px;">Auto-fetch uses the Location field to grab real-time data.</p>
                     <div class="input-group">
                         <label>Condition</label>
-                        <select ng-model="config.weather.condition" style="background: rgba(0,0,0,0.2); color:white;">
+                        <select ng-model="config.weather.condition">
                             <option value="sunny">Sunny / Clear</option>
                             <option value="cloudy">Cloudy</option>
                             <option value="rain">Rain / Wet</option>
@@ -304,22 +316,22 @@
 
             <div class="admin-section">
                 <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
-                <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.3); padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
                     <div class="grid-row" style="margin-bottom: 10px;">
                         <input type="text" ng-model="link.name" placeholder="Name (e.g. Main Feed)">
-                        <input type="text" ng-model="link.id" readonly style="color: #666;">
+                        <input type="text" ng-model="link.id" readonly style="color: #666; font-family: monospace;">
                     </div>
                     <input type="text" ng-model="link.url" placeholder="Embed URL">
-                    <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 4px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
-                        <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove
+                    <button ng-click="removeStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 8px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
+                        <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove Stream
                     </button>
                 </div>
-                <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
+                <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
             </div>
 
             <div class="admin-section">
-                <h3><i class="fa-solid fa-forward" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
-                <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto;"> Show Widget</label></div>
+                <h3><i class="fa-solid fa-forward-step" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
+                <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto; accent-color: var(--primary);"> Show Widget</label></div>
                 <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
                 <div class="grid-row">
                     <div class="input-group"><label>Date</label><input type="text" ng-model="config.nextRace.date"></div>
@@ -329,7 +341,7 @@
 
             <div class="admin-section">
                 <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
-                <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
                 
                 <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
                     <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
@@ -337,12 +349,12 @@
                     <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
 
                     <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
-                        <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-up"></i></button>
-                        <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-chevron-down"></i></button>
-                        <button class="icon-btn delete-btn" ng-click="removeSession($index)" title="Remove" style="width: 24px; height: 24px; font-size: 10px;"><i class="fa-solid fa-trash"></i></button>
+                        <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button class="icon-btn" ng-click="moveSessionDown($index)" ng-if="!$last" title="Move Down"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button class="icon-btn delete-btn" ng-click="removeSession($index)" title="Remove"><i class="fa-solid fa-trash"></i></button>
                     </div>
 
-                    <div class="schedule-grid-top">
+                    <div class="schedule-grid-top" style="margin-top: 15px;">
                         <div class="input-group" style="margin-bottom:0;">
                             <label ng-if="$first"><i class="fa-solid fa-calendar"></i> Day</label>
                             <input type="text" ng-model="session.day" placeholder="FRI">
@@ -373,7 +385,7 @@
                     </div>
                 </div>
                 
-                <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px;">
+                <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">
                     <i class="fa-solid fa-plus"></i> Add Session
                 </button>
             </div>
@@ -392,23 +404,23 @@
             <div class="admin-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
                     <div>
-                        <h3><i class="fa-solid fa-user-astronaut" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings & Scores</h3>
-                        <p style="font-size: 12px; color: #888;">Update points for drivers and save to push live leaderboards.</p>
+                        <h3><i class="fa-solid fa-helmet-racing" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings & Scores</h3>
+                        <p style="font-size: 11px; color: var(--text-muted);">Update points for drivers and save to push to the live site.</p>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="dashed-btn" ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort By Pts</button>
+                        <button class="dashed-btn" ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort by Pts</button>
                         <button class="action-btn" ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add Driver</button>
                     </div>
                 </div>
                 
                 <div class="driver-list-header">
-                    <span style="text-align: center;">ORD</span> <span style="text-align: center;">IMG</span> <span>NAME</span> <span>TEAM</span> <span>SCORE/PTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
+                    <span style="text-align: center;">POS</span> <span style="text-align: center;">IMG</span> <span>DRIVER</span> <span>TEAM</span> <span>POINTS</span> <span>IMG URL</span> <span style="text-align: center;">DEL</span>
                 </div>
                 
                 <div ng-repeat="driver in config.standings" class="driver-row">
                     <div style="display:flex; flex-direction:column; gap:2px;">
-                        <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveUp(config.standings, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                        <button style="background:none; border:none; padding:0; color:#666; font-size:12px; cursor:pointer;" ng-click="moveDown(config.standings, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveUp(config.standings, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveDown(config.standings, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
                     </div>
                     <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
                     
@@ -423,7 +435,7 @@
         </div>
 
         <div ng-show="currentView === 'maint'">
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
                 <button class="primary-btn" ng-click="saveMaintConfig()" ng-disabled="savingMaint">
                     <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingMaint"></i>
                     <div class="loading-spinner" ng-if="savingMaint"></div>
@@ -431,11 +443,11 @@
                 </button>
             </div>
 
-            <div class="admin-section" style="border-left: 4px solid {{maintConfig.isActive ? '#ff1801' : '#00d26a'}};">
+            <div class="admin-section" style="border-left: 4px solid {{maintConfig.isActive ? '#e10600' : '#00e676'}};">
                 <label class="toggle-label">
                     <div>
-                        <div style="font-size: 14px; font-weight: 700; color: white;"> MAINTENANCE MODE</div>
-                        <div style="font-size: 11px; color: #888;">{{maintConfig.isActive ? 'Site is currently HIDDEN (Maintenance Page)' : 'Site is currently LIVE'}}</div>
+                        <div style="font-size: 15px; font-weight: 800; color: white; letter-spacing: 1px;"> MAINTENANCE MODE</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{maintConfig.isActive ? 'Site is currently HIDDEN (Maintenance Page)' : 'Site is currently LIVE'}}</div>
                     </div>
                     <div style="display: flex; align-items: center;">
                         <input type="checkbox" ng-model="maintConfig.isActive" style="display: none;" id="maintSwitch">
@@ -445,10 +457,10 @@
             </div>
 
             <div class="admin-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                     <h3>Winner Profile</h3>
                     <label style="display: flex; align-items: center; cursor: pointer; margin: 0;">
-                        <div style="font-size: 10px; font-weight: 700; color: #888; margin-right: 10px; text-transform: uppercase;">
+                        <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); margin-right: 10px; text-transform: uppercase; letter-spacing: 1px;">
                             {{ maintConfig.showWinner ? 'Visible' : 'Hidden' }}
                         </div>
                         <div class="small-switch">
@@ -458,45 +470,46 @@
                     </label>
                 </div>
 
-                <div style="transition: 0.3s;" ng-style="{ opacity: maintConfig.showWinner ? '1' : '0.4' }">
+                <div style="transition: 0.3s;" ng-style="{ opacity: maintConfig.showWinner ? '1' : '0.3', pointerEvents: maintConfig.showWinner ? 'auto' : 'none' }">
                     <div class="grid-row">
                         <div>
                             <div class="input-group">
-                                <label>Championship Year</label>
-                                <input type="text" ng-model="maintConfig.winnerYear" ng-disabled="!maintConfig.showWinner" placeholder="e.g. 2025">
+                                <label>Year</label>
+                                <input type="text" ng-model="maintConfig.winnerYear" placeholder="e.g. 2026">
                             </div>
                             <div class="input-group">
                                 <label>Winner Name</label>
-                                <input type="text" ng-model="maintConfig.winnerName" ng-disabled="!maintConfig.showWinner">
+                                <input type="text" ng-model="maintConfig.winnerName">
                             </div>
                             <div class="input-group">
-                                <label>Team Name</label>
-                                <input type="text" ng-model="maintConfig.winnerTeam" ng-disabled="!maintConfig.showWinner">
+                                <label>Team</label>
+                                <input type="text" ng-model="maintConfig.winnerTeam">
                             </div>
                             <div class="input-group">
                                 <label>Image URL</label>
-                                <input type="text" ng-model="maintConfig.winnerImage" ng-disabled="!maintConfig.showWinner">
+                                <input type="text" ng-model="maintConfig.winnerImage">
                             </div>
                         </div>
-                        <div style="text-align: center;">
+                        <div style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
                             <label>Preview</label>
                             <img ng-src="{{maintConfig.winnerImage}}" class="lg-preview" 
-                                 ng-style="{ filter: maintConfig.showWinner ? 'none' : 'grayscale(100%)' }">
+                                 ng-style="{ filter: maintConfig.showWinner ? 'none' : 'grayscale(100%)' }"
+                                 onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
                         </div>
                     </div>
 
                     <div class="grid-row-3" style="margin-top: 15px;">
                         <div class="input-group">
                             <label>Points</label>
-                            <input type="number" ng-model="maintConfig.statsPoints" ng-disabled="!maintConfig.showWinner">
+                            <input type="number" ng-model="maintConfig.statsPoints">
                         </div>
                         <div class="input-group">
                             <label>Wins</label>
-                            <input type="number" ng-model="maintConfig.statsWins" ng-disabled="!maintConfig.showWinner">
+                            <input type="number" ng-model="maintConfig.statsWins">
                         </div>
                         <div class="input-group">
                             <label>Podiums</label>
-                            <input type="number" ng-model="maintConfig.statsPodiums" ng-disabled="!maintConfig.showWinner">
+                            <input type="number" ng-model="maintConfig.statsPodiums">
                         </div>
                     </div>
                 </div>
@@ -508,17 +521,17 @@
                     <div class="input-group">
                         <label>Theme Color (Hex)</label>
                         <div style="display: flex; gap: 10px;">
-                            <input type="color" ng-model="maintConfig.themeColor" style="height: 45px; width: 60px; padding: 0;">
+                            <input type="color" ng-model="maintConfig.themeColor" style="height: 45px; width: 60px; padding: 0; border: none; background: transparent; border-radius: 8px;">
                             <input type="text" ng-model="maintConfig.themeColor">
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>Counter Title</label>
-                        <input type="text" ng-model="maintConfig.timerTitle" placeholder="e.g. Season Starts In">
+                        <label>Timer Header</label>
+                        <input type="text" ng-model="maintConfig.timerTitle" placeholder="e.g. 2026 Season Starts In">
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>Target Date (Ex: March 1, 2026 12:00:00)</label>
+                    <label>Target Date (Ex: March 1, 2026 15:00:00)</label>
                     <input type="text" ng-model="maintConfig.targetDate">
                 </div>
             </div>
@@ -526,7 +539,7 @@
             <div class="admin-section">
                 <h3>Messaging & Branding</h3>
                 <div class="input-group">
-                    <label>Brand Name (Neon Text)</label>
+                    <label>Brand Name</label>
                     <input type="text" ng-model="maintConfig.brandName" placeholder="e.g. Watchf1.live">
                 </div>
                 <div class="input-group"><label>Title</label><input type="text" ng-model="maintConfig.msgTitle"></div>
@@ -609,17 +622,16 @@
                 db.collection("app_data").doc("maintenance_config").get().then(doc => {
                     $scope.$apply(() => {
                         $scope.maintConfig = doc.exists ? doc.data() : {
-                            isActive: false, showWinner: false, winnerName: "LANDO NORRIS", winnerTeam: "McLAREN", winnerYear: "2025",
-                            themeColor: "#FF8700", targetDate: "March 1, 2026 12:00:00", winnerImage: "",
-                            msgTitle: "Website Under Maintenance", msgSub: "Preparing for the new season", timerTitle: "Season Starts In",
+                            isActive: false, showWinner: false, winnerName: "MAX VERSTAPPEN", winnerTeam: "RED BULL RACING", winnerYear: "2026",
+                            themeColor: "#E10600", targetDate: "March 1, 2026 15:00:00", winnerImage: "",
+                            msgTitle: "A NEW ERA BEGINS", msgSub: "Calibrating 2026 systems...", timerTitle: "LIGHTS OUT IN",
                             statsPoints: 0, statsWins: 0, statsPodiums: 0, brandName: "Watchf1.live" 
                         };
                         if($scope.maintConfig.isActive === undefined) $scope.maintConfig.isActive = false;
                         if($scope.maintConfig.showWinner === undefined) $scope.maintConfig.showWinner = false;
-                        if($scope.maintConfig.winnerYear === undefined) $scope.maintConfig.winnerYear = "2025";
-                        if($scope.maintConfig.timerTitle === undefined) $scope.maintConfig.timerTitle = "Season Starts In";
+                        if($scope.maintConfig.winnerYear === undefined) $scope.maintConfig.winnerYear = "2026";
+                        if($scope.maintConfig.timerTitle === undefined) $scope.maintConfig.timerTitle = "LIGHTS OUT IN";
                         if($scope.maintConfig.brandName === undefined) $scope.maintConfig.brandName = "Watchf1.live";
-                        
                         if($scope.maintConfig.statsPoints === undefined) $scope.maintConfig.statsPoints = 0;
                         if($scope.maintConfig.statsWins === undefined) $scope.maintConfig.statsWins = 0;
                         if($scope.maintConfig.statsPodiums === undefined) $scope.maintConfig.statsPodiums = 0;
