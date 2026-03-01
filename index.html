@@ -8,21 +8,25 @@
     <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
     
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
-            --f1-red: #e10600;
+            --f1-red: #e60000;
+            --f1-carbon: #101010;
+            --f1-silver: #d1d1d1;
             --f1-green: #00d26a;
-            --bg-dark: #0b0b0f;
-            --glass-bg: rgba(23, 23, 29, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --bg-dark: #050505;
+            --glass-bg: rgba(10, 10, 10, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.05);
             --text-white: #ffffff;
-            --text-gray: #aeb0b8;
-            --glow-color: rgba(225, 6, 0, 0.15);
+            --text-gray: #999999;
+            --glow-color: rgba(230, 0, 0, 0.15);
         }
 
         * { box-sizing: border-box; }
@@ -31,428 +35,319 @@
             margin: 0; padding: 0;
             background-color: var(--bg-dark);
             color: var(--text-white);
-            font-family: 'Titillium Web', sans-serif;
+            font-family: 'Rajdhani', sans-serif; 
+            font-size: 16px;
             min-height: 100vh;
             display: flex; flex-direction: column;
             overflow-x: hidden;
             
-            background-image: radial-gradient(
-                800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                var(--glow-color), 
-                transparent 40%
-            );
+            background-image: 
+                radial-gradient(1200px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--glow-color), transparent 60%),
+                linear-gradient(to bottom, rgba(5,5,5,0.85), rgba(5,5,5,0.95)),
+                url('https://images.unsplash.com/photo-1611855735111-e374ee79cf61?q=80&w=2560&auto=format&fit=crop'); 
+            background-size: 100% 100%, cover, cover;
+            background-position: center, center, center;
             background-attachment: fixed;
         }
 
-        /* --- Header --- */
         header {
-            background: rgba(11, 11, 15, 0.8);
-            backdrop-filter: blur(10px);
+            background-color: #111;
+            background-image: 
+                linear-gradient(90deg, rgba(5,5,5,0.85) 0%, rgba(5,5,5,0.4) 50%, rgba(5,5,5,0.85) 100%), 
+                repeating-linear-gradient(45deg, #181818 25%, transparent 25%, transparent 75%, #181818 75%, #181818),
+                repeating-linear-gradient(45deg, #181818 25%, #0a0a0a 25%, #0a0a0a 75%, #181818 75%, #181818);
+            background-position: 0 0, 0 0, 5px 5px;
+            background-size: 100% 100%, 10px 10px, 10px 10px;
+            
             border-bottom: 2px solid var(--f1-red);
-            box-shadow: 0 5px 20px rgba(225, 6, 0, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             padding: 15px 30px;
             display: flex; align-items: center; justify-content: space-between;
             position: sticky; top: 0; z-index: 100;
-            height: 70px;
+            height: 75px;
             transition: all 0.3s ease;
         }
 
         .header-left { display: flex; align-items: center; gap: 20px; transition: all 0.3s ease; }
-        .f1-real-logo { height: 28px; width: auto; filter: brightness(0) invert(1); transition: all 0.3s ease; }
-        .header-divider { height: 20px; width: 1px; background: rgba(255,255,255,0.2); }
-        .gemini-real-logo { height: 32px; filter: brightness(0) invert(1); opacity: 0.8; transition: all 0.3s ease; }
+        .f1-real-logo { height: 24px; width: auto; filter: brightness(0) invert(1); transition: all 0.3s ease; }
+        .header-divider { height: 20px; width: 1px; background: rgba(255,255,255,0.15); }
+        .gemini-real-logo { height: 32px; filter: brightness(0) invert(1); opacity: 0.9; transition: all 0.3s ease; }
 
-        /* --- Right Side Status Area --- */
-        .status-area {
-            display: flex;
-            align-items: center;
-            gap: 10px; 
+        .header-marquee-container {
+            flex: 1; overflow: hidden; margin: 0 30px; white-space: nowrap; background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 6px 15px; position: relative;
+            backdrop-filter: blur(5px);
         }
+        .header-marquee-text {
+            display: inline-block; font-size: 14px; font-weight: 700; color: var(--text-gray); text-transform: uppercase;
+            letter-spacing: 1.5px; padding-left: 100%; animation: scroll-left 18s linear infinite;
+        }
+        .header-marquee-text span { color: #fff; }
 
-        .weather-pill {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ccc;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            display: flex; 
-            align-items: center;
-            gap: 12px;
-            margin-right: 5px;
-        }
+        .status-area { display: flex; align-items: center; gap: 10px; }
+        .weather-pill { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: #ccc; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px; margin-right: 5px; backdrop-filter: blur(5px); }
         .w-group { display: flex; align-items: center; gap: 4px; }
         .w-icon { font-size: 14px; margin-right: 2px; }
-        .w-label { color: var(--text-gray); font-size: 9px; font-weight: 700; margin-right: 2px; }
+        .w-label { color: var(--text-gray); font-size: 11px; font-weight: 700; margin-right: 2px; }
         .w-val { color: #fff; font-weight: 700; }
-        .w-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.2); }
+        .w-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.15); }
+        .timer-pill { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: #ccc; padding: 5px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center; white-space: nowrap; backdrop-filter: blur(5px); }
+        .status-pill { padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+        .status-pill.offline { background: #111; color: #555; border: 1px solid #333; }
+        .status-pill.live { background: var(--f1-red); color: white; box-shadow: 0 0 15px rgba(230, 0, 0, 0.5); font-weight: 800; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        .timer-pill {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ccc;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            display: flex; 
-            align-items: center;
-            white-space: nowrap;
-        }
-
-        .status-pill {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            display: flex; align-items: center; gap: 8px;
-            text-transform: uppercase;
-        }
-
-        .status-pill.offline {
-            background: #222;
-            color: #555;
-            border: 1px solid #333;
-            box-shadow: inset 0 0 5px #000;
-        }
-
-        .status-pill.live {
-            background: var(--f1-red);
-            color: white;
-            box-shadow: 0 0 15px rgba(225, 6, 0, 0.4);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        /* --- Layout --- */
-        .container {
-            max-width: 1600px;
-            margin: 30px auto;
-            padding: 0 30px;
-            display: grid;
-            grid-template-columns: 3.5fr 1.2fr;
-            gap: 30px;
-            flex: 1;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
+        .container { max-width: 1600px; margin: 30px auto; padding: 0 30px; display: grid; grid-template-columns: 3.5fr 1.2fr; gap: 30px; flex: 1; width: 100%; transition: all 0.3s ease; }
         @media (max-width: 1100px) { .container { grid-template-columns: 1fr; } }
 
-        /* --- Video Section --- */
-        .video-wrapper {
-            background: #000;
-            border-radius: 12px 12px 0 0; 
-            overflow: hidden;
-            border: 1px solid #222;
-            border-bottom: none; 
-            position: relative;
-            z-index: 2;
-        }
-
-        .video-wrapper::before {
-            content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px;
-            background: var(--f1-red); filter: blur(40px); opacity: 0.15; z-index: -1;
-        }
-        .video-responsive { position: relative; padding-bottom: 56.25%; height: 0; width: 100%; background: #111; }
+        /* HEAVILY ROUNDED VIDEO PLAYER */
+        .video-wrapper { background: #000; border-radius: 24px 24px 0 0; overflow: hidden; border: 1px solid #222; border-bottom: none; position: relative; z-index: 2; }
+        .video-wrapper::before { content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; background: var(--f1-red); filter: blur(50px); opacity: 0.1; z-index: -1; }
+        .video-responsive { position: relative; padding-bottom: 56.25%; height: 0; width: 100%; background: #0a0a0a; }
         .video-responsive iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+        .video-toolbar { background: #0a0a0a; border: 1px solid #222; border-top: none; border-radius: 0 0 24px 24px; padding: 12px 20px; display: flex; align-items: center; gap: 8px; margin-bottom: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transition: all 0.3s ease; }
 
-        /* --- Toolbar --- */
-        .video-toolbar {
-            background: #141419;
-            border: 1px solid #222;
-            border-top: none;
-            border-radius: 0 0 12px 12px; 
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-        }
-
-        /* --- Cards --- */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        @keyframes cardPulse {
-            0% { box-shadow: 0 0 0 rgba(225, 6, 0, 0); border-color: rgba(255,255,255,0.1); }
-            50% { box-shadow: 0 0 25px rgba(225, 6, 0, 0.25); border-color: var(--f1-red); }
-            100% { box-shadow: 0 0 0 rgba(225, 6, 0, 0); border-color: rgba(255,255,255,0.1); }
-        }
-
-        .up-next-glow {
-            animation: cardPulse 3s infinite ease-in-out;
-            position: relative;
-        }
-
+        /* HEAVILY ROUNDED GLASS CARDS */
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .stream-controls { margin-top: 0px; transition: all 0.3s ease; }
         .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
-        .event-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
-        .event-round { font-size: 11px; color: var(--f1-red); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; display: block; }
-        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; font-size: 13px; color: var(--text-gray); }
-        .meta-item strong { display: block; color: #fff; font-size: 11px; text-transform: uppercase; margin-bottom: 2px; }
+        .event-title { font-size: 30px; font-weight: 700; line-height: 1.1; letter-spacing: -0.5px; }
+        .event-round { font-size: 14px; color: var(--f1-red); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px; display: block; }
+        .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; font-size: 15px; color: var(--text-gray); }
+        .meta-item strong { display: block; color: #fff; font-size: 13px; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px; }
 
-        /* --- Buttons --- */
-        .stream-btn {
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            color: #aaa;
-            padding: 6px 14px; 
-            border-radius: 4px; 
-            font-size: 11px; 
-            font-weight: 600; 
-            text-transform: uppercase;
-            cursor: pointer; 
-            transition: all 0.2s; 
-            min-width: auto;
-        }
+        .stream-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #aaa; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; cursor: pointer; transition: all 0.2s; min-width: auto; letter-spacing: 0.5px;}
         .stream-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; }
-        .stream-btn.active { background: var(--f1-red); color: white; border-color: var(--f1-red); box-shadow: 0 0 10px rgba(225, 6, 0, 0.2); }
-        
+        .stream-btn.active { background: var(--f1-red); color: white; border-color: var(--f1-red); box-shadow: 0 0 15px rgba(230, 0, 0, 0.3); }
         .spacer { flex: 1; }
 
-        /* Sidebar & Standings Styles */
-        .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-gray); margin-bottom: 15px; letter-spacing: 1px; }
-
-        .schedule-row {
-            display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-radius: 6px; margin-bottom: 5px; transition: background 0.2s;
-        }
-        .schedule-row:hover { background: rgba(255,255,255,0.03); }
-        .schedule-row.live { background: linear-gradient(90deg, rgba(225,6,0,0.1), transparent); border-left: 3px solid var(--f1-red); }
-        .schedule-row.upcoming { border-left: 3px solid #fff; }
+        .card-title { font-size: 13px; font-weight: 800; text-transform: uppercase; color: var(--f1-red); margin-bottom: 20px; letter-spacing: 2px; display: flex; align-items: center; gap: 8px;}
+        
+        .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 12px; margin-bottom: 8px; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.02); background: rgba(255,255,255,0.01); }
+        .schedule-row:hover { background: rgba(255,255,255,0.04); }
+        .schedule-row.live { background: linear-gradient(90deg, rgba(230,0,0,0.15), rgba(230,0,0,0.02)); border-color: rgba(230,0,0,0.3); box-shadow: 0 0 15px rgba(230,0,0,0.1); }
+        .schedule-row.upcoming { border-color: rgba(255,255,255,0.08); }
         .schedule-row.ended { opacity: 0.4; }
-        .sess-name { font-weight: 600; font-size: 14px; }
-        .sess-status { font-size: 10px; font-weight: 800; color: var(--f1-red); margin-top: 2px; text-transform: uppercase; }
-        .sess-time { font-weight: 700; font-size: 14px; color: #fff; }
-        .sess-day { font-size: 11px; color: var(--text-gray); }
+        .sess-name { font-weight: 600; font-size: 16px; letter-spacing: 0.5px;}
+        .sess-status { font-size: 12px; font-weight: 700; color: var(--f1-red); margin-top: 2px; text-transform: uppercase; letter-spacing: 1px;}
+        .sess-time { font-weight: 700; font-size: 16px; color: #fff; }
+        .sess-day { font-size: 13px; color: var(--text-gray); }
 
-        /* --- Standings --- */
         .standings-list { transition: all 0.4s ease; max-height: auto; }
         .standings-list.expanded { max-height: 400px; overflow-y: auto; padding-right: 5px; }
         .standings-list.expanded::-webkit-scrollbar { width: 4px; }
         .standings-list.expanded::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-        .standings-list.expanded::-webkit-scrollbar-thumb { background: var(--f1-red); border-radius: 2px; }
-
-        .standing-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .standings-list.expanded::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .standing-row { display: flex; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .standing-row:last-child { border-bottom: none; }
-        
-        .st-pos { font-size: 16px; font-weight: 900; font-style: italic; margin-right: 10px; color: #fff; width: 20px; text-align: center; }
-        .st-pos.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .st-pos { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 800; margin-right: 15px; color: var(--text-gray); width: 20px; text-align: center; }
+        .st-pos.p1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
         .st-pos.p2 { color: #c0c0c0; }
         .st-pos.p3 { color: #cd7f32; }
-        
-        .st-img-wrapper {
-            width: 32px; height: 32px; border-radius: 50%; overflow: hidden; 
-            background: #333; margin-right: 12px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0;
-        }
+        .st-img-wrapper { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #222; margin-right: 15px; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
         .st-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-        
         .st-info { flex: 1; }
-        .st-name { font-weight: 700; font-size: 14px; }
-        .st-team { font-size: 11px; color: var(--text-gray); text-transform: uppercase; }
-        .st-pts { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .st-name { font-weight: 700; font-size: 16px; letter-spacing: 0.5px;}
+        .st-team { font-size: 13px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px;}
+        .st-pts { background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+        
+        .view-more-btn { width: 100%; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; color: var(--text-gray); padding: 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 10px; letter-spacing: 1px;}
+        .view-more-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
 
-        .view-more-btn {
-            width: 100%; background: transparent; border: none;
-            border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-gray);
-            padding: 10px; font-size: 11px; font-weight: 700; text-transform: uppercase;
-            cursor: pointer; transition: color 0.2s; margin-top: 5px;
-        }
-        .view-more-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
+        footer { margin-top: 40px; padding: 20px; text-align: center; color: var(--text-gray); font-size: 13px; border-top: 1px solid var(--glass-border); letter-spacing: 0.5px;}
 
-        footer { margin-top: 40px; padding: 20px; text-align: center; color: var(--text-gray); font-size: 11px; border-top: 1px solid var(--glass-border); }
-
-        /* --- THEATER & MOBILE STYLES --- */
-        body.theater-active header { height: 40px; padding: 0 20px; background: #000; border-bottom: 1px solid #333; }
+        body.theater-active header { height: 40px; padding: 0 20px; background: #000; border-bottom: 1px solid #111; background-image: none; }
         body.theater-active .f1-real-logo { height: 16px; }
         body.theater-active .gemini-real-logo { height: 20px; }
         body.theater-active .header-divider { height: 12px; }
-        body.theater-active .status-pill { padding: 2px 8px; font-size: 10px; }
-        body.theater-active .timer-pill { padding: 2px 8px; font-size: 10px; }
-        body.theater-active .weather-pill { padding: 2px 8px; font-size: 9px; }
+        body.theater-active .status-pill { padding: 2px 8px; font-size: 12px; border-radius: 10px; }
+        body.theater-active .timer-pill { padding: 2px 8px; font-size: 12px; border-radius: 10px; }
+        body.theater-active .weather-pill { padding: 2px 8px; font-size: 11px; border-radius: 10px; }
+        body.theater-active .header-marquee-container { display: none; }
         body.theater-active footer, body.theater-active .sidebar { display: none !important; }
         body.theater-active { height: 100vh; overflow: hidden; background: #000; }
         body.theater-active .container { max-width: 100%; margin: 0; padding: 0; height: calc(100vh - 40px); display: flex; flex-direction: column; }
         body.theater-active .main-column { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        
+        /* Remove roundness in theater mode */
         body.theater-active .video-wrapper { flex: 1; border-radius: 0; border: none; display: flex; align-items: center; }
         body.theater-active .video-wrapper::before { display: none; }
         body.theater-active .video-responsive { height: 100%; padding-bottom: 0; }
-        body.theater-active .video-toolbar { margin-bottom: 0; border-radius: 0; border: none; border-top: 1px solid #333; background: #111; padding: 5px 15px; height: 40px; }
-        body.theater-active .stream-btn { padding: 3px 8px; font-size: 9px; border-radius: 3px; }
-        body.theater-active .source-label { font-size: 9px !important; }
+        body.theater-active .video-toolbar { margin-bottom: 0; border-radius: 0; border: none; border-top: 1px solid #111; background: #000; padding: 5px 15px; height: 40px; }
+        body.theater-active .stream-btn { padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+        body.theater-active .source-label { font-size: 11px !important; }
         body.theater-active .stream-controls { display: none; }
         
         .loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
         .loader.hide { opacity: 0; pointer-events: none; }
-        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--f1-red); animation: spin 0.8s ease-in-out infinite; margin-bottom: 20px; box-shadow: 0 0 20px rgba(225, 6, 0, 0.2); }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.05); border-radius: 50%; border-top-color: var(--f1-red); animation: spin 0.8s ease-in-out infinite; margin-bottom: 20px; box-shadow: 0 0 20px rgba(230, 0, 0, 0.2); }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #666; animation: fadeText 1.5s infinite alternate; }
+        .loading-text { font-size: 14px; font-weight: 700; letter-spacing: 3px; color: #555; animation: fadeText 1.5s infinite alternate; text-transform: uppercase;}
         @keyframes fadeText { from { opacity: 0.5; } to { opacity: 1; } }
 
-        /* --- Maintenance Popup Styles --- */
-        .m-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: flex; justify-content: center; align-items: center;
+        .m-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; 
+            z-index: 2000; display: flex; justify-content: center; align-items: center; 
             animation: fadeIn 0.4s ease;
         }
-
-        .m-card {
-            background: linear-gradient(180deg, rgba(25, 25, 30, 0.95) 0%, rgba(10, 10, 15, 1) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 4px solid var(--f1-red); /* DEFAULT, Overridden by ng-style */
-            padding: 40px;
-            width: 100%; max-width: 480px;
-            text-align: center;
-            border-radius: 12px;
-            /* Default Glow Fallback */
-            box-shadow: 0 0 40px rgba(225, 6, 0, 0.3), 0 20px 60px rgba(0,0,0,0.6);
-            position: relative;
-        }
-
-        /* --- MARQUEE / TRAIN EFFECT --- */
-        .marquee-track {
-            width: 100%;
-            overflow: hidden;       /* Hides text when outside the box */
-            white-space: nowrap;    /* Forces text onto one line */
-            background: rgba(0, 0, 0, 0.4);
-            border-top: 2px solid var(--f1-red);      /* The rails (Top) */
-            border-bottom: 2px solid var(--f1-red);   /* The rails (Bottom) */
-            padding: 10px 0;
-            margin: 15px 0;
-            position: relative;
-        }
-
-        .marquee-train {
-            display: inline-block;
-            font-size: 24px;        /* Large text */
-            font-weight: 800;       /* Bold F1 font */
-            text-transform: uppercase;
-            color: #ffffff;
-            padding-left: 100%;     /* Starts off-screen to the right */
-            animation: scroll-left 12s linear infinite; /* The Engine */
-        }
-
-        @keyframes scroll-left {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
-        /* ------------------------------------- */
-
-        .m-tag {
-            background: rgba(225, 6, 0, 0.15); color: var(--f1-red);
-            font-size: 11px; font-weight: 800; letter-spacing: 2px;
-            padding: 5px 10px; border-radius: 4px; text-transform: uppercase;
-            display: inline-block; margin-bottom: 20px;
-        }
-
-        .winner-section { margin: 20px 0 30px 0; }
-        .winner-img {
-            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
-            border: 3px solid #d4af37; /* Gold border */
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-            margin-bottom: 15px;
-        }
-        .winner-title { color: #d4af37; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .winner-name { font-size: 28px; font-weight: 800; line-height: 1.1; margin-bottom: 5px; }
-        .winner-stats { font-size: 13px; color: var(--text-gray); display: flex; justify-content: center; gap: 15px; }
-        .stat-box strong { color: #fff; display: block; font-size: 16px; }
-
-        .season-timer {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px; border-radius: 8px; margin-bottom: 30px;
-        }
-        .timer-val { font-family: 'Titillium Web', monospace; font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 2px; }
-        .timer-label { font-size: 10px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-
-        .close-m-btn {
-            background: transparent; border: 1px solid rgba(255,255,255,0.2);
-            color: var(--text-gray); padding: 10px 25px;
-            font-size: 12px; font-weight: 700; text-transform: uppercase;
-            cursor: pointer; transition: all 0.2s; border-radius: 4px;
-        }
-        .close-m-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
         
+        /* FULL SCREEN MAINTENANCE CARD */
+        .m-card { 
+            background: linear-gradient(180deg, rgba(10, 10, 12, 0.9) 0%, rgba(5, 5, 5, 0.95) 100%); 
+            border-top: 4px solid var(--f1-red); 
+            border-bottom: none;
+            border-left: none;
+            border-right: none;
+            padding: 40px; 
+            width: 100vw; 
+            height: 100vh; 
+            max-width: 100%; 
+            display: flex; flex-direction: column; justify-content: center; 
+            align-items: center; text-align: center; 
+            border-radius: 0; 
+            position: relative; 
+            overflow: hidden; 
+            perspective: 1000px; 
+            z-index: 2; 
+        }
+
+        .m-bg-video {
+            position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
+            width: auto; height: auto; transform: translateX(-50%) translateY(-50%);
+            z-index: 0; object-fit: cover; opacity: 0.15; pointer-events: none;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; 
+            pointer-events: none;
+        }
+
+        .neon-brand {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: clamp(3rem, 7vw, 5rem);
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 30px var(--f1-red), 0 0 50px var(--f1-red);
+            line-height: 1;
+            text-align: center;
+        }
+
+        .m-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.03), transparent 40%);
+            z-index: 2; pointer-events: none;
+        }
+
+        .m-content {
+            width: 100%; max-width: 600px; position: relative; z-index: 3;
+            transform: rotateX(calc(var(--mouse-norm-y, 0) * -8deg)) rotateY(calc(var(--mouse-norm-x, 0) * 8deg)) translateY(calc(var(--mouse-norm-y, 0) * 15px));
+            transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-style: preserve-3d;
+        }
+
+        .marquee-track { width: 100%; overflow: hidden; white-space: nowrap; background: rgba(0, 0, 0, 0.4); border-top: 1px solid var(--f1-red); border-bottom: 1px solid var(--f1-red); border-radius: 0; padding: 12px 0; margin: 20px 0; position: relative; cursor: default; backdrop-filter: blur(5px); }
+        .marquee-train { display: inline-block; font-size: 22px; font-weight: 700; text-transform: uppercase; color: #ffffff; padding-left: 100%; animation: scroll-left 12s linear infinite; letter-spacing: 1px;}
+        .marquee-track:hover .marquee-train { animation-play-state: paused; }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        
+        .winner-section { margin: 20px 0 30px 0; transform: translateZ(20px); }
+        .winner-img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #d4af37; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); margin-bottom: 15px; }
+        .winner-title { color: #d4af37; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .winner-name { font-size: 32px; font-weight: 700; line-height: 1.1; margin-bottom: 5px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .winner-stats { font-size: 15px; color: var(--text-gray); display: flex; justify-content: center; gap: 15px; }
+        
+        .stat-box { background: rgba(255, 255, 255, 0.03); padding: 12px 18px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: default; }
+        .stat-box:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 10px 20px rgba(0,0,0,0.5); color: #fff; }
+        .stat-box strong { color: #fff; display: block; font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+        
+        .season-timer { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 24px; margin-bottom: 30px; transform: translateZ(10px); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .timer-val { font-family: 'Rajdhani', monospace; font-size: 34px; font-weight: 700; color: #fff; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .timer-label { font-size: 13px; color: var(--text-gray); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-weight: 800; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         @media (max-width: 768px) {
-            header { padding: 10px 15px; height: 60px; }
+            header { padding: 10px 15px; height: auto; flex-wrap: wrap; justify-content: space-between; gap: 10px; background-size: 100% 100%, 6px 6px, 6px 6px; }
             .header-left { gap: 10px; }
-            .f1-real-logo { height: 20px; }
-            .gemini-real-logo { height: 22px; }
+            .f1-real-logo { height: 18px; }
+            .gemini-real-logo { height: 20px; }
             .header-divider { height: 15px; }
+            .header-marquee-container { width: 100%; margin: 0; order: 3; flex: none; border-radius: 12px; }
             .container { margin: 15px auto; padding: 0 10px; gap: 20px; width: 100%; }
-            .video-toolbar { flex-wrap: wrap; justify-content: center; padding: 10px; }
+            
+            .video-wrapper { border-radius: 16px 16px 0 0; }
+            .video-toolbar { border-radius: 0 0 16px 16px; flex-wrap: wrap; justify-content: center; padding: 10px; }
+            .glass-card { border-radius: 16px; padding: 20px; }
+            
             .spacer { display: none; }
-            .stream-btn { flex: 1 1 auto; text-align: center; margin-bottom: 5px; font-size: 10px; }
+            .stream-btn { flex: 1 1 auto; text-align: center; margin-bottom: 5px; font-size: 12px; }
             .event-header { flex-direction: column; gap: 10px; }
-            .event-title { font-size: 18px; }
+            .event-title { font-size: 22px; }
             .meta-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .schedule-row { padding: 8px; }
-            .sess-name { font-size: 12px; }
-            .sess-time { font-size: 12px; }
+            .schedule-row { padding: 8px 12px; }
+            .sess-name { font-size: 14px; }
+            .sess-time { font-size: 14px; }
             body.theater-active header { display: none; } 
             body.theater-active .container { height: 100vh; }
-            body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; }
+            body.theater-active .video-toolbar { overflow-x: scroll; flex-wrap: nowrap; justify-content: flex-start; border-radius: 0; }
             
             .status-area { gap: 5px; }
             .weather-pill .w-label { display: none; } 
-            .weather-pill { padding: 4px 8px; gap: 6px; }
-            .timer-pill { font-size: 9px; padding: 4px 8px; }
-            .status-pill { font-size: 9px; padding: 4px 10px; }
+            .weather-pill { padding: 4px 10px; gap: 6px; }
+            .timer-pill { font-size: 11px; padding: 4px 10px; }
+            .status-pill { font-size: 11px; padding: 4px 12px; }
+            
+            .m-card { width: 100vw; height: 100vh; padding: 20px; border-radius: 0; }
+            .m-content { transform: none !important; }
         }
     </style>
 </head>
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}">
 
-    <div class="m-overlay" ng-if="maint.active">
-        <div class="m-card" ng-style="{
-            'border-top-color': maint.themeColor,
-            'box-shadow': '0 0 50px ' + getTransparentColor(maint.themeColor, 0.4) + ', 0 20px 60px rgba(0,0,0,0.8)'
-        }">
-            <div class="m-tag" ng-style="{'color': maint.themeColor, 'background': getTransparentColor(maint.themeColor)}">Status Update</div>
+    <div class="m-overlay" ng-show="splashActive || maint.active">
+        
+        <div class="m-card" ng-style="{'border-top-color': maint.themeColor, 'box-shadow': 'inset 0 0 150px ' + getTransparentColor(maint.themeColor, 0.10)}">
             
-            <div class="marquee-track" ng-style="{'border-top-color': maint.themeColor, 'border-bottom-color': maint.themeColor}">
-                <div class="marquee-train">
-                    {{ maint.msgTitle || 'WEBSITE UNDER MAINTENANCE' }}
-                </div>
-            </div>
-            <p style="color: var(--text-gray); font-size: 13px; margin-top: 5px; margin-bottom: 20px;">
-                {{ maint.msgSub || 'The servers are currently being updated.' }}
-            </p>
+            <video autoplay muted loop playsinline class="m-bg-video">
+                <source src="F1 Logo Animation Concept 1080P.mp4" type="video/mp4">
+            </video>
 
-            <div class="winner-section" ng-if="maint.showWinner">
-                <div class="winner-title">2025 World Champion</div>
-                
-                <img ng-src="{{maint.winnerImage}}" class="winner-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
-                
-                <div class="winner-name">{{maint.winnerName}}</div>
-                
-                <div class="winner-stats">
-                    <div class="stat-box"><strong>{{maint.statsPoints}}</strong> POINTS</div>
-                    <div class="stat-box"><strong>{{maint.statsWins}}</strong> WINS</div>
-                    <div class="stat-box"><strong>{{maint.statsPodiums}}</strong> PODIUMS</div>
-                </div>
-            </div>
+            <canvas id="particle-canvas"></canvas>
 
-            <div class="season-timer">
-                <div class="timer-label">{{maint.timerTitle}}</div>
-                <div class="timer-val">{{maint.timer2026}}</div>
+            <div class="m-content"> 
+                
+                <h1 class="neon-brand" ng-style="{'text-shadow': '0 0 10px rgba(255,255,255,0.5), 0 0 30px ' + maint.themeColor + ', 0 0 50px ' + maint.themeColor}">
+                    {{ maint.brandName || 'Watchf1.live' }}
+                </h1>
+                
+                <div class="marquee-track" ng-style="{'border-top-color': maint.themeColor, 'border-bottom-color': maint.themeColor}">
+                    <div class="marquee-train">
+                        {{ maint.msgTitle || 'WEBSITE UNDER MAINTENANCE' }}
+                    </div>
+                </div>
+                <p style="color: var(--text-gray); font-size: 16px; margin-top: 5px; margin-bottom: 25px;">
+                    {{ maint.msgSub || 'The servers are currently being updated.' }}
+                </p>
+
+                <div class="winner-section" ng-if="maint.showWinner">
+                    <div class="winner-title">2025 World Champion</div>
+                    <img ng-src="{{maint.winnerImage}}" class="winner-img" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'">
+                    <div class="winner-name">{{maint.winnerName}}</div>
+                    <div class="winner-stats">
+                        <div class="stat-box"><strong>{{maint.statsPoints}}</strong> POINTS</div>
+                        <div class="stat-box"><strong>{{maint.statsWins}}</strong> WINS</div>
+                        <div class="stat-box"><strong>{{maint.statsPodiums}}</strong> PODIUMS</div>
+                    </div>
+                </div>
+
+                <div class="season-timer" ng-style="{'border-color': getTransparentColor(maint.themeColor, 0.3)}">
+                    <div class="timer-label">{{maint.timerTitle}}</div>
+                    <div class="timer-val">{{maint.timer2026}}</div>
+                </div>
             </div>
         </div>
     </div>
@@ -469,21 +364,19 @@
             <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" class="gemini-real-logo">
         </div>
         
+        <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
+            <div class="header-marquee-text">
+                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+            </div>
+        </div>
+        
         <div class="status-area">
             <div class="weather-pill" ng-if="weather && weather.air">
                 <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
-                
-                <div class="w-group">
-                    <span class="w-label">AIR</span>
-                    <span class="w-val">{{weather.air}}°C</span>
-                </div>
-                
+                <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
                 <div class="w-divider"></div>
-                
-                <div class="w-group">
-                    <span class="w-label">TRACK</span>
-                    <span class="w-val">{{weather.track}}°C</span>
-                </div>
+                <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span></div>
             </div>
 
             <div class="timer-pill" ng-if="!activeSession && nextUp">
@@ -491,13 +384,8 @@
                 <span style="color: #fff;">{{nextUp.timerStr}}</span>
             </div>
 
-            <div class="status-pill live" ng-if="activeSession">
-                LIVE: {{activeSession.name}}
-            </div>
-
-            <div class="status-pill offline" ng-if="!activeSession">
-                OFFLINE
-            </div>
+            <div class="status-pill live" ng-if="activeSession">LIVE: {{activeSession.name}}</div>
+            <div class="status-pill offline" ng-if="!activeSession">OFFLINE</div>
         </div>
     </header>
 
@@ -511,10 +399,13 @@
             </div>
 
             <div class="video-toolbar">
-                <span class="source-label" style="font-size:10px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
+                <span class="source-label" style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                 <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)" ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
                 <div class="spacer"></div>
-                <button class="stream-btn" ng-click="toggleTheater()">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</button>
+                <button class="stream-btn" ng-click="toggleTheater()">
+                    <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'" style="margin-right: 5px;"></i>
+                    {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                </button>
             </div>
 
             <div class="glass-card stream-controls">
@@ -523,9 +414,9 @@
                         <span class="event-round">ROUND {{raceData.round}}</span>
                         <div class="event-title">{{raceData.name}}</div>
                     </div>
-                    <div style="font-size:12px; color:white; display:flex; align-items:center; gap:8px;">
-                        <span style="width:8px; height:8px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 8px var(--f1-green);"></span>
-                        <span style="opacity:0.7;">FEED:</span> {{currentStream.name}}
+                    <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
+                        <span style="width:10px; height:10px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 10px var(--f1-green);"></span>
+                        <span style="opacity:0.7;">FEED:</span> <span style="font-weight: 600;">{{currentStream.name}}</span>
                     </div>
                 </div>
                 <div class="meta-grid">
@@ -538,13 +429,6 @@
         </div>
 
         <div class="sidebar">
-            <div class="glass-card up-next-glow" ng-if="nextRace && nextRace.isVisible">
-                <div class="card-title">Up Next</div>
-                <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">{{nextRace.name}}</div>
-                <div style="font-size: 13px; color: var(--text-gray);">{{nextRace.circuit}}</div>
-                <div style="margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--f1-red);">{{nextRace.date}}</div>
-            </div>
-
             <div class="glass-card">
                 <div class="card-title">Weekend Schedule</div>
                 <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
@@ -583,18 +467,96 @@
 
     <footer>
         <p>This website does not create, host, or share any video content. All video streams are from external websites that are freely available online.</p>
-        <p style="opacity: 0.5;font-size: 12px;">· Engineered with Gemini · Backed by Firebase ·</p>
+        <p style="opacity: 0.5;font-size: 13px;">· Engineered with Gemini · Backed by Firebase ·</p>
     </footer>
 
     <script>
-        document.addEventListener('mousemove', e => {
-            requestAnimationFrame(() => {
-                document.body.style.setProperty('--mouse-x', e.clientX + 'px');
-                document.body.style.setProperty('--mouse-y', e.clientY + 'px');
+        document.addEventListener("DOMContentLoaded", function() {
+            const canvas = document.getElementById('particle-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            let particles = [];
+            let particleCount = window.innerWidth < 768 ? 40 : 80;
+            
+            for(let i=0; i<particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5,
+                    radius: Math.random() * 2 + 0.5
+                });
+            }
+
+            let mouse = { x: null, y: null };
+            document.addEventListener('mousemove', e => {
+                mouse.x = e.clientX; 
+                mouse.y = e.clientY;
+            });
+            document.addEventListener('mouseleave', () => {
+                mouse.x = null; 
+                mouse.y = null;
+            });
+
+            function animateParticles() {
+                requestAnimationFrame(animateParticles);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.x += p.vx; 
+                    p.y += p.vy;
+                    
+                    if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; 
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if(mouse.x != null) {
+                        let dx = mouse.x - p.x;
+                        let dy = mouse.y - p.y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 150) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(230, 0, 0, ${1 - dist/150})`;
+                            ctx.lineWidth = 1;
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(mouse.x, mouse.y);
+                            ctx.stroke();
+                        }
+                    }
+                });
+            }
+            animateParticles();
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
             });
         });
 
-        // ⚠️ REPLACE WITH YOUR FIREBASE CONFIG FROM CONSOLE ⚠️
+        document.addEventListener('mousemove', e => {
+            requestAnimationFrame(() => {
+                const x = e.clientX;
+                const y = e.clientY;
+                
+                document.body.style.setProperty('--mouse-x', x + 'px');
+                document.body.style.setProperty('--mouse-y', y + 'px');
+                
+                const normX = (x / window.innerWidth) * 2 - 1;
+                const normY = (y / window.innerHeight) * 2 - 1;
+                
+                document.body.style.setProperty('--mouse-norm-x', normX);
+                document.body.style.setProperty('--mouse-norm-y', normY);
+            });
+        });
+
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
             authDomain: "f1-stream-live.firebaseapp.com",
@@ -614,14 +576,23 @@
             $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']);
         });
 
-        app.controller('MainController', function($scope, $sce, $interval) {
+        app.controller('MainController', function($scope, $sce, $interval, $timeout) {
             $scope.isTheater = false;
             $scope.toggleTheater = function() { $scope.isTheater = !$scope.isTheater; };
             $scope.showAllStandings = false;
             $scope.toggleStandings = function() { $scope.showAllStandings = !$scope.showAllStandings; };
             $scope.dataLoaded = false; 
             
-            // Initial Objects
+            if (!sessionStorage.getItem('f1SplashSeen')) {
+                $scope.splashActive = true;
+                $timeout(function() {
+                    $scope.splashActive = false;
+                    sessionStorage.setItem('f1SplashSeen', 'true');
+                }, 3000);
+            } else {
+                $scope.splashActive = false;
+            }
+            
             $scope.streamLinks = [];
             $scope.currentStream = {};
             $scope.raceData = {};
@@ -630,9 +601,8 @@
             $scope.schedule = [];
             $scope.weather = null;
             
-            // Maintenance Object (Default values)
             $scope.maint = {
-                active: true,
+                active: false, 
                 showWinner: false, 
                 winnerName: "Max Verstappen",
                 winnerImage: "",
@@ -642,51 +612,33 @@
                 timer2026: "00d 00h 00m 00s",
                 msgTitle: "WEBSITE UNDER MAINTENANCE", 
                 msgSub: "The servers are currently being updated.",
-                timerTitle: "Season Starts In", // Default
-                themeColor: "#e10600" // Default Red
+                timerTitle: "Season Starts In",
+                themeColor: "#e60000",
+                brandName: "Watchf1.live"
             };
 
             $scope.closeMaintenance = function() { $scope.maint.active = false; };
-            $scope.trustSrc = function(src) { 
-                if(!src) return ""; 
-                return $sce.trustAsResourceUrl(src); 
-            };
+            $scope.trustSrc = function(src) { if(!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
 
-            // Helper for converting hex to rgba for the maintenance badge background
             $scope.getTransparentColor = function(hex, alpha) {
-                // Set default alpha if not provided
                 if(!alpha) alpha = 0.15;
-
-                if(!hex) return 'rgba(225, 6, 0, ' + alpha + ')';
-                
-                // Remove hash if present
+                if(!hex) return 'rgba(230, 0, 0, ' + alpha + ')';
                 hex = hex.replace('#', '');
-                
-                // Fix: Handle 3-digit hex codes (e.g. #f00)
-                if (hex.length === 3) {
-                    hex = hex.split('').map(function(char) { return char + char; }).join('');
-                }
-
+                if (hex.length === 3) hex = hex.split('').map(function(char) { return char + char; }).join('');
                 var r = parseInt(hex.substring(0,2), 16);
                 var g = parseInt(hex.substring(2,4), 16);
                 var b = parseInt(hex.substring(4,6), 16);
-                
-                if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(225, 6, 0, ' + alpha + ')';
-
+                if (isNaN(r) || isNaN(g) || isNaN(b)) return 'rgba(230, 0, 0, ' + alpha + ')';
                 return 'rgba(' + r + ',' + g + ',' + b + ', ' + alpha + ')';
             };
 
-            // Helper: Safe date parsing (handles Firestore Timestamps & Strings)
             function safeDate(val) {
                 if (!val) return null;
-                if (typeof val === 'object' && typeof val.toDate === 'function') {
-                    return val.toDate(); // Firestore Timestamp
-                }
-                return new Date(val); // String
+                if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate(); 
+                return new Date(val); 
             }
 
-            // --- 1. LOAD LIVE CONFIG ---
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -697,35 +649,24 @@
                 }
             });
 
-            // --- 2. LOAD MAINTENANCE CONFIG ---
             db.collection("app_data").doc("maintenance_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     $scope.$apply(function() {
-                        // TOGGLE LOGIC
                         if (data.isActive !== undefined) $scope.maint.active = data.isActive;
-                        
-                        // Show Winner Logic
-                        if (data.showWinner !== undefined) $scope.maint.showWinner = data.showWinner;
-                        else $scope.maint.showWinner = false;
-
+                        if (data.showWinner !== undefined) $scope.maint.showWinner = data.showWinner; else $scope.maint.showWinner = false;
                         if(data.msgTitle) $scope.maint.msgTitle = data.msgTitle;
                         if(data.msgSub) $scope.maint.msgSub = data.msgSub;
-                        
-                        // Merge DB data into scope
                         if(data.winnerName) $scope.maint.winnerName = data.winnerName;
                         if(data.winnerTeam) $scope.maint.winnerTeam = data.winnerTeam;
                         if(data.winnerImage) $scope.maint.winnerImage = data.winnerImage;
-                        
-                        // Map Stats
                         $scope.maint.statsPoints = data.statsPoints || 0;
                         $scope.maint.statsWins = data.statsWins || 0;
                         $scope.maint.statsPodiums = data.statsPodiums || 0;
-                        
-                        // Map Target Date & Custom Title & Theme
                         $scope.maint.targetDate = data.targetDate; 
                         if(data.timerTitle) $scope.maint.timerTitle = data.timerTitle;
                         if(data.themeColor) $scope.maint.themeColor = data.themeColor;
+                        if(data.brandName !== undefined) $scope.maint.brandName = data.brandName;
                     });
                 }
             });
@@ -741,9 +682,7 @@
                     $scope.schedule = data.schedule.map(function(s) {
                         var startDate = safeDate(s.timer);
                         var startTime = startDate ? startDate.getTime() : NaN;
-                        
-                        // Determine End Time
-                        var endTime = startTime + (2 * 60 * 60 * 1000); // Default +2 hours
+                        var endTime = startTime + (2 * 60 * 60 * 1000); 
                         if (s.endTime && s.endTime.includes(':') && !isNaN(startTime)) {
                             var parts = s.endTime.split(':');
                             var endDate = new Date(startDate);
@@ -751,13 +690,7 @@
                             endTime = endDate.getTime();
                             if(endTime < startTime) endTime += 86400000;
                         }
-
-                        return { 
-                            ...s, 
-                            start: startTime, 
-                            end: endTime,
-                            status: 'upcoming' 
-                        };
+                        return { ...s, start: startTime, end: endTime, status: 'upcoming' };
                     });
                 }
 
@@ -768,15 +701,11 @@
                 updateTimers();
             }
 
-            // --- 3. TIMERS ---
-            // Changed from var to function to avoid hoisting issues
             function updateTimers() {
                 var now = new Date().getTime();
 
-                // Maintenance Timer
                 if($scope.maint.targetDate) {
                     var targetDateObj = safeDate($scope.maint.targetDate);
-                    
                     if (targetDateObj && !isNaN(targetDateObj.getTime())) {
                         var target = targetDateObj.getTime();
                         var diff = target - now;
@@ -792,19 +721,15 @@
                     }
                 }
 
-                // Session Timers
                 if(!$scope.schedule) return;
                 $scope.nextUp = null;
                 $scope.activeSession = null;
 
                 $scope.schedule.forEach(function(session) {
                     if(isNaN(session.start)) return;
-
                     if (now < session.start) {
                         session.status = 'upcoming';
-                        if (!$scope.nextUp || session.start < $scope.nextUp.start) {
-                            $scope.nextUp = session;
-                        }
+                        if (!$scope.nextUp || session.start < $scope.nextUp.start) $scope.nextUp = session;
                     } else if (now >= session.start && now < session.end) {
                         session.status = 'live';
                         $scope.activeSession = session; 
@@ -821,11 +746,9 @@
                     var s = Math.floor((dist % (1000 * 60)) / 1000);
                     $scope.nextUp.timerStr = (d>0 ? d+"d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
                 }
-            };
+            }
 
             $interval(updateTimers, 1000);
-            
-            // Helpers
             function pad(num) { return num < 10 ? '0' + num : num; }
 
             $scope.formatTime12 = function(t) {
@@ -834,8 +757,7 @@
                 var h = parseInt(p[0]);
                 var m = p[1];
                 var a = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                h = h ? h : 12;
+                h = h % 12; h = h ? h : 12;
                 return h + ':' + m + ' ' + a;
             };
             
