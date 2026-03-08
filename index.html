@@ -424,15 +424,18 @@
             // --- ANALYTICS TRACKING ---
             const analyticsRef = db.collection("app_data").doc("analytics");
             
-            // Increment total views and active viewers when page loads
+            // 1. Instantly log the view on page load
             analyticsRef.set({
                 totalViews: firebase.firestore.FieldValue.increment(1),
                 activeViewers: firebase.firestore.FieldValue.increment(1)
-            }, { merge: true }).catch(e => console.error("Error logging visit:", e));
+            }, { merge: true })
+            .then(() => console.log("Live view tracked!"))
+            .catch(e => console.error("Tracking blocked (Check Firebase Rules):", e));
 
-            // Decrement active viewers when tab is closed/refreshed
-            $window.addEventListener('beforeunload', function() {
-                analyticsRef.set({
+            // 2. Safely remove the active viewer when they close the tab or reload
+            $window.addEventListener('beforeunload', function(e) {
+                // Keep the connection alive just long enough to send the -1 signal
+                db.collection("app_data").doc("analytics").set({
                     activeViewers: firebase.firestore.FieldValue.increment(-1)
                 }, { merge: true });
             });
