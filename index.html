@@ -403,7 +403,7 @@
         var app = angular.module('f1App', []);
         app.config(function($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
         
-        app.controller('MainController', function($scope, $sce, $interval) {
+        app.controller('MainController', function($scope, $sce, $interval, $window) {
             $scope.isTheater = false;
             $scope.toggleTheater = function() { $scope.isTheater = !$scope.isTheater; };
             $scope.showAllStandings = false;
@@ -420,6 +420,23 @@
             $scope.schedule = []; 
             $scope.weather = null;
             $scope.standingsView = 'drivers';
+
+            // --- ANALYTICS TRACKING ---
+            const analyticsRef = db.collection("app_data").doc("analytics");
+            
+            // Increment total views and active viewers when page loads
+            analyticsRef.set({
+                totalViews: firebase.firestore.FieldValue.increment(1),
+                activeViewers: firebase.firestore.FieldValue.increment(1)
+            }, { merge: true }).catch(e => console.error("Error logging visit:", e));
+
+            // Decrement active viewers when tab is closed/refreshed
+            $window.addEventListener('beforeunload', function() {
+                analyticsRef.set({
+                    activeViewers: firebase.firestore.FieldValue.increment(-1)
+                }, { merge: true });
+            });
+            // --------------------------
 
             $scope.trustSrc = function(src) { if(!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function(stream) { if(stream && stream.url) $scope.currentStream = stream; };
