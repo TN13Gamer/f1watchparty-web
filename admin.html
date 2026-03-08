@@ -486,7 +486,7 @@
                     </div>
                 </div>
                 <p style="font-size: 11px; color: var(--text-muted); text-align: center;">
-                    * Active Viewers and Total Views require your main website code to push data back to this database collection.
+                    * Active Viewers goes up when users visit the main site and drops when they leave.
                 </p>
             </div>
 
@@ -565,7 +565,6 @@
                 $scope.loginError = "Authenticating...";
                 auth.signInWithEmailAndPassword($scope.creds.email, $scope.creds.pass)
                     .then(() => {
-                        // Increment admin login count on manual login
                         db.collection("app_data").doc("analytics").set({
                             adminVisits: firebase.firestore.FieldValue.increment(1)
                         }, {merge: true});
@@ -573,6 +572,7 @@
                     })
                     .catch(e => $scope.$apply(() => $scope.loginError = e.message));
             };
+            
             $scope.logout = () => {
                 $scope.addLog("Admin logged out.");
                 auth.signOut();
@@ -580,7 +580,6 @@
 
             // --- DATA LOADING ---
             $scope.loadAllData = function() {
-                // Fetch Main Settings
                 db.collection("app_data").doc("live_config").get().then(doc => {
                     $scope.$apply(() => {
                         $scope.config = doc.exists ? doc.data() : {};
@@ -594,12 +593,15 @@
                     });
                 });
 
-                // Listen to Analytics Live
+                // Listen to Analytics Live with $timeout to fix UI freezing
                 db.collection("app_data").doc("analytics").onSnapshot((doc) => {
-                    $scope.$apply(() => {
+                    $timeout(() => {
                         if (doc.exists) {
-                            $scope.analytics = doc.data();
-                            if (!$scope.analytics.logs) $scope.analytics.logs = [];
+                            let data = doc.data();
+                            $scope.analytics.activeViewers = data.activeViewers || 0;
+                            $scope.analytics.totalViews = data.totalViews || 0;
+                            $scope.analytics.adminVisits = data.adminVisits || 0;
+                            if (data.logs) $scope.analytics.logs = data.logs;
                         }
                     });
                 });
@@ -665,7 +667,7 @@
                         adminVisits: 0,
                         logs: [{ action: "Analytics Reset by Admin", time: Date.now() }]
                     }).then(() => {
-                        $scope.$apply(() => $scope.showToast("Analytics reset successfully.", "success"));
+                        $scope.showToast("Analytics reset successfully.", "success");
                     });
                 }
             }
