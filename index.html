@@ -1418,12 +1418,20 @@
             $scope.activePopup = null;
             let lastFLDriver = null;
             let raceFinishedAnnounced = false;
+            let initialLoadHandled = false;
 
             $scope.$watch('standings', function(newStandings) {
                 if (!newStandings || newStandings.length === 0) return;
                 
                 // 1. Fastest Lap Detection
                 const currentFL = newStandings.find(d => d.isFastestLap);
+                
+                // Skip the very first detection on page load
+                if (!initialLoadHandled && currentFL) {
+                    lastFLDriver = currentFL.name;
+                    return;
+                }
+
                 if (currentFL && currentFL.name !== lastFLDriver) {
                     lastFLDriver = currentFL.name;
                     $scope.showPopup({
@@ -1436,7 +1444,15 @@
             }, true);
 
             $scope.$watch('activeSession', function(session) {
-                if (session && (session.name.includes('Finished') || session.status === 'finished') && !raceFinishedAnnounced) {
+                if (!session) return;
+
+                // Skip the very first detection on page load
+                if (!initialLoadHandled && (session.name.includes('Finished') || session.status === 'finished')) {
+                    raceFinishedAnnounced = true;
+                    return;
+                }
+
+                if ((session.name.includes('Finished') || session.status === 'finished') && !raceFinishedAnnounced) {
                     raceFinishedAnnounced = true;
                     $scope.showPopup({
                         type: 'checkered-flag',
@@ -1445,6 +1461,9 @@
                         msg: 'The checkered flag has been waved!'
                     });
                 }
+                
+                // Once we have a session, we can mark initial load as done
+                if (session) initialLoadHandled = true;
             });
 
             $scope.showPopup = function(data) {
