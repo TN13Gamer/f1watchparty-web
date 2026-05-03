@@ -647,110 +647,58 @@
             }, 10000); // 10 seconds
 
             // --- STANDINGS SYNC ---
-            // Fetches directly from Jolpica (official FIA data = same source as f1.com)
-            // Silently saves to Firestore → public site updates instantly via onSnapshot
+            // /api/sync-standings (Vercel serverless) is called by cron-job.org every 30s.
+            // Admin panel just re-reads from Firestore to show what the server has already synced.
             $scope.fetchingStandings = false;
             $scope.standingsLastUpdated = null;
 
-            var TEAM_ALIASES = {
-                'Mercedes':         ['mercedes', 'amg'],
-                'Ferrari':          ['ferrari', 'scuderia'],
-                'McLaren':          ['mclaren'],
-                'Red Bull':         ['red bull', 'redbull', 'oracle'],
-                'Aston Martin':     ['aston martin', 'aston'],
-                'Alpine F1 Team':   ['alpine'],
-                'Williams':         ['williams'],
-                'RB F1 Team':       ['racing bulls', 'rb f1', 'rb ', 'vcarb', 'alphatauri'],
-                'Audi':             ['audi', 'sauber', 'kick'],
-                'Haas F1 Team':     ['haas'],
-                'Cadillac F1 Team': ['cadillac', 'andretti']
-            };
-
-            $scope.fetchF1Standings = function(silent) {
-                if ($scope.fetchingStandings) return;
-                $scope.fetchingStandings = true;
-
-                $http.get('https://api.jolpi.ca/ergast/f1/current/driverstandings/')
-                    .then(function(dRes) {
-                        return $http.get('https://api.jolpi.ca/ergast/f1/current/constructorstandings/')
-                            .then(function(cRes) { return { d: dRes.data, c: cRes.data }; });
-                    })
-                    .then(function(data) {
-                        var dl = data.d && data.d.MRData &&
-                                 data.d.MRData.StandingsTable &&
-                                 data.d.MRData.StandingsTable.StandingsLists &&
-                                 data.d.MRData.StandingsTable.StandingsLists[0] &&
-                                 data.d.MRData.StandingsTable.StandingsLists[0].DriverStandings;
-
-                        if (dl && dl.length > 0) {
-                            dl.forEach(function(entry) {
-                                var lastName = entry.Driver.familyName.toLowerCase();
-                                var pts = parseInt(entry.points) || 0;
-                                for (var i = 0; i < ($scope.config.standings || []).length; i++) {
-                                    if (!$scope.config.standings[i].name) continue;
-                                    if ($scope.config.standings[i].name.toLowerCase().indexOf(lastName) !== -1) {
-                                        $scope.config.standings[i].points = pts; break;
-                                    }
-                                }
-                            });
-                            $scope.config.standings.sort(function(a, b) { return (b.points||0)-(a.points||0); });
-                        }
-
-                        var cl = data.c && data.c.MRData &&
-                                 data.c.MRData.StandingsTable &&
-                                 data.c.MRData.StandingsTable.StandingsLists &&
-                                 data.c.MRData.StandingsTable.StandingsLists[0] &&
-                                 data.c.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
-
-                        if (cl && cl.length > 0) {
-                            cl.forEach(function(entry) {
-                                var apiName = entry.Constructor.name;
-                                var pts = parseInt(entry.points) || 0;
-                                var aliases = TEAM_ALIASES[apiName] || [apiName.toLowerCase()];
-                                for (var i = 0; i < ($scope.config.constructors || []).length; i++) {
-                                    if (!$scope.config.constructors[i].name) continue;
-                                    var n = $scope.config.constructors[i].name.toLowerCase();
-                                    var matched = false;
-                                    for (var j = 0; j < aliases.length; j++) {
-                                        if (n.indexOf(aliases[j]) !== -1) { matched = true; break; }
-                                    }
-                                    if (matched) { $scope.config.constructors[i].points = pts; break; }
-                                }
-                            });
-                            $scope.config.constructors.sort(function(a,b) { return (b.points||0)-(a.points||0); });
-                        }
-
-                        $scope.fetchingStandings = false;
-                        $scope.standingsLastUpdated = new Date().toLocaleTimeString();
-                        $scope.saveLiveConfig(true); // push to Firestore → live site updates via onSnapshot
-
-                        if (!silent) {
-                            $scope.showToast('Points synced from official F1 data! (' + $scope.standingsLastUpdated + ')', 'success');
-                            $scope.addLog('Synced standings from F1 official data');
-                        }
-                    })
-                    .catch(function(err) {
-                        $scope.fetchingStandings = false;
-                        console.error('[standings] error:', err);
-                        if (!silent) $scope.showToast('Failed to sync standings. Check connection.', 'error');
-                    });
-            };
-
-            // Auto-poll every 30s while admin is open → keeps Firestore current → live site always up to date
-            $interval(function() {
-                if ($scope.isLoggedIn && $scope.config && ($scope.config.standings || []).length > 0) {
-                    $scope.fetchF1Standings(true);
-                }
-            }, 30000);
-
-            // Fetch once 2s after login (after config loads)
+            // Read lastStandingsSync timestamp from Firestore on load
             $scope.$watch('isLoggedIn', function(val) {
                 if (val) {
                     $timeout(function() {
-                        if (($scope.config.standings || []).length > 0) $scope.fetchF1Standings(true);
-                    }, 2000);
+                        db.collection('app_data').doc('live_config').get().then(function(doc) {
+                            if (doc.exists && doc.data().lastStandingsSync) {
+                                var d = new Date(doc.data().lastStandingsSync);
+                                $scope.standingsLastUpdated = d.toLocaleTimeString();
+                                if (!$scope.$$phase) $scope.$apply();
+                            }
+                        });
+                    }, 1500);
                 }
             });
+
+            $scope.fetchF1Standings = function() {
+                if ($scope.fetchingStandings) return;
+                $scope.fetchingStandings = true;
+
+                // Reload from Firestore — the /api/sync-standings cron has already updated it
+                db.collection('app_data').doc('live_config').get().then(function(doc) {
+                    if (doc.exists) {
+                        var data = doc.data();
+                        if (data.standings) {
+                            $scope.config.standings = data.standings;
+                            // Ensure sorted locally
+                            $scope.config.standings.sort((a, b) => (b.points || 0) - (a.points || 0));
+                        }
+                        if (data.constructors) {
+                            $scope.config.constructors = data.constructors;
+                            // Ensure sorted locally
+                            $scope.config.constructors.sort((a, b) => (b.points || 0) - (a.points || 0));
+                        }
+                        if (data.lastStandingsSync) {
+                            $scope.standingsLastUpdated = new Date(data.lastStandingsSync).toLocaleTimeString();
+                        }
+                        $scope.showToast('Standings refreshed & sorted from server sync!', 'success');
+                    }
+                    $scope.fetchingStandings = false;
+                    if (!$scope.$$phase) $scope.$apply();
+                }).catch(function(err) {
+                    $scope.fetchingStandings = false;
+                    $scope.showToast('Refresh failed: ' + err.message, 'error');
+                    if (!$scope.$$phase) $scope.$apply();
+                });
+            };
+
 
 
             // --- AUTO WEATHER FETCHER ---
@@ -957,21 +905,24 @@
                 $scope.config.standings.push({ name: "Driver", team: "Team", points: 0, image: "" });
                 $scope.addLog("Added new Driver row");
             };
-            $scope.sortDrivers = function() { 
-                $scope.config.standings.sort(function(a, b) { return (parseInt(b.points)||0) - (parseInt(a.points)||0); });
-                $scope.showToast('Drivers sorted by points!', 'success');
-                $scope.addLog('Sorted Driver Standings');
+            $scope.sortDrivers = () => { 
+                if ($scope.config.standings && $scope.config.standings.length > 0) {
+                    $scope.config.standings.sort((a, b) => (parseFloat(b.points) || 0) - (parseFloat(a.points) || 0)); 
+                    $scope.showToast("Drivers sorted by points.", "success");
+                    $scope.addLog("Manually sorted Driver Standings");
+                }
             };
-
             
             $scope.addConstructor = () => {
                 $scope.config.constructors.push({ name: "New Team", points: 0 });
                 $scope.addLog("Added new Team row");
             };
-            $scope.sortConstructors = function() { 
-                $scope.config.constructors.sort(function(a, b) { return (parseInt(b.points)||0) - (parseInt(a.points)||0); });
-                $scope.showToast('Constructors sorted by points!', 'success');
-                $scope.addLog('Sorted Team Standings');
+            $scope.sortConstructors = () => { 
+                if ($scope.config.constructors && $scope.config.constructors.length > 0) {
+                    $scope.config.constructors.sort((a, b) => (parseFloat(b.points) || 0) - (parseFloat(a.points) || 0)); 
+                    $scope.showToast("Constructors sorted by points.", "success");
+                    $scope.addLog("Manually sorted Team Standings");
+                }
             };
             
             $scope.addSession = () => {
