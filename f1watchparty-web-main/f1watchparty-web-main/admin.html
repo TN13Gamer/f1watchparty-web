@@ -835,6 +835,85 @@
       </div>
 
       <div ng-show="currentView === 'live'">
+        <!-- LIVE RACE TRACKER - HIGHLIGHTED -->
+        <div
+          class="admin-section"
+          style="
+            border: 2px solid var(--live-green);
+            box-shadow: 0 0 25px rgba(0, 230, 118, 0.15);
+            margin-bottom: 25px;
+            background: rgba(0, 230, 118, 0.05);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 15px;
+            "
+          >
+            <div>
+              <h3 style="margin-bottom: 5px; color: var(--live-green)">
+                <i
+                  class="fa-solid fa-satellite-dish"
+                  style="margin-right: 10px"
+                ></i>
+                Live Race Tracker (Local Scraper)
+              </h3>
+              <p style="font-size: 12px; color: #ccc; margin: 0">
+                Syncs live race positions directly from F1.com to your viewers.
+              </p>
+              <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px">
+                <i class="fa-solid fa-circle-info"></i> Ensure <code>node server.js</code> is running on your PC.
+              </p>
+            </div>
+            <div
+              class="live-controls"
+              style="display: flex; flex-direction: column; gap: 8px; min-width: 200px"
+            >
+              <button
+                class="btn btn-primary"
+                ng-click="toggleLiveRace()"
+                style="padding: 12px; font-weight: 800"
+              >
+                <i
+                  class="fa-solid"
+                  ng-class="liveRace.active ? 'fa-stop' : 'fa-play'"
+                  style="margin-right: 8px"
+                ></i>
+                {{liveRace.active ? 'STOP LIVE SYNC' : 'START LIVE SYNC'}}
+              </button>
+
+              <div class="sync-status" ng-class="{'active': liveRace.active}" style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1)">
+                <span class="pulse-dot" ng-if="liveRace.active"></span>
+                <span style="font-family: monospace; font-size: 11px">{{liveRace.status}}</span>
+              </div>
+
+              <div style="margin-top: 2px" ng-if="liveRace.active">
+                <label
+                  style="
+                    color: #fff;
+                    font-size: 11px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    ng-model="liveRace.autoPush"
+                    style="width: 16px; height: 16px; margin: 0"
+                  />
+                  Auto-Push to Viewers
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           style="
             display: flex;
@@ -983,7 +1062,8 @@
               </div>
             </div>
           </div>
-        </div>
+
+
 
         <div class="admin-section">
           <h3>
@@ -1234,112 +1314,7 @@
       </div>
 
       <div ng-show="currentView === 'scores'">
-        <div
-          class="admin-section"
-          style="
-            border: 2px solid var(--live-green);
-            box-shadow: 0 0 20px rgba(0, 230, 118, 0.1);
-          "
-        >
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <div>
-              <h3 style="margin-bottom: 5px">
-                <i
-                  class="fa-solid fa-satellite-dish"
-                  style="color: var(--live-green); margin-right: 10px"
-                ></i>
-                Live Race Tracker (OpenF1)
-              </h3>
-              <p style="font-size: 11px; color: var(--text-muted); margin: 0">
-                Auto-syncs live race positions and calculates provisional
-                championship points. Leave this page open during the race.
-              </p>
-            </div>
-            <div
-              class="live-controls"
-              style="display: flex; flex-direction: column; gap: 10px"
-            >
-              <div style="display: flex; gap: 10px">
-                <button
-                  class="btn btn-primary"
-                  ng-click="toggleLiveRace()"
-                  style="flex: 1"
-                >
-                  <i
-                    class="fa-solid"
-                    ng-class="liveRace.active ? 'fa-stop' : 'fa-play'"
-                  ></i>
-                  {{liveRace.active ? 'Stop Live Sync' : 'Start Live Sync'}}
-                </button>
-                <button
-                  class="btn btn-outline"
-                  ng-click="forceRefreshSession()"
-                  ng-if="liveRace.active"
-                  title="Force refresh today's session"
-                >
-                  <i class="fa-solid fa-sync"></i>
-                </button>
-              </div>
 
-              <div
-                class="session-info-badge"
-                ng-if="liveRace.active"
-                style="
-                  background: rgba(255, 255, 255, 0.05);
-                  padding: 8px;
-                  border-radius: 8px;
-                  font-size: 11px;
-                "
-              >
-                <div
-                  style="color: #888; font-size: 9px; text-transform: uppercase"
-                >
-                  Tracking Session:
-                </div>
-                <div
-                  style="
-                    color: var(--f1-red);
-                    font-weight: 800;
-                    font-size: 13px;
-                  "
-                >
-                  {{liveRace.sessionName}}
-                </div>
-              </div>
-
-              <div class="sync-status" ng-class="{'active': liveRace.active}">
-                <span class="pulse-dot" ng-if="liveRace.active"></span>
-                {{liveRace.status}}
-              </div>
-
-              <div style="margin-top: 5px" ng-if="liveRace.active">
-                <label
-                  style="
-                    color: #fff;
-                    font-size: 11px;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    cursor: pointer;
-                  "
-                >
-                  <input
-                    type="checkbox"
-                    ng-model="liveRace.autoPush"
-                    style="width: 14px; height: 14px; margin: 0"
-                  />
-                  Auto-Push Syncs to Viewers
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div
           style="display: flex; justify-content: flex-end; margin-bottom: 15px"
