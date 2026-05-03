@@ -29,37 +29,28 @@ async function scrapeLiveLeaderboard() {
         // We evaluate directly in the browser context
         const leaderboardData = await page.evaluate(() => {
             const data = [];
+            // Very broad selector to catch any potential rows
+            const rows = document.querySelectorAll('tr, [class*="row"], [class*="driver"]');
             
-            // F1 Lite heavily uses dynamic classes. We will robustly look for rows that contain positions 1-20
-            // and known driver acronyms (e.g. VER, NOR, LEC).
-            // A typical row will have: position, driver name/acronym, gap, interval
+            console.log(`Found ${rows.length} potential rows`);
             
-            // 1. Try to find the main table or list
-            const possibleRows = document.querySelectorAll('tr, li, .leaderboard-row, [class*="driver"]');
-            
-            let posCount = 1;
-            possibleRows.forEach(row => {
+            rows.forEach(row => {
                 const text = row.innerText || '';
+                // Split by newline and remove empty/whitespace-only parts
+                const parts = text.split(/\n/).map(p => p.trim()).filter(p => p && p.length > 0);
                 
-                // Fast heuristic to check if it's a driver row (has a position number at the start)
-                const isDriverRow = text.match(new RegExp(`^\\s*${posCount}\\s+`)) || 
-                                    text.match(/VER|NOR|LEC|SAI|HAM|RUS|PER|PIA|ALO|STR|TSU|RIC|HUL|MAG|BOT|ZHO|ALB|SAR|GAS|OCO/);
-                                    
-                if (isDriverRow && text.length > 5 && text.length < 100) {
-                    // Extract data (this is a generic extractor as exact classes change)
-                    // We split by newline or multiple spaces
-                    const parts = text.split(/\n|\s{2,}/).map(p => p.trim()).filter(p => p);
-                    
-                    if (parts.length >= 2) {
+                // A valid driver row usually has position as the first part (1-20)
+                const pos = parseInt(parts[0]);
+                if (!isNaN(pos) && pos >= 1 && pos <= 20) {
+                    // Avoid duplicate entries for the same position if we caught nested elements
+                    if (!data.find(d => d.position === pos)) {
                         data.push({
-                            position: posCount,
-                            // Attempt to guess which part is the driver (usually the second or third part, 3 letters)
-                            driver: parts.find(p => p.length === 3 && p === p.toUpperCase()) || parts[1] || 'UNK',
-                            gap: parts.find(p => p.includes('+') || p.includes('LAP')) || '',
-                            interval: parts[parts.length - 1] || '',
-                            raw: text // Kept for debugging
+                            position: pos,
+                            driver: parts[1] || 'UNK',
+                            gap: parts[2] || '',
+                            interval: parts[3] || '',
+                            raw: text.replace(/\n/g, ' | ')
                         });
-                        posCount++;
                     }
                 }
             });

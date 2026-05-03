@@ -4,6 +4,7 @@ npm-debug.log
 
 # Firebase Secret Key (IMPORTANT)
 serviceAccountKey.json
+f1-stream-live-firebase-adminsdk-fbsvc-*.json
 
 # Temporary Scrape Files
 f1_2026.html

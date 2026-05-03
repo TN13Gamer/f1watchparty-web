@@ -1787,7 +1787,7 @@
             driversMap: {}, // driver_number -> acronym
             pollInterval: null,
             weatherInterval: null,
-            autoPush: false, // Default to false as requested by user to prevent automatic saving
+            autoPush: true, // Automated by default as requested
           };
 
           const pointSystem = {
@@ -1852,7 +1852,7 @@
               $scope.pollLivePositions();
               $scope.liveRace.pollInterval = $interval(
                 $scope.pollLivePositions,
-                15000,
+                2000,
               );
 
               if (
