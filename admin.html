@@ -10,7 +10,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-
+    <!-- Firebase Data -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -33,10 +33,6 @@
 
         body {
             background-color: var(--bg-deep);
-            background-image: 
-                linear-gradient(rgba(225, 6, 0, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(225, 6, 0, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
             color: var(--text-main);
             font-family: 'Titillium Web', sans-serif;
             margin: 0; padding-bottom: 80px;
@@ -58,12 +54,12 @@
         .action-bar {
             position: sticky; top: 10px; z-index: 1000;
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(13, 13, 18, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(13, 13, 18, 0.85);
+            backdrop-filter: blur(20px);
             padding: 15px 25px; border-radius: 12px; 
             border: 1px solid var(--border);
             border-bottom: 2px solid var(--primary);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05);
             margin: 10px 0 20px 0;
         }
         .brand-logo { font-size: 20px; font-weight: 800; font-style: italic; display: flex; align-items: center; gap: 12px; letter-spacing: 1px;}
@@ -137,7 +133,7 @@
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         /* --- FORMS & SECTIONS --- */
-        .admin-section { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
+        .admin-section { background: rgba(18, 18, 22, 0.85); backdrop-filter: blur(15px); padding: 25px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05); position: relative; overflow: hidden; }
         .admin-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.5; }
         
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -191,8 +187,8 @@
         .img-preview { width: 38px; height: 38px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
 
         /* Login Overlay */
-        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,5,0.95); backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center; }
-        .login-box { background: var(--bg-surface); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); border-top: 4px solid var(--primary); width: 90%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,5,0.8); backdrop-filter: blur(15px); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: rgba(13, 13, 18, 0.85); backdrop-filter: blur(20px); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); border-top: 4px solid var(--primary); width: 90%; max-width: 380px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05); }
 
         @media (max-width: 768px) {
             .driver-list-header, .team-list-header { display: none; }
@@ -257,11 +253,14 @@
                     <button class="danger-btn" ng-click="quickResetTimers()"><i class="fa-solid fa-clock-rotate-left"></i> Reset Timers</button>
                 </div>
 
-                <button class="primary-btn" ng-click="saveLiveConfig()" ng-disabled="savingLive">
-                    <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingLive"></i>
-                    <div class="loading-spinner" ng-if="savingLive"></div>
-                    <span>{{ savingLive ? 'Saving...' : 'Save Live Settings' }}</span>
-                </button>
+                <div style="display:flex; gap:10px;">
+                    <button class="dashed-btn" ng-click="syncRaceDetails()" style="border-color: var(--tech-blue); color: var(--tech-blue);"><i class="fa-solid fa-rotate"></i> Sync Race Data</button>
+                    <button class="primary-btn" ng-click="saveLiveConfig()" ng-disabled="savingLive">
+                        <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingLive"></i>
+                        <div class="loading-spinner" ng-if="savingLive"></div>
+                        <span>{{ savingLive ? 'Saving...' : 'Save All Changes' }}</span>
+                    </button>
+                </div>
             </div>
 
             <div class="grid-row">
@@ -394,6 +393,36 @@
         </div>
 
         <div ng-show="currentView === 'scores'">
+            <div class="admin-section" style="border: 2px solid var(--live-green); box-shadow: 0 0 20px rgba(0, 230, 118, 0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="margin-bottom: 5px;"><i class="fa-solid fa-satellite-dish" style="color: var(--live-green); margin-right: 10px;"></i> Live Race Tracker (OpenF1)</h3>
+                        <p style="font-size: 11px; color: var(--text-muted); margin: 0;">Auto-syncs live race positions and calculates provisional championship points. Leave this page open during the race.</p>
+                    </div>
+                    <div class="live-controls" style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-primary" ng-click="toggleLiveRace()" style="flex:1;">
+                            <i class="fa-solid" ng-class="liveRace.active ? 'fa-stop' : 'fa-play'"></i> 
+                            {{liveRace.active ? 'Stop Live Sync' : 'Start Live Sync'}}
+                        </button>
+                        <button class="btn btn-outline" ng-click="forceRefreshSession()" ng-if="liveRace.active" title="Force refresh today's session">
+                            <i class="fa-solid fa-sync"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="session-info-badge" ng-if="liveRace.active" style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; font-size: 11px;">
+                        <div style="color: #888; font-size: 9px; text-transform: uppercase;">Tracking Session:</div>
+                        <div style="color: var(--f1-red); font-weight: 800; font-size: 13px;">{{liveRace.sessionName}}</div>
+                    </div>
+                    
+                    <div class="sync-status" ng-class="{'active': liveRace.active}">
+                        <span class="pulse-dot" ng-if="liveRace.active"></span>
+                        {{liveRace.status}}
+                    </div>
+                </div>
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
                 <button class="primary-btn" ng-click="saveLiveConfig()" ng-disabled="savingLive">
                     <i class="fa-solid fa-cloud-arrow-up" ng-if="!savingLive"></i>
@@ -409,6 +438,7 @@
                         <p style="font-size: 11px; color: var(--text-muted);">Update points for drivers and save to push to the live site.</p>
                     </div>
                     <div style="display: flex; gap: 10px;">
+                        <button class="dashed-btn" ng-click="apply2026Standings()" style="border-color: var(--primary); color: var(--primary);"><i class="fa-solid fa-calendar-check"></i> Sync 2026 Standings</button>
                         <button class="dashed-btn" ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort by Pts</button>
                         <button class="action-btn" ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add Driver</button>
                     </div>
@@ -523,7 +553,7 @@
 
         var app = angular.module('adminApp', []);
 
-        app.controller('AdminController', function($scope, $timeout, $interval) {
+        app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             $scope.currentView = 'live'; 
             $scope.isLoggedIn = false;
             $scope.creds = { email: "", pass: "" };
@@ -595,24 +625,238 @@
 
                 // Listen to Analytics Live with $timeout to fix UI freezing
                 db.collection("app_data").doc("analytics").onSnapshot((doc) => {
-                    $timeout(() => {
-                        if (doc.exists) {
-                            let data = doc.data();
-                            $scope.analytics.activeViewers = data.activeViewers || 0;
+                    if (doc.exists) {
+                        $timeout(() => {
+                            const data = doc.data();
                             $scope.analytics.totalViews = data.totalViews || 0;
                             $scope.analytics.adminVisits = data.adminVisits || 0;
                             if (data.logs) $scope.analytics.logs = data.logs;
+                        });
+                    }
+                });
+
+                // Listen to Active Devices for accurate viewer count
+                db.collection("app_data").doc("analytics").collection("active_devices").onSnapshot((snap) => {
+                    let now = Date.now();
+                    let activeCount = 0;
+                    snap.forEach(doc => {
+                        if (now - doc.data().lastActive < 60000) {
+                            activeCount++;
                         }
                     });
+                    $timeout(() => {
+                        $scope.analytics.activeViewers = activeCount;
+                    });
+                });
+
+                // Admin Cleanup Task: Periodically delete stale devices to keep database clean
+                setInterval(() => {
+                    db.collection("app_data").doc("analytics").collection("active_devices")
+                        .where("lastActive", "<", Date.now() - 90000)
+                        .get().then(snap => {
+                            snap.forEach(doc => doc.ref.delete());
+                        });
+                }, 60000);
+            };
+
+            // --- LIVE RACE TRACKER (OPENF1 API) ---
+            $scope.liveRace = {
+                active: false,
+                status: 'Stopped',
+                sessionName: 'N/A',
+                sessionKey: 'latest',
+                driversMap: {}, // driver_number -> acronym
+                pollInterval: null,
+                weatherInterval: null
+            };
+
+            const pointSystem = { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 };
+
+            $scope.forceRefreshSession = function() {
+                $scope.liveRace.status = 'Refreshing Session...';
+                $http.get('https://api.openf1.org/v1/sessions?session_key=latest')
+                    .then(res => {
+                        const s = res.data[0];
+                        if (s) {
+                            $scope.liveRace.sessionName = s.session_name;
+                            $scope.liveRace.sessionKey = s.session_key;
+                            $scope.showToast("Switched to session: " + s.session_name, "success");
+                            $scope.pollLivePositions();
+                        }
+                    });
+            };
+
+            $scope.toggleLiveRace = function() {
+                if ($scope.liveRace.active) {
+                    // STOP
+                    $scope.liveRace.active = false;
+                    $scope.config.isLiveRaceActive = false;
+                    $scope.liveRace.status = 'Stopped';
+                    $scope.liveRace.sessionName = 'N/A';
+                    if ($scope.liveRace.pollInterval) $interval.cancel($scope.liveRace.pollInterval);
+                    if ($scope.liveRace.weatherInterval) $interval.cancel($scope.liveRace.weatherInterval);
+                    
+                    if ($scope.config.standings) {
+                        $scope.config.standings.forEach(d => { d.livePoints = 0; d.livePosition = null; });
+                    }
+                    $scope.saveLiveConfig();
+                    $scope.showToast("Live tracking stopped.", "info");
+                } else {
+                    // START
+                    $scope.liveRace.active = true;
+                    $scope.config.isLiveRaceActive = true;
+                    $scope.liveRace.status = 'Detecting Session...';
+                    
+                    // 1. Fetch Session Info First
+                    $http.get('https://api.openf1.org/v1/sessions?session_key=latest')
+                        .then(function(sRes) {
+                            const s = sRes.data[0];
+                            if (s) {
+                                $scope.liveRace.sessionName = s.session_name;
+                                $scope.liveRace.sessionKey = s.session_key;
+                            }
+                            
+                            // 2. Fetch Drivers Map
+                            return $http.get('https://api.openf1.org/v1/drivers?session_key=latest');
+                        })
+                        .then(function(res) {
+                            res.data.forEach(d => {
+                                $scope.liveRace.driversMap[d.driver_number] = d.name_acronym;
+                            });
+                            $scope.liveRace.status = 'Polling Live Positions...';
+                            $scope.pollLivePositions(); 
+                            $scope.liveRace.pollInterval = $interval($scope.pollLivePositions, 30000); 
+
+                            if ($scope.config.raceData && $scope.config.raceData.location) {
+                                $scope.fetchWeather(true);
+                                $scope.liveRace.weatherInterval = $interval(function() {
+                                    $scope.fetchWeather(true);
+                                }, 300000);
+                            }
+                        })
+                        .catch(function(err) {
+                            $scope.showToast("Failed to connect to OpenF1 API.", "error");
+                            $scope.toggleLiveRace(); 
+                        });
+                }
+            };
+
+            $scope.pollLivePositions = function() {
+                if (!$scope.liveRace.active) return;
+                
+                // session_key=latest is dynamic but can sometimes be empty between sessions
+                const session_key = 'latest';
+                
+                // Use individual catch to ensure one failing endpoint doesn't break the whole sync
+                const p1 = $http.get(`https://api.openf1.org/v1/position?session_key=${session_key}`).catch(e => ({ data: [] }));
+                const p2 = $http.get(`https://api.openf1.org/v1/intervals?session_key=${session_key}`).catch(e => ({ data: [] }));
+                const p3 = $http.get(`https://api.openf1.org/v1/laps?session_key=${session_key}`).catch(e => ({ data: [] }));
+                const p4 = $http.get(`https://api.openf1.org/v1/sessions?session_key=${session_key}`).catch(e => ({ data: [] }));
+
+                Promise.all([p1, p2, p3, p4]).then(function(results) {
+                    const posRecords = results[0].data;
+                    const intervalRecords = results[1].data;
+                    const lapRecords = results[2].data;
+                    const sessionData = results[3].data[0];
+
+                    if (!posRecords || posRecords.length === 0) {
+                        $scope.$apply(() => { $scope.liveRace.status = 'No live data found for current session.'; });
+                        return;
+                    }
+
+                    // 1. Process Positions
+                    let latestPositions = {};
+                    posRecords.forEach(r => {
+                        if (!latestPositions[r.driver_number] || r.date > latestPositions[r.driver_number].date) {
+                            latestPositions[r.driver_number] = { position: r.position, date: r.date };
+                        }
+                    });
+
+                    // 2. Process Intervals (Gaps)
+                    let latestIntervals = {};
+                    if (intervalRecords && intervalRecords.length > 0) {
+                        intervalRecords.forEach(i => {
+                            if (!latestIntervals[i.driver_number] || i.date > latestIntervals[i.driver_number].date) {
+                                latestIntervals[i.driver_number] = i;
+                            }
+                        });
+                    }
+
+                    // 3. Process Laps (Fastest Lap)
+                    let fastestLap = { driver: null, time: Infinity };
+                    if (lapRecords && lapRecords.length > 0) {
+                        lapRecords.forEach(l => {
+                            if (l.lap_duration && l.lap_duration < fastestLap.time) {
+                                fastestLap = { driver: l.driver_number, time: l.lap_duration };
+                            }
+                        });
+                    }
+
+                    // 4. Checkered Flag Detection
+                    if (sessionData && (sessionData.status === 'finished' || (sessionData.session_name && sessionData.session_name.includes('Finished')))) {
+                        $scope.$apply(() => {
+                            $scope.liveRace.status = '🏁 CHECKERED FLAG';
+                            $scope.showToast("Session Finished. Stopping live tracking.", "success");
+                            if($scope.liveRace.active) $scope.toggleLiveRace(); 
+                        });
+                        return;
+                    }
+
+                    // Reset and Update our config
+                    $scope.$apply(() => {
+                        $scope.config.standings.forEach(d => { 
+                            d.livePoints = 0; 
+                            d.livePosition = null; 
+                            d.gapToLeader = null; 
+                            d.interval = null; 
+                            d.isFastestLap = false; 
+                        });
+
+                        Object.keys(latestPositions).forEach(driverNum => {
+                            let acronym = $scope.liveRace.driversMap[driverNum];
+                            if (acronym) {
+                                // Find driver by checking if name contains acronym OR if we have a match in common F1 surnames
+                                let driverObj = $scope.config.standings.find(d => {
+                                    if (!d.name) return false;
+                                    const n = d.name.toUpperCase();
+                                    const a = acronym.toUpperCase();
+                                    return n.includes(a) || n.split(' ').some(part => part.startsWith(a.substring(0,3)));
+                                });
+                                if (driverObj) {
+                                    driverObj.livePosition = parseInt(latestPositions[driverNum].position);
+                                    driverObj.livePoints = pointSystem[driverObj.livePosition] || 0;
+                                    
+                                    // Gaps
+                                    let intData = latestIntervals[driverNum];
+                                    if (intData) {
+                                        driverObj.gapToLeader = intData.gap_to_leader;
+                                        driverObj.interval = intData.interval;
+                                    }
+                                    
+                                    // FL
+                                    if (parseInt(driverNum) === fastestLap.driver) {
+                                        driverObj.isFastestLap = true;
+                                    }
+                                }
+                            }
+                        });
+
+                        $scope.liveRace.status = `Synced at ${new Date().toLocaleTimeString()}`;
+                        $scope.saveLiveConfig(true);
+                    });
+                }).catch(err => {
+                    console.error("Critical Sync Error:", err);
+                    $scope.$apply(() => { $scope.liveRace.status = 'Critical Sync Error. Check Console.'; });
                 });
             };
 
             // --- AUTO WEATHER FETCHER ---
-            $scope.fetchWeather = function() {
+            $scope.fetchWeather = function(silent = false) {
                 if (!$scope.config.raceData.location) {
-                    return $scope.showToast("Please enter a Circuit Location first.", "error");
+                    if (!silent) $scope.showToast("Please enter a Circuit Location first.", "error");
+                    return;
                 }
-                $scope.fetchingWeather = true;
+                if (!silent) $scope.fetchingWeather = true;
                 
                 fetch(`https://wttr.in/${encodeURIComponent($scope.config.raceData.location)}?format=j1`)
                     .then(res => res.json())
@@ -630,14 +874,18 @@
                             else $scope.config.weather.condition = 'sunny';
                             
                             $scope.fetchingWeather = false;
-                            $scope.showToast("Real-time weather pulled successfully!", "success");
-                            $scope.addLog(`Auto-fetched weather for ${$scope.config.raceData.location}`);
+                            if (!silent) {
+                                $scope.showToast("Real-time weather pulled successfully!", "success");
+                                $scope.addLog(`Auto-fetched weather for ${$scope.config.raceData.location}`);
+                            }
+                            // Auto-save silently so viewers get the update immediately
+                            $scope.saveLiveConfig(true);
                         });
                     })
                     .catch(e => {
                         $scope.$apply(() => {
                             $scope.fetchingWeather = false;
-                            $scope.showToast("Failed to fetch. API limit reached or invalid location.", "error");
+                            if (!silent) $scope.showToast("Failed to fetch. API limit reached or invalid location.", "error");
                         });
                     });
             };
@@ -673,10 +921,12 @@
             }
 
             // --- SAVE FUNCTIONS ---
-            $scope.saveLiveConfig = function() {
-                $scope.savingLive = true; 
-                $scope.statusText = "SAVING..."; 
-                $scope.statusType = "loading";
+            $scope.saveLiveConfig = function(silent = false) {
+                if (!silent) {
+                    $scope.savingLive = true; 
+                    $scope.statusText = "SAVING..."; 
+                    $scope.statusType = "loading";
+                }
 
                 let dataToSave = angular.copy($scope.config);
                 if(dataToSave.schedule) {
@@ -686,18 +936,154 @@
                 db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
                     .then(() => {
                         $scope.$apply(() => { 
-                            $scope.savingLive = false; 
-                            $scope.statusText = "LIVE"; 
-                            $scope.statusType = "success"; 
-                            $scope.showToast("Settings Saved Successfully!", "success");
-                            $scope.addLog("Saved Live Data Configuration");
+                            if (!silent) {
+                                $scope.savingLive = false; 
+                                $scope.statusText = "LIVE"; 
+                                $scope.statusType = "success"; 
+                                $scope.showToast("Settings Saved Successfully!", "success");
+                                $scope.addLog("Saved Live Data Configuration");
+                            }
                         });
                     })
                     .catch(e => {
                         $scope.$apply(() => {
                             $scope.savingLive = false; 
-                            $scope.showToast("Error: " + e.message, "error");
+                            if (!silent) $scope.showToast("Error: " + e.message, "error");
                         });
+                    });
+            };
+
+            $scope.apply2026Standings = function() {
+                if(!confirm("This will update the POINTS for your existing drivers based on current 2026 standings. Images and names will NOT be changed. Continue?")) return;
+                
+                // 2026 Data Points Map (Lowercase name -> points)
+                const pointsMap = {
+                    "antonelli": 75, "kimi antonelli": 75,
+                    "russell": 68, "george russell": 68,
+                    "leclerc": 55, "charles leclerc": 55,
+                    "hamilton": 43, "lewis hamilton": 43,
+                    "norris": 33, "lando norris": 33,
+                    "piastri": 28, "oscar piastri": 28,
+                    "bearman": 17, "oliver bearman": 17,
+                    "gasly": 16, "pierre gasly": 16,
+                    "verstappen": 16, "max verstappen": 16,
+                    "lawson": 10, "liam lawson": 10,
+                    "lindblad": 4, "arvid lindblad": 4,
+                    "hadjar": 4, "isack hadjar": 4,
+                    "bortoleto": 2, "gabriel bortoleto": 2,
+                    "sainz": 2, "carlos sainz": 2,
+                    "ocon": 1, "esteban ocon": 1,
+                    "colapinto": 1, "franco colapinto": 1,
+                    "hulkenberg": 0, "nico hulkenberg": 0,
+                    "albon": 0, "alexander albon": 0,
+                    "bottas": 0, "valtteri bottas": 0,
+                    "perez": 0, "sergio perez": 0,
+                    "alonso": 0, "fernando alonso": 0,
+                    "stroll": 0, "lance stroll": 0
+                };
+
+                // Update existing drivers only
+                if ($scope.config.standings) {
+                    $scope.config.standings.forEach(d => {
+                        if (!d.name) return;
+                        const nameLower = d.name.toLowerCase();
+                        
+                        // Try to find a match in the points map
+                        for (let key in pointsMap) {
+                            if (nameLower.includes(key) || key.includes(nameLower)) {
+                                d.points = pointsMap[key];
+                                break;
+                            }
+                        }
+                    });
+                    
+                    // Sort by points immediately
+                    $scope.config.standings.sort((a, b) => (b.points || 0) - (a.points || 0));
+                }
+
+                // Update constructor points (Robust Matching)
+                const constructorMap = {
+                    "mercedes": 143, "amg": 143,
+                    "ferrari": 98, "scuderia": 98,
+                    "mclaren": 61,
+                    "red bull": 20, "oracle": 20, "rbr": 20,
+                    "haas": 18,
+                    "alpine": 17,
+                    "racing bulls": 14, "rb": 14, "vcarb": 14,
+                    "audi": 2, "sauber": 2,
+                    "williams": 2,
+                    "cadillac": 0, "andretti": 0,
+                    "aston martin": 0, "aston": 0
+                };
+
+                if ($scope.config.constructors) {
+                    $scope.config.constructors.forEach(c => {
+                        if (!c.name) return;
+                        const nameLower = c.name.toLowerCase();
+                        for (let key in constructorMap) {
+                            if (nameLower.includes(key)) {
+                                c.points = constructorMap[key];
+                                break;
+                            }
+                        }
+                    });
+                    $scope.config.constructors.sort((a, b) => (b.points || 0) - (a.points || 0));
+                }
+
+                $scope.saveLiveConfig();
+                $scope.showToast("Points Updated & Sorted! (Images & Names Kept)", "success");
+            };
+
+            $scope.syncRaceDetails = function() {
+                $scope.showToast("Fetching latest race data...", "info");
+                
+                $http.get('https://api.openf1.org/v1/sessions?session_key=latest')
+                    .then(function(res) {
+                        const s = res.data[0];
+                        if (!s) return $scope.showToast("No active session found.", "error");
+
+                        // 1. Update Basic Info
+                        $scope.config.raceData.name = s.meeting_key + " - " + s.session_name; 
+                        $scope.config.raceData.location = s.location;
+                        $scope.config.raceData.circuit = s.circuit_short_name || s.location;
+                        
+                        // 2. Update Next Race Marquee
+                        $scope.config.nextRace = {
+                            name: s.session_name,
+                            circuit: s.location,
+                            date: new Date(s.date_start).toLocaleDateString('en-GB', { day:'2-digit', month:'short' }).toUpperCase(),
+                            isVisible: true
+                        };
+
+                        // 3. Try to fetch all sessions for this meeting to build schedule
+                        $http.get(`https://api.openf1.org/v1/sessions?meeting_key=${s.meeting_key}`)
+                            .then(function(meetingRes) {
+                                $scope.config.schedule = meetingRes.data.map(sess => {
+                                    const d = new Date(sess.date_start);
+                                    
+                                    // Calculate End Time (approx 1.5h for practice/qualy, 2h for race)
+                                    const duration = sess.session_name.toLowerCase().includes('race') ? 2 : 1.5;
+                                    const endD = new Date(d.getTime() + (duration * 60 * 60 * 1000));
+                                    
+                                    const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+                                    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+                                    
+                                    return {
+                                        name: sess.session_name,
+                                        day: days[d.getDay()],
+                                        date: d.getDate() + " " + months[d.getMonth()],
+                                        time: d.getHours() + ":" + (d.getMinutes()<10?'0':'') + d.getMinutes(),
+                                        endTime: endD.getHours() + ":" + (endD.getMinutes()<10?'0':'') + endD.getMinutes(),
+                                        timer: d.toISOString().slice(0,16).replace('T', ' '), // "YYYY-MM-DD HH:MM"
+                                        status: 'upcoming'
+                                    };
+                                });
+                                $scope.saveLiveConfig();
+                                $scope.showToast("Full weekend schedule synced!", "success");
+                            });
+                    })
+                    .catch(function(err) {
+                        $scope.showToast("Failed to fetch from OpenF1 API.", "error");
                     });
             };
 
