@@ -15,7 +15,6 @@
     "axios": "^1.16.0",
     "cheerio": "^1.2.0",
     "express": "^5.2.1",
-    "firebase-admin": "^13.8.0",
-    "puppeteer": "^24.42.0"
+    "firebase-admin": "^13.8.0"
   }
 }
