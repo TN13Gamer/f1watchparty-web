@@ -957,22 +957,21 @@
                 $scope.config.standings.push({ name: "Driver", team: "Team", points: 0, image: "" });
                 $scope.addLog("Added new Driver row");
             };
-            $scope.sortDrivers = () => { 
-                if(confirm("Sort Drivers by points?")) {
-                    $scope.config.standings.sort((a,b) => b.points - a.points); 
-                    $scope.addLog("Sorted Driver Standings");
-                }
+            $scope.sortDrivers = function() { 
+                $scope.config.standings.sort(function(a, b) { return (parseInt(b.points)||0) - (parseInt(a.points)||0); });
+                $scope.showToast('Drivers sorted by points!', 'success');
+                $scope.addLog('Sorted Driver Standings');
             };
+
             
             $scope.addConstructor = () => {
                 $scope.config.constructors.push({ name: "New Team", points: 0 });
                 $scope.addLog("Added new Team row");
             };
-            $scope.sortConstructors = () => { 
-                if(confirm("Sort Teams by points?")) {
-                    $scope.config.constructors.sort((a,b) => b.points - a.points); 
-                    $scope.addLog("Sorted Team Standings");
-                }
+            $scope.sortConstructors = function() { 
+                $scope.config.constructors.sort(function(a, b) { return (parseInt(b.points)||0) - (parseInt(a.points)||0); });
+                $scope.showToast('Constructors sorted by points!', 'success');
+                $scope.addLog('Sorted Team Standings');
             };
             
             $scope.addSession = () => {
