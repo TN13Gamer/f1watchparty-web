@@ -646,35 +646,107 @@
                 }
             }, 10000); // 10 seconds
 
-            // --- STANDINGS SYNC ---
-            // The backend server (server.js) automatically syncs standings from
-            // the official F1 API to Firestore every 30 seconds.
-            // The admin panel simply re-reads from Firestore to show latest data.
+            // --- STANDINGS SYNC (Jolpica F1 API — official FIA data, same as f1.com) ---
+            // Runs in browser every 10s — works on Vercel (no persistent server needed)
             $scope.fetchingStandings = false;
             $scope.standingsLastUpdated = null;
 
-            $scope.fetchF1Standings = function() {
+            const TEAM_ALIASES = {
+                'Red Bull':         ['red bull', 'redbull', 'oracle'],
+                'Mercedes':         ['mercedes', 'amg'],
+                'Ferrari':          ['ferrari', 'scuderia'],
+                'McLaren':          ['mclaren'],
+                'Aston Martin':     ['aston martin', 'aston'],
+                'Alpine F1 Team':   ['alpine'],
+                'Williams':         ['williams'],
+                'RB F1 Team':       ['rb f1', 'racing bulls', 'rb ', 'vcarb', 'alphatauri'],
+                'Audi':             ['audi', 'sauber', 'kick'],
+                'Haas F1 Team':     ['haas'],
+                'Cadillac F1 Team': ['cadillac', 'andretti']
+            };
+
+            $scope.fetchF1Standings = function(silent) {
                 if ($scope.fetchingStandings) return;
                 $scope.fetchingStandings = true;
 
-                // Reload config from Firestore — server.js has already updated it
-                db.collection('app_data').doc('live_config').get().then(function(doc) {
-                    if (doc.exists) {
-                        var data = doc.data();
-                        if (data.standings)    $scope.config.standings    = data.standings;
-                        if (data.constructors) $scope.config.constructors = data.constructors;
+                $http.get('https://api.jolpi.ca/ergast/f1/current/driverstandings/')
+                    .then(function(driverRes) {
+                        return $http.get('https://api.jolpi.ca/ergast/f1/current/constructorstandings/')
+                            .then(function(constructorRes) {
+                                return { d: driverRes.data, c: constructorRes.data };
+                            });
+                    })
+                    .then(function(data) {
+                        var driverList = data.d &&
+                            data.d.MRData &&
+                            data.d.MRData.StandingsTable &&
+                            data.d.MRData.StandingsTable.StandingsLists &&
+                            data.d.MRData.StandingsTable.StandingsLists[0] &&
+                            data.d.MRData.StandingsTable.StandingsLists[0].DriverStandings;
+
+                        if (driverList && driverList.length > 0) {
+                            driverList.forEach(function(entry) {
+                                var lastName = entry.Driver.familyName.toLowerCase();
+                                var apiPoints = parseInt(entry.points) || 0;
+                                var match = null;
+                                for (var i = 0; i < ($scope.config.standings || []).length; i++) {
+                                    if (!$scope.config.standings[i].name) continue;
+                                    if ($scope.config.standings[i].name.toLowerCase().indexOf(lastName) !== -1) {
+                                        match = $scope.config.standings[i]; break;
+                                    }
+                                }
+                                if (match) match.points = apiPoints;
+                            });
+                            $scope.config.standings.sort(function(a, b) { return (b.points||0) - (a.points||0); });
+                        }
+
+                        var constructorList = data.c &&
+                            data.c.MRData &&
+                            data.c.MRData.StandingsTable &&
+                            data.c.MRData.StandingsTable.StandingsLists &&
+                            data.c.MRData.StandingsTable.StandingsLists[0] &&
+                            data.c.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
+
+                        if (constructorList && constructorList.length > 0) {
+                            constructorList.forEach(function(entry) {
+                                var apiTeamName = entry.Constructor.name;
+                                var apiPoints = parseInt(entry.points) || 0;
+                                var aliases = TEAM_ALIASES[apiTeamName] || [apiTeamName.toLowerCase()];
+                                var match = null;
+                                for (var i = 0; i < ($scope.config.constructors || []).length; i++) {
+                                    if (!$scope.config.constructors[i].name) continue;
+                                    var n = $scope.config.constructors[i].name.toLowerCase();
+                                    for (var j = 0; j < aliases.length; j++) {
+                                        if (n.indexOf(aliases[j]) !== -1) { match = $scope.config.constructors[i]; break; }
+                                    }
+                                    if (match) break;
+                                }
+                                if (match) match.points = apiPoints;
+                            });
+                            $scope.config.constructors.sort(function(a, b) { return (b.points||0) - (a.points||0); });
+                        }
+
+                        $scope.fetchingStandings = false;
                         $scope.standingsLastUpdated = new Date().toLocaleTimeString();
-                        $scope.showToast('Standings refreshed! (' + $scope.standingsLastUpdated + ')', 'success');
-                    }
-                    $scope.fetchingStandings = false;
-                    $scope.$apply();
-                }).catch(function(err) {
-                    $scope.fetchingStandings = false;
-                    $scope.showToast('Refresh failed: ' + err.message, 'error');
-                    if (!$scope.$$phase) $scope.$apply();
-                });
+                        $scope.saveLiveConfig(true); // push to Firestore → index.html updates via onSnapshot
+
+                        if (!silent) {
+                            $scope.showToast('Standings synced! (' + $scope.standingsLastUpdated + ')', 'success');
+                            $scope.addLog('Synced standings from F1 API');
+                        }
+                    })
+                    .catch(function(err) {
+                        $scope.fetchingStandings = false;
+                        if (!silent) $scope.showToast('Failed to fetch standings.', 'error');
+                    });
             };
 
+            // Auto-poll every 10s while admin tab is open — saves to Firestore → live site updates instantly
+            $interval(function() {
+                if ($scope.isLoggedIn && $scope.config && $scope.config.standings && $scope.config.standings.length > 0) {
+                    $scope.fetchF1Standings(true);
+                }
+            }, 10000);
 
 
 
