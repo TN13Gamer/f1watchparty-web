@@ -3,8 +3,24 @@ const axios = require('axios');
 const admin = require('firebase-admin');
 const fs = require('fs');
 
+// Puppeteer is only available when running locally (not on Vercel)
+let scraper = null;
+try {
+    scraper = require('./f1_scraper.js');
+    console.log('✅ Puppeteer scraper loaded (local mode).');
+} catch (e) {
+    console.warn('⚠️  Puppeteer scraper not available (Vercel/serverless mode). Live scraping disabled.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// CORS: Allow the admin panel to call this API from any origin
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
 
 // Firebase initialization
 let db;
@@ -32,18 +48,18 @@ try {
   console.error('Failed to initialize Firebase Admin:', error);
 }
 
-// Load static 2026 schedule we scraped/generated
+// Load static 2026 schedule
 const schedule2026 = require('./schedule_2026.json');
 
-// Memory store
 const state = {
   activeSession: null,
-  livePositions: {},
+  livePositions: [],
   lastSync: null,
-  weather: { air: 0, track: 0, condition: 'sunny' }
+  weather: { air: 0, track: 0, condition: 'sunny' },
+  isLiveRace: false
 };
 
-// --- OpenF1 Polling ---
+// --- Session Detection via OpenF1 ---
 async function fetchLatestSession() {
   try {
     const { data } = await axios.get('https://api.openf1.org/v1/sessions?session_key=latest');
@@ -58,9 +74,8 @@ async function fetchLatestSession() {
         status: s.status
       };
       
-      // Auto-fetch weather based on the current track location
-      if(state.activeSession.location) fetchWeather(state.activeSession.location);
-
+      if (state.activeSession.location) fetchWeather(state.activeSession.location);
+      state.isLiveRace = true;
       return true;
     }
   } catch (error) {
@@ -76,11 +91,11 @@ async function fetchWeather(location) {
         let desc = data.current_condition[0].weatherDesc[0].value.toLowerCase();
         
         state.weather.air = temp;
-        state.weather.track = temp + Math.floor(Math.random() * 8) + 4; // Simulated track temp
+        state.weather.track = temp + Math.floor(Math.random() * 8) + 4;
         
-        if(desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower')) state.weather.condition = 'rain';
-        else if(desc.includes('cloud') || desc.includes('overcast')) state.weather.condition = 'cloudy';
-        else if(desc.includes('storm') || desc.includes('thunder')) state.weather.condition = 'storm';
+        if (desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower')) state.weather.condition = 'rain';
+        else if (desc.includes('cloud') || desc.includes('overcast')) state.weather.condition = 'cloudy';
+        else if (desc.includes('storm') || desc.includes('thunder')) state.weather.condition = 'storm';
         else state.weather.condition = 'sunny';
         
     } catch(e) {
@@ -93,31 +108,45 @@ async function syncToFirebase() {
         console.log('Simulating sync to Firebase...', new Date().toLocaleTimeString());
         return;
     }
-    
-    // In a full implementation, we'd map OpenF1 IDs to your existing Firestore drivers
-    // and push the update.
     try {
         const liveConfigRef = db.collection('app_data').doc('live_config');
-        
-        // Push weather and latest session info
         await liveConfigRef.set({
             weather: state.weather,
+            isLiveRaceActive: state.isLiveRace,
             lastAutoSync: Date.now()
         }, { merge: true });
-        
-        console.log('Successfully synced to Firebase at', new Date().toLocaleTimeString());
+        console.log(`✅ Synced weather & session to Firebase at ${new Date().toLocaleTimeString()}.`);
     } catch (e) {
         console.error('Firebase sync error:', e);
     }
 }
 
-// Polling intervals
-setInterval(fetchLatestSession, 60000); // Check session every minute
-setInterval(syncToFirebase, 30000);     // Push to Firebase every 30s
+// Polling intervals (only start in long-running mode, not on Vercel serverless)
+if (!process.env.VERCEL) {
+    setInterval(fetchLatestSession, 60000);
+    setInterval(syncToFirebase, 30000);
+}
 
+// --- API: Live Leaderboard (scraped from F1.com) ---
+app.get('/api/live-leaderboard', async (req, res) => {
+    try {
+        if (!scraper) {
+            // Vercel deployment: scraper not available, return empty
+            return res.json([]);
+        }
+        const data = await scraper.scrapeLiveLeaderboard();
+        res.json(data || []);
+    } catch (e) {
+        console.error('Scraper error:', e.message);
+        res.json([]);
+    }
+});
+
+// --- API: Status ---
 app.get('/', (req, res) => {
   res.json({
-    status: 'Automated F1 Backend is Running',
+    status: 'F1 Watch Party Backend Running',
+    mode: scraper ? 'local (scraper enabled)' : 'vercel (scraper disabled)',
     activeSession: state.activeSession,
     weather: state.weather,
     scheduleCount: schedule2026.length
@@ -125,7 +154,11 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, async () => {
-  console.log(`F1 Automation Server running on port ${PORT}`);
-  console.log('Fetching initial session data...');
-  await fetchLatestSession();
+  console.log(`🏎️  F1 Backend running on port ${PORT}`);
+  if (!process.env.VERCEL) {
+    console.log('Fetching initial session data...');
+    await fetchLatestSession();
+  }
 });
+
+module.exports = app;
