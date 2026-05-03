@@ -320,15 +320,6 @@
         .live-indicator-mini { background: rgba(255, 24, 1, 0.1); color: var(--f1-red); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; border: 1px solid rgba(255, 24, 1, 0.2); }
         .live-pulse { width: 5px; height: 5px; background: var(--f1-red); border-radius: 50%; box-shadow: 0 0 5px var(--f1-red); animation: pulse-red 1s infinite; }
 
-        .global-live-ticker { position: fixed; top: 0; left: 0; width: 100%; height: 30px; background: var(--f1-red); z-index: 10001; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.5); overflow: hidden; }
-        .ticker-content { display: flex; align-items: center; gap: 15px; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 800; color: white; letter-spacing: 1px; }
-        .ticker-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 1s infinite; }
-        .ticker-session { color: rgba(255,255,255,0.9); }
-        .ticker-divider { opacity: 0.3; }
-        .ticker-status { font-size: 8px; opacity: 0.8; }
-        
-        body.live-active header { margin-top: 30px; } /* Push header down when ticker is active */
-
         .w-label {
             color: var(--text-gray);
             font-size: 11px;
@@ -1136,17 +1127,6 @@
 </head>
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}" oncontextmenu="return false;">
-    <!-- GLOBAL LIVE TICKER -->
-    <div class="global-live-ticker" ng-if="isLiveRaceActive">
-        <div class="ticker-content">
-            <span class="ticker-dot"></span>
-            <span class="ticker-label">LIVE TELEMETRY:</span>
-            <span class="ticker-session">{{activeSession.name || raceData.name}}</span>
-            <span class="ticker-divider">|</span>
-            <span class="ticker-status">DATA STREAM ACTIVE</span>
-        </div>
-    </div>
-
     <!-- 3D Vanta Background Container -->
     <div id="vanta-bg"></div>
 
