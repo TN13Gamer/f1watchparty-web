@@ -1895,9 +1895,17 @@
           $scope.pollLivePositions = function () {
             if (!$scope.liveRace.active) return;
 
-            // Hit our scraper endpoint (relative URL works on both local and Vercel)
+            // Auto-detect: if running locally (file:// or localhost), hit the local server.
+            // If hosted on Vercel, use the relative /api path.
+            const isLocal = window.location.protocol === 'file:' || 
+                            window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1';
+            const scraperUrl = isLocal 
+                ? 'http://localhost:3000/api/live-leaderboard' 
+                : '/api/live-leaderboard';
+
             $http
-              .get("/api/live-leaderboard")
+              .get(scraperUrl)
               .then(function (res) {
                 const scrapedData = res.data;
 
