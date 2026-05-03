@@ -4,6 +4,7 @@
   "description": "A high-performance, real-time Formula 1 streaming dashboard. This project features a sleek, dark-themed user interface with live race status, weekend schedules, championship standings, and a dedicated administrative control panel powered by Firebase.",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

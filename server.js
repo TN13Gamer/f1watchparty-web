@@ -9,16 +9,24 @@ const PORT = process.env.PORT || 3000;
 // Firebase initialization
 let db;
 try {
-  // Try to load the service account if it exists
-  if (fs.existsSync('./serviceAccountKey.json')) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // Vercel / Production mode: load from environment variable
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    db = admin.firestore();
+    console.log('Firebase Admin initialized from Environment Variable.');
+  } else if (fs.existsSync('./serviceAccountKey.json')) {
+    // Local development mode: load from file
     const serviceAccount = require('./serviceAccountKey.json');
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
     db = admin.firestore();
-    console.log('Firebase Admin initialized successfully.');
+    console.log('Firebase Admin initialized from local file.');
   } else {
-    console.warn('\n!!! WARNING !!!\nserviceAccountKey.json not found. Firebase writes will be simulated.\nTo fully automate, please add your Firebase Admin SDK JSON file to this directory as serviceAccountKey.json.\n');
+    console.warn('\n!!! WARNING !!!\nNo Firebase credentials found (env or file). Firebase writes will be simulated.\n');
   }
 } catch (error) {
   console.error('Failed to initialize Firebase Admin:', error);
