@@ -19,7 +19,7 @@
 
     <!-- 3D Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
@@ -55,12 +55,23 @@
             /* Fallback */
         }
 
-        #vanta-bg {
+        .video-background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -3;
+        }
+
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 5, 5, 0.75); /* Dark overlay for readability */
             z-index: -2;
         }
 
@@ -1127,8 +1138,11 @@
 </head>
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}" oncontextmenu="return false;">
-    <!-- 3D Vanta Background Container -->
-    <div id="vanta-bg"></div>
+    <!-- Video Background Container -->
+    <video autoplay loop muted playsinline class="video-background">
+        <source src="F1 Logo Animation Concept 1080P.mp4" type="video/mp4">
+    </video>
+    <div class="video-overlay"></div>
 
     <div class="loader" ng-class="{'hide': dataLoaded}">
         <div class="spinner"></div>
@@ -1606,27 +1620,8 @@
             };
         });
 
-        // Initialize Vanta 3D Background
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof VANTA !== 'undefined') {
-                VANTA.NET({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    scale: 1.00,
-                    scaleMobile: 1.00,
-                    color: 0xe60000,
-                    backgroundColor: 0x050505,
-                    points: 12.00,
-                    maxDistance: 22.00,
-                    spacing: 18.00,
-                    showDots: true
-                });
-            }
-        });
+        // Removed Vanta 3D Background - Using F1 Video Background instead
+
 
         // ============================================================
         //  LIVE F1 TRACK MAP ENGINE
@@ -1690,12 +1685,16 @@
                 try {
                     const res = await fetch(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`);
                     const data = await res.json();
-                    data.forEach(d => {
-                        driverNames[d.driver_number] = d.name_acronym;
-                        driverColors[d.driver_number] = d.team_colour
-                            ? '#' + d.team_colour
-                            : (TEAM_COLORS[d.name_acronym] ? TEAM_COLORS[d.name_acronym][0] : '#ffffff');
-                    });
+                    if(Array.isArray(data)) {
+                        data.forEach(d => {
+                            driverNames[d.driver_number] = d.name_acronym;
+                            driverColors[d.driver_number] = d.team_colour
+                                ? '#' + d.team_colour
+                                : (TEAM_COLORS[d.name_acronym] ? TEAM_COLORS[d.name_acronym][0] : '#ffffff');
+                        });
+                    } else {
+                        console.warn('OpenF1 returned non-array data for drivers:', data);
+                    }
                 } catch(e) { console.warn('OpenF1 driver fetch failed', e); }
             }
 
@@ -1798,8 +1797,13 @@
             async function fetchPositions() {
                 try {
                     const res  = await fetch(`https://api.openf1.org/v1/location?session_key=${sessionKey}`);
+                    if (!res.ok) {
+                        console.warn('Location fetch returned non-ok status:', res.status);
+                        draw(); // clear or show waiting
+                        return;
+                    }
                     const data = await res.json();
-                    if (!data || data.length === 0) { draw(); return; }
+                    if (!data || !Array.isArray(data) || data.length === 0) { draw(); return; }
 
                     // Get latest record per driver
                     const latest = {};
