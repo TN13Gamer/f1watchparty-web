@@ -19,7 +19,7 @@
 
     <!-- 3D Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
@@ -71,8 +71,19 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(5, 5, 5, 0.75); /* Dark overlay for readability */
+            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9)); /* Gradient overlay */
             z-index: -2;
+        }
+
+        #vanta-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
         }
 
         /* 3D Depth Utilities */
@@ -992,12 +1003,71 @@
         }
 
         @keyframes fadeText {
-            from {
-                opacity: 0.5;
-            }
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
 
-            to {
-                opacity: 1;
+        /* WatchF1.live Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #050505;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo-container {
+            text-align: center;
+        }
+
+        .loading-logo-svg {
+            width: 600px;
+            height: 100px;
+            overflow: visible;
+        }
+
+        .loading-logo-svg text {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 900;
+            font-size: 70px;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            fill: transparent;
+            stroke: var(--f1-red);
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            /* Draw outline for 1.5s, then hold. Delay fill by 1.5s so it starts after outline completes */
+            animation: 
+                drawOutline 1.5s ease-in-out forwards, 
+                fillLogo 0.8s ease-in-out 1.5s forwards;
+        }
+
+        @keyframes drawOutline {
+            0% {
+                stroke-dashoffset: 1000;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fillLogo {
+            0% {
+                fill: transparent;
+            }
+            100% {
+                fill: var(--f1-red);
+                stroke-width: 0;
             }
         }
 
@@ -1138,15 +1208,19 @@
 </head>
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}" oncontextmenu="return false;">
-    <!-- Video Background Container -->
     <video autoplay loop muted playsinline class="video-background">
         <source src="F1 Logo Animation Concept 1080P.mp4" type="video/mp4">
     </video>
     <div class="video-overlay"></div>
+    <div id="vanta-overlay"></div>
 
+    <!-- Loading Animation -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading Live Data...</div>
+        <div class="loading-logo-container">
+            <svg class="loading-logo-svg" viewBox="0 0 600 100">
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchF1.live</text>
+            </svg>
+        </div>
     </div>
 
     <header>
@@ -1620,7 +1694,27 @@
             };
         });
 
-        // Removed Vanta 3D Background - Using F1 Video Background instead
+        // Added 3D Net Telemetry Overlay on top of Video
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof VANTA !== 'undefined') {
+                VANTA.NET({
+                    el: "#vanta-overlay",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    color: 0xe60000,
+                    backgroundColor: 0x0,
+                    backgroundAlpha: 0.0,
+                    points: 15.00,
+                    maxDistance: 24.00,
+                    spacing: 16.00
+                });
+            }
+        });
 
 
         // ============================================================
@@ -1680,10 +1774,18 @@
                 }));
             }
 
+            // --- Timeout Helper for Fetch ---
+            function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+                return Promise.race([
+                    fetch(url, options),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+                ]);
+            }
+
             // ---- Fetch drivers once to get colors and acronyms ----
             async function fetchDrivers() {
                 try {
-                    const res = await fetch(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`);
+                    const res = await fetchWithTimeout(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`, {}, 3000);
                     const data = await res.json();
                     if(Array.isArray(data)) {
                         data.forEach(d => {
@@ -1695,7 +1797,7 @@
                     } else {
                         console.warn('OpenF1 returned non-array data for drivers:', data);
                     }
-                } catch(e) { console.warn('OpenF1 driver fetch failed', e); }
+                } catch(e) { console.warn('OpenF1 driver fetch failed or timed out', e); }
             }
 
             // ---- Draw everything onto the canvas ----
@@ -1796,7 +1898,7 @@
             // ---- Fetch live positions from OpenF1 ----
             async function fetchPositions() {
                 try {
-                    const res  = await fetch(`https://api.openf1.org/v1/location?session_key=${sessionKey}`);
+                    const res  = await fetchWithTimeout(`https://api.openf1.org/v1/location?session_key=${sessionKey}`, {}, 3000);
                     if (!res.ok) {
                         console.warn('Location fetch returned non-ok status:', res.status);
                         draw(); // clear or show waiting
@@ -1829,7 +1931,7 @@
 
                     draw();
                     buildLegend();
-                } catch(e) { console.warn('OpenF1 location fetch failed', e); }
+                } catch(e) { console.warn('OpenF1 location fetch failed or timed out', e); }
             }
 
             // ---- Build color legend under canvas ----
