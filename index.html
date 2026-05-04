@@ -34,6 +34,8 @@
             --text-white: #ffffff;
             --text-gray: #999999;
             --glow-color: rgba(230, 0, 0, 0.15);
+            --border: #24242e;
+            --tech-blue: #00e5ff;
         }
 
         * {
@@ -71,7 +73,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9)); /* Gradient overlay */
+            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9));
+            /* Gradient overlay */
             z-index: -2;
         }
 
@@ -269,39 +272,166 @@
         }
 
         @keyframes pulse-red {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.7); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
         }
 
         @keyframes pulse-dot {
-            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--f1-red); }
-            50% { opacity: 0.5; box-shadow: 0 0 3px var(--f1-red); }
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px var(--f1-red);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 3px var(--f1-red);
+            }
         }
 
 
 
-        .fl-badge { position: absolute; bottom: -2px; right: -2px; background: #b100e1; color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 2px solid #000; box-shadow: 0 0 10px #b100e1; z-index: 5; }
-        .fastest-lap-row { border-left: 3px solid #b100e1 !important; background: rgba(177, 0, 225, 0.05) !important; }
-        .gap-text { font-size: 9px; font-family: monospace; color: var(--tech-blue); margin-left: 5px; opacity: 0.8; }
-        
-        .map-sector-line { stroke: rgba(255,255,255,0.2); stroke-dasharray: 5,5; stroke-width: 1; }
-        .map-sector-label { fill: rgba(255,255,255,0.4); font-size: 8px; font-weight: bold; }
+        .fl-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #b100e1;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px #b100e1;
+            z-index: 5;
+        }
 
-        .f1-popup-overlay { position: fixed; top: 80px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .f1-popup-content { background: rgba(10, 10, 15, 0.95); border: 1px solid var(--border); border-radius: 12px; padding: 15px 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 250px; display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-        .f1-popup-content.active { transform: translateX(0); }
-        .f1-popup-icon { font-size: 24px; margin-bottom: 0; }
-        .f1-popup-title { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; color: var(--text-gray); }
-        .f1-popup-msg { font-size: 13px; color: #fff; font-weight: 600; }
-        
-        .f1-popup-overlay.fastest-lap .f1-popup-content { border-left: 4px solid #b100e1; }
-        .f1-popup-overlay.fastest-lap .f1-popup-icon { color: #b100e1; }
-        
-        .f1-popup-overlay.checkered-flag .f1-popup-content { border-left: 4px solid #fff; }
-        .f1-popup-overlay.checkered-flag .f1-popup-icon { color: #fff; }
+        .fastest-lap-row {
+            border-left: 3px solid #b100e1 !important;
+            background: rgba(177, 0, 225, 0.05) !important;
+        }
 
-        .live-indicator-mini { background: rgba(255, 24, 1, 0.1); color: var(--f1-red); padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; border: 1px solid rgba(255, 24, 1, 0.2); }
-        .live-pulse { width: 5px; height: 5px; background: var(--f1-red); border-radius: 50%; box-shadow: 0 0 5px var(--f1-red); animation: pulse-red 1s infinite; }
+        .gap-text {
+            font-size: 9px;
+            font-family: monospace;
+            color: var(--tech-blue);
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+
+        .map-sector-line {
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-dasharray: 5, 5;
+            stroke-width: 1;
+        }
+
+        .map-sector-label {
+            fill: rgba(255, 255, 255, 0.4);
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .f1-popup-overlay {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .f1-popup-content {
+            background: rgba(10, 10, 15, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .f1-popup-content.active {
+            transform: translateX(0);
+        }
+
+        .f1-popup-icon {
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+
+        .f1-popup-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            color: var(--text-gray);
+        }
+
+        .f1-popup-msg {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-content {
+            border-left: 4px solid #b100e1;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-icon {
+            color: #b100e1;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-content {
+            border-left: 4px solid #fff;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-icon {
+            color: #fff;
+        }
+
+        .live-indicator-mini {
+            background: rgba(255, 24, 1, 0.1);
+            color: var(--f1-red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            border: 1px solid rgba(255, 24, 1, 0.2);
+        }
+
+        .live-pulse {
+            width: 5px;
+            height: 5px;
+            background: var(--f1-red);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
 
         .w-label {
             color: var(--text-gray);
@@ -964,15 +1094,22 @@
         }
 
         @keyframes fadeText {
-            from { opacity: 0.5; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* WatchF1.live Loading Animation */
         .loader {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: #050505;
             z-index: 9999;
             display: flex;
@@ -1007,8 +1144,8 @@
             stroke-dasharray: 1000;
             stroke-dashoffset: 1000;
             /* Draw outline for 1.5s, then hold. Delay fill by 1.5s so it starts after outline completes */
-            animation: 
-                drawOutline 1.5s ease-in-out forwards, 
+            animation:
+                drawOutline 1.5s ease-in-out forwards,
                 fillLogo 0.8s ease-in-out 1.5s forwards;
         }
 
@@ -1016,6 +1153,7 @@
             0% {
                 stroke-dashoffset: 1000;
             }
+
             100% {
                 stroke-dashoffset: 0;
             }
@@ -1025,6 +1163,7 @@
             0% {
                 fill: transparent;
             }
+
             100% {
                 fill: var(--f1-red);
                 stroke-width: 0;
@@ -1169,9 +1308,6 @@
 </head>
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater}" oncontextmenu="return false;">
-    <video autoplay loop muted playsinline class="video-background">
-        <source src="F1 Logo Animation Concept 1080P.mp4" type="video/mp4">
-    </video>
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
 
@@ -1206,10 +1342,6 @@
                 <div class="w-divider"></div>
                 <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                 </div>
-            </div>
-            <div class="timer-pill" ng-if="!activeSession && nextUp">
-                <span style="opacity: 0.6; margin-right: 6px; text-transform: uppercase;">{{nextUp.name}}:</span>
-                <span style="color: #fff;">{{nextUp.timerStr}}</span>
             </div>
             <div class="status-pill live" ng-if="activeSession">LIVE: {{activeSession.name}}</div>
             <div class="status-pill offline" ng-if="!activeSession">OFFLINE</div>
@@ -1297,18 +1429,10 @@
             <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-max="4" data-tilt-speed="400"
                 data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
 
-                <!-- Card Title: switches automatically -->
+                <!-- Card Title -->
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
                     <div class="card-title" style="margin-bottom:0;">
-                        <span ng-if="!isLiveRaceActive">Championship Standings</span>
-                        <span ng-if="isLiveRaceActive" style="color: var(--f1-red);">Live Race Positions</span>
-                    </div>
-                    <div ng-if="isLiveRaceActive" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="width:7px; height:7px; background:var(--f1-red); border-radius:50%; box-shadow:0 0-8px var(--f1-red); animation: pulse-dot 1s infinite; display:inline-block;"></span>
-                            <span style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red);">LIVE</span>
-                        </div>
-                        <div style="font-size:8px; color:rgba(255,255,255,0.4); font-family:monospace;" ng-if="lastSyncTime">UPDATED: {{lastSyncTime}}</div>
+                        <span>Championship Standings</span>
                     </div>
                 </div>
 
@@ -1320,42 +1444,10 @@
                 </div>
 
                 <div class="standings-list" ng-class="{'expanded': showAllStandings}">
-
-                    <!-- LIVE RACE MODE: sorted by race position, all 22 shown -->
-                    <div ng-show="standingsView === 'drivers' && isLiveRaceActive">
-                        <div class="standing-row" ng-class="{'fastest-lap-row': driver.isFastestLap}"
-                            ng-repeat="driver in standings | orderBy: liveRankSort | limitTo: (showAllStandings ? standings.length : 5)">
-                            <div class="st-pos" style="font-size: 15px; color: var(--f1-red); font-weight: 900;">
-                                P{{driver.livePosition || '—'}}
-                            </div>
-                            <div class="st-img-wrapper" style="position:relative;">
-                                <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}"
-                                    class="st-img"
-                                    onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"
-                                    loading="lazy">
-                                <div class="fl-badge" ng-if="driver.isFastestLap" title="Fastest Lap">💜</div>
-                            </div>
-                            <div class="st-info">
-                                <div class="st-name">{{driver.name}}</div>
-                                <div class="st-team">
-                                    {{driver.team}} 
-                                    <span class="gap-text" ng-if="driver.livePosition > 1 && driver.interval">
-                                        <i class="fa-solid fa-stopwatch" style="font-size:8px;"></i> +{{driver.interval}}s
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="st-pts" style="text-align:right;">
-                                <span ng-if="driver.livePoints > 0" style="color: var(--f1-green); font-size:13px; font-weight:800; display:block; line-height:1.2;">+{{driver.livePoints}}</span>
-                                <span style="font-size:10px; opacity:0.5;" ng-if="driver.livePosition === 1">LEADER</span>
-                                <span style="font-size:9px; opacity:0.4;" ng-if="driver.livePosition > 1 && driver.gapToLeader">Gap: +{{driver.gapToLeader}}s</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- NORMAL MODE: sorted by season points -->
-                    <div ng-show="standingsView === 'drivers' && !isLiveRaceActive">
+                    <!-- DRIVER STANDINGS: sorted by season points -->
+                    <div ng-show="standingsView === 'drivers'">
                         <div class="standing-row"
-                            ng-repeat="driver in standings | limitTo: (showAllStandings ? standings.length : 3)">
+                            ng-repeat="driver in standings | orderBy:'points':true | limitTo: (showAllStandings ? standings.length : 5)">
                             <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
                             <div class="st-img-wrapper">
                                 <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}"
@@ -1385,7 +1477,7 @@
                 </div>
 
                 <button class="view-more-btn" ng-click="toggleStandings()"
-                    ng-if="(standingsView === 'drivers' && standings.length > (isLiveRaceActive ? 5 : 3)) || (standingsView === 'constructors' && constructors.length > 3)">
+                    ng-if="(standingsView === 'drivers' && standings.length > 5) || (standingsView === 'constructors' && constructors.length > 3)">
                     {{ showAllStandings ? 'Collapse' : 'View All' }}
                 </button>
             </div>
@@ -1454,7 +1546,6 @@
             $scope.schedule = [];
             $scope.weather = null;
             $scope.standingsView = 'drivers';
-            $scope.isLiveRaceActive = false;
 
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
@@ -1462,12 +1553,12 @@
             let raceFinishedAnnounced = false;
             let initialLoadHandled = false;
 
-            $scope.$watch('standings', function(newStandings) {
+            $scope.$watch('standings', function (newStandings) {
                 if (!newStandings || newStandings.length === 0) return;
-                
+
                 // 1. Fastest Lap Detection
                 const currentFL = newStandings.find(d => d.isFastestLap);
-                
+
                 // Skip the very first detection on page load
                 if (!initialLoadHandled && currentFL) {
                     lastFLDriver = currentFL.name;
@@ -1485,7 +1576,7 @@
                 }
             }, true);
 
-            $scope.$watch('activeSession', function(session) {
+            $scope.$watch('activeSession', function (session) {
                 if (!session) return;
 
                 // Skip the very first detection on page load
@@ -1503,12 +1594,12 @@
                         msg: 'The checkered flag has been waved!'
                     });
                 }
-                
+
                 // Once we have a session, we can mark initial load as done
                 if (session) initialLoadHandled = true;
             });
 
-            $scope.showPopup = function(data) {
+            $scope.showPopup = function (data) {
                 $scope.activePopup = data;
                 setTimeout(() => {
                     $scope.$apply(() => { $scope.activePopup = null; });
@@ -1522,11 +1613,11 @@
             localStorage.setItem('f1_device_id', deviceId);
 
             const deviceRef = db.collection("app_data").doc("analytics").collection("active_devices").doc(deviceId);
-            
+
             function pingDevice() {
-                deviceRef.set({ lastActive: Date.now() }, { merge: true }).catch(() => {});
+                deviceRef.set({ lastActive: Date.now() }, { merge: true }).catch(() => { });
             }
-            
+
             // Ping immediately and every 30s
             pingDevice();
             setInterval(pingDevice, 30000);
@@ -1535,23 +1626,18 @@
             if (!sessionStorage.getItem('f1_view_counted')) {
                 analyticsRef.set({
                     totalViews: firebase.firestore.FieldValue.increment(1)
-                }, { merge: true }).catch(() => {});
+                }, { merge: true }).catch(() => { });
                 sessionStorage.setItem('f1_view_counted', 'true');
             }
 
             // 3. Best effort cleanup on exit
             $window.addEventListener('beforeunload', function (e) {
-                deviceRef.delete().catch(() => {});
+                deviceRef.delete().catch(() => { });
             });
             // --------------------------
 
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
-            
-            $scope.liveRankSort = function(driver) {
-                // If no live position, put them at the end (999)
-                return driver.livePosition || 999;
-            };
 
             function safeDate(val) { if (!val) return null; if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate(); return new Date(val); }
 
@@ -1572,8 +1658,8 @@
                 $scope.standings = data.standings || [];
                 $scope.constructors = data.constructors || [];
                 $scope.weather = data.weather || null;
-                $scope.isLiveRaceActive = data.isLiveRaceActive || false;
-
+                $scope.nextUp = null;
+                $scope.activeSession = null;
                 if (data.schedule) {
                     $scope.schedule = data.schedule.map(function (s) {
                         var startDate = safeDate(s.timer);
