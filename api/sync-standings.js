@@ -9,8 +9,31 @@ const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
   try {
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-    admin.initializeApp({ credential: admin.credential.cert(sa) });
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({ credential: admin.credential.cert(sa) });
+    } else {
+      const fs = require('fs');
+      const path = require('path');
+      let keyPath = null;
+      if (fs.existsSync(path.resolve(__dirname, '../serviceAccountKey.json'))) {
+        keyPath = path.resolve(__dirname, '../serviceAccountKey.json');
+      } else if (fs.existsSync(path.resolve(__dirname, '../../serviceAccountKey.json'))) {
+        keyPath = path.resolve(__dirname, '../../serviceAccountKey.json');
+      } else if (fs.existsSync(path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'))) {
+        keyPath = path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
+      } else if (fs.existsSync(path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'))) {
+        keyPath = path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
+      }
+      
+      if (keyPath) {
+        const sa = require(keyPath);
+        admin.initializeApp({ credential: admin.credential.cert(sa) });
+        console.log('[sync] Firebase initialized using local file:', keyPath);
+      } else {
+        console.warn('[sync] No Firebase credentials found.');
+      }
+    }
   } catch(e) { console.error('[sync] Firebase init error:', e.message); }
 }
 
@@ -62,6 +85,125 @@ async function fetchStandings() {
   };
 }
 
+async function syncStreamsAutomatically(config, ref) {
+  if (!config.autoSyncStreams) return;
+
+  try {
+    let rawLocation = config.raceData?.location || "";
+    if (!rawLocation && config.raceData?.name) {
+      rawLocation = config.raceData.name;
+    }
+    
+    let location = "";
+    if (rawLocation) {
+      let parts = rawLocation.split(',');
+      let lastPart = parts[parts.length - 1].trim();
+      location = lastPart.replace(/[0-9]/g, '').trim();
+    }
+
+    if (!location) return;
+
+    let sessionAbbr = "FP1"; // Fallback
+    if (config.schedule && config.schedule.length > 0) {
+      const now = Date.now();
+      let closestFutureTime = Infinity;
+      let activeSess = null;
+
+      config.schedule.forEach(s => {
+        if (!s.timer) return;
+        const start = new Date(s.timer).getTime();
+        if (isNaN(start)) return;
+        
+        let end = start + (2 * 60 * 60 * 1000); 
+        if (s.endTime && s.endTime.includes(':')) {
+          const parts = s.endTime.split(':');
+          const d = new Date(s.timer);
+          d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+          end = d.getTime();
+          if (end < start) end += 86400000;
+        }
+
+        if (now >= start && now < end) {
+          activeSess = s;
+        } else if (now < start && start < closestFutureTime) {
+          closestFutureTime = start;
+          if (!activeSess) activeSess = s;
+        }
+      });
+
+      if (!activeSess && config.schedule.length > 0) {
+         activeSess = config.schedule[0];
+      }
+
+      if (activeSess && activeSess.name) {
+        let nameLower = activeSess.name.toLowerCase();
+        if (nameLower.includes("practice 1") || nameLower.includes("fp1")) {
+          sessionAbbr = "FP1";
+        } else if (nameLower.includes("practice 2") || nameLower.includes("fp2")) {
+          sessionAbbr = "FP2";
+        } else if (nameLower.includes("practice 3") || nameLower.includes("fp3")) {
+          sessionAbbr = "FP3";
+        } else if (nameLower.includes("qualifying") || nameLower.includes("qualy") || nameLower.includes("qual")) {
+          sessionAbbr = "Qualifying";
+        } else if (nameLower.includes("sprint")) {
+          sessionAbbr = "Sprint";
+        } else if (nameLower.includes("race") || nameLower.includes("grand prix")) {
+          sessionAbbr = "Race";
+        }
+      }
+    }
+
+    let searchTokens = ["f1", location.toLowerCase(), sessionAbbr.toLowerCase()];
+
+    const { data } = await axios.get('https://api.pushembdz.store/v1/streams', { 
+      timeout: 8000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (data && data.categories) {
+      let allStreams = [];
+      data.categories.forEach(cat => {
+        if (cat.streams) allStreams = allStreams.concat(cat.streams);
+      });
+
+      let matched = allStreams.filter(s => {
+        if (!s.title) return false;
+        let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+        return searchTokens.every(token => titleLower.includes(token));
+      });
+
+      if (matched.length > 0) {
+        let newLinks = matched.map((s, index) => {
+          let parts = s.title.split(' - ');
+          let name = s.title;
+          if (parts.length > 1) {
+            let lastPart = parts[parts.length - 1].trim();
+            if (lastPart.length <= 10) {
+              name = parts[0].trim() + " - " + lastPart;
+            }
+          }
+          let url = s.link || "";
+          if (url.includes("api.pushembdz.store")) {
+            url = url.replace("api.pushembdz.store", "pushembdz.store");
+          }
+          return {
+            name: name,
+            id: "src_" + (Date.now() + index),
+            url: url
+          };
+        });
+
+        await ref.update({ streamLinks: newLinks });
+        console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore.`);
+      }
+    }
+  } catch (err) {
+    console.error('[sync] Stream auto-fetch error:', err.message);
+  }
+}
+
 module.exports = async (req, res) => {
   if (!['GET','POST'].includes(req.method)) return res.status(405).end();
 
@@ -106,6 +248,9 @@ module.exports = async (req, res) => {
     const syncedAt = new Date().toISOString();
     await ref.set({ standings, constructors, lastStandingsSync: syncedAt, standingsSource: source }, { merge: true });
     if (changed) console.log('[sync] Updated Firestore', syncedAt, source);
+
+    // Automatically sync streams from pushembdz if enabled
+    await syncStreamsAutomatically(config, ref);
 
     res.json({ ok: true, updated: changed, syncedAt, source });
   } catch(err) {

@@ -33,16 +33,26 @@ try {
     });
     db = admin.firestore();
     console.log('Firebase Admin initialized from Environment Variable.');
-  } else if (fs.existsSync('./serviceAccountKey.json')) {
-    // Local development mode: load from file
-    const serviceAccount = require('./serviceAccountKey.json');
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    db = admin.firestore();
-    console.log('Firebase Admin initialized from local file.');
   } else {
-    console.warn('\n!!! WARNING !!!\nNo Firebase credentials found (env or file). Firebase writes will be simulated.\n');
+    // Local development mode: check root or nested folder for credentials
+    const path = require('path');
+    let keyPath = null;
+    if (fs.existsSync('./serviceAccountKey.json')) {
+      keyPath = path.resolve('./serviceAccountKey.json');
+    } else if (fs.existsSync('./f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json')) {
+      keyPath = path.resolve('./f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
+    }
+
+    if (keyPath) {
+      const serviceAccount = require(keyPath);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      db = admin.firestore();
+      console.log('Firebase Admin initialized from file:', keyPath);
+    } else {
+      console.warn('\n!!! WARNING !!!\nNo Firebase credentials found (env or file). Firebase writes will be simulated.\n');
+    }
   }
 } catch (error) {
   console.error('Failed to initialize Firebase Admin:', error);
@@ -103,6 +113,125 @@ async function fetchWeather(location) {
     }
 }
 
+async function syncStreamsAutomatically(config, ref) {
+    if (!config.autoSyncStreams) return;
+
+    try {
+        let rawLocation = config.raceData?.location || "";
+        if (!rawLocation && config.raceData?.name) {
+            rawLocation = config.raceData.name;
+        }
+        
+        let location = "";
+        if (rawLocation) {
+            let parts = rawLocation.split(',');
+            let lastPart = parts[parts.length - 1].trim();
+            location = lastPart.replace(/[0-9]/g, '').trim();
+        }
+
+        if (!location) return;
+
+        let sessionAbbr = "FP1"; // Fallback
+        if (config.schedule && config.schedule.length > 0) {
+            const now = Date.now();
+            let closestFutureTime = Infinity;
+            let activeSess = null;
+
+            config.schedule.forEach(s => {
+                if (!s.timer) return;
+                const start = new Date(s.timer).getTime();
+                if (isNaN(start)) return;
+                
+                let end = start + (2 * 60 * 60 * 1000); 
+                if (s.endTime && s.endTime.includes(':')) {
+                    const parts = s.endTime.split(':');
+                    const d = new Date(s.timer);
+                    d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                    end = d.getTime();
+                    if (end < start) end += 86400000;
+                }
+
+                if (now >= start && now < end) {
+                    activeSess = s;
+                } else if (now < start && start < closestFutureTime) {
+                    closestFutureTime = start;
+                    if (!activeSess) activeSess = s;
+                }
+            });
+
+            if (!activeSess && config.schedule.length > 0) {
+                 activeSess = config.schedule[0];
+            }
+
+            if (activeSess && activeSess.name) {
+                let nameLower = activeSess.name.toLowerCase();
+                if (nameLower.includes("practice 1") || nameLower.includes("fp1")) {
+                    sessionAbbr = "FP1";
+                } else if (nameLower.includes("practice 2") || nameLower.includes("fp2")) {
+                    sessionAbbr = "FP2";
+                } else if (nameLower.includes("practice 3") || nameLower.includes("fp3")) {
+                    sessionAbbr = "FP3";
+                } else if (nameLower.includes("qualifying") || nameLower.includes("qualy") || nameLower.includes("qual")) {
+                    sessionAbbr = "Qualifying";
+                } else if (nameLower.includes("sprint")) {
+                    sessionAbbr = "Sprint";
+                } else if (nameLower.includes("race") || nameLower.includes("grand prix")) {
+                    sessionAbbr = "Race";
+                }
+            }
+        }
+
+        let searchTokens = ["f1", location.toLowerCase(), sessionAbbr.toLowerCase()];
+
+        const { data } = await axios.get('https://api.pushembdz.store/v1/streams', { 
+            timeout: 8000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+
+        if (data && data.categories) {
+            let allStreams = [];
+            data.categories.forEach(cat => {
+                if (cat.streams) allStreams = allStreams.concat(cat.streams);
+            });
+
+            let matched = allStreams.filter(s => {
+                if (!s.title) return false;
+                let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                return searchTokens.every(token => titleLower.includes(token));
+            });
+
+            if (matched.length > 0) {
+                let newLinks = matched.map((s, index) => {
+                    let parts = s.title.split(' - ');
+                    let name = s.title;
+                    if (parts.length > 1) {
+                        let lastPart = parts[parts.length - 1].trim();
+                        if (lastPart.length <= 10) {
+                            name = parts[0].trim() + " - " + lastPart;
+                        }
+                    }
+                    let url = s.link || "";
+                    if (url.includes("api.pushembdz.store")) {
+                        url = url.replace("api.pushembdz.store", "pushembdz.store");
+                    }
+                    return {
+                        name: name,
+                        id: "src_" + (Date.now() + index),
+                        url: url
+                    };
+                });
+
+                await ref.update({ streamLinks: newLinks });
+                console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore.`);
+            }
+        }
+    } catch (err) {
+        console.error('[sync] Stream auto-fetch error:', err.message);
+    }
+}
+
 async function syncToFirebase() {
     if (!db) {
         console.log('Simulating sync to Firebase...', new Date().toLocaleTimeString());
@@ -116,6 +245,13 @@ async function syncToFirebase() {
             lastAutoSync: Date.now()
         }, { merge: true });
         console.log(`✅ Synced weather & session to Firebase at ${new Date().toLocaleTimeString()}.`);
+
+        // Fetch current config to check if stream auto-sync is enabled
+        const configDoc = await liveConfigRef.get();
+        if (configDoc.exists) {
+            const config = configDoc.data();
+            await syncStreamsAutomatically(config, liveConfigRef);
+        }
     } catch (e) {
         console.error('Firebase sync error:', e);
     }
@@ -141,6 +277,25 @@ app.get('/api/live-leaderboard', async (req, res) => {
         res.json([]);
     }
 });
+
+// --- API: Fetch Streams from pushembdz.store ---
+app.get('/api/fetch-streams', async (req, res) => {
+    try {
+        const { data } = await axios.get('https://api.pushembdz.store/v1/streams', { 
+            timeout: 8000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+        res.json(data);
+    } catch (e) {
+        console.error('Error fetching streams:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- API: Sync Standings (Vercel cron handler) ---
+app.all('/api/sync-standings', require('./api/sync-standings.js'));
 
 // --- API: Status ---
 app.get('/', (req, res) => {

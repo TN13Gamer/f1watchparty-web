@@ -18,3 +18,9 @@ intercepted.json
 next_data.json
 lite.png
 live.png
+
+# Scratch, duplicate folders, and temporary files
+f1watchparty-web-main/
+scratch/
+api_dump.json
+schedule_2026.json

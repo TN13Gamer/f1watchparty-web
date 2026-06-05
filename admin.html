@@ -322,6 +322,33 @@
 
             <div class="admin-section">
                 <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
+
+                <!-- Auto-Fetch Stream Widget -->
+                <div style="background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--tech-blue); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                        <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 5px;"></i> Auto-Fetch Streams
+                    </h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                        Fetch embed links automatically from pushembdz.store. The search keyword is suggested based on your current GP location and active session.
+                    </p>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Search Keyword</label>
+                            <input type="text" ng-model="streamFetchQuery" placeholder="e.g. F1 - Monaco - FP1" style="margin-bottom: 0;">
+                        </div>
+                        <button class="action-btn" ng-click="autoFetchStreams()" ng-disabled="fetchingStreams" style="height: 44px; padding: 0 20px;">
+                            <i class="fa-solid" ng-class="fetchingStreams ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                            {{ fetchingStreams ? 'Fetching...' : 'Fetch & Import' }}
+                        </button>
+                    </div>
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
+                            <input type="checkbox" ng-model="config.autoSyncStreams" style="width: auto; height: auto; margin: 0; accent-color: var(--tech-blue);">
+                            <span>Enable Auto-Sync Streams (Automatically updates links every 30s via backend cron)</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div ng-repeat="link in config.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
                     <div class="grid-row" style="margin-bottom: 10px;">
                         <input type="text" ng-model="link.name" placeholder="Name (e.g. Main Feed)">
@@ -947,6 +974,146 @@
                     $scope.config.streamLinks.splice(i, 1); 
                     $scope.addLog("Deleted Stream link");
                 }
+            };
+
+            // --- STREAM AUTOFETCH LOGIC ---
+            $scope.fetchingStreams = false;
+            $scope.streamFetchQuery = "";
+
+            $scope.updateFetchQuerySuggestion = function() {
+                if (!$scope.config || !$scope.config.raceData) return;
+                
+                let rawLocation = $scope.config.raceData.location || "";
+                if (!rawLocation && $scope.config.raceData.name) {
+                    rawLocation = $scope.config.raceData.name;
+                }
+                
+                // Clean location: extract city/country if it's a full address
+                let location = "";
+                if (rawLocation) {
+                    // Take the last part of comma-separated string (usually city/country)
+                    let parts = rawLocation.split(',');
+                    let lastPart = parts[parts.length - 1].trim();
+                    // Remove all numbers (zip codes, road numbers)
+                    location = lastPart.replace(/[0-9]/g, '').trim();
+                }
+                
+                let sessionAbbr = "FP1"; // Fallback
+                if ($scope.config.schedule && $scope.config.schedule.length > 0) {
+                    let activeSess = $scope.config.schedule.find(s => s.isLive);
+                    if (!activeSess) {
+                        activeSess = $scope.config.schedule.find(s => s.isUpcoming);
+                    }
+                    if (activeSess && activeSess.name) {
+                        let nameLower = activeSess.name.toLowerCase();
+                        if (nameLower.includes("practice 1") || nameLower.includes("fp1")) {
+                            sessionAbbr = "FP1";
+                        } else if (nameLower.includes("practice 2") || nameLower.includes("fp2")) {
+                            sessionAbbr = "FP2";
+                        } else if (nameLower.includes("practice 3") || nameLower.includes("fp3")) {
+                            sessionAbbr = "FP3";
+                        } else if (nameLower.includes("qualifying") || nameLower.includes("qualy") || nameLower.includes("qual")) {
+                            sessionAbbr = "Qualifying";
+                        } else if (nameLower.includes("sprint")) {
+                            sessionAbbr = "Sprint";
+                        } else if (nameLower.includes("race") || nameLower.includes("grand prix")) {
+                            sessionAbbr = "Race";
+                        }
+                    }
+                }
+                
+                if (location) {
+                    $scope.streamFetchQuery = "F1 - " + location + " - " + sessionAbbr;
+                } else {
+                    $scope.streamFetchQuery = "F1 - - " + sessionAbbr;
+                }
+            };
+
+            $scope.$watch('config.raceData', function(newVal) {
+                if (newVal) $scope.updateFetchQuerySuggestion();
+            }, true);
+
+            $scope.$watch('config.schedule', function(newVal) {
+                if (newVal) $scope.updateFetchQuerySuggestion();
+            }, true);
+
+            $scope.autoFetchStreams = function() {
+                if ($scope.fetchingStreams) return;
+                $scope.fetchingStreams = true;
+
+                const rawQuery = ($scope.streamFetchQuery || "").trim().toLowerCase();
+                if (!rawQuery) {
+                    $scope.showToast("Please enter a search keyword.", "error");
+                    $scope.fetchingStreams = false;
+                    return;
+                }
+
+                // Tokenize query: split by whitespace, ignore punctuation (dashes, commas, etc)
+                let queryTokens = rawQuery
+                    .replace(/[^a-z0-9\s]/g, ' ')
+                    .split(/\s+/)
+                    .filter(t => t.length > 0);
+
+                let apiUrl = '/api/fetch-streams';
+                if (window.location.protocol === 'file:') {
+                    apiUrl = 'http://localhost:3000/api/fetch-streams';
+                }
+
+                $http.get(apiUrl)
+                    .then(res => {
+                        $scope.fetchingStreams = false;
+                        if (!res.data || !res.data.categories) {
+                            $scope.showToast("No streams found on the server.", "error");
+                            return;
+                        }
+
+                        let allStreams = [];
+                        res.data.categories.forEach(cat => {
+                            if (cat.streams) {
+                                allStreams = allStreams.concat(cat.streams);
+                            }
+                        });
+
+                        // Token-based matching: title must contain all query tokens
+                        let matched = allStreams.filter(s => {
+                            if (!s.title) return false;
+                            let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                            return queryTokens.every(token => titleLower.includes(token));
+                        });
+
+                        if (matched.length === 0) {
+                            $scope.showToast("No matching streams found for '" + $scope.streamFetchQuery + "'", "error");
+                            return;
+                        }
+
+                        let newLinks = matched.map((s, index) => {
+                            let parts = s.title.split(' - ');
+                            let name = s.title;
+                            if (parts.length > 1) {
+                                let lastPart = parts[parts.length - 1].trim();
+                                if (lastPart.length <= 10) {
+                                    name = parts[0].trim() + " - " + lastPart;
+                                }
+                            }
+                            let url = s.link || "";
+                            if (url.includes("api.pushembdz.store")) {
+                                url = url.replace("api.pushembdz.store", "pushembdz.store");
+                            }
+                            return {
+                                name: name,
+                                id: "src_" + (Date.now() + index),
+                                url: url
+                            };
+                        });
+
+                        $scope.config.streamLinks = newLinks;
+                        $scope.showToast("Imported " + newLinks.length + " streams matching query!", "success");
+                        $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.streamFetchQuery + "'");
+                    })
+                    .catch(err => {
+                        $scope.fetchingStreams = false;
+                        $scope.showToast("Error fetching streams: " + (err.data?.error || err.statusText || err.message || "Unknown error"), "error");
+                    });
             };
 
             // --- LIVE SCHEDULE LOGIC ---
