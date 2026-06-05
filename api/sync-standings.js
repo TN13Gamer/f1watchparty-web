@@ -174,6 +174,22 @@ async function syncStreamsAutomatically(config, ref) {
         return searchTokens.every(token => titleLower.includes(token));
       });
 
+      // Fallback matching: if no strict match, try matching just the core tokens
+      if (matched.length === 0) {
+        let coreTokens = searchTokens.filter(token => {
+          const t = token.toLowerCase();
+          return !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t);
+        });
+
+        if (coreTokens.length > 0) {
+          matched = allStreams.filter(s => {
+            if (!s.title) return false;
+            let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+            return coreTokens.every(token => titleLower.includes(token));
+          });
+        }
+      }
+
       if (matched.length > 0) {
         let newLinks = matched.map((s, index) => {
           let parts = s.title.split(' - ');

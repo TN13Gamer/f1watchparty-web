@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const admin = require('firebase-admin');
 const fs = require('fs');
+const path = require('path');
 
 // Puppeteer is only available when running locally (not on Vercel)
 let scraper = null;
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     next();
 });
+
+// Serve static frontend files (index.html, admin.html, etc.) when running locally
+app.use(express.static(path.join(__dirname)));
 
 // Firebase initialization
 let db;
@@ -202,6 +206,22 @@ async function syncStreamsAutomatically(config, ref) {
                 return searchTokens.every(token => titleLower.includes(token));
             });
 
+            // Fallback matching: if no strict match, try matching just the core tokens
+            if (matched.length === 0) {
+                let coreTokens = searchTokens.filter(token => {
+                    const t = token.toLowerCase();
+                    return !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t);
+                });
+
+                if (coreTokens.length > 0) {
+                    matched = allStreams.filter(s => {
+                        if (!s.title) return false;
+                        let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                        return coreTokens.every(token => titleLower.includes(token));
+                    });
+                }
+            }
+
             if (matched.length > 0) {
                 let newLinks = matched.map((s, index) => {
                     let parts = s.title.split(' - ');
@@ -297,19 +317,30 @@ app.get('/api/fetch-streams', async (req, res) => {
 // --- API: Sync Standings (Vercel cron handler) ---
 app.all('/api/sync-standings', require('./api/sync-standings.js'));
 
-// --- API: Status ---
-app.get('/', (req, res) => {
-  res.json({
-    status: 'F1 Watch Party Backend Running',
-    mode: scraper ? 'local (scraper enabled)' : 'vercel (scraper disabled)',
-    activeSession: state.activeSession,
-    weather: state.weather,
-    scheduleCount: schedule2026.length
-  });
+// Route for /admin
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.listen(PORT, async () => {
-  console.log(`🏎️  F1 Backend running on port ${PORT}`);
+// --- API: Status ---
+app.get('/', (req, res) => {
+  if (req.accepts('html')) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  } else {
+    res.json({
+      status: 'F1 Watch Party Backend Running',
+      mode: scraper ? 'local (scraper enabled)' : 'vercel (scraper disabled)',
+      activeSession: state.activeSession,
+      weather: state.weather,
+      scheduleCount: schedule2026.length
+    });
+  }
+});
+
+const HOST = process.argv.includes('--host') ? '0.0.0.0' : 'localhost';
+
+app.listen(PORT, HOST, async () => {
+  console.log(`🏎️  F1 Backend running at http://${HOST === '0.0.0.0' ? '0.0.0.0' : 'localhost'}:${PORT}`);
   if (!process.env.VERCEL) {
     console.log('Fetching initial session data...');
     await fetchLatestSession();

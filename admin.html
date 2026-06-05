@@ -1054,65 +1054,136 @@
                     .split(/\s+/)
                     .filter(t => t.length > 0);
 
-                let apiUrl = '/api/fetch-streams';
-                if (window.location.protocol === 'file:') {
-                    apiUrl = 'http://localhost:3000/api/fetch-streams';
+                let primaryUrl = '/api/fetch-streams';
+                let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/fetch-streams';
+                
+                // If running on file:// protocol, go straight to production API
+                let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                function parseAndMatchStreams(res) {
+                    let data = res.data;
+                    if (typeof data === 'string') {
+                        try {
+                            data = JSON.parse(data);
+                        } catch (e) {
+                            throw new Error("Invalid response format");
+                        }
+                    }
+
+                    // Check if response lacks categories
+                    if (!data || !data.categories) {
+                        throw new Error("Invalid response format");
+                    }
+
+                    let allStreams = [];
+                    data.categories.forEach(cat => {
+                        if (cat.streams) {
+                            allStreams = allStreams.concat(cat.streams);
+                        }
+                    });
+
+                    // Token-based matching: title must contain all query tokens
+                    let matched = allStreams.filter(s => {
+                        if (!s.title) return false;
+                        let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                        return queryTokens.every(token => titleLower.includes(token));
+                    });
+
+                    // Fallback matching: if no strict match, try matching just the core tokens
+                    if (matched.length === 0) {
+                        let coreTokens = queryTokens.filter(token => {
+                            const t = token.toLowerCase();
+                            return !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t);
+                        });
+
+                        if (coreTokens.length > 0) {
+                            matched = allStreams.filter(s => {
+                                if (!s.title) return false;
+                                let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                                return coreTokens.every(token => titleLower.includes(token));
+                            });
+                        }
+                    }
+
+                    if (matched.length === 0) {
+                        $scope.showToast("No matching streams found for '" + $scope.streamFetchQuery + "'", "error");
+                        return;
+                    }
+
+                    let newLinks = matched.map((s, index) => {
+                        let parts = s.title.split(' - ');
+                        let name = s.title;
+                        if (parts.length > 1) {
+                            let lastPart = parts[parts.length - 1].trim();
+                            if (lastPart.length <= 10) {
+                                name = parts[0].trim() + " - " + lastPart;
+                            }
+                        }
+                        let url = s.link || "";
+                        if (url.includes("api.pushembdz.store")) {
+                            url = url.replace("api.pushembdz.store", "pushembdz.store");
+                        }
+                        return {
+                            name: name,
+                            id: "src_" + (Date.now() + index),
+                            url: url
+                        };
+                    });
+
+                    $scope.config.streamLinks = newLinks;
+                    $scope.showToast("Imported " + newLinks.length + " streams matching query!", "success");
+                    $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.streamFetchQuery + "'");
                 }
 
-                $http.get(apiUrl)
+                $http.get(targetUrl)
                     .then(res => {
-                        $scope.fetchingStreams = false;
-                        if (!res.data || !res.data.categories) {
-                            $scope.showToast("No streams found on the server.", "error");
-                            return;
+                        try {
+                            $scope.fetchingStreams = false;
+                            parseAndMatchStreams(res);
+                        } catch (e) {
+                            // If primary URL failed format check and we haven't tried fallback, try fallback
+                            if (targetUrl === primaryUrl) {
+                                console.log("Local API returned invalid response, trying fallback production API...");
+                                $scope.fetchingStreams = true; // reset loading flag for fallback request
+                                $http.get(fallbackUrl)
+                                    .then(fallbackRes => {
+                                        $scope.fetchingStreams = false;
+                                        try {
+                                            parseAndMatchStreams(fallbackRes);
+                                        } catch (fallbackErr) {
+                                            $scope.showToast("No streams found on the server.", "error");
+                                        }
+                                    })
+                                    .catch(fallbackErr => {
+                                        $scope.fetchingStreams = false;
+                                        $scope.showToast("Error fetching streams from production: " + (fallbackErr.data?.error || fallbackErr.statusText || fallbackErr.message || "Unknown error"), "error");
+                                    });
+                            } else {
+                                $scope.showToast("No streams found on the server.", "error");
+                            }
                         }
-
-                        let allStreams = [];
-                        res.data.categories.forEach(cat => {
-                            if (cat.streams) {
-                                allStreams = allStreams.concat(cat.streams);
-                            }
-                        });
-
-                        // Token-based matching: title must contain all query tokens
-                        let matched = allStreams.filter(s => {
-                            if (!s.title) return false;
-                            let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-                            return queryTokens.every(token => titleLower.includes(token));
-                        });
-
-                        if (matched.length === 0) {
-                            $scope.showToast("No matching streams found for '" + $scope.streamFetchQuery + "'", "error");
-                            return;
-                        }
-
-                        let newLinks = matched.map((s, index) => {
-                            let parts = s.title.split(' - ');
-                            let name = s.title;
-                            if (parts.length > 1) {
-                                let lastPart = parts[parts.length - 1].trim();
-                                if (lastPart.length <= 10) {
-                                    name = parts[0].trim() + " - " + lastPart;
-                                }
-                            }
-                            let url = s.link || "";
-                            if (url.includes("api.pushembdz.store")) {
-                                url = url.replace("api.pushembdz.store", "pushembdz.store");
-                            }
-                            return {
-                                name: name,
-                                id: "src_" + (Date.now() + index),
-                                url: url
-                            };
-                        });
-
-                        $scope.config.streamLinks = newLinks;
-                        $scope.showToast("Imported " + newLinks.length + " streams matching query!", "success");
-                        $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.streamFetchQuery + "'");
                     })
                     .catch(err => {
-                        $scope.fetchingStreams = false;
-                        $scope.showToast("Error fetching streams: " + (err.data?.error || err.statusText || err.message || "Unknown error"), "error");
+                        // If primary URL failed to connect and we haven't tried fallback, try fallback
+                        if (targetUrl === primaryUrl) {
+                            console.log("Local API request failed, trying fallback production API...");
+                            $http.get(fallbackUrl)
+                                .then(fallbackRes => {
+                                    $scope.fetchingStreams = false;
+                                    try {
+                                        parseAndMatchStreams(fallbackRes);
+                                    } catch (fallbackErr) {
+                                        $scope.showToast("No streams found on the server.", "error");
+                                    }
+                                })
+                                .catch(fallbackErr => {
+                                    $scope.fetchingStreams = false;
+                                    $scope.showToast("Error fetching streams: " + (fallbackErr.data?.error || fallbackErr.statusText || fallbackErr.message || "Unknown error"), "error");
+                                });
+                        } else {
+                            $scope.fetchingStreams = false;
+                            $scope.showToast("Error fetching streams: " + (err.data?.error || err.statusText || err.message || "Unknown error"), "error");
+                        }
                     });
             };
 
