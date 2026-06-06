@@ -144,8 +144,8 @@
             overflow: hidden;
             margin: 0 30px;
             white-space: nowrap;
-            background: rgba(230, 0, 0, 0.15);
-            border: 1px solid rgba(230, 0, 0, 0.3);
+            background: var(--glow-color);
+            border: 1px solid var(--f1-red);
             border-radius: 20px;
             padding: 6px 15px;
             position: relative;
@@ -477,7 +477,7 @@
         .status-pill.live {
             background: var(--f1-red);
             color: white;
-            box-shadow: 0 0 15px rgba(230, 0, 0, 0.5);
+            box-shadow: 0 0 15px var(--f1-red);
             font-weight: 800;
             animation: pulse 2s infinite;
         }
@@ -651,7 +651,7 @@
             background: var(--f1-red);
             color: white;
             border-color: var(--f1-red);
-            box-shadow: 0 0 15px rgba(230, 0, 0, 0.3);
+            box-shadow: 0 0 15px var(--glow-color);
         }
 
         .spacer {
@@ -690,8 +690,8 @@
         }
 
         .white-schedule-card .schedule-row.live {
-            background: linear-gradient(90deg, rgba(230, 0, 0, 0.15), transparent);
-            border-color: rgba(230, 0, 0, 0.4);
+            background: linear-gradient(90deg, var(--glow-color), transparent);
+            border-color: var(--glow-color);
             border-left: 4px solid var(--f1-red);
         }
 
@@ -726,10 +726,10 @@
         }
 
         .schedule-row.live {
-            background: linear-gradient(90deg, rgba(230, 0, 0, 0.15), rgba(230, 0, 0, 0.02));
-            border-color: rgba(230, 0, 0, 0.3);
+            background: linear-gradient(90deg, var(--glow-color), rgba(255, 255, 255, 0.01));
+            border-color: var(--glow-color);
             border-left: 3px solid var(--f1-red);
-            box-shadow: 0 0 15px rgba(230, 0, 0, 0.1);
+            box-shadow: 0 0 15px var(--glow-color);
         }
 
         .schedule-row.upcoming {
@@ -795,7 +795,7 @@
             background: var(--f1-red);
             color: white;
             border-color: var(--f1-red);
-            box-shadow: 0 0 15px rgba(230, 0, 0, 0.3);
+            box-shadow: 0 0 15px var(--glow-color);
         }
 
         .standings-list {
@@ -1634,8 +1634,7 @@
             $scope.activeThemeName = '';
             
             function applyDynamicTheme(location, themeOverride) {
-                let key = (themeOverride && themeOverride !== '') ? themeOverride : location;
-                if (!key) return;
+                let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
                 const loc = key.toLowerCase();
                 let theme = {
                     primary: '#e60000',      // Default F1 Red
@@ -1673,7 +1672,7 @@
                         glow: 'rgba(0, 255, 204, 0.2)',
                         name: 'Night GP Theme (Cyber Neon)'
                     };
-                } else if (loc.includes('abu dhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
                     theme = {
                         primary: '#00e5ff', // Yas Marina Cyan
                         glow: 'rgba(0, 229, 255, 0.2)',
@@ -1749,7 +1748,7 @@
                 $scope.raceData = data.raceData || {};
                 
                 // Trigger dynamic theming based on race location or theme override
-                if (($scope.raceData.location || $scope.raceData.theme) && !$scope.themeOverrideActive) {
+                if (!$scope.themeOverrideActive) {
                     applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
                 }
 
@@ -1866,11 +1865,7 @@
             $scope.resetThemeTest = function () {
                 $scope.themeOverrideActive = false;
                 $scope.currentOverrideLoc = '';
-                if ($scope.raceData && ($scope.raceData.location || $scope.raceData.theme)) {
-                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
-                } else {
-                    applyDynamicTheme('default');
-                }
+                applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
             };
         });
 
