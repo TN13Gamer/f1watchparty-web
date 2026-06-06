@@ -277,12 +277,16 @@
         .session-card.is-live { border-color: var(--live-green); background: rgba(0, 255, 135, 0.02); box-shadow: 0 0 15px rgba(0, 255, 135, 0.08); }
         .session-card.is-upcoming { border-color: var(--upcoming-orange); background: rgba(255, 157, 0, 0.02); }
         
+        .badge-container {
+            position: absolute; top: -10px; left: 15px;
+            display: flex; gap: 6px; z-index: 20;
+        }
         .live-indicator, .upcoming-indicator, .timer-badge { 
-            position: absolute; top: -10px; left: 15px; font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; z-index: 20; letter-spacing: 1px;
+            font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;
         }
         .live-indicator { background: var(--live-green); color: #000; animation: pulse 2s infinite; box-shadow: 0 0 12px var(--live-green); }
         .upcoming-indicator { background: var(--upcoming-orange); color: #000; }
-        .timer-badge { left: 85px; background: #000; color: #ffffff; border: 1px solid var(--border); }
+        .timer-badge { background: #000; color: #ffffff; border: 1px solid var(--border); }
         
         .live-controls { display:flex; justify-content:space-between; align-items:center; }
 
@@ -783,9 +787,11 @@
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
                 
                 <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
-                    <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
-                    <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
-                    <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
+                    <div class="badge-container">
+                        <div class="live-indicator" ng-if="session.isLive"><i class="fa-solid fa-circle fa-beat" style="font-size:8px; margin-right:4px;"></i> LIVE NOW</div>
+                        <div class="upcoming-indicator" ng-if="session.isUpcoming"><i class="fa-solid fa-clock" style="margin-right:4px;"></i> UP NEXT</div>
+                        <div class="timer-badge" ng-if="session.isUpcoming">{{session.countdown}}</div>
+                    </div>
 
                     <div style="position: absolute; right: 10px; top: 10px; display: flex; gap: 5px; z-index: 10;">
                         <button class="icon-btn" ng-click="moveSessionUp($index)" ng-if="!$first" title="Move Up"><i class="fa-solid fa-chevron-up"></i></button>
