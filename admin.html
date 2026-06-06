@@ -36,7 +36,10 @@
         /* Set Titillium Web globally */
         * {
             box-sizing: border-box;
-            font-family: 'Titillium Web', sans-serif !important;
+        }
+
+        body, input, select, textarea, button {
+            font-family: 'Titillium Web', sans-serif;
         }
 
         body {
@@ -840,7 +843,7 @@
             <div class="admin-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
                     <div>
-                        <h3><i class="fa-solid fa-helmet-racing" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings</h3>
+                        <h3><i class="fa-solid fa-trophy" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings</h3>
                         <p style="font-size: 11px; color: var(--text-muted);">Auto-synced from official F1 API every 30s via server. Last sync: <strong>{{standingsLastUpdated || 'checking...'}}</strong></p>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -848,7 +851,7 @@
                             <i class="fa-solid" ng-class="fetchingStandings ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
                             {{fetchingStandings ? 'Fetching...' : 'Sync from F1 API'}}
                         </button>
-                        <button class="dashed-btn" ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort by Pts</button>
+                        <button class="dashed-btn" ng-click="sortDrivers()"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by Pts</button>
                         <button class="action-btn" ng-click="addDriver()"><i class="fa-solid fa-plus"></i> Add Driver</button>
                     </div>
                 </div>
@@ -880,7 +883,7 @@
                         <p style="font-size: 11px; color: var(--text-muted);">Auto-synced with Driver standings via F1 API. Or edit manually.</p>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="dashed-btn" ng-click="sortConstructors()"><i class="fa-solid fa-arrow-down-9-1"></i> Sort by Pts</button>
+                        <button class="dashed-btn" ng-click="sortConstructors()"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort by Pts</button>
                         <button class="action-btn" ng-click="addConstructor()"><i class="fa-solid fa-plus"></i> Add Team</button>
                     </div>
                 </div>
