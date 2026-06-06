@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formula 1 | Live Stream</title>
+    <title>watchf1.live | Live Stream</title>
 
     <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
 
@@ -129,23 +129,13 @@
             transition: all 0.3s ease;
         }
 
-        .f1-real-logo {
-            height: 24px;
-            width: auto;
-            filter: brightness(0) invert(1);
-            transition: all 0.3s ease;
-        }
-
-        .header-divider {
-            height: 20px;
-            width: 1px;
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .gemini-real-logo {
-            height: 32px;
-            filter: brightness(0) invert(1);
-            opacity: 0.9;
+        .logo-text {
+            font-size: 26px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
 
@@ -948,16 +938,9 @@
             background-image: none;
         }
 
-        body.theater-active .f1-real-logo {
-            height: 16px;
-        }
-
-        body.theater-active .gemini-real-logo {
-            height: 20px;
-        }
-
-        body.theater-active .header-divider {
-            height: 12px;
+        body.theater-active .logo-text {
+            font-size: 18px;
+            letter-spacing: 1px;
         }
 
         body.theater-active .status-pill {
@@ -1128,8 +1111,9 @@
         }
 
         .loading-logo-svg {
-            width: 600px;
-            height: 100px;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
             overflow: visible;
         }
 
@@ -1185,16 +1169,9 @@
                 gap: 10px;
             }
 
-            .f1-real-logo {
-                height: 18px;
-            }
-
-            .gemini-real-logo {
-                height: 20px;
-            }
-
-            .header-divider {
-                height: 15px;
+            .logo-text {
+                font-size: 20px;
+                letter-spacing: 1px;
             }
 
             .header-marquee-container {
@@ -1218,14 +1195,33 @@
 
             .video-toolbar {
                 border-radius: 0 0 16px 16px;
-                flex-wrap: wrap;
-                justify-content: center;
-                padding: 10px;
+                padding: 10px 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                overflow-x: auto;
+                white-space: nowrap;
+                flex-wrap: nowrap !important;
+                justify-content: flex-start !important;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+            }
+
+            .video-toolbar::-webkit-scrollbar {
+                display: none; /* Hide scrollbar for Chrome, Safari and Opera */
             }
 
             .glass-card {
                 border-radius: 16px;
                 padding: 20px;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
+            }
+
+            .video-wrapper {
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
             }
 
             .spacer {
@@ -1233,11 +1229,10 @@
             }
 
             .stream-btn {
-                flex: 1 1 auto;
+                flex: 0 0 auto !important;
                 text-align: center;
-                margin-bottom: 5px;
                 font-size: 11px;
-                padding: 5px 8px;
+                padding: 6px 12px;
             }
 
             .event-header {
@@ -1322,10 +1317,7 @@
 
     <header>
         <div class="header-left">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" class="f1-real-logo">
-            <div class="header-divider"></div>
-            <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png"
-                class="gemini-real-logo">
+            <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
         </div>
 
         <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -1363,7 +1355,7 @@
 
     <div class="container">
         <div class="main-column">
-            <div class="video-wrapper" data-tilt data-tilt-max="2" data-tilt-speed="400" data-tilt-glare
+            <div class="video-wrapper" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400" data-tilt-glare
                 data-tilt-max-glare="0.2" data-tilt-perspective="1000">
                 <div class="video-responsive">
                     <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
@@ -1382,7 +1374,7 @@
                     {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
                 </button>
             </div>
-            <div class="glass-card stream-controls" data-tilt data-tilt-max="3" data-tilt-speed="400" data-tilt-glare
+            <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-glare
                 data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <div class="event-header">
                     <div>
@@ -1408,7 +1400,7 @@
         </div>
 
         <div class="sidebar">
-            <div class="glass-card white-schedule-card" data-tilt data-tilt-max="4" data-tilt-speed="400"
+            <div class="glass-card white-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
                 data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <div class="card-title">Weekend Schedule</div>
                 <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
@@ -1426,7 +1418,7 @@
                 </div>
             </div>
 
-            <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-max="4" data-tilt-speed="400"
+            <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
                 data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
 
                 <!-- Card Title -->
@@ -1639,6 +1631,108 @@
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
 
+            $scope.activeThemeName = '';
+            
+            function applyDynamicTheme(location, themeOverride) {
+                let key = (themeOverride && themeOverride !== '') ? themeOverride : location;
+                if (!key) return;
+                const loc = key.toLowerCase();
+                let theme = {
+                    primary: '#e60000',      // Default F1 Red
+                    glow: 'rgba(230, 0, 0, 0.15)',
+                    name: 'Classic F1 Theme'
+                };
+                
+                if (loc.includes('monaco') || loc.includes('monte carlo')) {
+                    theme = {
+                        primary: '#e2001a', // Monaco Red
+                        glow: 'rgba(226, 0, 26, 0.15)',
+                        name: 'Monaco GP Theme (Red & White)'
+                    };
+                } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
+                    theme = {
+                        primary: '#ff1801', // Italian Scarlet Red
+                        glow: 'rgba(255, 24, 1, 0.15)',
+                        name: 'Italian GP Theme (Red)'
+                    };
+                } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
+                    theme = {
+                        primary: '#00cc7a', // British Racing Green
+                        glow: 'rgba(0, 204, 122, 0.15)',
+                        name: 'British GP Theme (Green)'
+                    };
+                } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
+                    theme = {
+                        primary: '#ff7700', // Dutch Orange
+                        glow: 'rgba(255, 119, 0, 0.15)',
+                        name: 'Dutch GP Theme (Orange)'
+                    };
+                } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                    theme = {
+                        primary: '#00ffcc', // Cyber Neon Teal
+                        glow: 'rgba(0, 255, 204, 0.2)',
+                        name: 'Night GP Theme (Cyber Neon)'
+                    };
+                } else if (loc.includes('abu dhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                    theme = {
+                        primary: '#00e5ff', // Yas Marina Cyan
+                        glow: 'rgba(0, 229, 255, 0.2)',
+                        name: 'Desert GP Theme (Electric Blue)'
+                    };
+                } else if (loc.includes('spa') || loc.includes('belgium')) {
+                    theme = {
+                        primary: '#ffb700', // Eau Rouge Gold
+                        glow: 'rgba(255, 183, 0, 0.15)',
+                        name: 'Belgian GP Theme (Gold)'
+                    };
+                } else if (loc.includes('suzuka') || loc.includes('japan')) {
+                    theme = {
+                        primary: '#ff66a3', // Sakura Pink
+                        glow: 'rgba(255, 102, 163, 0.2)',
+                        name: 'Japanese GP Theme (Sakura Pink)'
+                    };
+                } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
+                    theme = {
+                        primary: '#ffcc00', // Aussie Gold
+                        glow: 'rgba(255, 204, 0, 0.15)',
+                        name: 'Australian GP Theme (Aussie Gold)'
+                    };
+                } else if (loc.includes('canada') || loc.includes('montreal')) {
+                    theme = {
+                        primary: '#ff3333', // Maple Red
+                        glow: 'rgba(255, 51, 51, 0.15)',
+                        name: 'Canadian GP Theme (Red)'
+                    };
+                } else if (loc.includes('china') || loc.includes('shanghai')) {
+                    theme = {
+                        primary: '#ff2200', // Chinese Red
+                        glow: 'rgba(255, 34, 0, 0.15)',
+                        name: 'Chinese GP Theme (Dragon Red)'
+                    };
+                } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
+                    theme = {
+                        primary: '#00ff33', // Brazilian Green
+                        glow: 'rgba(0, 255, 51, 0.15)',
+                        name: 'Brazilian GP Theme (Senna Green)'
+                    };
+                }
+
+                // Apply variables to document root
+                const root = document.documentElement;
+                root.style.setProperty('--f1-red', theme.primary);
+                root.style.setProperty('--glow-color', theme.glow);
+                $scope.activeThemeName = theme.name;
+
+                // Dynamic Vanta points color update if initialized
+                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.vantaInstance.setOptions({ color: vantaColor });
+                } else {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.pendingVantaColor = vantaColor;
+                }
+            }
+
             function safeDate(val) { if (!val) return null; if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate(); return new Date(val); }
 
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
@@ -1653,6 +1747,12 @@
 
             function processData(data) {
                 $scope.raceData = data.raceData || {};
+                
+                // Trigger dynamic theming based on race location or theme override
+                if (($scope.raceData.location || $scope.raceData.theme) && !$scope.themeOverrideActive) {
+                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                }
+
                 $scope.nextRace = data.nextRace || {};
                 $scope.streamLinks = data.streamLinks || [];
                 $scope.standings = data.standings || [];
@@ -1734,12 +1834,51 @@
                 if (c.includes('night')) return '🌙';
                 return '☀️';
             };
+
+            // --- Theme Test Mode System ---
+            $scope.isTestMode = $window.location.search.includes('testThemes=true');
+            $scope.themeOverrideActive = false;
+            $scope.currentOverrideLoc = '';
+            
+            $scope.testThemesList = [
+                { name: 'Monaco (Red/White)', loc: 'Monaco' },
+                { name: 'Monza (Scarlet Red)', loc: 'Monza' },
+                { name: 'Silverstone (Racing Green)', loc: 'Silverstone' },
+                { name: 'Zandvoort (Dutch Orange)', loc: 'Zandvoort' },
+                { name: 'Singapore (Neon Teal)', loc: 'Singapore' },
+                { name: 'Yas Marina (Desert Cyan)', loc: 'Abu Dhabi' },
+                { name: 'Spa (Eau Rouge Gold)', loc: 'Spa' },
+                { name: 'Suzuka (Sakura Pink)', loc: 'Suzuka' },
+                { name: 'Melbourne (Aussie Gold)', loc: 'Melbourne' },
+                { name: 'Montreal (Maple Red)', loc: 'Canada' },
+                { name: 'Shanghai (Chinese Red)', loc: 'China' },
+                { name: 'Brazil (Senna Green)', loc: 'Brazil' },
+                { name: 'Classic F1 (Default Red)', loc: 'Default' }
+            ];
+
+            $scope.selectTestTheme = function (loc) {
+                $scope.themeOverrideActive = true;
+                $scope.currentOverrideLoc = loc;
+                $scope.raceData.location = loc === 'Default' ? 'Default GP' : loc;
+                applyDynamicTheme(loc);
+            };
+
+            $scope.resetThemeTest = function () {
+                $scope.themeOverrideActive = false;
+                $scope.currentOverrideLoc = '';
+                if ($scope.raceData && ($scope.raceData.location || $scope.raceData.theme)) {
+                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                } else {
+                    applyDynamicTheme('default');
+                }
+            };
         });
 
-        // Added 3D Net Telemetry Overlay on top of Video
+        // Added 3D Net Telemetry Overlay on top of Video (only initialized on desktop for performance)
         document.addEventListener("DOMContentLoaded", function () {
-            if (typeof VANTA !== 'undefined') {
-                VANTA.NET({
+            if (typeof VANTA !== 'undefined' && window.innerWidth > 768) {
+                const initialColor = window.pendingVantaColor || 0xe60000;
+                window.vantaInstance = VANTA.NET({
                     el: "#vanta-overlay",
                     mouseControls: true,
                     touchControls: true,
@@ -1748,7 +1887,7 @@
                     minWidth: 200.00,
                     scale: 1.00,
                     scaleMobile: 1.00,
-                    color: 0xe60000,
+                    color: initialColor,
                     backgroundColor: 0x0,
                     backgroundAlpha: 0.0,
                     points: 15.00,
@@ -1761,6 +1900,71 @@
 
 
     </script>
+    <!-- Floating Theme Test Control Panel -->
+    <div class="theme-test-panel animate-in" ng-if="isTestMode" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(10, 10, 14, 0.9);
+        backdrop-filter: blur(12px);
+        border: 2px solid var(--f1-red);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px var(--glow-color);
+        z-index: 9999;
+        width: 280px;
+        max-height: 400px;
+        overflow-y: auto;
+        color: #fff;
+        font-family: 'Titillium Web', sans-serif;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
+            <div style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
+                <i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Theme Test Mode
+            </div>
+            <button ng-if="themeOverrideActive" ng-click="resetThemeTest()" style="
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.15);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 8px;
+                cursor: pointer;
+                text-transform: uppercase;
+                color: #fff;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            ">Reset</button>
+        </div>
+        <div style="font-size: 10px; color: #8a8a9c; margin-bottom: 12px; line-height: 1.4;">
+            Select a location theme to test how the site styling and background telemetry net color adapt.
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)" ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}" style="
+                background: rgba(255,255,255,0.02);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-left: 3px solid transparent;
+                text-align: left;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-transform: none;
+                letter-spacing: 0.5px;
+            ">
+                <span>{{t.name}}</span>
+                <i class="fa-solid fa-chevron-right" style="font-size: 8px; opacity: 0.5;"></i>
+            </button>
+        </div>
+        <div style="margin-top: 10px; font-size: 8px; text-align: center; color: #6a6a7c;">
+            Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
+        </div>
+    </div>
 </body>
 
 </html>

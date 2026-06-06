@@ -180,13 +180,20 @@
         .schedule-grid-top { display: grid; grid-template-columns: 0.5fr 0.8fr 2fr; gap: 10px; margin-bottom: 10px; }
         .schedule-grid-bot { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 10px; }
 
-        .driver-list-header { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; letter-spacing: 1px; font-weight: 700;}
-        .driver-row { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 0.8fr 1fr 50px; gap: 10px; align-items: center; background: #181820; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; transition:0.2s; }
+        .driver-list-header { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 80px 2fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; letter-spacing: 1px; font-weight: 700;}
+        .driver-row { display: grid; grid-template-columns: 40px 50px 2fr 1.5fr 80px 2fr 50px; gap: 10px; align-items: center; background: #181820; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; transition:0.2s; }
         .driver-row:hover { background: #1c1c25; border-color: var(--border); transform: translateX(4px); }
+        .driver-move-col { display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; }
+        .driver-move-col button { background: none; border: none; padding: 0; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+        .driver-move-col button:hover { color: white; }
+        .driver-img-col { text-align: center; }
         
-        .team-list-header { display: grid; grid-template-columns: 40px 2fr 1fr 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; letter-spacing: 1px; font-weight: 700;}
-        .team-row { display: grid; grid-template-columns: 40px 2fr 1fr 50px; gap: 10px; align-items: center; background: #181820; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; transition:0.2s; }
+        .team-list-header { display: grid; grid-template-columns: 40px 2fr 80px 50px; gap: 10px; padding: 0 10px 10px; margin-bottom: 5px; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 10px; letter-spacing: 1px; font-weight: 700;}
+        .team-row { display: grid; grid-template-columns: 40px 2fr 80px 50px; gap: 10px; align-items: center; background: #181820; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; transition:0.2s; }
         .team-row:hover { background: #1c1c25; border-color: var(--border); transform: translateX(4px); }
+        .team-move-col { display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; }
+        .team-move-col button { background: none; border: none; padding: 0; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+        .team-move-col button:hover { color: white; }
 
         .img-preview { width: 38px; height: 38px; border-radius: 50%; background: #000; object-fit: cover; border: 2px solid var(--border); }
 
@@ -195,12 +202,162 @@
         .login-box { background: rgba(13, 13, 18, 0.85); backdrop-filter: blur(20px); padding: 40px 30px; border-radius: 16px; border: 1px solid var(--border); border-top: 4px solid var(--primary); width: 90%; max-width: 380px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.05); }
 
         @media (max-width: 768px) {
-            .driver-list-header, .team-list-header { display: none; }
-            .driver-row, .team-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; padding:15px; border:1px solid var(--border); }
-            .driver-row input, .team-row input { width: 100%; }
-            .schedule-grid-top, .schedule-grid-bot { grid-template-columns: 1fr; }
-            .driver-row button.delete-btn, .team-row button.delete-btn { position: absolute; top: 10px; right: 10px; }
-            .log-entry { flex-direction: column; align-items: flex-start; gap: 5px; }
+            body {
+                padding-bottom: 40px !important;
+            }
+            .container {
+                padding: 0 10px !important;
+            }
+            .admin-section {
+                padding: 15px 12px !important;
+                margin-bottom: 15px !important;
+            }
+            h2 {
+                font-size: 20px !important;
+            }
+            
+            /* Action Bar */
+            .action-bar {
+                padding: 10px 15px !important;
+                margin: 5px 0 15px 0 !important;
+            }
+            .brand-logo {
+                font-size: 16px !important;
+            }
+
+            /* Responsive Tab Navigation */
+            .tab-container {
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 4px !important;
+                gap: 5px !important;
+            }
+            .tab-btn {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: 100px !important;
+                padding: 10px 12px !important;
+                font-size: 11px !important;
+            }
+
+            /* Main Layout Grid Row Collapse */
+            .grid-row {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+
+            /* Schedule Cards */
+            .session-card {
+                padding-top: 55px !important;
+            }
+            .schedule-grid-top, .schedule-grid-bot {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
+
+            /* Driver Rows - Modern Grid Card Layout */
+            .driver-list-header, .team-list-header { 
+                display: none !important; 
+            }
+            .driver-row {
+                display: grid !important;
+                grid-template-columns: 35px 50px 1fr 70px !important;
+                grid-template-areas: 
+                    "move img name pts"
+                    "move img team pts"
+                    "move del url url" !important;
+                gap: 8px !important;
+                padding: 12px 10px !important;
+                border: 1px solid var(--border) !important;
+            }
+            .driver-row > *:nth-child(1) { 
+                grid-area: move; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: center; 
+                gap: 4px;
+            }
+            .driver-row > *:nth-child(2) { 
+                grid-area: img; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+            }
+            .driver-row > *:nth-child(3) { 
+                grid-area: name; 
+                width: 100% !important; 
+            }
+            .driver-row > *:nth-child(4) { 
+                grid-area: team; 
+                width: 100% !important; 
+            }
+            .driver-row > *:nth-child(5) { 
+                grid-area: pts; 
+                width: 100% !important; 
+                height: 100% !important; 
+                min-height: 70px !important;
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+            }
+            .driver-row > *:nth-child(6) { 
+                grid-area: url; 
+                width: 100% !important; 
+                font-size: 11px !important;
+            }
+            .driver-row > *:nth-child(7) { 
+                grid-area: del; 
+                width: 100% !important; 
+                height: 38px !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+            }
+
+            /* Constructor Rows - Neat Single Line Grid */
+            .team-row {
+                display: grid !important;
+                grid-template-columns: 35px 1fr 70px 40px !important;
+                grid-template-areas: 
+                    "move name pts del" !important;
+                gap: 8px !important;
+                padding: 10px !important;
+                align-items: center !important;
+                border: 1px solid var(--border) !important;
+            }
+            .team-row > *:nth-child(1) { 
+                grid-area: move; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: center; 
+                gap: 4px;
+            }
+            .team-row > *:nth-child(2) { 
+                grid-area: name; 
+                width: 100% !important; 
+            }
+            .team-row > *:nth-child(3) { 
+                grid-area: pts; 
+                width: 100% !important; 
+            }
+            .team-row > *:nth-child(4) { 
+                grid-area: del; 
+                width: 100% !important; 
+                height: 38px !important;
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .log-entry { 
+                flex-direction: column; 
+                align-items: flex-start; 
+                gap: 5px; 
+            }
         }
     </style>
 </head>
@@ -282,6 +439,25 @@
                     <div class="grid-row">
                         <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
                         <div class="input-group"><label>Laps / Duration</label><input type="text" ng-model="config.raceData.laps"></div>
+                    </div>
+                    <div class="input-group">
+                        <label style="color: var(--primary);">Active Theme (Override)</label>
+                        <select ng-model="config.raceData.theme" style="border-left-color: var(--primary);">
+                            <option value="">Auto-Detect (Based on Location)</option>
+                            <option value="monaco">Monaco Theme (Red & White)</option>
+                            <option value="monza">Italian Theme (Scarlet Red)</option>
+                            <option value="silverstone">British Theme (Racing Green)</option>
+                            <option value="zandvoort">Dutch Theme (Orange)</option>
+                            <option value="singapore">Night GP Theme (Cyber Neon Teal)</option>
+                            <option value="abudhabi">Desert GP Theme (Electric Blue)</option>
+                            <option value="spa">Belgian Theme (Gold)</option>
+                            <option value="suzuka">Japanese Theme (Sakura Pink)</option>
+                            <option value="melbourne">Australian Theme (Aussie Gold)</option>
+                            <option value="canada">Canadian Theme (Maple Red)</option>
+                            <option value="china">Chinese Theme (Dragon Red)</option>
+                            <option value="brazil">Brazilian Theme (Senna Green)</option>
+                            <option value="classic">Classic F1 Theme (Default Red)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -455,18 +631,18 @@
                 </div>
                 
                 <div ng-repeat="driver in config.standings" class="driver-row">
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveUp(config.standings, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveDown(config.standings, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="driver-move-col">
+                        <button class="move-btn" ng-click="moveUp(config.standings, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button class="move-btn" ng-click="moveDown(config.standings, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
                     </div>
-                    <div style="text-align: center;"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
+                    <div class="driver-img-col"><img ng-src="{{driver.image}}" class="img-preview" onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"></div>
                     
-                    <input type="text" ng-model="driver.name" placeholder="Driver Name">
-                    <input type="text" ng-model="driver.team" placeholder="Team">
-                    <input type="number" class="score-input" ng-model="driver.points" placeholder="0">
-                    <input type="text" ng-model="driver.image" placeholder="Image URL">
+                    <input type="text" class="driver-name-input" ng-model="driver.name" placeholder="Driver Name">
+                    <input type="text" class="driver-team-input" ng-model="driver.team" placeholder="Team">
+                    <input type="number" class="score-input driver-points-input" ng-model="driver.points" placeholder="0">
+                    <input type="text" class="driver-url-input" ng-model="driver.image" placeholder="Image URL">
                     
-                    <button class="icon-btn delete-btn" ng-click="removeItem(config.standings, $index, 'Driver')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="icon-btn delete-btn driver-del-btn" ng-click="removeItem(config.standings, $index, 'Driver')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
 
@@ -487,15 +663,15 @@
                 </div>
                 
                 <div ng-repeat="team in config.constructors" class="team-row">
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveUp(config.constructors, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
-                        <button style="background:none; border:none; padding:0; color:var(--text-muted); font-size:12px; cursor:pointer;" ng-click="moveDown(config.constructors, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="team-move-col">
+                        <button class="move-btn" ng-click="moveUp(config.constructors, $index)" ng-if="!$first"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button class="move-btn" ng-click="moveDown(config.constructors, $index)" ng-if="!$last"><i class="fa-solid fa-chevron-down"></i></button>
                     </div>
                     
-                    <input type="text" ng-model="team.name" placeholder="Team Name">
-                    <input type="number" class="score-input" ng-model="team.points" placeholder="0">
+                    <input type="text" class="team-name-input" ng-model="team.name" placeholder="Team Name">
+                    <input type="number" class="score-input team-points-input" ng-model="team.points" placeholder="0">
                     
-                    <button class="icon-btn delete-btn" ng-click="removeItem(config.constructors, $index, 'Team')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="icon-btn delete-btn team-del-btn" ng-click="removeItem(config.constructors, $index, 'Team')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
         </div>
@@ -668,7 +844,7 @@
             // --- AUTO WEATHER REFRESH (every 10 seconds) ---
             $scope.weatherLastUpdated = null;
             let weatherAutoInterval = $interval(function() {
-                if ($scope.config && $scope.config.raceData && $scope.config.raceData.location) {
+                if ($scope.config && $scope.config.raceData && ($scope.config.raceData.location || $scope.config.raceData.name)) {
                     $scope.fetchWeather(true);
                 }
             }, 10000); // 10 seconds
@@ -730,13 +906,19 @@
 
             // --- AUTO WEATHER FETCHER ---
             $scope.fetchWeather = function(silent = false) {
-                if (!$scope.config.raceData.location) {
-                    if (!silent) $scope.showToast("Please enter a Circuit Location first.", "error");
+                let searchLoc = $scope.config.raceData.location || $scope.config.raceData.name || "";
+                if (searchLoc) {
+                    // Clean up "Grand Prix" and "GP" for better weather search accuracy
+                    searchLoc = searchLoc.replace(/grand prix/gi, "").replace(/gp/gi, "").trim();
+                }
+
+                if (!searchLoc) {
+                    if (!silent) $scope.showToast("Please enter a Circuit Location or Grand Prix Name first.", "error");
                     return;
                 }
                 if (!silent) $scope.fetchingWeather = true;
                 
-                fetch(`https://wttr.in/${encodeURIComponent($scope.config.raceData.location)}?format=j1`)
+                fetch(`https://wttr.in/${encodeURIComponent(searchLoc)}?format=j1`)
                     .then(res => res.json())
                     .then(data => {
                         $scope.$apply(() => {
@@ -755,7 +937,7 @@
                             $scope.weatherLastUpdated = new Date().toLocaleTimeString();
                             if (!silent) {
                                 $scope.showToast("Real-time weather pulled successfully!", "success");
-                                $scope.addLog(`Auto-fetched weather for ${$scope.config.raceData.location}`);
+                                $scope.addLog(`Auto-fetched weather for ${searchLoc}`);
                             }
                             // Auto-save silently so viewers get the update immediately
                             $scope.saveLiveConfig(true);
