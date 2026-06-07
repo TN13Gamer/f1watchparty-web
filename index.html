@@ -1256,173 +1256,13 @@
             gap: 8px;
         }
 
-        .chat-messages-container {
+        /* Twitch iframe fills the remaining chat space */
+        .chat-twitch-iframe {
             flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #09090b;
-            scroll-behavior: smooth;
-        }
-
-        .chat-msg {
-            font-size: 13px;
-            line-height: 1.5;
-            animation: fadeIn 0.15s ease-out;
-            word-wrap: break-word;
-        }
-
-        .chat-author {
-            font-weight: 800;
-            letter-spacing: 0.3px;
-        }
-
-        .chat-text {
-            color: #eee;
-            font-weight: 600;
-        }
-
-        .chat-empty {
-            color: #555;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 50px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* Custom Chat input layout */
-        .chat-input-area {
-            background: #16161b;
-            border-top: 1px solid rgba(145, 70, 255, 0.2);
-            padding: 12px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .nickname-banner {
-            font-size: 11px;
-            color: #888;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-        }
-
-        .edit-nick-btn {
-            background: none !important;
-            border: none !important;
-            color: #a970ff !important;
-            font-size: 10px !important;
-            cursor: pointer !important;
-            padding: 0 !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 4px !important;
-        }
-
-        .edit-nick-btn:hover {
-            color: #fff !important;
-            transform: none !important;
-        }
-
-        .nickname-edit-row {
-            display: flex;
-            gap: 5px;
+            border: none;
             width: 100%;
-            align-items: center;
-        }
-
-        .nickname-input {
-            flex: 1;
-            background: rgba(0,0,0,0.4) !important;
-            border: 1px solid rgba(145, 70, 255, 0.3) !important;
-            border-left: 2px solid #a970ff !important;
-            padding: 4px 8px !important;
-            font-size: 11px !important;
-            color: #fff !important;
-            border-radius: 4px !important;
-            height: 24px !important;
-        }
-
-        .save-nick-btn, .cancel-nick-btn {
-            background: rgba(255,255,255,0.05) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            width: 24px !important;
-            height: 24px !important;
-            padding: 0 !important;
-            border-radius: 4px !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 10px !important;
-        }
-
-        .save-nick-btn {
-            color: #00e676 !important;
-            border-color: rgba(0, 230, 118, 0.3) !important;
-        }
-
-        .cancel-nick-btn {
-            color: #ff3333 !important;
-            border-color: rgba(255, 51, 51, 0.3) !important;
-        }
-
-        .save-nick-btn:hover, .cancel-nick-btn:hover {
-            transform: none !important;
-            background: rgba(255,255,255,0.1) !important;
-        }
-
-        .chat-input-form {
-            display: flex;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .chat-input-field {
-            flex: 1;
-            background: rgba(0,0,0,0.4) !important;
-            border: 1px solid rgba(145, 70, 255, 0.2) !important;
-            border-left: 2px solid #a970ff !important;
-            padding: 8px 12px !important;
-            font-size: 12px !important;
-            color: #fff !important;
-            border-radius: 6px !important;
-            height: 34px !important;
-        }
-
-        .chat-input-field:focus {
-            border-color: #a970ff !important;
-            box-shadow: 0 0 10px rgba(145, 70, 255, 0.2) !important;
-            background: rgba(0,0,0,0.6) !important;
-        }
-
-        .chat-send-btn {
-            background: #9146ff !important;
-            border: none !important;
-            color: #fff !important;
-            width: 34px !important;
-            height: 34px !important;
-            border-radius: 6px !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            font-size: 12px !important;
-        }
-
-        .chat-send-btn:hover {
-            background: #a970ff !important;
-            transform: scale(1.05) !important;
+            min-height: 0;
+            background: #0e0e10;
         }
 
         /* Pinned Message Banner style */
@@ -1868,34 +1708,11 @@
             </div>
         </div>
 
-        <div class="chat-messages-container">
-            <div ng-repeat="msg in chatList" class="chat-msg">
-                <span class="chat-author" style="color: {{msg.color || '#a970ff'}};">{{msg.username}}</span>:
-                <span class="chat-text">{{msg.text}}</span>
-            </div>
-            <div ng-if="chatList.length === 0" class="chat-empty">
-                Welcome to the stream! Say something...
-            </div>
-        </div>
-
-        <!-- Chat Input Area & Username Editor -->
-        <div class="chat-input-area">
-            <div class="nickname-banner">
-                <div ng-if="!chatState.editingNickname">
-                    <span>Chatting as <strong style="color: {{chatUserColor}};">{{chatState.username}}</strong></span>
-                    <button class="edit-nick-btn" ng-click="startEditNickname()"><i class="fa-solid fa-pen"></i> Edit</button>
-                </div>
-                <div ng-if="chatState.editingNickname" class="nickname-edit-row">
-                    <input type="text" class="nickname-input" ng-model="chatState.tempNickname" placeholder="New nickname" maxlength="15">
-                    <button class="save-nick-btn" ng-click="saveNickname()"><i class="fa-solid fa-check"></i></button>
-                    <button class="cancel-nick-btn" ng-click="cancelEditNickname()"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </div>
-            <form ng-submit="sendChatMessage()" class="chat-input-form">
-                <input type="text" ng-model="chatState.chatInput" placeholder="Send a message..." class="chat-input-field" required maxlength="150" autocomplete="off">
-                <button type="submit" class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-            </form>
-        </div>
+        <!-- Twitch Chat Iframe -->
+        <iframe class="chat-twitch-iframe"
+            ng-src="{{twitchChatUrl}}"
+            allowfullscreen>
+        </iframe>
     </div>
 
     <footer>
@@ -1994,65 +1811,6 @@
                 $scope.chatState.editingNickname = false;
             };
 
-            function initChatListener() {
-                if (chatEventSource) chatEventSource.close();
-                
-                chatEventSource = new EventSource('/api/chat/stream');
-                
-                chatEventSource.onmessage = function(event) {
-                    try {
-                        const payload = JSON.parse(event.data);
-                        if (payload.type === 'chatList') {
-                            $timeout(function() {
-                                $scope.chatList = payload.data;
-                                setTimeout(scrollChatToBottom, 100);
-                            });
-                        }
-                    } catch (e) {
-                        console.error('Error parsing chat list SSE:', e);
-                    }
-                };
-
-                chatEventSource.onerror = function(err) {
-                    console.error('SSE connection error, retrying...', err);
-                    chatEventSource.close();
-                    setTimeout(initChatListener, 5000);
-                };
-            }
-
-            function scrollChatToBottom() {
-                const container = document.querySelector('.chat-messages-container');
-                if (container) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            }
-
-            $scope.$watch('isChatOpen', function(isOpen) {
-                if (isOpen) {
-                    initChatListener();
-                } else {
-                    if (chatEventSource) {
-                        chatEventSource.close();
-                        chatEventSource = null;
-                    }
-                }
-            });
-
-            $scope.sendChatMessage = function() {
-                const text = $scope.chatState.chatInput ? $scope.chatState.chatInput.trim() : '';
-                if (!text) return;
-
-                $http.post('/api/chat/send', {
-                    username: $scope.chatState.username,
-                    text: text,
-                    color: $scope.chatUserColor,
-                    isAdmin: false
-                }).then(function() {
-                    $scope.chatState.chatInput = '';
-                }).catch(function(err) {
-                    console.error("Error sending chat message via API:", err);
-                });
-            };
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
 
@@ -2279,6 +2037,11 @@
                 $scope.raceData = data.raceData || {};
                 $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = data.pinnedMessage || null;
+
+                // Build the Twitch chat embed URL (parent must match the page hostname)
+                var parent = $window.location.hostname || 'localhost';
+                var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
+                $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
 
                 // Trigger dynamic theming based on race location or theme override
                 if (!$scope.themeOverrideActive) {
