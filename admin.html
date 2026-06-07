@@ -636,6 +636,7 @@
 
         <div class="tab-container">
             <button class="tab-btn" ng-class="{'active': currentView === 'live'}" ng-click="currentView = 'live'"><i class="fa-solid fa-video" style="margin-right: 5px;"></i> Live Event</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'chat'}" ng-click="currentView = 'chat'"><i class="fa-solid fa-comments" style="margin-right: 5px;"></i> Live Chat</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'scores'}" ng-click="currentView = 'scores'"><i class="fa-solid fa-list-ol" style="margin-right: 5px;"></i> Standings</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'logs'}" ng-click="currentView = 'logs'"><i class="fa-solid fa-chart-line" style="margin-right: 5px;"></i> Logs & Analytics</button>
         </div>
@@ -956,6 +957,62 @@
             </div>
         </div>
 
+        <div ng-show="currentView === 'chat'">
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3><i class="fa-solid fa-comments" style="color: var(--primary); margin-right: 10px;"></i> Live Chat Moderation</h3>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Monitor active stream chat, reply as admin, delete inappropriate messages, clear chat history, or pin announcements.</p>
+                    </div>
+                    <div>
+                        <button class="danger-btn" ng-click="clearChatHistory()"><i class="fa-solid fa-trash-can"></i> Clear Chat History</button>
+                    </div>
+                </div>
+
+                <!-- Admin Chat Container and Messages Panel -->
+                <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                    <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 500px; overflow: hidden;">
+                        
+                        <!-- Pinned message overview inside admin panel -->
+                        <div style="background: rgba(225, 6, 0, 0.1); border-bottom: 1px solid var(--primary); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;" ng-if="config.pinnedMessage">
+                            <div>
+                                <span style="color: var(--primary); font-weight: 800; text-transform: uppercase; font-size: 9px; letter-spacing: 1px; display: block; margin-bottom: 2px;"><i class="fa-solid fa-thumbtack"></i> Pinned Announcement</span>
+                                <span style="font-weight: 700; color: {{config.pinnedMessage.color || '#a970ff'}};">{{config.pinnedMessage.username}}</span>: 
+                                <span style="color: #eee; font-weight: 600;">{{config.pinnedMessage.text}}</span>
+                            </div>
+                            <button class="icon-btn delete-btn" ng-click="unpinMessage()" title="Unpin message" style="width: 28px; height: 28px; border-radius: 4px; padding: 0;"><i class="fa-solid fa-thumbtack-slash" style="font-size: 11px;"></i></button>
+                        </div>
+
+                        <!-- Chat Messages Viewer -->
+                        <div id="adminChatContainer" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                            <div ng-repeat="msg in chatList" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); font-size: 13px;">
+                                <div style="flex: 1; word-wrap: break-word; line-height: 1.4; padding-right: 15px;">
+                                    <span style="font-weight: 800; color: {{msg.color || '#a970ff'}};">{{msg.username}}</span>
+                                    <span ng-if="msg.isAdmin" style="font-size: 9px; background: var(--primary); color: #fff; padding: 1px 4px; border-radius: 3px; font-weight: 800; margin-left: 5px; text-transform: uppercase;">Admin</span>:
+                                    <span style="color: #eee; font-weight: 600; margin-left: 5px;">{{msg.text}}</span>
+                                </div>
+                                <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+                                    <button ng-click="pinMessage(msg)" class="action-btn" title="Pin message" style="padding: 4px 8px; font-size: 9px; height: 26px; border-radius: 4px; border-color: rgba(255,255,255,0.15);"><i class="fa-solid fa-thumbtack"></i> Pin</button>
+                                    <button ng-click="deleteMessage(msg.id)" class="icon-btn delete-btn" title="Delete message" style="width: 26px; height: 26px; border-radius: 4px; padding: 0; margin: 0;"><i class="fa-solid fa-trash" style="font-size: 10px;"></i></button>
+                                </div>
+                            </div>
+                            <div ng-if="chatList.length === 0" style="text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 50px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                                Chat history is empty.
+                            </div>
+                        </div>
+
+                        <!-- Chat Input for Admin -->
+                        <div style="background: rgba(20,20,27,0.9); border-top: 1px solid var(--border); padding: 15px;">
+                            <form ng-submit="sendAdminMessage()" style="display: flex; gap: 10px;">
+                                <input type="text" ng-model="adminChatInput" placeholder="Type message as ADMIN..." style="flex: 1; height: 40px; font-size: 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 8px; color: #fff; padding: 0 15px;" required maxlength="150" autocomplete="off">
+                                <button type="submit" class="primary-btn" style="height: 40px; padding: 0 20px; font-size: 12px; border-radius: 8px;"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -1079,6 +1136,111 @@
                             snap.forEach(doc => doc.ref.delete());
                         });
                 }, 60000);
+            };
+
+            // --- Custom Chat System for Admin ---
+            $scope.chatList = [];
+            $scope.adminChatInput = "";
+            let chatListener = null;
+
+            function initChatListener() {
+                if (chatListener) chatListener();
+                chatListener = db.collection("chat_messages")
+                    .orderBy("timestamp", "desc")
+                    .limit(60)
+                    .onSnapshot((snapshot) => {
+                        const msgs = [];
+                        snapshot.forEach((doc) => {
+                            const d = doc.data();
+                            msgs.push({
+                                id: doc.id,
+                                ...d,
+                                timestamp: d.timestamp ? d.timestamp.toDate() : new Date()
+                            });
+                        });
+                        $scope.$apply(function() {
+                            $scope.chatList = msgs.reverse();
+                            setTimeout(scrollAdminChatToBottom, 100);
+                        });
+                    });
+            }
+
+            function scrollAdminChatToBottom() {
+                const container = document.getElementById('adminChatContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+
+            $scope.$watch('currentView', function(newVal) {
+                if (newVal === 'chat') {
+                    initChatListener();
+                }
+            });
+
+            $scope.sendAdminMessage = function() {
+                const text = $scope.adminChatInput ? $scope.adminChatInput.trim() : '';
+                if (!text) return;
+
+                db.collection("chat_messages").add({
+                    username: "ADMIN",
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    color: "#e10600", // F1 Red
+                    isAdmin: true
+                }).then(() => {
+                    $scope.$apply(function() { $scope.adminChatInput = ''; });
+                });
+            };
+
+            $scope.deleteMessage = function(id) {
+                db.collection("chat_messages").doc(id).delete().then(() => {
+                    $scope.showToast("Message deleted successfully.", "success");
+                }).catch((err) => {
+                    $scope.showToast("Failed to delete message: " + err.message, "error");
+                });
+            };
+
+            $scope.clearChatHistory = function() {
+                if (confirm("Are you sure you want to clear ALL chat history? This cannot be undone.")) {
+                    db.collection("chat_messages").get().then((snapshot) => {
+                        const batch = db.batch();
+                        snapshot.forEach((doc) => {
+                            batch.delete(doc.ref);
+                        });
+                        return batch.commit();
+                    }).then(() => {
+                        $scope.showToast("All chat history has been cleared.", "success");
+                    }).catch((err) => {
+                        $scope.showToast("Failed to clear chat: " + err.message, "error");
+                    });
+                }
+            };
+
+            $scope.pinMessage = function(msg) {
+                db.collection("app_data").doc("live_config").update({
+                    pinnedMessage: {
+                        username: msg.username,
+                        text: msg.text,
+                        color: msg.color || '#a970ff',
+                        isAdmin: msg.isAdmin || false,
+                        timestamp: Date.now()
+                    }
+                }).then(() => {
+                    $scope.showToast("Message pinned to the top of live chat.", "success");
+                }).catch((err) => {
+                    $scope.showToast("Failed to pin message: " + err.message, "error");
+                });
+            };
+
+            $scope.unpinMessage = function() {
+                db.collection("app_data").doc("live_config").update({
+                    pinnedMessage: firebase.firestore.FieldValue.delete()
+                }).then(() => {
+                    $scope.showToast("The message has been unpinned.", "success");
+                }).catch((err) => {
+                    $scope.showToast("Failed to unpin message: " + err.message, "error");
+                });
             };
 
             // --- AUTO WEATHER REFRESH (every 10 seconds) ---

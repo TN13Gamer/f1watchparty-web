@@ -1292,6 +1292,175 @@
             text-transform: uppercase;
         }
 
+        /* Custom Chat input layout */
+        .chat-input-area {
+            background: #16161b;
+            border-top: 1px solid rgba(145, 70, 255, 0.2);
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nickname-banner {
+            font-size: 11px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .edit-nick-btn {
+            background: none !important;
+            border: none !important;
+            color: #a970ff !important;
+            font-size: 10px !important;
+            cursor: pointer !important;
+            padding: 0 !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+
+        .edit-nick-btn:hover {
+            color: #fff !important;
+            transform: none !important;
+        }
+
+        .nickname-edit-row {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .nickname-input {
+            flex: 1;
+            background: rgba(0,0,0,0.4) !important;
+            border: 1px solid rgba(145, 70, 255, 0.3) !important;
+            border-left: 2px solid #a970ff !important;
+            padding: 4px 8px !important;
+            font-size: 11px !important;
+            color: #fff !important;
+            border-radius: 4px !important;
+            height: 24px !important;
+        }
+
+        .save-nick-btn, .cancel-nick-btn {
+            background: rgba(255,255,255,0.05) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            width: 24px !important;
+            height: 24px !important;
+            padding: 0 !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 10px !important;
+        }
+
+        .save-nick-btn {
+            color: #00e676 !important;
+            border-color: rgba(0, 230, 118, 0.3) !important;
+        }
+
+        .cancel-nick-btn {
+            color: #ff3333 !important;
+            border-color: rgba(255, 51, 51, 0.3) !important;
+        }
+
+        .save-nick-btn:hover, .cancel-nick-btn:hover {
+            transform: none !important;
+            background: rgba(255,255,255,0.1) !important;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .chat-input-field {
+            flex: 1;
+            background: rgba(0,0,0,0.4) !important;
+            border: 1px solid rgba(145, 70, 255, 0.2) !important;
+            border-left: 2px solid #a970ff !important;
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            height: 34px !important;
+        }
+
+        .chat-input-field:focus {
+            border-color: #a970ff !important;
+            box-shadow: 0 0 10px rgba(145, 70, 255, 0.2) !important;
+            background: rgba(0,0,0,0.6) !important;
+        }
+
+        .chat-send-btn {
+            background: #9146ff !important;
+            border: none !important;
+            color: #fff !important;
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            font-size: 12px !important;
+        }
+
+        .chat-send-btn:hover {
+            background: #a970ff !important;
+            transform: scale(1.05) !important;
+        }
+
+        /* Pinned Message Banner style */
+        .chat-pinned-message {
+            background: rgba(145, 70, 255, 0.12);
+            border-bottom: 2px solid #9146ff;
+            padding: 10px 15px;
+            font-size: 12px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .pinned-header {
+            font-size: 9px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pinned-header i {
+            transform: rotate(45deg);
+        }
+
+        .pinned-body {
+            font-weight: 600;
+            line-height: 1.4;
+            color: #fff;
+            word-wrap: break-word;
+        }
+
         /* Highlighted Chat Button Style */
         .chat-btn {
             color: #a970ff !important;
@@ -1674,24 +1843,51 @@
 
 
 
-    <!-- Collapsible Twitch Chat Sidebar Drawer (Custom WebSockets Client) -->
+    <!-- Collapsible Custom Chat Sidebar Drawer -->
     <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
         <div class="chat-header">
             <span>Chat</span>
             <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="chat-status">
-            <span style="width: 6px; height: 6px; background: #00e676; border-radius: 50%; box-shadow: 0 0 8px #00e676; display: inline-block;"></span>
-            <span>LIVE CHAT (READ-ONLY)</span>
+        
+        <!-- Pinned Message Area -->
+        <div class="chat-pinned-message" ng-if="pinnedMessage">
+            <div class="pinned-header">
+                <i class="fa-solid fa-thumbtack"></i> PINNED MESSAGE
+            </div>
+            <div class="pinned-body">
+                <span class="chat-author" style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
+                <span class="chat-text">{{pinnedMessage.text}}</span>
+            </div>
         </div>
+
         <div class="chat-messages-container">
-            <div ng-repeat="msg in chatMessages" class="chat-msg">
-                <span class="chat-author" style="color: {{msg.color || '#a970ff'}};">{{msg.displayName}}</span>:
+            <div ng-repeat="msg in chatList" class="chat-msg">
+                <span class="chat-author" style="color: {{msg.color || '#a970ff'}};">{{msg.username}}</span>:
                 <span class="chat-text">{{msg.text}}</span>
             </div>
-            <div ng-if="chatMessages.length === 0" class="chat-empty">
-                Waiting for messages...
+            <div ng-if="chatList.length === 0" class="chat-empty">
+                Welcome to the stream! Say something...
             </div>
+        </div>
+
+        <!-- Chat Input Area & Username Editor -->
+        <div class="chat-input-area">
+            <div class="nickname-banner">
+                <div ng-if="!editingNickname">
+                    <span>Chatting as <strong style="color: {{chatUserColor}};">{{chatUsername}}</strong></span>
+                    <button class="edit-nick-btn" ng-click="startEditNickname()"><i class="fa-solid fa-pen"></i> Edit</button>
+                </div>
+                <div ng-if="editingNickname" class="nickname-edit-row">
+                    <input type="text" class="nickname-input" ng-model="tempNickname" placeholder="New nickname" maxlength="15">
+                    <button class="save-nick-btn" ng-click="saveNickname()"><i class="fa-solid fa-check"></i></button>
+                    <button class="cancel-nick-btn" ng-click="cancelEditNickname()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <form ng-submit="sendChatMessage()" class="chat-input-form">
+                <input type="text" ng-model="chatInput" placeholder="Send a message..." class="chat-input-field" required maxlength="150" autocomplete="off">
+                <button type="submit" class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
         </div>
     </div>
 
@@ -1744,72 +1940,69 @@
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
             $scope.twitchChannel = 'watchf1olive';
-            $scope.chatMessages = [];
-            let chatWs = null;
+            $scope.chatList = [];
+            $scope.chatInput = '';
+            let chatListener = null;
 
-            function connectTwitchChat(channel) {
-                if (chatWs) {
-                    try { chatWs.close(); } catch(e) {}
+            // Get or set guest nickname
+            let storedNick = localStorage.getItem('f1_chat_nickname');
+            if (!storedNick) {
+                storedNick = 'Guest_' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('f1_chat_nickname', storedNick);
+            }
+            $scope.chatUsername = storedNick;
+            $scope.tempNickname = storedNick;
+            $scope.editingNickname = false;
+
+            // Curated premium night-friendly colors
+            const chatColors = ['#a970ff', '#ff1e15', '#00ffcc', '#ff7700', '#ffb700', '#00e5ff', '#ff66a3', '#00ff33', '#ffcc00'];
+            let storedColor = localStorage.getItem('f1_chat_color');
+            if (!storedColor) {
+                storedColor = chatColors[Math.floor(Math.random() * chatColors.length)];
+                localStorage.setItem('f1_chat_color', storedColor);
+            }
+            $scope.chatUserColor = storedColor;
+
+            $scope.startEditNickname = function() {
+                $scope.tempNickname = $scope.chatUsername;
+                $scope.editingNickname = true;
+            };
+
+            $scope.saveNickname = function() {
+                const nick = $scope.tempNickname ? $scope.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
+                if (nick && nick.length >= 2) {
+                    $scope.chatUsername = nick;
+                    localStorage.setItem('f1_chat_nickname', nick);
+                    $scope.editingNickname = false;
+                } else {
+                    alert('Nickname must be alphanumeric, between 2 and 15 characters.');
                 }
-                $scope.chatMessages = [];
-                const chan = (channel || 'watchf1olive').toLowerCase().trim();
-                
-                chatWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-                
-                chatWs.onopen = function() {
-                    console.log('🔌 Connected to Twitch IRC WebSocket for #' + chan);
-                    chatWs.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
-                    chatWs.send('PASS oauth:dummy');
-                    chatWs.send('NICK justinfan' + Math.floor(Math.random() * 89999 + 10000));
-                    chatWs.send('JOIN #' + chan);
-                };
+            };
 
-                chatWs.onmessage = function(event) {
-                    const data = event.data;
-                    
-                    if (data.startsWith('PING')) {
-                        chatWs.send('PONG');
-                        return;
-                    }
+            $scope.cancelEditNickname = function() {
+                $scope.editingNickname = false;
+            };
 
-                    if (data.includes('PRIVMSG')) {
-                        const match = data.match(/@([^ ]+) :([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
-                        if (match) {
-                            const tagsStr = match[1];
-                            const username = match[2];
-                            const text = match[3].trim();
-
-                            const tags = {};
-                            tagsStr.split(';').forEach(tag => {
-                                const parts = tag.split('=');
-                                if (parts[0] && parts[1]) tags[parts[0]] = parts[1];
+            function initChatListener() {
+                if (chatListener) chatListener();
+                chatListener = db.collection("chat_messages")
+                    .orderBy("timestamp", "desc")
+                    .limit(60)
+                    .onSnapshot((snapshot) => {
+                        const msgs = [];
+                        snapshot.forEach((doc) => {
+                            const d = doc.data();
+                            msgs.push({
+                                id: doc.id,
+                                ...d,
+                                timestamp: d.timestamp ? d.timestamp.toDate() : new Date()
                             });
-
-                            const displayName = tags['display-name'] || username;
-                            const color = tags['color'] || '#a970ff';
-
-                            $scope.$apply(function() {
-                                $scope.chatMessages.push({
-                                    displayName: displayName,
-                                    color: color,
-                                    text: text
-                                });
-                                if ($scope.chatMessages.length > 150) {
-                                    $scope.chatMessages.shift();
-                                }
-                                setTimeout(scrollChatToBottom, 50);
-                            });
-                        }
-                    }
-                };
-
-                chatWs.onerror = function(err) {
-                    console.error('Twitch Chat WS Error:', err);
-                };
-
-                chatWs.onclose = function() {
-                    console.log('🔌 Twitch Chat WS Closed');
-                };
+                        });
+                        $scope.$apply(function() {
+                            $scope.chatList = msgs.reverse();
+                            setTimeout(scrollChatToBottom, 100);
+                        });
+                    });
             }
 
             function scrollChatToBottom() {
@@ -1819,16 +2012,33 @@
                 }
             }
 
-            $scope.$watchGroup(['isChatOpen', 'twitchChannel'], function(newValues) {
-                const isOpen = newValues[0];
-                const channel = newValues[1];
-                if (isOpen && channel) {
-                    connectTwitchChat(channel);
-                } else if (!isOpen && chatWs) {
-                    try { chatWs.close(); } catch(e) {}
-                    chatWs = null;
+            $scope.$watch('isChatOpen', function(isOpen) {
+                if (isOpen) {
+                    initChatListener();
+                } else {
+                    if (chatListener) {
+                        chatListener();
+                        chatListener = null;
+                    }
                 }
             });
+
+            $scope.sendChatMessage = function() {
+                const text = $scope.chatInput ? $scope.chatInput.trim() : '';
+                if (!text) return;
+
+                db.collection("chat_messages").add({
+                    username: $scope.chatUsername,
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    color: $scope.chatUserColor,
+                    isAdmin: false
+                }).then(() => {
+                    $scope.$apply(function() { $scope.chatInput = ''; });
+                }).catch((err) => {
+                    console.error("Error sending chat message:", err);
+                });
+            };
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
 
@@ -2054,6 +2264,7 @@
             function processData(data) {
                 $scope.raceData = data.raceData || {};
                 $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
+                $scope.pinnedMessage = data.pinnedMessage || null;
                 
                 // Trigger dynamic theming based on race location or theme override
                 if (!$scope.themeOverrideActive) {
