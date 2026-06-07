@@ -1511,7 +1511,7 @@
                 </button>
                 <button class="stream-btn" ng-click="toggleChat()">
                     <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
-                    {{ isChatOpen ? 'Hide Chat' : 'Twitch Chat' }}
+                    {{ isChatOpen ? 'Hide Chat' : 'Chat' }}
                 </button>
             </div>
             <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-glare
@@ -1624,7 +1624,7 @@
     <!-- Collapsible Twitch Chat Sidebar Drawer -->
     <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
         <div class="chat-header">
-            <span>Twitch Chat</span>
+            <span>Chat</span>
             <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="chat-iframe-container">
