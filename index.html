@@ -1189,7 +1189,7 @@
             }
         }
 
-        /* Twitch Chat Sidebar Drawer */
+        /* Chat Sidebar Drawer (Twitch brand themed) */
         .chat-sidebar {
             position: fixed;
             top: 0;
@@ -1197,9 +1197,10 @@
             width: 340px;
             height: 100vh;
             background: #0f0f12;
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 2px solid #9146ff;
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-            z-index: 10000;
+            z-index: 100000;
+            transform: translate3d(0, 0, 10000px);
             transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             flex-direction: column;
@@ -1212,14 +1213,14 @@
         .chat-header {
             padding: 15px;
             background: #16161b;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(145, 70, 255, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 13px;
             font-weight: 800;
             letter-spacing: 2px;
-            color: var(--f1-red);
+            color: #a970ff;
             text-transform: uppercase;
         }
 
@@ -1237,7 +1238,7 @@
         }
 
         .chat-close-btn:hover {
-            color: #fff;
+            color: #a970ff;
         }
 
         .chat-iframe-container {
@@ -1252,15 +1253,28 @@
             border: none;
         }
 
-        body.chat-open {
-            transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        /* Highlighted Chat Button Style */
+        .chat-btn {
+            color: #a970ff !important;
+            border-color: rgba(145, 70, 255, 0.4) !important;
+            background: rgba(145, 70, 255, 0.05) !important;
         }
 
-        @media (min-width: 1200px) {
-            body.chat-open {
-                padding-right: 340px;
-            }
+        .chat-btn:hover {
+            background: rgba(145, 70, 255, 0.15) !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 10px rgba(145, 70, 255, 0.3) !important;
         }
+
+        .chat-btn.active {
+            background: #9146ff !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 15px rgba(145, 70, 255, 0.6) !important;
+        }
+
+
 
         @media (max-width: 768px) {
             header {
@@ -1509,7 +1523,7 @@
                         style="margin-right: 5px;"></i>
                     {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
                 </button>
-                <button class="stream-btn" ng-click="toggleChat()">
+                <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()">
                     <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
                     {{ isChatOpen ? 'Hide Chat' : 'Chat' }}
                 </button>
