@@ -593,6 +593,81 @@
                 margin-top: 2px;
             }
         }
+
+        /* Premium Switch Toggles */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        .switch-container:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .switch-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            text-transform: none;
+            letter-spacing: 0.5px;
+        }
+        .switch-label i {
+            color: var(--primary);
+            width: 16px;
+            text-align: center;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #2a2a35;
+            transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+            border-color: var(--primary-bright);
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 <body ng-controller="AdminController">
@@ -637,6 +712,7 @@
         <div class="tab-container">
             <button class="tab-btn" ng-class="{'active': currentView === 'live'}" ng-click="currentView = 'live'"><i class="fa-solid fa-video" style="margin-right: 5px;"></i> Live Event</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'scores'}" ng-click="currentView = 'scores'"><i class="fa-solid fa-list-ol" style="margin-right: 5px;"></i> Standings</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'chat'}" ng-click="currentView = 'chat'"><i class="fa-solid fa-comments" style="margin-right: 5px;"></i> Chat Mod</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'logs'}" ng-click="currentView = 'logs'"><i class="fa-solid fa-chart-line" style="margin-right: 5px;"></i> Logs & Analytics</button>
         </div>
 
@@ -653,6 +729,49 @@
                         <div class="loading-spinner" ng-if="savingLive"></div>
                         <span>{{ savingLive ? 'Saving...' : 'Save All Changes' }}</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- Widget Visibility Panel -->
+            <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                <h3><span><i class="fa-solid fa-toggle-on" style="color: var(--primary); margin-right: 10px;"></i> Widget Visibility Controls</span></h3>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the main site in real-time (excluding Championship Standings).</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-video"></i> Video Player</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.widgets.videoPlayer">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-calendar-day"></i> Event Details</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.widgets.eventDetails">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-cloud-sun-rain"></i> Track Weather</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.widgets.weather">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-forward-step"></i> Up Next (Marquee)</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.nextRace.isVisible">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-stopwatch"></i> Weekend Schedule</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.widgets.schedule">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -980,6 +1099,15 @@
                     <i class="fa-solid fa-thumbtack"></i> Pin Announcement
                 </button>
             </div>
+
+            <div class="admin-section" style="margin-top: 20px;">
+                <h3><i class="fa-solid fa-trash-can" style="color: var(--primary); margin-right: 10px;"></i> Database Moderation</h3>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Permanently clear all custom chat messages from the Firestore database.</p>
+                <button class="danger-btn" ng-click="clearChat()" ng-disabled="clearingChat" style="height: 42px; padding: 0 24px;">
+                    <i class="fa-solid" ng-class="clearingChat ? 'fa-spinner fa-spin' : 'fa-dumpster'"></i>
+                    <span>{{ clearingChat ? 'Clearing...' : 'Clear All Chat Messages' }}</span>
+                </button>
+            </div>
         </div>
 
     </div>
@@ -1068,6 +1196,21 @@
                         if (!$scope.config.weather) $scope.config.weather = { air: 0, track: 0, condition: 'sunny' };
                         if (!$scope.config.raceData) $scope.config.raceData = {};
                         if (!$scope.config.nextRace) $scope.config.nextRace = {};
+                        
+                        // Initialize widgets settings with default true
+                        if (!$scope.config.widgets) {
+                            $scope.config.widgets = {
+                                videoPlayer: true,
+                                eventDetails: true,
+                                weather: true,
+                                schedule: true
+                            };
+                        } else {
+                            if ($scope.config.widgets.videoPlayer === undefined) $scope.config.widgets.videoPlayer = true;
+                            if ($scope.config.widgets.eventDetails === undefined) $scope.config.widgets.eventDetails = true;
+                            if ($scope.config.widgets.weather === undefined) $scope.config.widgets.weather = true;
+                            if ($scope.config.widgets.schedule === undefined) $scope.config.widgets.schedule = true;
+                        }
                     });
                 });
 
@@ -1136,6 +1279,50 @@
                 }).catch((err) => {
                     $scope.showToast("Failed to unpin message: " + err.message, "error");
                 });
+            };
+
+            $scope.clearingChat = false;
+            $scope.clearChat = function() {
+                if (!confirm("Are you sure you want to clear ALL chat messages? This cannot be undone.")) return;
+                
+                $scope.clearingChat = true;
+                let primaryUrl = '/api/chat/clear';
+                let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/chat/clear';
+                let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                $http.post(targetUrl)
+                    .then(res => {
+                        $scope.clearingChat = false;
+                        $scope.showToast("Chat messages cleared successfully!", "success");
+                        $scope.addLog("Cleared all custom chat messages via API");
+                    })
+                    .catch(err => {
+                        // Fallback to client-side Firestore delete
+                        console.log("API chat clear failed, falling back to direct Firestore delete...", err);
+                        db.collection("chat_messages").get()
+                            .then(snap => {
+                                if (snap.size === 0) {
+                                    $scope.clearingChat = false;
+                                    $scope.showToast("No chat messages found to clear.", "success");
+                                    if (!$scope.$$phase) $scope.$apply();
+                                    return;
+                                }
+                                let batch = db.batch();
+                                snap.forEach(doc => batch.delete(doc.ref));
+                                return batch.commit();
+                            })
+                            .then(() => {
+                                $scope.clearingChat = false;
+                                $scope.showToast("Chat messages cleared via client database!", "success");
+                                $scope.addLog("Cleared all custom chat messages via client database");
+                                if (!$scope.$$phase) $scope.$apply();
+                            })
+                            .catch(clientErr => {
+                                $scope.clearingChat = false;
+                                $scope.showToast("Clear failed: " + clientErr.message, "error");
+                                if (!$scope.$$phase) $scope.$apply();
+                            });
+                    });
             };
 
 

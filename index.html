@@ -532,6 +532,15 @@
             animation: pulse 2s infinite;
         }
 
+        .status-pill.offline {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #888 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
         @keyframes pulse {
             0% {
                 opacity: 1;
@@ -1539,7 +1548,7 @@
         </div>
 
         <div class="status-area">
-            <div class="weather-pill" ng-if="weather && weather.air">
+            <div class="weather-pill" ng-if="widgets.weather && weather && weather.air">
                 <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
                 <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
                 <div class="w-divider"></div>
@@ -1550,8 +1559,8 @@
             <div class="status-pill countdown" ng-if="!activeSession && nextUp">
                 <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
             </div>
-            <div class="status-pill countdown" ng-if="!activeSession && !nextUp && (raceData.name || nextRace.name)">
-                <i class="fa-regular fa-clock"></i> NEXT: {{raceData.name || nextRace.name}}
+            <div class="status-pill offline" ng-if="!activeSession && !nextUp">
+                <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
             </div>
         </div>
     </header>
@@ -1571,14 +1580,14 @@
 
     <div class="container">
         <div class="main-column">
-            <div class="video-wrapper" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400"
+            <div class="video-wrapper" ng-if="widgets.videoPlayer" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400"
                 data-tilt-glare data-tilt-max-glare="0.2" data-tilt-perspective="1000">
                 <div class="video-responsive">
                     <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                         scrolling="no"></iframe>
                 </div>
             </div>
-            <div class="video-toolbar">
+            <div class="video-toolbar" ng-if="widgets.videoPlayer">
                 <span class="source-label"
                     style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                 <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
@@ -1594,7 +1603,7 @@
                     {{ isChatOpen ? 'Chat' : 'Chat' }}
                 </button>
             </div>
-            <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+            <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
                 data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <div class="event-header">
                     <div>
@@ -1620,7 +1629,7 @@
         </div>
 
         <div class="sidebar">
-            <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+            <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                 data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <video autoplay loop muted playsinline class="card-video-bg">
                     <source src="racing.mp4" type="video/mp4">
@@ -1662,7 +1671,7 @@
                     <!-- DRIVER STANDINGS: sorted by season points -->
                     <div ng-show="standingsView === 'drivers'">
                         <div class="standing-row"
-                            ng-repeat="driver in standings | orderBy:'points':true | limitTo: (showAllStandings ? standings.length : 5)">
+                            ng-repeat="driver in standings | orderBy:'points':true | limitTo: (showAllStandings ? standings.length : 4)">
                             <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
                             <div class="st-img-wrapper">
                                 <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}"
@@ -1692,7 +1701,7 @@
                 </div>
 
                 <button class="view-more-btn" ng-click="toggleStandings()"
-                    ng-if="(standingsView === 'drivers' && standings.length > 5) || (standingsView === 'constructors' && constructors.length > 3)">
+                    ng-if="(standingsView === 'drivers' && standings.length > 4) || (standingsView === 'constructors' && constructors.length > 3)">
                     {{ showAllStandings ? 'Collapse' : 'View All' }}
                 </button>
             </div>
@@ -2057,6 +2066,18 @@
                 $scope.raceData = data.raceData || {};
                 $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = data.pinnedMessage || null;
+
+                // Handle new widgets visibility config
+                $scope.widgets = data.widgets || {
+                    videoPlayer: true,
+                    eventDetails: true,
+                    weather: true,
+                    schedule: true
+                };
+                if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
+                if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
+                if ($scope.widgets.weather === undefined) $scope.widgets.weather = true;
+                if ($scope.widgets.schedule === undefined) $scope.widgets.schedule = true;
 
                 // Build the Twitch chat embed URL (parent must match the page hostname)
                 var parent = $window.location.hostname || 'localhost';
