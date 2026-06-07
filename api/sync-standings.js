@@ -13,28 +13,38 @@ if (!admin.apps.length) {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
       admin.initializeApp({ credential: admin.credential.cert(sa) });
-    } else {
-      const fs = require('fs');
-      const path = require('path');
-      let keyPath = null;
-      if (fs.existsSync(path.resolve(__dirname, '../serviceAccountKey.json'))) {
-        keyPath = path.resolve(__dirname, '../serviceAccountKey.json');
-      } else if (fs.existsSync(path.resolve(__dirname, '../../serviceAccountKey.json'))) {
-        keyPath = path.resolve(__dirname, '../../serviceAccountKey.json');
-      } else if (fs.existsSync(path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'))) {
-        keyPath = path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
-      } else if (fs.existsSync(path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'))) {
-        keyPath = path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
-      }
-      
-      if (keyPath) {
-        const sa = require(keyPath);
-        admin.initializeApp({ credential: admin.credential.cert(sa) });
-        console.log('[sync] Firebase initialized using local file:', keyPath);
       } else {
-        console.warn('[sync] No Firebase credentials found.');
+        const fs = require('fs');
+        const path = require('path');
+        let keyPath = null;
+        
+        const possiblePaths = [
+          path.resolve(__dirname, '../serviceAccountKey.json'),
+          path.resolve(__dirname, '../../serviceAccountKey.json'),
+          path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
+          path.resolve(__dirname, '../../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
+          path.resolve(__dirname, '../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
+          path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
+          path.resolve(process.cwd(), './serviceAccountKey.json'),
+          path.resolve(process.cwd(), './f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
+          path.resolve(process.cwd(), './f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json')
+        ];
+        
+        for (const p of possiblePaths) {
+          if (fs.existsSync(p)) {
+            keyPath = p;
+            break;
+          }
+        }
+        
+        if (keyPath) {
+          const sa = require(keyPath);
+          admin.initializeApp({ credential: admin.credential.cert(sa) });
+          console.log('[sync] Firebase initialized using local file:', keyPath);
+        } else {
+          console.warn('[sync] No Firebase credentials found.');
+        }
       }
-    }
   } catch(e) { console.error('[sync] Firebase init error:', e.message); }
 }
 
