@@ -24,6 +24,7 @@ app.use((req, res, next) => {
 });
 
 // Serve static frontend files (index.html, admin.html, etc.) when running locally
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // Firebase initialization
@@ -316,6 +317,155 @@ app.get('/api/fetch-streams', async (req, res) => {
 
 // --- API: Sync Standings (Vercel cron handler) ---
 app.all('/api/sync-standings', require('./api/sync-standings.js'));
+
+// --- Custom Chat System SSE Broadcast ---
+let sseClients = [];
+
+function broadcastSSE(payload) {
+  const data = `data: ${JSON.stringify(payload)}\n\n`;
+  sseClients.forEach(client => {
+    try {
+      client.res.write(data);
+    } catch (e) {
+      // ignore write errors
+    }
+  });
+}
+
+// Listen to Firestore chat_messages changes on the backend using Admin SDK (which bypasses client rules)
+if (db) {
+  db.collection("chat_messages")
+    .orderBy("timestamp", "desc")
+    .limit(60)
+    .onSnapshot(snapshot => {
+      const msgs = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        msgs.push({
+          id: doc.id,
+          username: d.username,
+          text: d.text,
+          timestamp: d.timestamp ? d.timestamp.toDate().getTime() : Date.now(),
+          color: d.color || '#a970ff',
+          isAdmin: !!d.isAdmin
+        });
+      });
+      broadcastSSE({ type: 'chatList', data: msgs.reverse() });
+    }, err => {
+      console.error('Firestore chat listener error:', err);
+    });
+}
+
+// SSE stream endpoint
+app.get('/api/chat/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Add client to active clients list
+  const client = { res };
+  sseClients.push(client);
+
+  // Send the current chat list immediately on connection if Firestore is loaded
+  if (db) {
+    db.collection("chat_messages")
+      .orderBy("timestamp", "desc")
+      .limit(60)
+      .get()
+      .then(snapshot => {
+        const msgs = [];
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          msgs.push({
+            id: doc.id,
+            username: d.username,
+            text: d.text,
+            timestamp: d.timestamp ? d.timestamp.toDate().getTime() : Date.now(),
+            color: d.color || '#a970ff',
+            isAdmin: !!d.isAdmin
+          });
+        });
+        res.write(`data: ${JSON.stringify({ type: 'chatList', data: msgs.reverse() })}\n\n`);
+      })
+      .catch(err => {
+        console.error('Error fetching initial chat list for SSE:', err);
+      });
+  }
+
+  req.on('close', () => {
+    sseClients = sseClients.filter(c => c !== client);
+  });
+});
+
+// Chat send endpoint
+app.post('/api/chat/send', (req, res) => {
+  const { username, text, color, isAdmin } = req.body;
+  if (!text || !username) {
+    return res.status(400).json({ error: 'Missing username or text' });
+  }
+
+  if (!db) {
+    return res.status(500).json({ error: 'Database not initialized' });
+  }
+
+  db.collection("chat_messages").add({
+    username: username,
+    text: text,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    color: color || '#a970ff',
+    isAdmin: !!isAdmin
+  }).then(() => {
+    res.json({ success: true });
+  }).catch(err => {
+    console.error('Error writing to Firestore:', err);
+    res.status(500).json({ error: err.message });
+  });
+});
+
+// Chat delete endpoint (moderation)
+app.post('/api/chat/delete', (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'Missing document id' });
+  }
+
+  if (!db) {
+    return res.status(500).json({ error: 'Database not initialized' });
+  }
+
+  db.collection("chat_messages").doc(id).delete()
+    .then(() => {
+      res.json({ success: true });
+    })
+    .catch(err => {
+      console.error('Error deleting from Firestore:', err);
+      res.status(500).json({ error: err.message });
+    });
+});
+
+// Chat clear endpoint (moderation)
+app.post('/api/chat/clear', (req, res) => {
+  if (!db) {
+    return res.status(500).json({ error: 'Database not initialized' });
+  }
+
+  db.collection("chat_messages").get()
+    .then(snapshot => {
+      const batch = db.batch();
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      return batch.commit();
+    })
+    .then(() => {
+      res.json({ success: true });
+    })
+    .catch(err => {
+      console.error('Error clearing Firestore collection:', err);
+      res.status(500).json({ error: err.message });
+    });
+});
 
 // Route for /admin
 app.get('/admin', (req, res) => {

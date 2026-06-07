@@ -7,7 +7,7 @@
     <title>watchf1.live | Live Stream</title>
 
     <script>
-        (function() {
+        (function () {
             const savedLoc = localStorage.getItem('f1_theme_loc') || 'default';
             const savedOverride = localStorage.getItem('f1_theme_override') || '';
             let key = (savedOverride !== '') ? savedOverride : savedLoc;
@@ -48,7 +48,8 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -61,7 +62,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
-        [ng-cloak], .ng-cloak {
+        [ng-cloak],
+        .ng-cloak {
             display: none !important;
         }
 
@@ -738,7 +740,7 @@
             pointer-events: none;
         }
 
-        .carbon-schedule-card > *:not(.card-video-bg) {
+        .carbon-schedule-card>*:not(.card-video-bg) {
             position: relative;
             z-index: 2;
         }
@@ -1543,12 +1545,15 @@
                 flex-wrap: nowrap !important;
                 justify-content: flex-start !important;
                 -webkit-overflow-scrolling: touch;
-                -ms-overflow-style: none;  /* IE and Edge */
-                scrollbar-width: none;  /* Firefox */
+                -ms-overflow-style: none;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
             }
 
             .video-toolbar::-webkit-scrollbar {
-                display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+                display: none;
+                /* Hide scrollbar for Chrome, Safari and Opera */
             }
 
             .glass-card {
@@ -1653,6 +1658,7 @@
                 width: 100%;
                 right: -100%;
             }
+
             .chat-sidebar.open {
                 right: 0;
             }
@@ -1660,7 +1666,8 @@
     </style>
 </head>
 
-<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}" oncontextmenu="return false;">
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
+    oncontextmenu="return false;">
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
 
@@ -1713,8 +1720,8 @@
 
     <div class="container">
         <div class="main-column">
-            <div class="video-wrapper" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400" data-tilt-glare
-                data-tilt-max-glare="0.2" data-tilt-perspective="1000">
+            <div class="video-wrapper" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400"
+                data-tilt-glare data-tilt-max-glare="0.2" data-tilt-perspective="1000">
                 <div class="video-responsive">
                     <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                         scrolling="no"></iframe>
@@ -1733,11 +1740,11 @@
                 </button>
                 <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()">
                     <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
-                    {{ isChatOpen ? 'Hide Chat' : 'Chat' }}
+                    {{ isChatOpen ? 'Chat' : 'Chat' }}
                 </button>
             </div>
-            <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-glare
-                data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+            <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <div class="event-header">
                     <div>
                         <span class="event-round">ROUND {{raceData.round}}</span>
@@ -1762,8 +1769,8 @@
         </div>
 
         <div class="sidebar">
-            <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
-                data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+            <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                 <video autoplay loop muted playsinline class="card-video-bg">
                     <source src="racing.mp4" type="video/mp4">
                 </video>
@@ -1783,8 +1790,8 @@
                 </div>
             </div>
 
-            <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
-                data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+            <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
 
                 <!-- Card Title -->
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
@@ -1874,18 +1881,18 @@
         <!-- Chat Input Area & Username Editor -->
         <div class="chat-input-area">
             <div class="nickname-banner">
-                <div ng-if="!editingNickname">
-                    <span>Chatting as <strong style="color: {{chatUserColor}};">{{chatUsername}}</strong></span>
+                <div ng-if="!chatState.editingNickname">
+                    <span>Chatting as <strong style="color: {{chatUserColor}};">{{chatState.username}}</strong></span>
                     <button class="edit-nick-btn" ng-click="startEditNickname()"><i class="fa-solid fa-pen"></i> Edit</button>
                 </div>
-                <div ng-if="editingNickname" class="nickname-edit-row">
-                    <input type="text" class="nickname-input" ng-model="tempNickname" placeholder="New nickname" maxlength="15">
+                <div ng-if="chatState.editingNickname" class="nickname-edit-row">
+                    <input type="text" class="nickname-input" ng-model="chatState.tempNickname" placeholder="New nickname" maxlength="15">
                     <button class="save-nick-btn" ng-click="saveNickname()"><i class="fa-solid fa-check"></i></button>
                     <button class="cancel-nick-btn" ng-click="cancelEditNickname()"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <form ng-submit="sendChatMessage()" class="chat-input-form">
-                <input type="text" ng-model="chatInput" placeholder="Send a message..." class="chat-input-field" required maxlength="150" autocomplete="off">
+                <input type="text" ng-model="chatState.chatInput" placeholder="Send a message..." class="chat-input-field" required maxlength="150" autocomplete="off">
                 <button type="submit" class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
         </div>
@@ -1934,15 +1941,14 @@
         var app = angular.module('f1App', []);
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
-        app.controller('MainController', function ($scope, $sce, $interval, $window) {
+        app.controller('MainController', function ($scope, $sce, $interval, $window, $http) {
             $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
             $scope.twitchChannel = 'watchf1olive';
             $scope.chatList = [];
-            $scope.chatInput = '';
-            let chatListener = null;
+            let chatEventSource = null;
 
             // Get or set guest nickname
             let storedNick = localStorage.getItem('f1_chat_nickname');
@@ -1950,9 +1956,6 @@
                 storedNick = 'Guest_' + Math.floor(1000 + Math.random() * 9000);
                 localStorage.setItem('f1_chat_nickname', storedNick);
             }
-            $scope.chatUsername = storedNick;
-            $scope.tempNickname = storedNick;
-            $scope.editingNickname = false;
 
             // Curated premium night-friendly colors
             const chatColors = ['#a970ff', '#ff1e15', '#00ffcc', '#ff7700', '#ffb700', '#00e5ff', '#ff66a3', '#00ff33', '#ffcc00'];
@@ -1963,46 +1966,58 @@
             }
             $scope.chatUserColor = storedColor;
 
+            // Group chat state to resolve AngularJS ng-if prototype scope inheritance issues
+            $scope.chatState = {
+                username: storedNick,
+                tempNickname: storedNick,
+                editingNickname: false,
+                chatInput: ''
+            };
+
             $scope.startEditNickname = function() {
-                $scope.tempNickname = $scope.chatUsername;
-                $scope.editingNickname = true;
+                $scope.chatState.tempNickname = $scope.chatState.username;
+                $scope.chatState.editingNickname = true;
             };
 
             $scope.saveNickname = function() {
-                const nick = $scope.tempNickname ? $scope.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
+                const nick = $scope.chatState.tempNickname ? $scope.chatState.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
                 if (nick && nick.length >= 2) {
-                    $scope.chatUsername = nick;
+                    $scope.chatState.username = nick;
                     localStorage.setItem('f1_chat_nickname', nick);
-                    $scope.editingNickname = false;
+                    $scope.chatState.editingNickname = false;
                 } else {
                     alert('Nickname must be alphanumeric, between 2 and 15 characters.');
                 }
             };
 
             $scope.cancelEditNickname = function() {
-                $scope.editingNickname = false;
+                $scope.chatState.editingNickname = false;
             };
 
             function initChatListener() {
-                if (chatListener) chatListener();
-                chatListener = db.collection("chat_messages")
-                    .orderBy("timestamp", "desc")
-                    .limit(60)
-                    .onSnapshot((snapshot) => {
-                        const msgs = [];
-                        snapshot.forEach((doc) => {
-                            const d = doc.data();
-                            msgs.push({
-                                id: doc.id,
-                                ...d,
-                                timestamp: d.timestamp ? d.timestamp.toDate() : new Date()
+                if (chatEventSource) chatEventSource.close();
+                
+                chatEventSource = new EventSource('/api/chat/stream');
+                
+                chatEventSource.onmessage = function(event) {
+                    try {
+                        const payload = JSON.parse(event.data);
+                        if (payload.type === 'chatList') {
+                            $scope.$apply(function() {
+                                $scope.chatList = payload.data;
+                                setTimeout(scrollChatToBottom, 100);
                             });
-                        });
-                        $scope.$apply(function() {
-                            $scope.chatList = msgs.reverse();
-                            setTimeout(scrollChatToBottom, 100);
-                        });
-                    });
+                        }
+                    } catch (e) {
+                        console.error('Error parsing chat list SSE:', e);
+                    }
+                };
+
+                chatEventSource.onerror = function(err) {
+                    console.error('SSE connection error, retrying...', err);
+                    chatEventSource.close();
+                    setTimeout(initChatListener, 5000);
+                };
             }
 
             function scrollChatToBottom() {
@@ -2016,27 +2031,26 @@
                 if (isOpen) {
                     initChatListener();
                 } else {
-                    if (chatListener) {
-                        chatListener();
-                        chatListener = null;
+                    if (chatEventSource) {
+                        chatEventSource.close();
+                        chatEventSource = null;
                     }
                 }
             });
 
             $scope.sendChatMessage = function() {
-                const text = $scope.chatInput ? $scope.chatInput.trim() : '';
+                const text = $scope.chatState.chatInput ? $scope.chatState.chatInput.trim() : '';
                 if (!text) return;
 
-                db.collection("chat_messages").add({
-                    username: $scope.chatUsername,
+                $http.post('/api/chat/send', {
+                    username: $scope.chatState.username,
                     text: text,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     color: $scope.chatUserColor,
                     isAdmin: false
-                }).then(() => {
-                    $scope.$apply(function() { $scope.chatInput = ''; });
-                }).catch((err) => {
-                    console.error("Error sending chat message:", err);
+                }).then(function() {
+                    $scope.chatState.chatInput = '';
+                }).catch(function(err) {
+                    console.error("Error sending chat message via API:", err);
                 });
             };
             $scope.showAllStandings = false;
@@ -2147,7 +2161,7 @@
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
 
             $scope.activeThemeName = '';
-            
+
             function applyDynamicTheme(location, themeOverride) {
                 let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
                 localStorage.setItem('f1_theme_loc', location || '');
@@ -2158,7 +2172,7 @@
                     glow: 'rgba(230, 0, 0, 0.15)',
                     name: 'Classic F1 Theme'
                 };
-                
+
                 if (loc.includes('monaco') || loc.includes('monte carlo')) {
                     theme = {
                         primary: '#e2001a', // Monaco Red
@@ -2265,7 +2279,7 @@
                 $scope.raceData = data.raceData || {};
                 $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = data.pinnedMessage || null;
-                
+
                 // Trigger dynamic theming based on race location or theme override
                 if (!$scope.themeOverrideActive) {
                     applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
@@ -2357,7 +2371,7 @@
             $scope.isTestMode = $window.location.search.includes('testThemes=true');
             $scope.themeOverrideActive = false;
             $scope.currentOverrideLoc = '';
-            
+
             $scope.testThemesList = [
                 { name: 'Monaco (Red/White)', loc: 'Monaco' },
                 { name: 'Monza (Scarlet Red)', loc: 'Monza' },
@@ -2432,8 +2446,10 @@
         color: #fff;
         font-family: 'Titillium Web', sans-serif;
     ">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
-            <div style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
+            <div
+                style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
                 <i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Theme Test Mode
             </div>
             <button ng-if="themeOverrideActive" ng-click="resetThemeTest()" style="
@@ -2453,7 +2469,9 @@
             Select a location theme to test how the site styling and background telemetry net color adapt.
         </div>
         <div style="display: flex; flex-direction: column; gap: 6px;">
-            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)" ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}" style="
+            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)"
+                ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}"
+                style="
                 background: rgba(255,255,255,0.02);
                 border: 1px solid rgba(255,255,255,0.05);
                 border-left: 3px solid transparent;

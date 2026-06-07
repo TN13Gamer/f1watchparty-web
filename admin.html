@@ -1141,28 +1141,31 @@
             // --- Custom Chat System for Admin ---
             $scope.chatList = [];
             $scope.adminChatInput = "";
-            let chatListener = null;
+            let chatEventSource = null;
 
             function initChatListener() {
-                if (chatListener) chatListener();
-                chatListener = db.collection("chat_messages")
-                    .orderBy("timestamp", "desc")
-                    .limit(60)
-                    .onSnapshot((snapshot) => {
-                        const msgs = [];
-                        snapshot.forEach((doc) => {
-                            const d = doc.data();
-                            msgs.push({
-                                id: doc.id,
-                                ...d,
-                                timestamp: d.timestamp ? d.timestamp.toDate() : new Date()
+                if (chatEventSource) chatEventSource.close();
+                chatEventSource = new EventSource('/api/chat/stream');
+                
+                chatEventSource.onmessage = function(event) {
+                    try {
+                        const payload = JSON.parse(event.data);
+                        if (payload.type === 'chatList') {
+                            $scope.$apply(function() {
+                                $scope.chatList = payload.data;
+                                setTimeout(scrollAdminChatToBottom, 100);
                             });
-                        });
-                        $scope.$apply(function() {
-                            $scope.chatList = msgs.reverse();
-                            setTimeout(scrollAdminChatToBottom, 100);
-                        });
-                    });
+                        }
+                    } catch (e) {
+                        console.error('Error parsing chat list SSE:', e);
+                    }
+                };
+
+                chatEventSource.onerror = function(err) {
+                    console.error('SSE connection error, retrying...', err);
+                    chatEventSource.close();
+                    setTimeout(initChatListener, 5000);
+                };
             }
 
             function scrollAdminChatToBottom() {
@@ -1175,6 +1178,11 @@
             $scope.$watch('currentView', function(newVal) {
                 if (newVal === 'chat') {
                     initChatListener();
+                } else {
+                    if (chatEventSource) {
+                        chatEventSource.close();
+                        chatEventSource = null;
+                    }
                 }
             });
 
@@ -1182,37 +1190,32 @@
                 const text = $scope.adminChatInput ? $scope.adminChatInput.trim() : '';
                 if (!text) return;
 
-                db.collection("chat_messages").add({
+                $http.post('/api/chat/send', {
                     username: "ADMIN",
                     text: text,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     color: "#e10600", // F1 Red
                     isAdmin: true
                 }).then(() => {
-                    $scope.$apply(function() { $scope.adminChatInput = ''; });
+                    $scope.adminChatInput = '';
+                }).catch((err) => {
+                    $scope.showToast("Failed to send message: " + (err.data?.error || err.statusText), "error");
                 });
             };
 
             $scope.deleteMessage = function(id) {
-                db.collection("chat_messages").doc(id).delete().then(() => {
+                $http.post('/api/chat/delete', { id: id }).then(() => {
                     $scope.showToast("Message deleted successfully.", "success");
                 }).catch((err) => {
-                    $scope.showToast("Failed to delete message: " + err.message, "error");
+                    $scope.showToast("Failed to delete message: " + (err.data?.error || err.statusText), "error");
                 });
             };
 
             $scope.clearChatHistory = function() {
                 if (confirm("Are you sure you want to clear ALL chat history? This cannot be undone.")) {
-                    db.collection("chat_messages").get().then((snapshot) => {
-                        const batch = db.batch();
-                        snapshot.forEach((doc) => {
-                            batch.delete(doc.ref);
-                        });
-                        return batch.commit();
-                    }).then(() => {
+                    $http.post('/api/chat/clear').then(() => {
                         $scope.showToast("All chat history has been cleared.", "success");
                     }).catch((err) => {
-                        $scope.showToast("Failed to clear chat: " + err.message, "error");
+                        $scope.showToast("Failed to clear chat: " + (err.data?.error || err.statusText), "error");
                     });
                 }
             };
