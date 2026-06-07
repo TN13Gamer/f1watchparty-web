@@ -2009,6 +2009,25 @@
         const db = firebase.firestore();
 
         var app = angular.module('f1App', []);
+        app.directive('tilt', function ($timeout) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    $timeout(function () {
+                        if (typeof VanillaTilt !== 'undefined' && !element[0].vanillaTilt) {
+                            VanillaTilt.init(element[0], {
+                                max: attrs.tiltMax !== undefined ? parseInt(attrs.tiltMax) : 15,
+                                speed: attrs.tiltSpeed !== undefined ? parseInt(attrs.tiltSpeed) : 300,
+                                glare: attrs.tiltGlare !== undefined,
+                                "max-glare": attrs.tiltMaxGlare !== undefined ? parseFloat(attrs.tiltMaxGlare) : 1.0,
+                                perspective: attrs.tiltPerspective !== undefined ? parseInt(attrs.tiltPerspective) : 1000,
+                                mobile: attrs.tiltMobile === 'true'
+                            });
+                        }
+                    }, 50);
+                }
+            };
+        });
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
