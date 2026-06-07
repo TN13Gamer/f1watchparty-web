@@ -694,10 +694,7 @@
                             <option value="classic">Classic F1 Theme (Default Red)</option>
                         </select>
                     </div>
-                    <div class="input-group">
-                        <label style="color: #9c27b0;">Chat Channel</label>
-                        <input type="text" ng-model="config.twitchChannel" placeholder="e.g. watchf1olive" style="border-left-color: #9c27b0;">
-                    </div>
+
                 </div>
 
                 <div class="admin-section">
@@ -1151,7 +1148,7 @@
                     try {
                         const payload = JSON.parse(event.data);
                         if (payload.type === 'chatList') {
-                            $scope.$apply(function() {
+                            $timeout(function() {
                                 $scope.chatList = payload.data;
                                 setTimeout(scrollAdminChatToBottom, 100);
                             });

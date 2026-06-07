@@ -1941,7 +1941,7 @@
         var app = angular.module('f1App', []);
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
-        app.controller('MainController', function ($scope, $sce, $interval, $window, $http) {
+        app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
             $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
@@ -2003,7 +2003,7 @@
                     try {
                         const payload = JSON.parse(event.data);
                         if (payload.type === 'chatList') {
-                            $scope.$apply(function() {
+                            $timeout(function() {
                                 $scope.chatList = payload.data;
                                 setTimeout(scrollChatToBottom, 100);
                             });
