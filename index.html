@@ -6,6 +6,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>watchf1.live | Live Stream</title>
 
+    <script>
+        (function() {
+            const savedLoc = localStorage.getItem('f1_theme_loc') || 'default';
+            const savedOverride = localStorage.getItem('f1_theme_override') || '';
+            let key = (savedOverride !== '') ? savedOverride : savedLoc;
+            const loc = key.toLowerCase();
+            let primary = '#e60000';
+            let glow = 'rgba(230, 0, 0, 0.15)';
+            if (loc.includes('monaco') || loc.includes('monte carlo')) {
+                primary = '#e2001a'; glow = 'rgba(226, 0, 26, 0.15)';
+            } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
+                primary = '#ff1801'; glow = 'rgba(255, 24, 1, 0.15)';
+            } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
+                primary = '#00cc7a'; glow = 'rgba(0, 204, 122, 0.15)';
+            } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
+                primary = '#ff7700'; glow = 'rgba(255, 119, 0, 0.15)';
+            } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                primary = '#00ffcc'; glow = 'rgba(0, 255, 204, 0.2)';
+            } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                primary = '#00e5ff'; glow = 'rgba(0, 229, 255, 0.2)';
+            } else if (loc.includes('spa') || loc.includes('belgium')) {
+                primary = '#ffb700'; glow = 'rgba(255, 183, 0, 0.15)';
+            } else if (loc.includes('suzuka') || loc.includes('japan')) {
+                primary = '#ff66a3'; glow = 'rgba(255, 102, 163, 0.2)';
+            } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
+                primary = '#ffcc00'; glow = 'rgba(255, 204, 0, 0.15)';
+            } else if (loc.includes('canada') || loc.includes('montreal')) {
+                primary = '#ff3333'; glow = 'rgba(255, 51, 51, 0.15)';
+            } else if (loc.includes('china') || loc.includes('shanghai')) {
+                primary = '#ff2200'; glow = 'rgba(255, 34, 0, 0.15)';
+            } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
+                primary = '#00ff33'; glow = 'rgba(0, 255, 51, 0.15)';
+            }
+            document.documentElement.style.setProperty('--f1-red', primary);
+            document.documentElement.style.setProperty('--glow-color', glow);
+        })();
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
@@ -23,6 +61,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
+        [ng-cloak], .ng-cloak {
+            display: none !important;
+        }
+
         :root {
             --f1-red: #e60000;
             --f1-carbon: #101010;
@@ -475,9 +517,9 @@
         }
 
         .status-pill.live {
-            background: var(--f1-red);
-            color: white;
-            box-shadow: 0 0 15px var(--f1-red);
+            background: #e60000 !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.6) !important;
             font-weight: 800;
             animation: pulse 2s infinite;
         }
@@ -648,10 +690,10 @@
         }
 
         .stream-btn.active {
-            background: var(--f1-red);
-            color: white;
-            border-color: var(--f1-red);
-            box-shadow: 0 0 15px var(--glow-color);
+            background: #e60000 !important;
+            color: white !important;
+            border-color: #e60000 !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.4) !important;
         }
 
         .spacer {
@@ -670,43 +712,35 @@
             gap: 8px;
         }
 
-        .white-schedule-card {
-            background: #ffffff !important;
-            border-color: #dddddd !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+        .carbon-schedule-card {
+            position: relative;
+            overflow: hidden;
+            background-color: #0c0c0f !important;
+            background-image:
+                linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
+                repeating-linear-gradient(45deg, #16161b 25%, transparent 25%, transparent 75%, #16161b 75%, #16161b),
+                repeating-linear-gradient(45deg, #16161b 25%, #08080a 25%, #08080a 75%, #16161b 75%, #16161b) !important;
+            background-position: 0 0, 0 0, 4px 4px !important;
+            background-size: 100% 100%, 8px 8px, 8px 8px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
         }
 
-        .white-schedule-card .card-title {
-            color: var(--f1-red);
+        .carbon-schedule-card .card-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0.18;
+            pointer-events: none;
         }
 
-        .white-schedule-card .schedule-row {
-            background: #f8f9fa;
-            border-color: #e9ecef;
-        }
-
-        .white-schedule-card .schedule-row:hover {
-            background: #e9ecef;
-        }
-
-        .white-schedule-card .schedule-row.live {
-            background: linear-gradient(90deg, var(--glow-color), transparent);
-            border-color: var(--glow-color);
-            border-left: 4px solid var(--f1-red);
-        }
-
-        .white-schedule-card .schedule-row.upcoming {
-            background: #f8f9fa;
-            border-color: #e9ecef;
-        }
-
-        .white-schedule-card .sess-name,
-        .white-schedule-card .sess-time {
-            color: #111111;
-        }
-
-        .white-schedule-card .sess-day {
-            color: #666666;
+        .carbon-schedule-card > *:not(.card-video-bg) {
+            position: relative;
+            z-index: 2;
         }
 
         .schedule-row {
@@ -1184,13 +1218,23 @@
 
             .container {
                 margin: 15px auto;
-                padding: 0 10px;
-                gap: 20px;
+                padding: 0 12px;
+                gap: 16px;
                 width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .main-column,
+            .sidebar {
+                width: 100%;
+                min-width: 0;
             }
 
             .video-wrapper {
                 border-radius: 16px 16px 0 0;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
             }
 
             .video-toolbar {
@@ -1219,11 +1263,6 @@
                 transform: none !important;
             }
 
-            .video-wrapper {
-                /* Reset 3D tilt transforms on mobile */
-                transform: none !important;
-            }
-
             .spacer {
                 display: none;
             }
@@ -1231,8 +1270,19 @@
             .stream-btn {
                 flex: 0 0 auto !important;
                 text-align: center;
-                font-size: 11px;
-                padding: 6px 12px;
+                font-size: 13px;
+                padding: 10px 18px;
+                border-radius: 12px;
+            }
+
+            .tab-btn {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+
+            .view-more-btn {
+                padding: 14px;
+                font-size: 14px;
             }
 
             .event-header {
@@ -1277,7 +1327,9 @@
             }
 
             .status-area {
-                gap: 5px;
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
             }
 
             .weather-pill .w-label {
@@ -1287,16 +1339,19 @@
             .weather-pill {
                 padding: 4px 10px;
                 gap: 6px;
+                flex-shrink: 0;
             }
 
             .timer-pill {
                 font-size: 11px;
                 padding: 4px 10px;
+                flex-shrink: 0;
             }
 
             .status-pill {
                 font-size: 11px;
                 padding: 4px 12px;
+                flex-shrink: 0;
             }
         }
     </style>
@@ -1400,8 +1455,11 @@
         </div>
 
         <div class="sidebar">
-            <div class="glass-card white-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
+            <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400"
                 data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                <video autoplay loop muted playsinline class="card-video-bg">
+                    <source src="racing.mp4" type="video/mp4">
+                </video>
                 <div class="card-title">Weekend Schedule</div>
                 <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
                     <div class="sess-info">
@@ -1635,6 +1693,8 @@
             
             function applyDynamicTheme(location, themeOverride) {
                 let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
+                localStorage.setItem('f1_theme_loc', location || '');
+                localStorage.setItem('f1_theme_override', themeOverride || '');
                 const loc = key.toLowerCase();
                 let theme = {
                     primary: '#e60000',      // Default F1 Red
@@ -1896,7 +1956,7 @@
 
     </script>
     <!-- Floating Theme Test Control Panel -->
-    <div class="theme-test-panel animate-in" ng-if="isTestMode" style="
+    <div class="theme-test-panel animate-in ng-cloak" ng-if="isTestMode" style="
         position: fixed;
         bottom: 20px;
         right: 20px;
