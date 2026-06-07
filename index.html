@@ -1680,12 +1680,12 @@
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
-            $scope.twitchChannel = 'formula1';
+            $scope.twitchChannel = 'watchf1olive';
             $scope.twitchChatUrl = '';
             
             $scope.$watch('twitchChannel', function (newVal) {
                 const domain = $window.location.hostname;
-                $scope.twitchChatUrl = 'https://www.twitch.tv/embed/' + (newVal || 'formula1') + '/chat?parent=' + domain + '&darkpopout';
+                $scope.twitchChatUrl = 'https://www.twitch.tv/embed/' + (newVal || 'watchf1olive') + '/chat?parent=' + domain + '&darkpopout';
             });
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
@@ -1911,7 +1911,7 @@
 
             function processData(data) {
                 $scope.raceData = data.raceData || {};
-                $scope.twitchChannel = data.twitchChannel || 'formula1';
+                $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
                 
                 // Trigger dynamic theming based on race location or theme override
                 if (!$scope.themeOverrideActive) {
