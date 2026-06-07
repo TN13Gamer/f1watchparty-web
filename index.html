@@ -1861,7 +1861,7 @@
 
                         <div ng-show="standingsView === 'constructors'">
                             <div class="standing-row"
-                                ng-repeat="team in constructors | limitTo: (showAllStandings ? constructors.length : 3)">
+                                ng-repeat="team in constructors | orderBy:'points':true | limitTo: (showAllStandings ? constructors.length : 3)">
                                 <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
                                 <div class="st-info" style="margin-left: 10px;">
                                     <div class="st-name">{{team.name}}</div>

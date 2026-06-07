@@ -300,6 +300,14 @@ module.exports = async (req, res) => {
     if (!doc.exists) return res.json({ ok: false, message: 'live_config not found' });
 
     const config = doc.data();
+
+    // Check if auto-sync is disabled.
+    // Allow manual triggers (?manual=true) to bypass this check.
+    if (config.autoSyncStandings === false && req.query.manual !== 'true') {
+      console.log('[sync] Standings auto-sync is disabled. Skipping.');
+      return res.json({ ok: true, message: 'Auto-sync disabled' });
+    }
+
     const standings = config.standings || [];
     const constructors = config.constructors || [];
     let changed = false;
@@ -335,7 +343,7 @@ module.exports = async (req, res) => {
         changed = true;
       }
     });
-    if (changed) standings.sort((a, b) => (b.points||0) - (a.points||0));
+    standings.sort((a, b) => (b.points||0) - (a.points||0));
 
     if (cl?.length) {
       cl.forEach(entry => {
@@ -360,7 +368,7 @@ module.exports = async (req, res) => {
           changed = true;
         }
       });
-      if (changed) constructors.sort((a, b) => (b.points||0) - (a.points||0));
+      constructors.sort((a, b) => (b.points||0) - (a.points||0));
     }
 
     const syncedAt = new Date().toISOString();

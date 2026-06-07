@@ -1102,7 +1102,11 @@
                         <h3><i class="fa-solid fa-trophy" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings</h3>
                         <p style="font-size: 11px; color: var(--text-muted);">Auto-synced from official F1 API every 30s via server. Last sync: <strong>{{standingsLastUpdated || 'checking...'}}</strong></p>
                     </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #eee; font-weight: bold; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <input type="checkbox" ng-model="config.autoSyncStandings" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: var(--primary);">
+                            <span>Auto-Sync</span>
+                        </label>
                         <button class="action-btn" ng-click="fetchF1Standings()" ng-disabled="fetchingStandings" style="border-color: var(--live-green); color: var(--live-green);">
                             <i class="fa-solid" ng-class="fetchingStandings ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
                             {{fetchingStandings ? 'Fetching...' : 'Sync from F1 API'}}
@@ -1515,27 +1519,36 @@
                     }, 1500);
                 }
             });
-
-            $scope.fetchF1Standings = function() {
+             $scope.fetchF1Standings = function() {
                 if ($scope.fetchingStandings) return;
                 $scope.fetchingStandings = true;
 
-                // Reload from Firestore — the /api/sync-standings cron has already updated it
-                db.collection('app_data').doc('live_config').get().then(function(doc) {
-                    if (doc.exists) {
-                        var data = doc.data();
-                        if (data.standings)    $scope.config.standings    = data.standings;
-                        if (data.constructors) $scope.config.constructors = data.constructors;
-                        if (data.lastStandingsSync) {
-                            $scope.standingsLastUpdated = new Date(data.lastStandingsSync).toLocaleTimeString();
+                var primaryUrl = '/api/sync-standings?manual=true';
+                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                $http.get(targetUrl).then(function(res) {
+                    db.collection('app_data').doc('live_config').get().then(function(doc) {
+                        if (doc.exists) {
+                            var data = doc.data();
+                            if (data.standings)    $scope.config.standings    = data.standings;
+                            if (data.constructors) $scope.config.constructors = data.constructors;
+                            if (data.lastStandingsSync) {
+                                $scope.standingsLastUpdated = new Date(data.lastStandingsSync).toLocaleTimeString();
+                            }
+                            $scope.showToast('Standings sync succeeded and loaded!', 'success');
                         }
-                        $scope.showToast('Standings refreshed from server sync!', 'success');
-                    }
-                    $scope.fetchingStandings = false;
-                    if (!$scope.$$phase) $scope.$apply();
+                        $scope.fetchingStandings = false;
+                        if (!$scope.$$phase) $scope.$apply();
+                    }).catch(function(err) {
+                        $scope.fetchingStandings = false;
+                        $scope.showToast('Failed to load updated standings: ' + err.message, 'error');
+                        if (!$scope.$$phase) $scope.$apply();
+                    });
                 }).catch(function(err) {
                     $scope.fetchingStandings = false;
-                    $scope.showToast('Refresh failed: ' + err.message, 'error');
+                    var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
+                    $scope.showToast('Sync API failed: ' + errMsg, 'error');
                     if (!$scope.$$phase) $scope.$apply();
                 });
             };
