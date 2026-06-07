@@ -1241,16 +1241,55 @@
             color: #a970ff;
         }
 
-        .chat-iframe-container {
-            flex: 1;
-            width: 100%;
-            background: #09090b;
+        .chat-status {
+            padding: 8px 15px;
+            background: rgba(145, 70, 255, 0.05);
+            font-size: 10px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(145, 70, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .chat-iframe-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .chat-messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #09090b;
+            scroll-behavior: smooth;
+        }
+
+        .chat-msg {
+            font-size: 13px;
+            line-height: 1.5;
+            animation: fadeIn 0.15s ease-out;
+            word-wrap: break-word;
+        }
+
+        .chat-author {
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .chat-text {
+            color: #eee;
+            font-weight: 600;
+        }
+
+        .chat-empty {
+            color: #555;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 50px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         /* Highlighted Chat Button Style */
@@ -1635,14 +1674,24 @@
 
 
 
-    <!-- Collapsible Twitch Chat Sidebar Drawer -->
+    <!-- Collapsible Twitch Chat Sidebar Drawer (Custom WebSockets Client) -->
     <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
         <div class="chat-header">
             <span>Chat</span>
             <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="chat-iframe-container">
-            <iframe ng-if="isChatOpen" ng-src="{{trustSrc(twitchChatUrl)}}" frameborder="0" scrolling="no"></iframe>
+        <div class="chat-status">
+            <span style="width: 6px; height: 6px; background: #00e676; border-radius: 50%; box-shadow: 0 0 8px #00e676; display: inline-block;"></span>
+            <span>LIVE CHAT (READ-ONLY)</span>
+        </div>
+        <div class="chat-messages-container">
+            <div ng-repeat="msg in chatMessages" class="chat-msg">
+                <span class="chat-author" style="color: {{msg.color || '#a970ff'}};">{{msg.displayName}}</span>:
+                <span class="chat-text">{{msg.text}}</span>
+            </div>
+            <div ng-if="chatMessages.length === 0" class="chat-empty">
+                Waiting for messages...
+            </div>
         </div>
     </div>
 
@@ -1695,11 +1744,90 @@
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
             $scope.twitchChannel = 'watchf1olive';
-            $scope.twitchChatUrl = '';
-            
-            $scope.$watch('twitchChannel', function (newVal) {
-                const domain = $window.location.hostname;
-                $scope.twitchChatUrl = 'https://www.twitch.tv/embed/' + (newVal || 'watchf1olive') + '/chat?parent=' + domain + '&darkpopout';
+            $scope.chatMessages = [];
+            let chatWs = null;
+
+            function connectTwitchChat(channel) {
+                if (chatWs) {
+                    try { chatWs.close(); } catch(e) {}
+                }
+                $scope.chatMessages = [];
+                const chan = (channel || 'watchf1olive').toLowerCase().trim();
+                
+                chatWs = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+                
+                chatWs.onopen = function() {
+                    console.log('🔌 Connected to Twitch IRC WebSocket for #' + chan);
+                    chatWs.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
+                    chatWs.send('PASS oauth:dummy');
+                    chatWs.send('NICK justinfan' + Math.floor(Math.random() * 89999 + 10000));
+                    chatWs.send('JOIN #' + chan);
+                };
+
+                chatWs.onmessage = function(event) {
+                    const data = event.data;
+                    
+                    if (data.startsWith('PING')) {
+                        chatWs.send('PONG');
+                        return;
+                    }
+
+                    if (data.includes('PRIVMSG')) {
+                        const match = data.match(/@([^ ]+) :([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
+                        if (match) {
+                            const tagsStr = match[1];
+                            const username = match[2];
+                            const text = match[3].trim();
+
+                            const tags = {};
+                            tagsStr.split(';').forEach(tag => {
+                                const parts = tag.split('=');
+                                if (parts[0] && parts[1]) tags[parts[0]] = parts[1];
+                            });
+
+                            const displayName = tags['display-name'] || username;
+                            const color = tags['color'] || '#a970ff';
+
+                            $scope.$apply(function() {
+                                $scope.chatMessages.push({
+                                    displayName: displayName,
+                                    color: color,
+                                    text: text
+                                });
+                                if ($scope.chatMessages.length > 150) {
+                                    $scope.chatMessages.shift();
+                                }
+                                setTimeout(scrollChatToBottom, 50);
+                            });
+                        }
+                    }
+                };
+
+                chatWs.onerror = function(err) {
+                    console.error('Twitch Chat WS Error:', err);
+                };
+
+                chatWs.onclose = function() {
+                    console.log('🔌 Twitch Chat WS Closed');
+                };
+            }
+
+            function scrollChatToBottom() {
+                const container = document.querySelector('.chat-messages-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+
+            $scope.$watchGroup(['isChatOpen', 'twitchChannel'], function(newValues) {
+                const isOpen = newValues[0];
+                const channel = newValues[1];
+                if (isOpen && channel) {
+                    connectTwitchChat(channel);
+                } else if (!isOpen && chatWs) {
+                    try { chatWs.close(); } catch(e) {}
+                    chatWs = null;
+                }
             });
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
