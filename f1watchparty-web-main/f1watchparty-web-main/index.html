@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="f1App">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>watchf1.live | Live Stream</title>
+
+    <script>
+        (function () {
+            const savedLoc = localStorage.getItem('f1_theme_loc') || 'default';
+            const savedOverride = localStorage.getItem('f1_theme_override') || '';
+            let key = (savedOverride !== '') ? savedOverride : savedLoc;
+            const loc = key.toLowerCase();
+            let primary = '#e60000';
+            let glow = 'rgba(230, 0, 0, 0.15)';
+            if (loc.includes('monaco') || loc.includes('monte carlo')) {
+                primary = '#e2001a'; glow = 'rgba(226, 0, 26, 0.15)';
+            } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
+                primary = '#ff1801'; glow = 'rgba(255, 24, 1, 0.15)';
+            } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
+                primary = '#00cc7a'; glow = 'rgba(0, 204, 122, 0.15)';
+            } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
+                primary = '#ff7700'; glow = 'rgba(255, 119, 0, 0.15)';
+            } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                primary = '#00ffcc'; glow = 'rgba(0, 255, 204, 0.2)';
+            } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                primary = '#00e5ff'; glow = 'rgba(0, 229, 255, 0.2)';
+            } else if (loc.includes('spa') || loc.includes('belgium')) {
+                primary = '#ffb700'; glow = 'rgba(255, 183, 0, 0.15)';
+            } else if (loc.includes('suzuka') || loc.includes('japan')) {
+                primary = '#ff66a3'; glow = 'rgba(255, 102, 163, 0.2)';
+            } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
+                primary = '#ffcc00'; glow = 'rgba(255, 204, 0, 0.15)';
+            } else if (loc.includes('canada') || loc.includes('montreal')) {
+                primary = '#ff3333'; glow = 'rgba(255, 51, 51, 0.15)';
+            } else if (loc.includes('china') || loc.includes('shanghai')) {
+                primary = '#ff2200'; glow = 'rgba(255, 34, 0, 0.15)';
+            } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
+                primary = '#00ff33'; glow = 'rgba(0, 255, 51, 0.15)';
+            }
+            document.documentElement.style.setProperty('--f1-red', primary);
+            document.documentElement.style.setProperty('--glow-color', glow);
+        })();
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- 3D Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+
+    <style>
+        [ng-cloak],
+        .ng-cloak {
+            display: none !important;
+        }
+
+        :root {
+            --f1-red: #e60000;
+            --f1-carbon: #101010;
+            --f1-silver: #d1d1d1;
+            --f1-green: #00d26a;
+            --bg-dark: #050505;
+            --glass-bg: rgba(10, 10, 10, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --text-white: #ffffff;
+            --text-gray: #999999;
+            --glow-color: rgba(230, 0, 0, 0.15);
+            --border: #24242e;
+            --tech-blue: #00e5ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 16px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-color: #050505;
+            /* Fallback */
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -3;
+        }
+
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9));
+            /* Gradient overlay */
+            z-index: -2;
+        }
+
+        #vanta-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 3D Depth Utilities */
+        .glass-card,
+        .video-wrapper {
+            transform-style: preserve-3d;
+        }
+
+        .glass-card>*,
+        .video-responsive {
+            transform: translateZ(30px);
+        }
+
+        header {
+            background-color: #111;
+            background-image:
+                linear-gradient(90deg, rgba(5, 5, 5, 0.85) 0%, rgba(5, 5, 5, 0.4) 50%, rgba(5, 5, 5, 0.85) 100%),
+                repeating-linear-gradient(45deg, #181818 25%, transparent 25%, transparent 75%, #181818 75%, #181818),
+                repeating-linear-gradient(45deg, #181818 25%, #0a0a0a 25%, #0a0a0a 75%, #181818 75%, #181818);
+            background-position: 0 0, 0 0, 5px 5px;
+            background-size: 100% 100%, 10px 10px, 10px 10px;
+
+            border-bottom: 2px solid var(--f1-red);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 75px;
+            transition: all 0.3s ease;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-marquee-container {
+            flex: 1;
+            overflow: hidden;
+            margin: 0 30px;
+            white-space: nowrap;
+            background: var(--glow-color);
+            border: 1px solid var(--f1-red);
+            border-radius: 20px;
+            padding: 6px 15px;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .header-marquee-text {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding-left: 100%;
+            animation: scroll-left 18s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .header-marquee-text span {
+            color: #fff;
+        }
+
+        .status-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weather-pill {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-right: 5px;
+            backdrop-filter: blur(5px);
+        }
+
+        .w-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .w-icon {
+            font-size: 14px;
+            margin-right: 2px;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        }
+
+        /* --- LIVE TRACK MAP --- */
+        .track-map-section {
+            max-width: 1400px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+        }
+
+        .track-map-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .track-map-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .track-map-title {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-gray);
+        }
+
+        .live-dot {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--f1-red);
+        }
+
+        .live-dot span {
+            width: 7px;
+            height: 7px;
+            background: var(--f1-red);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px var(--f1-red);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 3px var(--f1-red);
+            }
+        }
+
+
+
+        .fl-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #b100e1;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px #b100e1;
+            z-index: 5;
+        }
+
+        .fastest-lap-row {
+            border-left: 3px solid #b100e1 !important;
+            background: rgba(177, 0, 225, 0.05) !important;
+        }
+
+        .gap-text {
+            font-size: 9px;
+            font-family: monospace;
+            color: var(--tech-blue);
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+
+        .map-sector-line {
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-dasharray: 5, 5;
+            stroke-width: 1;
+        }
+
+        .map-sector-label {
+            fill: rgba(255, 255, 255, 0.4);
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .f1-popup-overlay {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .f1-popup-content {
+            background: rgba(10, 10, 15, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .f1-popup-content.active {
+            transform: translateX(0);
+        }
+
+        .f1-popup-icon {
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+
+        .f1-popup-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            color: var(--text-gray);
+        }
+
+        .f1-popup-msg {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-content {
+            border-left: 4px solid #b100e1;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-icon {
+            color: #b100e1;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-content {
+            border-left: 4px solid #fff;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-icon {
+            color: #fff;
+        }
+
+        .live-indicator-mini {
+            background: rgba(255, 24, 1, 0.1);
+            color: var(--f1-red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            border: 1px solid rgba(255, 24, 1, 0.2);
+        }
+
+        .live-pulse {
+            width: 5px;
+            height: 5px;
+            background: var(--f1-red);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .w-label {
+            color: var(--text-gray);
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 2px;
+        }
+
+        .w-val {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .w-divider {
+            width: 1px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .timer-pill {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+        }
+
+        .status-pill {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.countdown {
+            background: rgba(255, 180, 0, 0.08);
+            color: #ffb400;
+            border: 1px solid rgba(255, 180, 0, 0.35);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill.countdown i {
+            color: #ffb400;
+        }
+
+        .status-pill.live {
+            background: #e60000 !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.6) !important;
+            font-weight: 800;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 3.5fr 1.2fr;
+            gap: 30px;
+            flex: 1;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 1100px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-wrapper {
+            background: #000;
+            border-radius: 24px 24px 0 0;
+            overflow: hidden;
+            border: 1px solid #222;
+            border-bottom: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: var(--f1-red);
+            filter: blur(50px);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .video-responsive {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            width: 100%;
+            background: #0a0a0a;
+        }
+
+        .video-responsive iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .video-toolbar {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-top: none;
+            border-radius: 0 0 24px 24px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .stream-controls {
+            margin-top: 0px;
+            transition: all 0.3s ease;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .event-title {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .event-round {
+            font-size: 14px;
+            color: var(--f1-red);
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            font-size: 15px;
+            color: var(--text-gray);
+        }
+
+        .meta-item strong {
+            display: block;
+            color: #fff;
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .stream-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: auto;
+            letter-spacing: 0.5px;
+        }
+
+        .stream-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .stream-btn.active {
+            background: #e60000 !important;
+            color: white !important;
+            border-color: #e60000 !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.4) !important;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--f1-red);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .carbon-schedule-card {
+            position: relative;
+            overflow: hidden;
+            background-color: #0c0c0f !important;
+            background-image:
+                linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
+                repeating-linear-gradient(45deg, #16161b 25%, transparent 25%, transparent 75%, #16161b 75%, #16161b),
+                repeating-linear-gradient(45deg, #16161b 25%, #08080a 25%, #08080a 75%, #16161b 75%, #16161b) !important;
+            background-position: 0 0, 0 0, 4px 4px !important;
+            background-size: 100% 100%, 8px 8px, 8px 8px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .carbon-schedule-card .card-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0.18;
+            pointer-events: none;
+        }
+
+        .carbon-schedule-card>*:not(.card-video-bg) {
+            position: relative;
+            z-index: 2;
+        }
+
+        .schedule-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .schedule-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .schedule-row.live {
+            background: linear-gradient(90deg, var(--glow-color), rgba(255, 255, 255, 0.01));
+            border-color: var(--glow-color);
+            border-left: 3px solid var(--f1-red);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .schedule-row.upcoming {
+            background: rgba(255, 255, 255, 0.01);
+            border-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .schedule-row.ended {
+            opacity: 0.4;
+        }
+
+        .sess-name {
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .sess-status {
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sess-time {
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .sess-day {
+            font-size: 13px;
+            color: var(--text-gray);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-gray);
+            padding: 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background: var(--f1-red);
+            color: white;
+            border-color: var(--f1-red);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .standings-list {
+            transition: all 0.4s ease;
+            max-height: auto;
+        }
+
+        .standings-list.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .standings-list.expanded::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .standings-list.expanded::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .standings-list.expanded::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .standing-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .standing-row:last-child {
+            border-bottom: none;
+        }
+
+        .st-pos {
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            margin-right: 15px;
+            color: var(--text-gray);
+            width: 20px;
+            text-align: center;
+        }
+
+        .st-pos.p1 {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .st-pos.p2 {
+            color: #c0c0c0;
+        }
+
+        .st-pos.p3 {
+            color: #cd7f32;
+        }
+
+        .st-img-wrapper {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #222;
+            margin-right: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .st-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        .st-info {
+            flex: 1;
+        }
+
+        .st-name {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .st-team {
+            font-size: 13px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .st-pts {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .view-more-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            color: var(--text-gray);
+            padding: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        .view-more-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 13px;
+            border-top: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+        }
+
+        body.theater-active header {
+            height: 40px;
+            padding: 0 20px;
+            background: #000;
+            border-bottom: 1px solid #111;
+            background-image: none;
+        }
+
+        body.theater-active .logo-text {
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        body.theater-active .status-pill {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .timer-pill {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .weather-pill {
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .header-marquee-container {
+            display: none;
+        }
+
+        body.theater-active footer,
+        body.theater-active .sidebar {
+            display: none !important;
+        }
+
+        body.theater-active {
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        body.theater-active .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.theater-active .main-column {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.theater-active .video-wrapper {
+            flex: 1;
+            border-radius: 0;
+            border: none;
+            display: flex;
+            align-items: center;
+        }
+
+        body.theater-active .video-wrapper::before {
+            display: none;
+        }
+
+        body.theater-active .video-responsive {
+            height: 100%;
+            padding-bottom: 0;
+        }
+
+        body.theater-active .video-toolbar {
+            margin-bottom: 0;
+            border-radius: 0;
+            border: none;
+            border-top: 1px solid #111;
+            background: #000;
+            padding: 5px 15px;
+            height: 40px;
+        }
+
+        body.theater-active .stream-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+
+        body.theater-active .source-label {
+            font-size: 11px !important;
+        }
+
+        body.theater-active .stream-controls {
+            display: none;
+        }
+
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+        }
+
+        .loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border-top-color: var(--f1-red);
+            animation: spin 0.8s ease-in-out infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(230, 0, 0, 0.2);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #555;
+            animation: fadeText 1.5s infinite alternate;
+            text-transform: uppercase;
+        }
+
+        @keyframes fadeText {
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* WatchF1.live Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo-container {
+            text-align: center;
+        }
+
+        .loading-logo-svg {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            overflow: visible;
+        }
+
+        .loading-logo-svg text {
+            font-family: 'Titillium Web', sans-serif;
+            font-weight: 900;
+            font-size: 70px;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            stroke: var(--f1-red);
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            /* Draw outline for 1.5s, then hold. Delay fill by 1.5s so it starts after outline completes */
+            animation:
+                drawOutline 1.5s ease-in-out forwards,
+                fillLogo 0.8s ease-in-out 1.5s forwards;
+        }
+
+        @keyframes drawOutline {
+            0% {
+                stroke-dashoffset: 1000;
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fillLogo {
+            0% {
+                fill: transparent;
+            }
+
+            100% {
+                fill: var(--f1-red);
+                stroke-width: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Chat Sidebar Drawer (Twitch brand themed) */
+        .chat-sidebar {
+            position: fixed;
+            top: 0;
+            right: -340px;
+            width: 340px;
+            height: 100vh;
+            background: #0f0f12;
+            border-left: 2px solid #9146ff;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 100000;
+            transform: translate3d(0, 0, 10000px);
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-sidebar.open {
+            right: 0;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #16161b;
+            border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #a970ff;
+            text-transform: uppercase;
+        }
+
+        .chat-close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-close-btn:hover {
+            color: #a970ff;
+        }
+
+        .chat-status {
+            padding: 8px 15px;
+            background: rgba(145, 70, 255, 0.05);
+            font-size: 10px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(145, 70, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Twitch iframe fills the remaining chat space */
+        .chat-twitch-iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            min-height: 0;
+            background: #0e0e10;
+        }
+
+        /* Pinned Message Banner style */
+        .chat-pinned-message {
+            background: rgba(145, 70, 255, 0.12);
+            border-bottom: 2px solid #9146ff;
+            padding: 10px 15px;
+            font-size: 12px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .pinned-header {
+            font-size: 9px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pinned-header i {
+            transform: rotate(45deg);
+        }
+
+        .pinned-body {
+            font-weight: 600;
+            line-height: 1.4;
+            color: #fff;
+            word-wrap: break-word;
+        }
+
+        /* Highlighted Chat Button Style */
+        .chat-btn {
+            color: #a970ff !important;
+            border-color: rgba(145, 70, 255, 0.4) !important;
+            background: rgba(145, 70, 255, 0.05) !important;
+        }
+
+        .chat-btn:hover {
+            background: rgba(145, 70, 255, 0.15) !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 10px rgba(145, 70, 255, 0.3) !important;
+        }
+
+        .chat-btn.active {
+            background: #9146ff !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 15px rgba(145, 70, 255, 0.6) !important;
+        }
+
+
+
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 15px;
+                height: auto;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 10px;
+                background-size: 100% 100%, 6px 6px, 6px 6px;
+            }
+
+            .header-left {
+                gap: 10px;
+            }
+
+            .logo-text {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+
+            .header-marquee-container {
+                width: 100%;
+                margin: 0;
+                order: 3;
+                flex: none;
+                border-radius: 12px;
+            }
+
+            .container {
+                margin: 15px auto;
+                padding: 0 12px;
+                gap: 16px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .main-column,
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .video-wrapper {
+                border-radius: 16px 16px 0 0;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
+            }
+
+            .video-toolbar {
+                border-radius: 0 0 16px 16px;
+                padding: 10px 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                overflow-x: auto;
+                white-space: nowrap;
+                flex-wrap: nowrap !important;
+                justify-content: flex-start !important;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: none;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
+            }
+
+            .video-toolbar::-webkit-scrollbar {
+                display: none;
+                /* Hide scrollbar for Chrome, Safari and Opera */
+            }
+
+            .glass-card {
+                border-radius: 16px;
+                padding: 20px;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
+            }
+
+            .spacer {
+                display: none;
+            }
+
+            .stream-btn {
+                flex: 0 0 auto !important;
+                text-align: center;
+                font-size: 13px;
+                padding: 10px 18px;
+                border-radius: 12px;
+            }
+
+            .tab-btn {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+
+            .view-more-btn {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .event-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .event-title {
+                font-size: 22px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .schedule-row {
+                padding: 8px 12px;
+            }
+
+            .sess-name {
+                font-size: 14px;
+            }
+
+            .sess-time {
+                font-size: 14px;
+            }
+
+            body.theater-active header {
+                display: none;
+            }
+
+            body.theater-active .container {
+                height: 100vh;
+            }
+
+            body.theater-active .video-toolbar {
+                overflow-x: scroll;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                border-radius: 0;
+            }
+
+            .status-area {
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .weather-pill .w-label {
+                display: none;
+            }
+
+            .weather-pill {
+                padding: 4px 10px;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .timer-pill {
+                font-size: 11px;
+                padding: 4px 10px;
+                flex-shrink: 0;
+            }
+
+            .status-pill {
+                font-size: 11px;
+                padding: 4px 12px;
+                flex-shrink: 0;
+            }
+
+            .chat-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+
+            .chat-sidebar.open {
+                right: 0;
+            }
+        }
+    </style>
+</head>
+
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
+    oncontextmenu="return false;">
+    <div class="video-overlay"></div>
+    <div id="vanta-overlay"></div>
+
+    <!-- Loading Animation -->
+    <div class="loader" ng-class="{'hide': dataLoaded}">
+        <div class="loading-logo-container">
+            <svg class="loading-logo-svg" viewBox="0 0 600 100">
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchF1.live</text>
+            </svg>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
+        </div>
+
+        <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
+            <div class="header-marquee-text">
+                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+            </div>
+        </div>
+
+        <div class="status-area">
+            <div class="weather-pill" ng-if="weather && weather.air">
+                <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
+                <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
+                <div class="w-divider"></div>
+                <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
+                </div>
+            </div>
+            <div class="status-pill live" ng-if="activeSession">LIVE: {{activeSession.name}}</div>
+            <div class="status-pill countdown" ng-if="!activeSession && nextUp">
+                <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
+            </div>
+            <div class="status-pill countdown" ng-if="!activeSession && !nextUp && (raceData.name || nextRace.name)">
+                <i class="fa-regular fa-clock"></i> NEXT: {{raceData.name || nextRace.name}}
+            </div>
+        </div>
+    </header>
+
+
+
+    <!-- NOTIFICATION TOASTS (Now on the side) -->
+    <div class="f1-popup-overlay" ng-class="activePopup.type">
+        <div class="f1-popup-content" ng-class="{'active': activePopup}">
+            <div class="f1-popup-icon"><i class="fa-solid" ng-class="activePopup.icon"></i></div>
+            <div>
+                <div class="f1-popup-title">{{activePopup.title}}</div>
+                <div class="f1-popup-msg">{{activePopup.msg}}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-column">
+            <div class="video-wrapper" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400"
+                data-tilt-glare data-tilt-max-glare="0.2" data-tilt-perspective="1000">
+                <div class="video-responsive">
+                    <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
+                        scrolling="no"></iframe>
+                </div>
+            </div>
+            <div class="video-toolbar">
+                <span class="source-label"
+                    style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
+                <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
+                    ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
+                <div class="spacer"></div>
+                <button class="stream-btn" ng-click="toggleTheater()">
+                    <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
+                        style="margin-right: 5px;"></i>
+                    {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                </button>
+                <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()">
+                    <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
+                    {{ isChatOpen ? 'Chat' : 'Chat' }}
+                </button>
+            </div>
+            <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                <div class="event-header">
+                    <div>
+                        <span class="event-round">ROUND {{raceData.round}}</span>
+                        <div class="event-title">{{raceData.name}}</div>
+                    </div>
+                    <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
+                        <span
+                            style="width:10px; height:10px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 10px var(--f1-green);"></span>
+                        <span style="opacity:0.7;">FEED:</span> <span
+                            style="font-weight: 600;">{{currentStream.name}}</span>
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
+                    <div class="meta-item"><strong>Circuit</strong>{{raceData.circuit}}</div>
+                    <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
+                    <div class="meta-item"><strong>Laps</strong>{{raceData.laps}}</div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="sidebar">
+            <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                <video autoplay loop muted playsinline class="card-video-bg">
+                    <source src="racing.mp4" type="video/mp4">
+                </video>
+                <div class="card-title">Weekend Schedule</div>
+                <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
+                    <div class="sess-info">
+                        <span class="sess-name">{{session.name}}</span>
+                        <span class="sess-status" style="color: var(--f1-red);" ng-if="session.status === 'live'">TRACK
+                            LIVE</span>
+                        <span class="sess-status" style="color: #666;"
+                            ng-if="session.status === 'upcoming'">UPCOMING</span>
+                    </div>
+                    <div class="sess-time-box">
+                        <div class="sess-time">{{formatTime12(session.time)}}</div>
+                        <div class="sess-day">{{session.day}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+
+                <!-- Card Title -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
+                    <div class="card-title" style="margin-bottom:0;">
+                        <span>Championship Standings</span>
+                    </div>
+                </div>
+
+                <div class="tabs" style="margin-top: 12px;">
+                    <button class="tab-btn" ng-class="{'active': standingsView === 'drivers'}"
+                        ng-click="standingsView = 'drivers'">Drivers</button>
+                    <button class="tab-btn" ng-class="{'active': standingsView === 'constructors'}"
+                        ng-click="standingsView = 'constructors'">Teams</button>
+                </div>
+
+                <div class="standings-list" ng-class="{'expanded': showAllStandings}">
+                    <!-- DRIVER STANDINGS: sorted by season points -->
+                    <div ng-show="standingsView === 'drivers'">
+                        <div class="standing-row"
+                            ng-repeat="driver in standings | orderBy:'points':true | limitTo: (showAllStandings ? standings.length : 4)">
+                            <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
+                            <div class="st-img-wrapper">
+                                <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}"
+                                    class="st-img"
+                                    onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"
+                                    loading="lazy">
+                            </div>
+                            <div class="st-info">
+                                <div class="st-name">{{driver.name}}</div>
+                                <div class="st-team">{{driver.team}}</div>
+                            </div>
+                            <div class="st-pts">{{driver.points}} PTS</div>
+                        </div>
+                    </div>
+
+                    <div ng-show="standingsView === 'constructors'">
+                        <div class="standing-row"
+                            ng-repeat="team in constructors | limitTo: (showAllStandings ? constructors.length : 3)">
+                            <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
+                            <div class="st-info" style="margin-left: 10px;">
+                                <div class="st-name">{{team.name}}</div>
+                            </div>
+                            <div class="st-pts">{{team.points}} PTS</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button class="view-more-btn" ng-click="toggleStandings()"
+                    ng-if="(standingsView === 'drivers' && standings.length > 4) || (standingsView === 'constructors' && constructors.length > 3)">
+                    {{ showAllStandings ? 'Collapse' : 'View All' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Collapsible Custom Chat Sidebar Drawer -->
+    <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
+        <div class="chat-header">
+            <span>Chat</span>
+            <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <!-- Pinned Message Area -->
+        <div class="chat-pinned-message" ng-if="pinnedMessage">
+            <div class="pinned-header">
+                <i class="fa-solid fa-thumbtack"></i> PINNED MESSAGE
+            </div>
+            <div class="pinned-body">
+                <span class="chat-author" style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
+                <span class="chat-text">{{pinnedMessage.text}}</span>
+            </div>
+        </div>
+
+        <!-- Twitch Chat Iframe -->
+        <iframe class="chat-twitch-iframe"
+            ng-src="{{twitchChatUrl}}"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <footer>
+        <p>This website does not create, host, or share any video content. All video streams are from external websites
+            that are freely available online.</p>
+        <p style="opacity: 0.5;font-size: 13px;">· Engineered with Gemini · Backed by Firebase ·</p>
+    </footer>
+
+    <script>
+        // Anti-inspection
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function (e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74) || (e.ctrlKey && e.keyCode === 85)) {
+                return false;
+            }
+        };
+
+        document.addEventListener('mousemove', e => {
+            requestAnimationFrame(() => {
+                const x = e.clientX; const y = e.clientY;
+                document.body.style.setProperty('--mouse-x', x + 'px');
+                document.body.style.setProperty('--mouse-y', y + 'px');
+                const normX = (x / window.innerWidth) * 2 - 1;
+                const normY = (y / window.innerHeight) * 2 - 1;
+                document.body.style.setProperty('--mouse-norm-x', normX);
+                document.body.style.setProperty('--mouse-norm-y', normY);
+            });
+        });
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
+            authDomain: "f1-stream-live.firebaseapp.com",
+            projectId: "f1-stream-live",
+            storageBucket: "f1-stream-live.firebasestorage.app",
+            messagingSenderId: "426806288804",
+            appId: "1:426806288804:web:f8ee225776596ebc39e131",
+            measurementId: "G-50FMFWY32X"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        var app = angular.module('f1App', []);
+        app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
+
+        app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            $scope.isTheater = false;
+            $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
+            $scope.isChatOpen = false;
+            $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
+            $scope.twitchChannel = 'watchf1olive';
+            $scope.chatList = [];
+            let chatEventSource = null;
+
+            // Get or set guest nickname
+            let storedNick = localStorage.getItem('f1_chat_nickname');
+            if (!storedNick) {
+                storedNick = 'Guest_' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('f1_chat_nickname', storedNick);
+            }
+
+            // Curated premium night-friendly colors
+            const chatColors = ['#a970ff', '#ff1e15', '#00ffcc', '#ff7700', '#ffb700', '#00e5ff', '#ff66a3', '#00ff33', '#ffcc00'];
+            let storedColor = localStorage.getItem('f1_chat_color');
+            if (!storedColor) {
+                storedColor = chatColors[Math.floor(Math.random() * chatColors.length)];
+                localStorage.setItem('f1_chat_color', storedColor);
+            }
+            $scope.chatUserColor = storedColor;
+
+            // Group chat state to resolve AngularJS ng-if prototype scope inheritance issues
+            $scope.chatState = {
+                username: storedNick,
+                tempNickname: storedNick,
+                editingNickname: false,
+                chatInput: ''
+            };
+
+            $scope.startEditNickname = function() {
+                $scope.chatState.tempNickname = $scope.chatState.username;
+                $scope.chatState.editingNickname = true;
+            };
+
+            $scope.saveNickname = function() {
+                const nick = $scope.chatState.tempNickname ? $scope.chatState.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
+                if (nick && nick.length >= 2) {
+                    $scope.chatState.username = nick;
+                    localStorage.setItem('f1_chat_nickname', nick);
+                    $scope.chatState.editingNickname = false;
+                } else {
+                    alert('Nickname must be alphanumeric, between 2 and 15 characters.');
+                }
+            };
+
+            $scope.cancelEditNickname = function() {
+                $scope.chatState.editingNickname = false;
+            };
+
+            $scope.showAllStandings = false;
+            $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
+
+            $scope.dataLoaded = false;
+            $scope.streamLinks = [];
+            $scope.currentStream = {};
+            $scope.raceData = {};
+            $scope.nextRace = {};
+
+            $scope.standings = [];
+            $scope.constructors = [];
+            $scope.schedule = [];
+            $scope.weather = null;
+            $scope.standingsView = 'drivers';
+
+            // --- ANALYTICS TRACKING ---
+            $scope.activePopup = null;
+            let lastFLDriver = null;
+            let raceFinishedAnnounced = false;
+            let initialLoadHandled = false;
+
+            $scope.$watch('standings', function (newStandings) {
+                if (!newStandings || newStandings.length === 0) return;
+
+                // 1. Fastest Lap Detection
+                const currentFL = newStandings.find(d => d.isFastestLap);
+
+                // Skip the very first detection on page load
+                if (!initialLoadHandled && currentFL) {
+                    lastFLDriver = currentFL.name;
+                    return;
+                }
+
+                if (currentFL && currentFL.name !== lastFLDriver) {
+                    lastFLDriver = currentFL.name;
+                    $scope.showPopup({
+                        type: 'fastest-lap',
+                        icon: 'fa-stopwatch',
+                        title: 'PURPLE SECTOR',
+                        msg: currentFL.name + ' set the FASTEST LAP!'
+                    });
+                }
+            }, true);
+
+            $scope.$watch('activeSession', function (session) {
+                if (!session) return;
+
+                // Skip the very first detection on page load
+                if (!initialLoadHandled && (session.name.includes('Finished') || session.status === 'finished')) {
+                    raceFinishedAnnounced = true;
+                    return;
+                }
+
+                if ((session.name.includes('Finished') || session.status === 'finished') && !raceFinishedAnnounced) {
+                    raceFinishedAnnounced = true;
+                    $scope.showPopup({
+                        type: 'checkered-flag',
+                        icon: 'fa-flag-checkered',
+                        title: 'SESSION FINISHED',
+                        msg: 'The checkered flag has been waved!'
+                    });
+                }
+
+                // Once we have a session, we can mark initial load as done
+                if (session) initialLoadHandled = true;
+            });
+
+            $scope.showPopup = function (data) {
+                $scope.activePopup = data;
+                setTimeout(() => {
+                    $scope.$apply(() => { $scope.activePopup = null; });
+                }, 5000);
+            };
+
+            const analyticsRef = db.collection("app_data").doc("analytics");
+
+            // 1. Accurate Active Viewers (Heartbeat System)
+            const deviceId = localStorage.getItem('f1_device_id') || Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('f1_device_id', deviceId);
+
+            const deviceRef = db.collection("app_data").doc("analytics").collection("active_devices").doc(deviceId);
+
+            function pingDevice() {
+                deviceRef.set({ lastActive: Date.now() }, { merge: true }).catch(() => { });
+            }
+
+            // Ping immediately and every 30s
+            pingDevice();
+            setInterval(pingDevice, 30000);
+
+            // 2. Total Views (Prevent duplicate count on refresh)
+            if (!sessionStorage.getItem('f1_view_counted')) {
+                analyticsRef.set({
+                    totalViews: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(() => { });
+                sessionStorage.setItem('f1_view_counted', 'true');
+            }
+
+            // 3. Best effort cleanup on exit
+            $window.addEventListener('beforeunload', function (e) {
+                deviceRef.delete().catch(() => { });
+            });
+            // --------------------------
+
+            $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
+            $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
+
+            $scope.activeThemeName = '';
+
+            function applyDynamicTheme(location, themeOverride) {
+                let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
+                localStorage.setItem('f1_theme_loc', location || '');
+                localStorage.setItem('f1_theme_override', themeOverride || '');
+                const loc = key.toLowerCase();
+                let theme = {
+                    primary: '#e60000',      // Default F1 Red
+                    glow: 'rgba(230, 0, 0, 0.15)',
+                    name: 'Classic F1 Theme'
+                };
+
+                if (loc.includes('monaco') || loc.includes('monte carlo')) {
+                    theme = {
+                        primary: '#e2001a', // Monaco Red
+                        glow: 'rgba(226, 0, 26, 0.15)',
+                        name: 'Monaco GP Theme (Red & White)'
+                    };
+                } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
+                    theme = {
+                        primary: '#ff1801', // Italian Scarlet Red
+                        glow: 'rgba(255, 24, 1, 0.15)',
+                        name: 'Italian GP Theme (Red)'
+                    };
+                } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
+                    theme = {
+                        primary: '#00cc7a', // British Racing Green
+                        glow: 'rgba(0, 204, 122, 0.15)',
+                        name: 'British GP Theme (Green)'
+                    };
+                } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
+                    theme = {
+                        primary: '#ff7700', // Dutch Orange
+                        glow: 'rgba(255, 119, 0, 0.15)',
+                        name: 'Dutch GP Theme (Orange)'
+                    };
+                } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                    theme = {
+                        primary: '#00ffcc', // Cyber Neon Teal
+                        glow: 'rgba(0, 255, 204, 0.2)',
+                        name: 'Night GP Theme (Cyber Neon)'
+                    };
+                } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                    theme = {
+                        primary: '#00e5ff', // Yas Marina Cyan
+                        glow: 'rgba(0, 229, 255, 0.2)',
+                        name: 'Desert GP Theme (Electric Blue)'
+                    };
+                } else if (loc.includes('spa') || loc.includes('belgium')) {
+                    theme = {
+                        primary: '#ffb700', // Eau Rouge Gold
+                        glow: 'rgba(255, 183, 0, 0.15)',
+                        name: 'Belgian GP Theme (Gold)'
+                    };
+                } else if (loc.includes('suzuka') || loc.includes('japan')) {
+                    theme = {
+                        primary: '#ff66a3', // Sakura Pink
+                        glow: 'rgba(255, 102, 163, 0.2)',
+                        name: 'Japanese GP Theme (Sakura Pink)'
+                    };
+                } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
+                    theme = {
+                        primary: '#ffcc00', // Aussie Gold
+                        glow: 'rgba(255, 204, 0, 0.15)',
+                        name: 'Australian GP Theme (Aussie Gold)'
+                    };
+                } else if (loc.includes('canada') || loc.includes('montreal')) {
+                    theme = {
+                        primary: '#ff3333', // Maple Red
+                        glow: 'rgba(255, 51, 51, 0.15)',
+                        name: 'Canadian GP Theme (Red)'
+                    };
+                } else if (loc.includes('china') || loc.includes('shanghai')) {
+                    theme = {
+                        primary: '#ff2200', // Chinese Red
+                        glow: 'rgba(255, 34, 0, 0.15)',
+                        name: 'Chinese GP Theme (Dragon Red)'
+                    };
+                } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
+                    theme = {
+                        primary: '#00ff33', // Brazilian Green
+                        glow: 'rgba(0, 255, 51, 0.15)',
+                        name: 'Brazilian GP Theme (Senna Green)'
+                    };
+                }
+
+                // Apply variables to document root
+                const root = document.documentElement;
+                root.style.setProperty('--f1-red', theme.primary);
+                root.style.setProperty('--glow-color', theme.glow);
+                $scope.activeThemeName = theme.name;
+
+                // Dynamic Vanta points color update if initialized
+                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.vantaInstance.setOptions({ color: vantaColor });
+                } else {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.pendingVantaColor = vantaColor;
+                }
+            }
+
+            function safeDate(val) {
+                if (!val) return null;
+                if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
+                // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
+                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
+                    var parts = val.trim().split(/[\s\-:]/);
+                    return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
+                }
+                return new Date(val);
+            }
+
+            db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    $scope.$apply(function () {
+                        processData(data);
+                        $scope.dataLoaded = true;
+                    });
+                }
+            });
+
+            function processData(data) {
+                $scope.raceData = data.raceData || {};
+                $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
+                $scope.pinnedMessage = data.pinnedMessage || null;
+
+                // Build the Twitch chat embed URL (parent must match the page hostname)
+                var parent = $window.location.hostname || 'localhost';
+                var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
+                $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
+
+                // Trigger dynamic theming based on race location or theme override
+                if (!$scope.themeOverrideActive) {
+                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                }
+
+                $scope.nextRace = data.nextRace || {};
+                $scope.streamLinks = data.streamLinks || [];
+                $scope.standings = data.standings || [];
+                $scope.constructors = data.constructors || [];
+                $scope.weather = data.weather || null;
+                $scope.nextUp = null;
+                $scope.activeSession = null;
+                if (data.schedule) {
+                    $scope.schedule = data.schedule.map(function (s) {
+                        var startDate = safeDate(s.timer);
+                        var startTime = startDate ? startDate.getTime() : NaN;
+                        var endTime = startTime + (2 * 60 * 60 * 1000);
+                        if (s.endTime && s.endTime.includes(':') && !isNaN(startTime)) {
+                            var parts = s.endTime.split(':');
+                            var endDate = new Date(startDate);
+                            endDate.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                            endTime = endDate.getTime();
+                            if (endTime < startTime) endTime += 86400000;
+                        }
+                        return { ...s, start: startTime, end: endTime, status: 'upcoming' };
+                    });
+                }
+
+                if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
+                    $scope.currentStream = $scope.streamLinks[0];
+                }
+                $scope.lastSyncTime = new Date().toLocaleTimeString();
+                console.log("🏎️ Data Sync:", $scope.lastSyncTime, data);
+                updateTimers();
+            }
+
+            function updateTimers() {
+                var now = new Date().getTime();
+                if (!$scope.schedule) return;
+                $scope.nextUp = null; $scope.activeSession = null;
+                $scope.schedule.forEach(function (session) {
+                    if (isNaN(session.start)) return;
+                    if (now < session.start) {
+                        session.status = 'upcoming';
+                        if (!$scope.nextUp || session.start < $scope.nextUp.start) $scope.nextUp = session;
+                    }
+                    else if (now >= session.start && now < session.end) {
+                        session.status = 'live';
+                        $scope.activeSession = session;
+                    }
+                    else {
+                        session.status = 'ended';
+                    }
+                });
+                if ($scope.nextUp) {
+                    var dist = $scope.nextUp.start - now;
+                    var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                    var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                    var s = Math.floor((dist % (1000 * 60)) / 1000);
+                    $scope.nextUp.timerStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                }
+            }
+
+            $interval(updateTimers, 1000);
+
+            function pad(num) { return num < 10 ? '0' + num : num; }
+
+            $scope.formatTime12 = function (t) {
+                if (!t) return "";
+                var p = t.split(':');
+                var h = parseInt(p[0]); var m = p[1];
+                var a = h >= 12 ? 'PM' : 'AM';
+                h = h % 12; h = h ? h : 12;
+                return h + ':' + m + ' ' + a;
+            };
+
+            $scope.getWeatherIcon = function (c) {
+                if (!c) return '☀️';
+                c = c.toLowerCase();
+                if (c.includes('storm') || c.includes('thunder')) return '🌩️';
+                if (c.includes('rain') || c.includes('shower')) return '🌧️';
+                if (c.includes('cloud')) return '☁️';
+                if (c.includes('night')) return '🌙';
+                return '☀️';
+            };
+
+            // --- Theme Test Mode System ---
+            $scope.isTestMode = $window.location.search.includes('testThemes=true');
+            $scope.themeOverrideActive = false;
+            $scope.currentOverrideLoc = '';
+
+            $scope.testThemesList = [
+                { name: 'Monaco (Red/White)', loc: 'Monaco' },
+                { name: 'Monza (Scarlet Red)', loc: 'Monza' },
+                { name: 'Silverstone (Racing Green)', loc: 'Silverstone' },
+                { name: 'Zandvoort (Dutch Orange)', loc: 'Zandvoort' },
+                { name: 'Singapore (Neon Teal)', loc: 'Singapore' },
+                { name: 'Yas Marina (Desert Cyan)', loc: 'Abu Dhabi' },
+                { name: 'Spa (Eau Rouge Gold)', loc: 'Spa' },
+                { name: 'Suzuka (Sakura Pink)', loc: 'Suzuka' },
+                { name: 'Melbourne (Aussie Gold)', loc: 'Melbourne' },
+                { name: 'Montreal (Maple Red)', loc: 'Canada' },
+                { name: 'Shanghai (Chinese Red)', loc: 'China' },
+                { name: 'Brazil (Senna Green)', loc: 'Brazil' },
+                { name: 'Classic F1 (Default Red)', loc: 'Default' }
+            ];
+
+            $scope.selectTestTheme = function (loc) {
+                $scope.themeOverrideActive = true;
+                $scope.currentOverrideLoc = loc;
+                $scope.raceData.location = loc === 'Default' ? 'Default GP' : loc;
+                applyDynamicTheme(loc);
+            };
+
+            $scope.resetThemeTest = function () {
+                $scope.themeOverrideActive = false;
+                $scope.currentOverrideLoc = '';
+                applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+            };
+        });
+
+        // Added 3D Net Telemetry Overlay on top of Video (only initialized on desktop for performance)
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof VANTA !== 'undefined' && window.innerWidth > 768) {
+                const initialColor = window.pendingVantaColor || 0xe60000;
+                window.vantaInstance = VANTA.NET({
+                    el: "#vanta-overlay",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    color: initialColor,
+                    backgroundColor: 0x0,
+                    backgroundAlpha: 0.0,
+                    points: 15.00,
+                    maxDistance: 24.00,
+                    spacing: 16.00
+                });
+            }
+        });
+
+
+
+    </script>
+    <!-- Floating Theme Test Control Panel -->
+    <div class="theme-test-panel animate-in ng-cloak" ng-if="isTestMode" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(10, 10, 14, 0.9);
+        backdrop-filter: blur(12px);
+        border: 2px solid var(--f1-red);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px var(--glow-color);
+        z-index: 9999;
+        width: 280px;
+        max-height: 400px;
+        overflow-y: auto;
+        color: #fff;
+        font-family: 'Titillium Web', sans-serif;
+    ">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
+            <div
+                style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
+                <i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Theme Test Mode
+            </div>
+            <button ng-if="themeOverrideActive" ng-click="resetThemeTest()" style="
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.15);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 8px;
+                cursor: pointer;
+                text-transform: uppercase;
+                color: #fff;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            ">Reset</button>
+        </div>
+        <div style="font-size: 10px; color: #8a8a9c; margin-bottom: 12px; line-height: 1.4;">
+            Select a location theme to test how the site styling and background telemetry net color adapt.
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)"
+                ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}"
+                style="
+                background: rgba(255,255,255,0.02);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-left: 3px solid transparent;
+                text-align: left;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-transform: none;
+                letter-spacing: 0.5px;
+            ">
+                <span>{{t.name}}</span>
+                <i class="fa-solid fa-chevron-right" style="font-size: 8px; opacity: 0.5;"></i>
+            </button>
+        </div>
+        <div style="margin-top: 10px; font-size: 8px; text-align: center; color: #6a6a7c;">
+            Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
+        </div>
+    </div>
+</body>
+
+</html>
