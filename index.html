@@ -512,10 +512,16 @@
             text-transform: uppercase;
         }
 
-        .status-pill.offline {
-            background: #111;
-            color: #555;
-            border: 1px solid #333;
+        .status-pill.countdown {
+            background: rgba(255, 180, 0, 0.08);
+            color: #ffb400;
+            border: 1px solid rgba(255, 180, 0, 0.35);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill.countdown i {
+            color: #ffb400;
         }
 
         .status-pill.live {
@@ -1541,7 +1547,9 @@
                 </div>
             </div>
             <div class="status-pill live" ng-if="activeSession">LIVE: {{activeSession.name}}</div>
-            <div class="status-pill offline" ng-if="!activeSession">OFFLINE</div>
+            <div class="status-pill countdown" ng-if="!activeSession && nextUp">
+                <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
+            </div>
         </div>
     </header>
 
