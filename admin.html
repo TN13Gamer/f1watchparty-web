@@ -668,6 +668,100 @@
         input:checked + .slider:before {
             transform: translateX(20px);
         }
+
+        /* Custom Confirm Modal Styling */
+        .custom-confirm-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000;
+        }
+        .custom-confirm-box {
+            background: #121218;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .custom-confirm-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-bright));
+        }
+        .confirm-icon {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(225, 6, 0, 0.3));
+        }
+        .custom-confirm-box h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 12px 0;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            padding: 0;
+            text-shadow: none;
+        }
+        .custom-confirm-box p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0 0 25px 0;
+        }
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .confirm-buttons button {
+            flex: 1;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transform: none !important;
+        }
+        .confirm-buttons .cancel-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .confirm-buttons .cancel-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .confirm-buttons .confirm-btn {
+            background: var(--primary);
+            border: 1px solid var(--primary-bright);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(225, 6, 0, 0.3);
+        }
+        .confirm-buttons .confirm-btn:hover {
+            background: var(--primary-bright);
+            box-shadow: 0 6px 20px rgba(225, 6, 0, 0.5);
+        }
     </style>
 </head>
 <body ng-controller="AdminController">
@@ -1327,50 +1421,71 @@
                 });
             };
 
-            $scope.clearingChat = false;
-            $scope.clearChat = function() {
-                if (!confirm("Are you sure you want to clear ALL chat messages? This cannot be undone.")) return;
-                
-                $scope.clearingChat = true;
-                let primaryUrl = '/api/chat/clear';
-                let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/chat/clear';
-                let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
-
-                $http.post(targetUrl)
-                    .then(res => {
-                        $scope.clearingChat = false;
-                        $scope.showToast("Chat messages cleared successfully!", "success");
-                        $scope.addLog("Cleared all custom chat messages via API");
-                    })
-                    .catch(err => {
-                        // Fallback to client-side Firestore delete
-                        console.log("API chat clear failed, falling back to direct Firestore delete...", err);
-                        db.collection("chat_messages").get()
-                            .then(snap => {
-                                if (snap.size === 0) {
-                                    $scope.clearingChat = false;
-                                    $scope.showToast("No chat messages found to clear.", "success");
-                                    if (!$scope.$$phase) $scope.$apply();
-                                    return;
-                                }
-                                let batch = db.batch();
-                                snap.forEach(doc => batch.delete(doc.ref));
-                                return batch.commit();
-                            })
-                            .then(() => {
-                                $scope.clearingChat = false;
-                                $scope.showToast("Chat messages cleared via client database!", "success");
-                                $scope.addLog("Cleared all custom chat messages via client database");
-                                if (!$scope.$$phase) $scope.$apply();
-                            })
-                            .catch(clientErr => {
-                                $scope.clearingChat = false;
-                                $scope.showToast("Clear failed: " + clientErr.message, "error");
-                                if (!$scope.$$phase) $scope.$apply();
-                            });
-                    });
+            // Custom Confirmation System
+            $scope.confirmDialog = {
+                show: false,
+                title: '',
+                message: '',
+                ok: null,
+                cancel: null
             };
 
+            $scope.showConfirm = function(message, onConfirm, title = 'Confirm Action') {
+                $scope.confirmDialog.title = title;
+                $scope.confirmDialog.message = message;
+                $scope.confirmDialog.show = true;
+                $scope.confirmDialog.ok = function() {
+                    $scope.confirmDialog.show = false;
+                    if (onConfirm) onConfirm();
+                };
+                $scope.confirmDialog.cancel = function() {
+                    $scope.confirmDialog.show = false;
+                };
+            };
+
+            $scope.clearingChat = false;
+            $scope.clearChat = function() {
+                $scope.showConfirm("Are you sure you want to clear ALL chat messages? This cannot be undone.", function() {
+                    $scope.clearingChat = true;
+                    let primaryUrl = '/api/chat/clear';
+                    let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/chat/clear';
+                    let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                    $http.post(targetUrl)
+                        .then(res => {
+                            $scope.clearingChat = false;
+                            $scope.showToast("Chat messages cleared successfully!", "success");
+                            $scope.addLog("Cleared all custom chat messages via API");
+                        })
+                        .catch(err => {
+                            // Fallback to client-side Firestore delete
+                            console.log("API chat clear failed, falling back to direct Firestore delete...", err);
+                            db.collection("chat_messages").get()
+                                .then(snap => {
+                                    if (snap.size === 0) {
+                                        $scope.clearingChat = false;
+                                        $scope.showToast("No chat messages found to clear.", "success");
+                                        if (!$scope.$$phase) $scope.$apply();
+                                        return;
+                                    }
+                                    let batch = db.batch();
+                                    snap.forEach(doc => batch.delete(doc.ref));
+                                    return batch.commit();
+                                })
+                                .then(() => {
+                                    $scope.clearingChat = false;
+                                    $scope.showToast("Chat messages cleared via client database!", "success");
+                                    $scope.addLog("Cleared all custom chat messages via client database");
+                                    if (!$scope.$$phase) $scope.$apply();
+                                })
+                                .catch(clientErr => {
+                                    $scope.clearingChat = false;
+                                    $scope.showToast("Clear failed: " + clientErr.message, "error");
+                                    if (!$scope.$$phase) $scope.$apply();
+                                });
+                        });
+                }, "Clear Chat Messages");
+            };
 
             // --- AUTO WEATHER REFRESH (every 10 seconds) ---
             $scope.weatherLastUpdated = null;
@@ -1476,24 +1591,26 @@
 
             // --- QUICK ACTIONS ---
             $scope.quickClearStreams = function() {
-                if(confirm("Are you sure you want to delete ALL stream sources?")) {
+                $scope.showConfirm("Are you sure you want to delete ALL stream sources?", function() {
                     $scope.config.streamLinks = [];
                     $scope.showToast("Stream list cleared. Don't forget to Save.", "success");
                     $scope.addLog("Cleared all Stream Sources");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Clear Streams");
             };
             
 
             $scope.quickResetTimers = function() {
-                if(confirm("Are you sure you want to clear all Session Timers?")) {
+                $scope.showConfirm("Are you sure you want to clear all Session Timers?", function() {
                     $scope.config.schedule.forEach(s => s.timer = "");
                     $scope.showToast("Timers cleared. Don't forget to Save.", "success");
                     $scope.addLog("Reset all Schedule Timers");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Reset Timers");
             };
 
             $scope.resetAnalytics = function() {
-                if(confirm("WARNING: This will reset all views and logs back to zero. Continue?")) {
+                $scope.showConfirm("WARNING: This will reset all views and logs back to zero. Continue?", function() {
                     db.collection("app_data").doc("analytics").set({
                         activeViewers: 0,
                         totalViews: 0,
@@ -1501,9 +1618,10 @@
                         logs: [{ action: "Analytics Reset by Admin", time: Date.now() }]
                     }).then(() => {
                         $scope.showToast("Analytics reset successfully.", "success");
+                        if (!$scope.$$phase) $scope.$apply();
                     });
-                }
-            }
+                }, "Reset Analytics");
+            };
 
             // --- SAVE FUNCTIONS ---
             $scope.saveLiveConfig = function(silent = false) {
@@ -1539,84 +1657,84 @@
             };
 
             $scope.apply2026Standings = function() {
-                if(!confirm("This will update the POINTS for your existing drivers based on current 2026 standings. Images and names will NOT be changed. Continue?")) return;
-                
-                // 2026 Data Points Map (Lowercase name -> points)
-                const pointsMap = {
-                    "antonelli": 75, "kimi antonelli": 75,
-                    "russell": 68, "george russell": 68,
-                    "leclerc": 55, "charles leclerc": 55,
-                    "hamilton": 43, "lewis hamilton": 43,
-                    "norris": 33, "lando norris": 33,
-                    "piastri": 28, "oscar piastri": 28,
-                    "bearman": 17, "oliver bearman": 17,
-                    "gasly": 16, "pierre gasly": 16,
-                    "verstappen": 16, "max verstappen": 16,
-                    "lawson": 10, "liam lawson": 10,
-                    "lindblad": 4, "arvid lindblad": 4,
-                    "hadjar": 4, "isack hadjar": 4,
-                    "bortoleto": 2, "gabriel bortoleto": 2,
-                    "sainz": 2, "carlos sainz": 2,
-                    "ocon": 1, "esteban ocon": 1,
-                    "colapinto": 1, "franco colapinto": 1,
-                    "hulkenberg": 0, "nico hulkenberg": 0,
-                    "albon": 0, "alexander albon": 0,
-                    "bottas": 0, "valtteri bottas": 0,
-                    "perez": 0, "sergio perez": 0,
-                    "alonso": 0, "fernando alonso": 0,
-                    "stroll": 0, "lance stroll": 0
-                };
+                $scope.showConfirm("This will update the POINTS for your existing drivers based on current 2026 standings. Images and names will NOT be changed. Continue?", function() {
+                    // 2026 Data Points Map (Lowercase name -> points)
+                    const pointsMap = {
+                        "antonelli": 75, "kimi antonelli": 75,
+                        "russell": 68, "george russell": 68,
+                        "leclerc": 55, "charles leclerc": 55,
+                        "hamilton": 43, "lewis hamilton": 43,
+                        "norris": 33, "lando norris": 33,
+                        "piastri": 28, "oscar piastri": 28,
+                        "bearman": 17, "oliver bearman": 17,
+                        "gasly": 16, "pierre gasly": 16,
+                        "verstappen": 16, "max verstappen": 16,
+                        "lawson": 10, "liam lawson": 10,
+                        "lindblad": 4, "arvid lindblad": 4,
+                        "hadjar": 4, "isack hadjar": 4,
+                        "bortoleto": 2, "gabriel bortoleto": 2,
+                        "sainz": 2, "carlos sainz": 2,
+                        "ocon": 1, "esteban ocon": 1,
+                        "colapinto": 1, "franco colapinto": 1,
+                        "hulkenberg": 0, "nico hulkenberg": 0,
+                        "albon": 0, "alexander albon": 0,
+                        "bottas": 0, "valtteri bottas": 0,
+                        "perez": 0, "sergio perez": 0,
+                        "alonso": 0, "fernando alonso": 0,
+                        "stroll": 0, "lance stroll": 0
+                    };
 
-                // Update existing drivers only
-                if ($scope.config.standings) {
-                    $scope.config.standings.forEach(d => {
-                        if (!d.name) return;
-                        const nameLower = d.name.toLowerCase();
+                    // Update existing drivers only
+                    if ($scope.config.standings) {
+                        $scope.config.standings.forEach(d => {
+                            if (!d.name) return;
+                            const nameLower = d.name.toLowerCase();
+                            
+                            // Try to find a match in the points map
+                            for (let key in pointsMap) {
+                                if (nameLower.includes(key) || key.includes(nameLower)) {
+                                    d.points = pointsMap[key];
+                                    break;
+                                }
+                            }
+                        });
                         
-                        // Try to find a match in the points map
-                        for (let key in pointsMap) {
-                            if (nameLower.includes(key) || key.includes(nameLower)) {
-                                d.points = pointsMap[key];
-                                break;
+                        // Sort by points immediately
+                        $scope.config.standings.sort((a, b) => (b.points || 0) - (a.points || 0));
+                    }
+
+                    // Update constructor points (Robust Matching)
+                    const constructorMap = {
+                        "mercedes": 143, "amg": 143,
+                        "ferrari": 98, "scuderia": 98,
+                        "mclaren": 61,
+                        "red bull": 20, "oracle": 20, "rbr": 20,
+                        "haas": 18,
+                        "alpine": 17,
+                        "racing bulls": 14, "rb": 14, "vcarb": 14,
+                        "audi": 2, "sauber": 2,
+                        "williams": 2,
+                        "cadillac": 0, "andretti": 0,
+                        "aston martin": 0, "aston": 0
+                    };
+
+                    if ($scope.config.constructors) {
+                        $scope.config.constructors.forEach(c => {
+                            if (!c.name) return;
+                            const nameLower = c.name.toLowerCase();
+                            for (let key in constructorMap) {
+                                if (nameLower.includes(key)) {
+                                    c.points = constructorMap[key];
+                                    break;
+                                }
                             }
-                        }
-                    });
-                    
-                    // Sort by points immediately
-                    $scope.config.standings.sort((a, b) => (b.points || 0) - (a.points || 0));
-                }
+                        });
+                        $scope.config.constructors.sort((a, b) => (b.points || 0) - (a.points || 0));
+                    }
 
-                // Update constructor points (Robust Matching)
-                const constructorMap = {
-                    "mercedes": 143, "amg": 143,
-                    "ferrari": 98, "scuderia": 98,
-                    "mclaren": 61,
-                    "red bull": 20, "oracle": 20, "rbr": 20,
-                    "haas": 18,
-                    "alpine": 17,
-                    "racing bulls": 14, "rb": 14, "vcarb": 14,
-                    "audi": 2, "sauber": 2,
-                    "williams": 2,
-                    "cadillac": 0, "andretti": 0,
-                    "aston martin": 0, "aston": 0
-                };
-
-                if ($scope.config.constructors) {
-                    $scope.config.constructors.forEach(c => {
-                        if (!c.name) return;
-                        const nameLower = c.name.toLowerCase();
-                        for (let key in constructorMap) {
-                            if (nameLower.includes(key)) {
-                                c.points = constructorMap[key];
-                                break;
-                            }
-                        }
-                    });
-                    $scope.config.constructors.sort((a, b) => (b.points || 0) - (a.points || 0));
-                }
-
-                $scope.saveLiveConfig();
-                $scope.showToast("Points Updated & Sorted! (Images & Names Kept)", "success");
+                    $scope.saveLiveConfig();
+                    $scope.showToast("Points Updated & Sorted! (Images & Names Kept)", "success");
+                }, "Apply Standings");
             };
 
 
@@ -1625,10 +1743,11 @@
 
             // --- HELPER FUNCTIONS ---
             $scope.removeItem = (arr, i, typeName) => { 
-                if(confirm("Delete this item?")) {
+                $scope.showConfirm("Delete this item?", function() {
                     arr.splice(i, 1); 
                     if(typeName) $scope.addLog(`Removed a ${typeName}`);
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Delete Item");
             };
             $scope.moveUp = (arr, i) => { if(i>0) [arr[i], arr[i-1]] = [arr[i-1], arr[i]]; };
             $scope.moveDown = (arr, i) => { if(i<arr.length-1) [arr[i], arr[i+1]] = [arr[i+1], arr[i]]; };
@@ -1638,10 +1757,11 @@
                 $scope.addLog("Added new Driver row");
             };
             $scope.sortDrivers = () => { 
-                if(confirm("Sort Drivers by points?")) {
+                $scope.showConfirm("Sort Drivers by points?", function() {
                     $scope.config.standings.sort((a,b) => b.points - a.points); 
                     $scope.addLog("Sorted Driver Standings");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Sort Drivers");
             };
             
             $scope.addConstructor = () => {
@@ -1649,10 +1769,11 @@
                 $scope.addLog("Added new Team row");
             };
             $scope.sortConstructors = () => { 
-                if(confirm("Sort Teams by points?")) {
+                $scope.showConfirm("Sort Teams by points?", function() {
                     $scope.config.constructors.sort((a,b) => b.points - a.points); 
                     $scope.addLog("Sorted Team Standings");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Sort Teams");
             };
             
             $scope.addSession = () => {
@@ -1660,10 +1781,11 @@
                 $scope.addLog("Added new Schedule Session");
             };
             $scope.removeSession = (i) => { 
-                if(confirm("Delete Session?")) {
+                $scope.showConfirm("Delete Session?", function() {
                     $scope.config.schedule.splice(i, 1); 
                     $scope.addLog("Deleted Schedule Session");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Delete Session");
             };
             $scope.moveSessionUp = (i) => $scope.moveUp($scope.config.schedule, i);
             $scope.moveSessionDown = (i) => $scope.moveDown($scope.config.schedule, i);
@@ -1673,10 +1795,11 @@
                 $scope.addLog("Added new Stream link row");
             };
             $scope.removeStream = (i) => { 
-                if(confirm("Delete Stream?")) {
+                $scope.showConfirm("Delete Stream?", function() {
                     $scope.config.streamLinks.splice(i, 1); 
                     $scope.addLog("Deleted Stream link");
-                }
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Delete Stream");
             };
 
             // --- STREAM AUTOFETCH LOGIC ---
@@ -1937,5 +2060,18 @@
             $interval(checkLiveStatus, 1000);
         });
     </script>
+
+    <!-- Custom Confirmation Modal -->
+    <div class="custom-confirm-overlay" ng-if="confirmDialog.show">
+        <div class="custom-confirm-box animate-in">
+            <div class="confirm-icon"><i class="fa-solid fa-circle-question"></i></div>
+            <h3>{{confirmDialog.title || 'Confirm Action'}}</h3>
+            <p>{{confirmDialog.message}}</p>
+            <div class="confirm-buttons">
+                <button class="cancel-btn" ng-click="confirmDialog.cancel()">Cancel</button>
+                <button class="confirm-btn" ng-click="confirmDialog.ok()">Confirm</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
