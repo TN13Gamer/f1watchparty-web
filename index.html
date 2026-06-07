@@ -1189,6 +1189,79 @@
             }
         }
 
+        /* Twitch Chat Sidebar Drawer */
+        .chat-sidebar {
+            position: fixed;
+            top: 0;
+            right: -340px;
+            width: 340px;
+            height: 100vh;
+            background: #0f0f12;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-sidebar.open {
+            right: 0;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #16161b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--f1-red);
+            text-transform: uppercase;
+        }
+
+        .chat-close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-close-btn:hover {
+            color: #fff;
+        }
+
+        .chat-iframe-container {
+            flex: 1;
+            width: 100%;
+            background: #09090b;
+        }
+
+        .chat-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        body.chat-open {
+            transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 1200px) {
+            body.chat-open {
+                padding-right: 340px;
+            }
+        }
+
         @media (max-width: 768px) {
             header {
                 padding: 10px 15px;
@@ -1353,11 +1426,19 @@
                 padding: 4px 12px;
                 flex-shrink: 0;
             }
+
+            .chat-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+            .chat-sidebar.open {
+                right: 0;
+            }
         }
     </style>
 </head>
 
-<body ng-controller="MainController" ng-class="{'theater-active': isTheater}" oncontextmenu="return false;">
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}" oncontextmenu="return false;">
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
 
@@ -1427,6 +1508,10 @@
                     <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
                         style="margin-right: 5px;"></i>
                     {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                </button>
+                <button class="stream-btn" ng-click="toggleChat()">
+                    <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
+                    {{ isChatOpen ? 'Hide Chat' : 'Twitch Chat' }}
                 </button>
             </div>
             <div class="glass-card stream-controls" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-glare
@@ -1536,6 +1621,17 @@
 
 
 
+    <!-- Collapsible Twitch Chat Sidebar Drawer -->
+    <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
+        <div class="chat-header">
+            <span>Twitch Chat</span>
+            <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="chat-iframe-container">
+            <iframe ng-if="isChatOpen" ng-src="{{trustSrc(twitchChatUrl)}}" frameborder="0" scrolling="no"></iframe>
+        </div>
+    </div>
+
     <footer>
         <p>This website does not create, host, or share any video content. All video streams are from external websites
             that are freely available online.</p>
@@ -1582,6 +1678,15 @@
         app.controller('MainController', function ($scope, $sce, $interval, $window) {
             $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
+            $scope.isChatOpen = false;
+            $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
+            $scope.twitchChannel = 'formula1';
+            $scope.twitchChatUrl = '';
+            
+            $scope.$watch('twitchChannel', function (newVal) {
+                const domain = $window.location.hostname;
+                $scope.twitchChatUrl = 'https://www.twitch.tv/embed/' + (newVal || 'formula1') + '/chat?parent=' + domain + '&darkpopout';
+            });
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
 
@@ -1806,6 +1911,7 @@
 
             function processData(data) {
                 $scope.raceData = data.raceData || {};
+                $scope.twitchChannel = data.twitchChannel || 'formula1';
                 
                 // Trigger dynamic theming based on race location or theme override
                 if (!$scope.themeOverrideActive) {
