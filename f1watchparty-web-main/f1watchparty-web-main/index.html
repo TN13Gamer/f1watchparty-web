@@ -1688,11 +1688,14 @@
                     <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                     </div>
                 </div>
-                <div class="status-pill live" ng-if="activeSession">LIVE: {{activeSession.name}}</div>
-                <div class="status-pill countdown" ng-if="!activeSession && nextUp">
+                <div class="status-pill countdown" ng-if="customTimerActive">
+                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
+                </div>
+                <div class="status-pill live" ng-if="!customTimerActive && activeSession">LIVE: {{activeSession.name}}</div>
+                <div class="status-pill countdown" ng-if="!customTimerActive && !activeSession && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!activeSession && !nextUp">
+                <div class="status-pill offline" ng-if="!customTimerActive && !activeSession && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1879,10 +1882,28 @@
             Round {{raceData.round || 'N/A'}} <span>• {{raceData.name}}</span>
         </div>
 
+        <!-- Up Next Marquee in Countdown Mode -->
+        <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible" style="max-width: 600px; width: 100%; margin: 0 auto 30px auto; flex: none;">
+            <div class="header-marquee-text">
+                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+            </div>
+        </div>
+
         <!-- Timer Card -->
         <div class="countdown-timer-box">
+            <!-- 0. Custom Countdown Timer (if enabled & active) -->
+            <div ng-if="customTimerActive">
+                <div class="countdown-session-title">
+                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM STARTS'}}
+                </div>
+                <div class="countdown-digits">
+                    {{customTimerCountdown || '00:00:00'}}
+                </div>
+            </div>
+
             <!-- 1. Live Session -->
-            <div ng-if="activeSession">
+            <div ng-if="!customTimerActive && activeSession">
                 <div class="countdown-session-title" style="color: var(--f1-green);">
                     <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
                 </div>
@@ -1892,7 +1913,7 @@
             </div>
 
             <!-- 2. Upcoming Session Countdown -->
-            <div ng-if="!activeSession && nextUp">
+            <div ng-if="!customTimerActive && !activeSession && nextUp">
                 <div class="countdown-session-title">
                     <i class="fa-regular fa-clock"></i> Up Next: {{nextUp.name}}
                 </div>
@@ -1902,7 +1923,7 @@
             </div>
 
             <!-- 3. Offline State -->
-            <div class="countdown-offline" ng-if="!activeSession && !nextUp">
+            <div class="countdown-offline" ng-if="!customTimerActive && !activeSession && !nextUp">
                 <div class="countdown-offline-badge">
                     <i class="fa-solid fa-circle" style="color: #444; font-size: 10px;"></i> Offline
                 </div>
@@ -2242,6 +2263,9 @@
                 // Handle siteMode View Mode
                 $scope.siteMode = data.siteMode || 'main';
 
+                // Handle customTimer Countdown config
+                $scope.customTimer = data.customTimer || { enabled: false, label: '', target: '' };
+
                 // Handle new widgets visibility config
                 $scope.widgets = data.widgets || {
                     videoPlayer: true,
@@ -2297,6 +2321,32 @@
 
             function updateTimers() {
                 var now = new Date().getTime();
+
+                // Compute custom timer countdown
+                if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
+                    var targetTime = safeDate($scope.customTimer.target);
+                    if (targetTime && !isNaN(targetTime.getTime())) {
+                        var dist = targetTime.getTime() - now;
+                        if (dist > 0) {
+                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((dist % (1000 * 60)) / 1000);
+                            $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                            $scope.customTimerActive = true;
+                        } else {
+                            $scope.customTimerCountdown = "LIVE NOW";
+                            $scope.customTimerActive = false;
+                        }
+                    } else {
+                        $scope.customTimerCountdown = "";
+                        $scope.customTimerActive = false;
+                    }
+                } else {
+                    $scope.customTimerCountdown = "";
+                    $scope.customTimerActive = false;
+                }
+
                 if (!$scope.schedule) return;
                 $scope.nextUp = null; $scope.activeSession = null;
                 $scope.schedule.forEach(function (session) {

@@ -746,6 +746,28 @@
                 </div>
             </div>
 
+            <!-- Custom Countdown Timer Panel -->
+            <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                <h3><span><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Custom Countdown Timer</span></h3>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the automatic weekend schedule countdown with a custom target time.</p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;">
+                        <input type="checkbox" ng-model="config.customTimer.enabled" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: var(--primary);">
+                        <span>Enable Custom Timer (Overrides schedule timers)</span>
+                    </label>
+                </div>
+                <div class="grid-row" ng-if="config.customTimer.enabled">
+                    <div class="input-group">
+                        <label>Timer Label / Title</label>
+                        <input type="text" ng-model="config.customTimer.label" placeholder="e.g. STREAM STARTS" ng-change="saveLiveConfig(true)">
+                    </div>
+                    <div class="input-group">
+                        <label>Target Date-Time (Format: YYYY-MM-DDTHH:MM:00)</label>
+                        <input type="text" ng-model="config.customTimer.target" placeholder="e.g. 2026-06-07T22:30:00" ng-change="saveLiveConfig(true)">
+                    </div>
+                </div>
+            </div>
+
             <!-- Widget Visibility Panel -->
             <div class="admin-section animate-in" style="margin-bottom: 25px;">
                 <h3><span><i class="fa-solid fa-toggle-on" style="color: var(--primary); margin-right: 10px;"></i> Widget Visibility Controls</span></h3>
@@ -1229,6 +1251,11 @@
                         // Initialize siteMode default to 'main'
                         if (!$scope.config.siteMode) {
                             $scope.config.siteMode = 'main';
+                        }
+
+                        // Initialize customTimer default to disabled
+                        if (!$scope.config.customTimer) {
+                            $scope.config.customTimer = { enabled: false, label: '', target: '' };
                         }
                     });
                 });
