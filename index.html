@@ -1550,6 +1550,9 @@
             <div class="status-pill countdown" ng-if="!activeSession && nextUp">
                 <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
             </div>
+            <div class="status-pill countdown" ng-if="!activeSession && !nextUp && (raceData.name || nextRace.name)">
+                <i class="fa-regular fa-clock"></i> NEXT: {{raceData.name || nextRace.name}}
+            </div>
         </div>
     </header>
 
@@ -2029,7 +2032,16 @@
                 }
             }
 
-            function safeDate(val) { if (!val) return null; if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate(); return new Date(val); }
+            function safeDate(val) {
+                if (!val) return null;
+                if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
+                // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
+                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
+                    var parts = val.trim().split(/[\s\-:]/);
+                    return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
+                }
+                return new Date(val);
+            }
 
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
