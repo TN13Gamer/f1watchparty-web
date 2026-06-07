@@ -549,10 +549,50 @@
             align-items: center;
             text-align: center;
             min-height: calc(100vh - 120px);
-            padding: 40px 20px;
+            padding: 80px 20px 40px 20px; /* adjusted top padding to accommodate marquee */
             box-sizing: border-box;
             z-index: 10;
             position: relative;
+        }
+
+        .landing-marquee {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.65);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-bottom: 2px solid var(--f1-red);
+            box-shadow: 0 4px 20px var(--glow-color);
+            padding: 10px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        .landing-marquee-text {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ddd;
+            animation: scroll-left-landing 22s linear infinite;
+            padding-left: 100%;
+        }
+
+        .landing-marquee-text span {
+            color: #fff;
+        }
+
+        @keyframes scroll-left-landing {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
 
         .countdown-brand {
@@ -1874,20 +1914,20 @@
 
     <!-- Countdown Landing Page Mode -->
     <div class="countdown-page-container ng-cloak animate-in" ng-if="dataLoaded && siteMode === 'countdown'">
+        <!-- Up Next Marquee Banner at the very top -->
+        <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
+            <div class="landing-marquee-text">
+                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+            </div>
+        </div>
+
         <div class="countdown-brand">
             WatchF1<span>.Live</span>
         </div>
 
         <div class="countdown-gp-info" ng-if="raceData.name">
             Round {{raceData.round || 'N/A'}} <span>• {{raceData.name}}</span>
-        </div>
-
-        <!-- Up Next Marquee in Countdown Mode -->
-        <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible" style="max-width: 600px; width: 100%; margin: 0 auto 30px auto; flex: none;">
-            <div class="header-marquee-text">
-                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
-                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
-            </div>
         </div>
 
         <!-- Timer Card -->
