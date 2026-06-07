@@ -6,6 +6,7 @@
 
 const axios = require('axios');
 const admin = require('firebase-admin');
+const cheerio = require('cheerio');
 
 if (!admin.apps.length) {
   try {
@@ -55,34 +56,99 @@ const TEAM_ALIASES = {
   'Cadillac':         ['cadillac', 'andretti']
 };
 
+function formatDriverNameFromHref(href) {
+  if (!href) return '';
+  const parts = href.split('/');
+  const lastPart = parts[parts.length - 1];
+  if (!lastPart) return '';
+  return lastPart
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 async function fetchStandings() {
-  // Try f1.com official API first
+  const year = new Date().getFullYear();
+  
+  // Try scraping formula1.com results pages directly (highly reliable server-rendered HTML)
   try {
-    const headers = { 'apikey': 'qPgPPRJyGCIPxFT3el4MF7thXHyJCzAP', 'locale': 'en' };
-    const [d, c] = await Promise.all([
-      axios.get('https://api.formula1.com/v1/editorial-driverstandings/standings', { headers, timeout: 6000 }),
-      axios.get('https://api.formula1.com/v1/editorial-constructorstandings/standings', { headers, timeout: 6000 })
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    };
+    const [driverRes, teamRes] = await Promise.all([
+      axios.get(`https://www.formula1.com/en/results.html/${year}/drivers.html`, { headers, timeout: 10000 }),
+      axios.get(`https://www.formula1.com/en/results.html/${year}/team.html`, { headers, timeout: 10000 })
     ]);
-    const dl = d.data?.standings?.DriverStandings || d.data?.DriverStandings;
-    const cl = c.data?.standings?.ConstructorStandings || c.data?.ConstructorStandings;
-    if (dl?.length > 0) {
-      console.log('[sync] Using f1.com API');
-      return { dl, cl, source: 'f1.com' };
+
+    const $d = cheerio.load(driverRes.data);
+    const dl = [];
+    $d('table tbody tr').each((i, row) => {
+      const cells = $d(row).find('td');
+      if (cells.length >= 5) {
+        const driverLinkEl = $d(cells[1]).find('a');
+        const href = driverLinkEl.attr('href') || '';
+        const name = formatDriverNameFromHref(href);
+        const image = driverLinkEl.find('img').attr('src') || '';
+        // Convert thumbnail to higher resolution square format
+        const highResImage = image.replace('/c_lfill,w_64/', '/c_fill,w_80,h_80,g_north/');
+        const team = $d(cells[3]).text().trim();
+        const points = parseInt($d(cells[4]).text().trim() || 0);
+        
+        dl.push({
+          Driver: {
+            familyName: name.split(' ').pop() || '',
+            givenName: name.split(' ')[0] || '',
+            fullName: name
+          },
+          Constructor: {
+            name: team
+          },
+          points: points,
+          image: highResImage || image
+        });
+      }
+    });
+
+    const $t = cheerio.load(teamRes.data);
+    const cl = [];
+    $t('table tbody tr').each((i, row) => {
+      const cells = $t(row).find('td');
+      if (cells.length >= 3) {
+        const teamName = $t(cells[1]).text().trim();
+        const points = parseInt($t(cells[2]).text().trim() || 0);
+        cl.push({
+          Constructor: {
+            name: teamName
+          },
+          points: points
+        });
+      }
+    });
+
+    if (dl.length > 0) {
+      console.log('[sync] Using formula1.com HTML parsing');
+      return { dl, cl, source: 'formula1.com' };
     }
-  } catch(e) {
-    console.warn('[sync] f1.com failed:', e.message, '— falling back to Jolpica');
+  } catch (err) {
+    console.warn('[sync] formula1.com scrape failed:', err.message, '— falling back to Jolpica JSON');
   }
 
   // Fallback: Jolpica (official FIA data mirror)
-  const [d, c] = await Promise.all([
-    axios.get('https://api.jolpi.ca/ergast/f1/current/driverstandings/', { timeout: 8000 }),
-    axios.get('https://api.jolpi.ca/ergast/f1/current/constructorstandings/', { timeout: 8000 })
-  ]);
-  return {
-    dl: d.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings,
-    cl: c.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings,
-    source: 'jolpica'
-  };
+  try {
+    const [d, c] = await Promise.all([
+      axios.get(`https://api.jolpi.ca/ergast/f1/${year}/driverStandings.json`, { timeout: 10000 }),
+      axios.get(`https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`, { timeout: 10000 })
+    ]);
+    return {
+      dl: d.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [],
+      cl: c.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [],
+      source: 'jolpica'
+    };
+  } catch(e) {
+    console.error('[sync] Jolpica fallback failed:', e.message);
+  }
+
+  return { dl: [], cl: [], source: 'none' };
 }
 
 async function syncStreamsAutomatically(config, ref) {
@@ -237,12 +303,37 @@ module.exports = async (req, res) => {
     const standings = config.standings || [];
     const constructors = config.constructors || [];
     let changed = false;
+    // Filter out dummy/placeholder driver entries if any
+    for (let i = standings.length - 1; i >= 0; i--) {
+      if (standings[i].name === 'Driver' && standings[i].team === 'Team') {
+        standings.splice(i, 1);
+        changed = true;
+      }
+    }
 
     dl.forEach(entry => {
+      const fullName = entry.Driver?.fullName || (entry.Driver?.givenName + ' ' + entry.Driver?.familyName);
       const lastName = (entry.Driver?.familyName || '').toLowerCase();
       const pts = parseInt(entry.points || 0);
       const match = standings.find(d => d.name && d.name.toLowerCase().includes(lastName));
-      if (match && match.points !== pts) { match.points = pts; changed = true; }
+      if (match) {
+        if (match.points !== pts) {
+          match.points = pts;
+          changed = true;
+        }
+        if (entry.image && match.image !== entry.image) {
+          match.image = entry.image;
+          changed = true;
+        }
+      } else {
+        standings.push({
+          name: fullName,
+          team: entry.Constructor?.name || '',
+          points: pts,
+          image: entry.image || ''
+        });
+        changed = true;
+      }
     });
     if (changed) standings.sort((a, b) => (b.points||0) - (a.points||0));
 
@@ -256,7 +347,18 @@ module.exports = async (req, res) => {
           const n = c.name.toLowerCase();
           return aliases.some(a => n.includes(a));
         });
-        if (match && match.points !== pts) { match.points = pts; changed = true; }
+        if (match) {
+          if (match.points !== pts) {
+            match.points = pts;
+            changed = true;
+          }
+        } else {
+          constructors.push({
+            name: name,
+            points: pts
+          });
+          changed = true;
+        }
       });
       if (changed) constructors.sort((a, b) => (b.points||0) - (a.points||0));
     }
