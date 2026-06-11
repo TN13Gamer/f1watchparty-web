@@ -183,6 +183,46 @@
             transition: all 0.3s ease;
         }
 
+        /* Sport Toggle styling */
+        .sport-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2px;
+            gap: 2px;
+            backdrop-filter: blur(5px);
+        }
+        .sport-toggle-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 5px 12px;
+            border-radius: 18px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sport-toggle-btn:hover {
+            color: #fff;
+        }
+        .sport-toggle-btn.active.f1 {
+            background: var(--f1-red);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(230, 0, 0, 0.4);
+        }
+        .sport-toggle-btn.active.fifa {
+            background: #00ff55;
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 255, 85, 0.4);
+        }
+
         .header-marquee-container {
             flex: 1;
             overflow: hidden;
@@ -1710,7 +1750,17 @@
     <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
         <header>
             <div class="header-left">
-                <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
+                <span class="logo-text" ng-if="activeSport !== 'fifa'">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
+                <span class="logo-text" ng-if="activeSport === 'fifa'">WatchFIFA<span style="color: var(--f1-red);">.Live</span></span>
+                
+                <div class="sport-toggle">
+                    <button class="sport-toggle-btn f1" ng-class="{'active': activeSport === 'f1'}" ng-click="setSport('f1')">
+                        <i class="fa-solid fa-car-side"></i> <span>F1</span>
+                    </button>
+                    <button class="sport-toggle-btn fifa" ng-class="{'active': activeSport === 'fifa'}" ng-click="setSport('fifa')">
+                        <i class="fa-solid fa-futbol"></i> <span>FIFA</span>
+                    </button>
+                </div>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -1721,7 +1771,7 @@
             </div>
 
             <div class="status-area">
-                <div class="weather-pill" ng-if="widgets.weather && weather && weather.air">
+                <div class="weather-pill" ng-if="widgets.weather && weather && weather.air && activeSport !== 'fifa'">
                     <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
                     <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
                     <div class="w-divider"></div>
@@ -1752,7 +1802,7 @@
             </div>
         </div>
 
-        <div class="container">
+        <div class="container" ng-style="{'grid-template-columns': (activeSport === 'fifa' || (!widgets.schedule && !widgets.standings)) ? '1fr' : ''}">
             <div class="main-column">
                 <div class="video-wrapper" ng-if="widgets.videoPlayer">
                     <div class="video-responsive">
@@ -1799,7 +1849,7 @@
                 </div>
             </div>
 
-            <div class="sidebar">
+            <div class="sidebar" ng-if="activeSport !== 'fifa' && (widgets.schedule || widgets.standings)">
                 <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
                     <video autoplay loop muted playsinline class="card-video-bg">
@@ -1920,13 +1970,18 @@
                 UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
             </div>
         </div>
-
-        <div class="countdown-brand">
+        <div class="countdown-brand" ng-if="activeSport !== 'fifa'">
             WatchF1<span>.Live</span>
         </div>
-
-        <div class="countdown-gp-info" ng-if="raceData.name">
+        <div class="countdown-brand" ng-if="activeSport === 'fifa'">
+            WatchFIFA<span>.Live</span>
+        </div>
+        
+        <div class="countdown-gp-info" ng-if="raceData.name && activeSport !== 'fifa'">
             Round {{raceData.round || 'N/A'}} <span>• {{raceData.name}}</span>
+        </div>
+        <div class="countdown-gp-info" ng-if="raceData.name && activeSport === 'fifa'">
+            EVENT <span>• {{raceData.name}}</span>
         </div>
 
         <!-- Timer Card -->
@@ -2188,6 +2243,35 @@
 
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
+            
+            $scope.activeSport = 'f1';
+            $scope.setSport = function (sport) {
+                $scope.activeSport = sport;
+                sessionStorage.setItem('f1_selected_sport', sport);
+                applySportTheme();
+            };
+
+            function applySportTheme() {
+                if ($scope.activeSport === 'fifa') {
+                    const theme = {
+                        primary: '#00ff55', // FIFA Pitch Green
+                        glow: 'rgba(0, 255, 85, 0.15)',
+                        name: 'FIFA Pitch Green Theme'
+                    };
+                    const root = document.documentElement;
+                    root.style.setProperty('--f1-red', theme.primary);
+                    root.style.setProperty('--glow-color', theme.glow);
+                    $scope.activeThemeName = theme.name;
+                    if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                        const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                        window.vantaInstance.setOptions({ color: vantaColor });
+                    }
+                } else {
+                    if (!$scope.themeOverrideActive) {
+                        applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                    }
+                }
+            }
 
             $scope.activeThemeName = '';
 
@@ -2343,10 +2427,15 @@
                 var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
                 $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
 
-                // Trigger dynamic theming based on race location or theme override
-                if (!$scope.themeOverrideActive) {
-                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                // Handle activeSport mode
+                if (!sessionStorage.getItem('f1_selected_sport')) {
+                    $scope.activeSport = data.activeSport || 'f1';
+                } else {
+                    $scope.activeSport = sessionStorage.getItem('f1_selected_sport');
                 }
+
+                // Trigger dynamic theming based on active sport
+                applySportTheme();
 
                 $scope.nextRace = data.nextRace || {};
                 $scope.streamLinks = data.streamLinks || [];
