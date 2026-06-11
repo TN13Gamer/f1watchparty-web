@@ -10,9 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 
     <!-- 3D Library for Premium Visualizer Background -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
@@ -424,10 +422,6 @@
                 </div>
                 <h2 class="sport-title">Formula 1</h2>
                 <p class="sport-desc">Live timing, Grand Prix race streams, schedule countdowns, and championship standings.</p>
-                <div class="status-badge" id="status-f1">
-                    <span class="status-pulse"></span>
-                    <span class="status-text">Connecting...</span>
-                </div>
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -440,10 +434,6 @@
                 </div>
                 <h2 class="sport-title">FIFA Football</h2>
                 <p class="sport-desc">Live soccer streams, match details, match schedules, and real-time custom fan chat.</p>
-                <div class="status-badge" id="status-fifa">
-                    <span class="status-pulse"></span>
-                    <span class="status-text">Connecting...</span>
-                </div>
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -484,150 +474,6 @@
             });
         } catch (e) {
             console.error("Vanta initialization failed: ", e);
-        }
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
-            authDomain: "f1-stream-live.firebaseapp.com",
-            projectId: "f1-stream-live",
-            storageBucket: "f1-stream-live.firebasestorage.app",
-            messagingSenderId: "426806288804",
-            appId: "1:426806288804:web:f8ee225776596ebc39e131",
-            measurementId: "G-50FMFWY32X"
-        };
-
-        // Initialize Firebase
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Listen for Real-Time configurations
-        const statusF1El = document.getElementById('status-f1');
-        const statusFifaEl = document.getElementById('status-fifa');
-        
-        let f1TimerInterval = null;
-        let fifaTimerInterval = null;
-
-        db.collection("app_data").doc("live_config").onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                
-                // --- Update F1 Status ---
-                updateF1Status(data);
-                
-                // --- Update FIFA Status ---
-                updateFifaStatus(data);
-            } else {
-                updateF1Status(null);
-                updateFifaStatus(null);
-            }
-        }, (error) => {
-            console.error("Firestore listener error:", error);
-            updateF1Status(null);
-            updateFifaStatus(null);
-        });
-
-        function updateF1Status(data) {
-            // Clear any active timer intervals
-            if (f1TimerInterval) clearInterval(f1TimerInterval);
-            
-            const badge = statusF1El;
-            const textEl = badge.querySelector('.status-text');
-
-            if (!data) {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-                return;
-            }
-
-            const isLive = data.widgets && data.widgets.videoPlayer;
-            const customTimer = data.customTimer || { enabled: false };
-            const raceData = data.raceData || {};
-
-            if (isLive) {
-                badge.className = 'status-badge live';
-                textEl.innerText = raceData.name ? `LIVE NOW: ${raceData.name}` : 'Live Stream Active';
-            } else if (customTimer.enabled && customTimer.target) {
-                badge.className = 'status-badge';
-                startCountdown(customTimer.target, customTimer.label || 'Starts In', textEl, (intervalId) => {
-                    f1TimerInterval = intervalId;
-                });
-            } else {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-            }
-        }
-
-        function updateFifaStatus(data) {
-            // Clear any active timer intervals
-            if (fifaTimerInterval) clearInterval(fifaTimerInterval);
-            
-            const badge = statusFifaEl;
-            const textEl = badge.querySelector('.status-text');
-
-            if (!data || !data.fifa) {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-                return;
-            }
-
-            const fifa = data.fifa;
-            const isLive = fifa.widgets && fifa.widgets.videoPlayer;
-            const customTimer = fifa.customTimer || { enabled: false };
-            const raceData = fifa.raceData || {};
-
-            if (isLive) {
-                badge.className = 'status-badge live';
-                textEl.innerText = raceData.name ? `LIVE NOW: ${raceData.name}` : 'Live Stream Active';
-            } else if (customTimer.enabled && customTimer.target) {
-                badge.className = 'status-badge';
-                startCountdown(customTimer.target, customTimer.label || 'Starts In', textEl, (intervalId) => {
-                    fifaTimerInterval = intervalId;
-                });
-            } else {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-            }
-        }
-
-        // Countdown Timer helper
-        function startCountdown(targetStr, label, element, registerInterval) {
-            // Parse target time format "YYYY-MM-DDTHH:MM:SS" as local time (same as admin)
-            function parseLocalDate(str) {
-                if (!str) return null;
-                var parts = str.trim().split(/[\s\-:T]/);
-                if (parts.length >= 5) {
-                    return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4], +parts[5] || 0);
-                }
-                return new Date(str);
-            }
-
-            const targetTime = parseLocalDate(targetStr).getTime();
-            
-            function tick() {
-                const now = Date.now();
-                const diff = targetTime - now;
-
-                if (diff <= 0) {
-                    element.innerText = 'Live Soon';
-                    return;
-                }
-
-                const days = Math.floor(diff / 86400000);
-                const hours = Math.floor((diff % 86400000) / 3600000);
-                const minutes = Math.floor((diff % 3600000) / 60000);
-                const seconds = Math.floor((diff % 60000) / 1000);
-
-                let timeStr = '';
-                if (days > 0) timeStr += `${days}d `;
-                timeStr += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                element.innerText = `${label}: ${timeStr}`;
-            }
-
-            tick();
-            const interval = setInterval(tick, 1000);
-            registerInterval(interval);
         }
     </script>
 </body>
