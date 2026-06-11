@@ -1711,10 +1711,25 @@
         <header>
             <div class="header-left">
                 <span class="logo-text">WatchFIFA<span style="color: var(--f1-red);">.Live</span></span>
-                
-                <a href="/" class="sport-toggle-btn active" style="margin-left: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: rgba(230, 0, 0, 0.1); border: 1px solid rgba(230, 0, 0, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #ff1e15; transition: all 0.35s;" onmouseover="this.style.background='rgba(230, 0, 0, 0.2)'" onmouseout="this.style.background='rgba(230, 0, 0, 0.1)'">
-                    <i class="fa-solid fa-car-side"></i> <span>F1 PARTY</span>
-                </a>
+                <button class="sport-switch-btn" ng-click="goToF1()" style="
+                    margin-left: 15px;
+                    background: rgba(230, 0, 0, 0.1);
+                    border: 1px solid rgba(230, 0, 0, 0.3);
+                    color: #e60000;
+                    padding: 5px 12px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(230, 0, 0, 0.2)'; this.style.boxShadow='0 0 10px rgba(230, 0, 0, 0.3)'" onmouseout="this.style.background='rgba(230, 0, 0, 0.1)'; this.style.boxShadow='none'">
+                    <i class="fa-solid fa-car-side"></i> F1 PARTY
+                </button>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -2003,6 +2018,12 @@
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
 
+            $scope.goToF1 = function () {
+                sessionStorage.setItem('f1_manual_override', 'true');
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                window.location.href = isLocal ? 'index.html' : '/';
+            };
+
             $scope.dataLoaded = false;
             $scope.streamLinks = [];
             $scope.currentStream = {};
@@ -2248,7 +2269,8 @@
             });
 
             function processData(data) {
-                $scope.raceData = data.raceData || {};
+                // Map FIFA specific settings
+                $scope.raceData = (data.fifa && data.fifa.raceData) ? data.fifa.raceData : {};
                 $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = data.pinnedMessage || null;
 
@@ -2277,9 +2299,16 @@
                 var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
                 $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
 
-                // Redirect to F1 if active sport is F1
+                // Check if activeSport has changed to handle override reset
                 $scope.activeSport = data.activeSport || 'f1';
-                if ($scope.activeSport !== 'fifa') {
+                var lastSport = sessionStorage.getItem('f1_last_active_sport');
+                if (lastSport && lastSport !== $scope.activeSport) {
+                    sessionStorage.removeItem('f1_manual_override');
+                }
+                sessionStorage.setItem('f1_last_active_sport', $scope.activeSport);
+
+                // Redirect to F1 if active sport is F1 and no manual override is active
+                if ($scope.activeSport !== 'fifa' && !sessionStorage.getItem('f1_manual_override')) {
                     var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     window.location.href = isLocal ? 'index.html' : '/';
                     return;
@@ -2289,7 +2318,7 @@
                 applyFifaTheme();
 
                 $scope.nextRace = data.nextRace || {};
-                $scope.streamLinks = data.streamLinks || [];
+                $scope.streamLinks = (data.fifa && data.fifa.streamLinks) ? data.fifa.streamLinks : [];
                 $scope.standings = data.standings || [];
                 $scope.constructors = data.constructors || [];
                 $scope.weather = data.weather || null;

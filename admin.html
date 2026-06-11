@@ -826,6 +826,16 @@
                 </div>
             </div>
 
+            <!-- Sport Event Sub-Tabs -->
+            <div class="tab-container" style="margin-bottom: 20px; background: rgba(255, 255, 255, 0.02); border-color: rgba(255, 255, 255, 0.05);">
+                <button class="tab-btn" ng-class="{'active': adminSportView === 'f1'}" ng-click="setAdminSportView('f1')" style="font-size: 11px;">
+                    <i class="fa-solid fa-car-side" style="margin-right: 5px;"></i> F1 Event Settings
+                </button>
+                <button class="tab-btn" ng-class="{'active': adminSportView === 'fifa'}" ng-click="setAdminSportView('fifa')" style="font-size: 11px;">
+                    <i class="fa-solid fa-futbol" style="margin-right: 5px;"></i> FIFA Event Settings
+                </button>
+            </div>
+
             <!-- Active Site View Mode Panel -->
             <div class="admin-section animate-in" style="margin-bottom: 25px;">
                 <h3><span><i class="fa-solid fa-sliders" style="color: var(--primary); margin-right: 10px;"></i> Active Site View Mode</span></h3>
@@ -926,7 +936,7 @@
                 </div>
             </div>
 
-            <div class="grid-row">
+            <div class="grid-row" ng-show="adminSportView === 'f1'">
                 <div class="admin-section">
                     <h3><span><i class="fa-solid fa-calendar-day" style="color: var(--primary); margin-right: 10px;"></i> Event Details</span></h3>
                     <div class="grid-row">
@@ -1001,7 +1011,7 @@
                 </div>
             </div>
 
-            <div class="admin-section">
+            <div class="admin-section" ng-show="adminSportView === 'f1'">
                 <h3><i class="fa-solid fa-video" style="color: var(--primary); margin-right: 10px;"></i> Stream Sources</h3>
 
                 <!-- Auto-Fetch Stream Widget -->
@@ -1043,7 +1053,7 @@
                 <button class="dashed-btn" ng-click="addStream()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;"><i class="fa-solid fa-plus"></i> Add New Source</button>
             </div>
 
-            <div class="admin-section">
+            <div class="admin-section" ng-show="adminSportView === 'f1'">
                 <h3><i class="fa-solid fa-forward-step" style="color: var(--primary); margin-right: 10px;"></i> Up Next Widget</h3>
                 <div style="margin-bottom: 20px;"><label><input type="checkbox" ng-model="config.nextRace.isVisible" style="width:auto; accent-color: var(--primary);"> Show Widget</label></div>
                 <div class="input-group"><label>Event Name</label><input type="text" ng-model="config.nextRace.name"></div>
@@ -1053,7 +1063,7 @@
                 </div>
             </div>
 
-            <div class="admin-section">
+            <div class="admin-section" ng-show="adminSportView === 'f1'">
                 <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
                 
@@ -1104,6 +1114,40 @@
                 <button class="dashed-btn" ng-click="addSession()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">
                     <i class="fa-solid fa-plus"></i> Add Session
                 </button>
+            </div>
+
+            <!-- FIFA Settings View -->
+            <div ng-show="adminSportView === 'fifa'">
+                <div class="admin-section">
+                    <h3><span><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match Details</span></h3>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Match / Tournament Round</label><input type="text" ng-model="config.fifa.raceData.round" placeholder="e.g. Group A / Final"></div>
+                        <div class="input-group"><label>Match Title (Teams)</label><input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Argentina vs France"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Stadium / Venue</label><input type="text" ng-model="config.fifa.raceData.circuit" placeholder="e.g. Lusail Stadium"></div>
+                        <div class="input-group"><label>Location / Country</label><input type="text" ng-model="config.fifa.raceData.location" placeholder="e.g. Qatar"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Date & Time String</label><input type="text" ng-model="config.fifa.raceData.date" placeholder="e.g. 18 Dec 2022, 18:00 UTC"></div>
+                        <div class="input-group"><label>Match Info / Duration</label><input type="text" ng-model="config.fifa.raceData.laps" placeholder="e.g. 90 Mins + ET"></div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3><i class="fa-solid fa-video" style="color: #00ff55; margin-right: 10px;"></i> FIFA Stream Sources</h3>
+                    <div ng-repeat="link in config.fifa.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div class="grid-row" style="margin-bottom: 10px;">
+                            <input type="text" ng-model="link.name" placeholder="Name (e.g. English Stream)">
+                            <input type="text" ng-model="link.id" readonly style="color: #666; font-family: monospace;">
+                        </div>
+                        <input type="text" ng-model="link.url" placeholder="Embed URL">
+                        <button ng-click="removeFifaStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 8px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
+                            <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove FIFA Stream
+                        </button>
+                    </div>
+                    <button class="dashed-btn" ng-click="addFifaStream()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;"><i class="fa-solid fa-plus"></i> Add New FIFA Source</button>
+                </div>
             </div>
         </div>
 
@@ -1286,6 +1330,10 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             $scope.currentView = 'live'; 
+            $scope.adminSportView = 'f1';
+            $scope.setAdminSportView = function(view) {
+                $scope.adminSportView = view;
+            };
             $scope.isLoggedIn = false;
             $scope.creds = { email: "", pass: "" };
             $scope.config = {}; 
@@ -1382,6 +1430,17 @@
                         // Initialize customTimer default to disabled
                         if (!$scope.config.customTimer) {
                             $scope.config.customTimer = { enabled: false, label: '', target: '' };
+                        }
+
+                        // Initialize FIFA settings if undefined
+                        if (!$scope.config.fifa) {
+                            $scope.config.fifa = {
+                                raceData: { round: '', name: '', location: '', circuit: '', date: '', laps: '' },
+                                streamLinks: []
+                            };
+                        } else {
+                            if (!$scope.config.fifa.raceData) $scope.config.fifa.raceData = { round: '', name: '', location: '', circuit: '', date: '', laps: '' };
+                            if (!$scope.config.fifa.streamLinks) $scope.config.fifa.streamLinks = [];
                         }
                     });
                 });
@@ -1632,10 +1691,15 @@
 
             // --- QUICK ACTIONS ---
             $scope.quickClearStreams = function() {
-                $scope.showConfirm("Are you sure you want to delete ALL stream sources?", function() {
-                    $scope.config.streamLinks = [];
-                    $scope.showToast("Stream list cleared. Don't forget to Save.", "success");
-                    $scope.addLog("Cleared all Stream Sources");
+                const sportText = $scope.adminSportView === 'fifa' ? "FIFA " : "";
+                $scope.showConfirm("Are you sure you want to delete ALL " + sportText + "stream sources?", function() {
+                    if ($scope.adminSportView === 'fifa') {
+                        $scope.config.fifa.streamLinks = [];
+                    } else {
+                        $scope.config.streamLinks = [];
+                    }
+                    $scope.showToast(sportText + "Stream list cleared. Don't forget to Save.", "success");
+                    $scope.addLog("Cleared all " + sportText + "Stream Sources");
                     if (!$scope.$$phase) $scope.$apply();
                 }, "Clear Streams");
             };
@@ -1841,6 +1905,18 @@
                     $scope.addLog("Deleted Stream link");
                     if (!$scope.$$phase) $scope.$apply();
                 }, "Delete Stream");
+            };
+
+            $scope.addFifaStream = () => {
+                $scope.config.fifa.streamLinks.push({ name: "", id: "src_fifa_"+Date.now(), url: "" });
+                $scope.addLog("Added new FIFA Stream link row");
+            };
+            $scope.removeFifaStream = (i) => { 
+                $scope.showConfirm("Delete FIFA Stream?", function() {
+                    $scope.config.fifa.streamLinks.splice(i, 1); 
+                    $scope.addLog("Deleted FIFA Stream link");
+                    if (!$scope.$$phase) $scope.$apply();
+                }, "Delete FIFA Stream");
             };
 
             // --- STREAM AUTOFETCH LOGIC ---

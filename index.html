@@ -1711,6 +1711,25 @@
         <header>
             <div class="header-left">
                 <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
+                <button class="sport-switch-btn" ng-click="goToFifa()" style="
+                    margin-left: 15px;
+                    background: rgba(0, 255, 85, 0.1);
+                    border: 1px solid rgba(0, 255, 85, 0.3);
+                    color: #00ff55;
+                    padding: 5px 12px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(0, 255, 85, 0.2)'; this.style.boxShadow='0 0 10px rgba(0, 255, 85, 0.3)'" onmouseout="this.style.background='rgba(0, 255, 85, 0.1)'; this.style.boxShadow='none'">
+                    <i class="fa-solid fa-futbol"></i> FIFA PARTY
+                </button>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -2085,6 +2104,12 @@
             $scope.showAllStandings = false;
             $scope.toggleStandings = function () { $scope.showAllStandings = !$scope.showAllStandings; };
 
+            $scope.goToFifa = function () {
+                sessionStorage.setItem('f1_manual_override', 'true');
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                window.location.href = isLocal ? 'fifa.html' : '/fifa';
+            };
+
             $scope.dataLoaded = false;
             $scope.streamLinks = [];
             $scope.currentStream = {};
@@ -2321,9 +2346,16 @@
                 // Handle siteMode View Mode
                 $scope.siteMode = data.siteMode || 'main';
 
-                // Redirect to FIFA if active sport is FIFA
+                // Check if activeSport has changed to handle override reset
                 $scope.activeSport = data.activeSport || 'f1';
-                if ($scope.activeSport === 'fifa') {
+                var lastSport = sessionStorage.getItem('f1_last_active_sport');
+                if (lastSport && lastSport !== $scope.activeSport) {
+                    sessionStorage.removeItem('f1_manual_override');
+                }
+                sessionStorage.setItem('f1_last_active_sport', $scope.activeSport);
+
+                // Redirect to FIFA if active sport is FIFA and no manual override is active
+                if ($scope.activeSport === 'fifa' && !sessionStorage.getItem('f1_manual_override')) {
                     var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     window.location.href = isLocal ? 'fifa.html' : '/fifa';
                     return;
