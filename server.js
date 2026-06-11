@@ -472,6 +472,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// Route for /fifa
+app.get('/fifa', (req, res) => {
+  res.sendFile(path.join(__dirname, 'fifa.html'));
+});
+
 // --- API: Status ---
 app.get('/', (req, res) => {
   if (req.accepts('html')) {

@@ -10,6 +10,10 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/fifa",
+      "destination": "/fifa.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

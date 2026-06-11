@@ -1710,7 +1710,11 @@
     <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
         <header>
             <div class="header-left">
-                <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
+                <span class="logo-text">WatchFIFA<span style="color: var(--f1-red);">.Live</span></span>
+                
+                <a href="/" class="sport-toggle-btn active" style="margin-left: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: rgba(230, 0, 0, 0.1); border: 1px solid rgba(230, 0, 0, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #ff1e15; transition: all 0.35s;" onmouseover="this.style.background='rgba(230, 0, 0, 0.2)'" onmouseout="this.style.background='rgba(230, 0, 0, 0.1)'">
+                    <i class="fa-solid fa-car-side"></i> <span>F1 PARTY</span>
+                </a>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -1721,13 +1725,6 @@
             </div>
 
             <div class="status-area">
-                <div class="weather-pill" ng-if="widgets.weather && weather && weather.air">
-                    <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
-                    <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
-                    <div class="w-divider"></div>
-                    <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
-                    </div>
-                </div>
                 <div class="status-pill countdown" ng-if="customTimerActive">
                     <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
                 </div>
@@ -1752,7 +1749,7 @@
             </div>
         </div>
 
-        <div class="container">
+        <div class="container" style="grid-template-columns: 1fr;">
             <div class="main-column">
                 <div class="video-wrapper" ng-if="widgets.videoPlayer">
                     <div class="video-responsive">
@@ -1796,85 +1793,6 @@
                         <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
                         <div class="meta-item"><strong>Laps</strong>{{raceData.laps}}</div>
                     </div>
-                </div>
-            </div>
-
-            <div class="sidebar">
-                <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
-                    <video autoplay loop muted playsinline class="card-video-bg">
-                        <source src="racing.mp4" type="video/mp4">
-                    </video>
-                    <div class="card-title">Weekend Schedule</div>
-                    <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
-                        <div class="sess-info">
-                            <span class="sess-name">{{session.name}}</span>
-                            <span class="sess-status" style="color: var(--f1-red);" ng-if="session.status === 'live'">TRACK
-                                LIVE</span>
-                            <span class="sess-status" style="color: #666;"
-                                ng-if="session.status === 'upcoming'">UPCOMING</span>
-                        </div>
-                        <div class="sess-time-box">
-                            <div class="sess-time">{{formatTime12(session.time)}}</div>
-                            <div class="sess-day">{{session.day}}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
-
-                    <!-- Card Title -->
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
-                        <div class="card-title" style="margin-bottom:0;">
-                            <span>Championship Standings</span>
-                        </div>
-                    </div>
-
-                    <div class="tabs" style="margin-top: 12px;">
-                        <button class="tab-btn" ng-class="{'active': standingsView === 'drivers'}"
-                            ng-click="standingsView = 'drivers'">Drivers</button>
-                        <button class="tab-btn" ng-class="{'active': standingsView === 'constructors'}"
-                            ng-click="standingsView = 'constructors'">Teams</button>
-                    </div>
-
-                    <div class="standings-list" ng-class="{'expanded': showAllStandings}">
-                        <!-- DRIVER STANDINGS: sorted by season points -->
-                        <div ng-show="standingsView === 'drivers'">
-                            <div class="standing-row"
-                                ng-repeat="driver in standings | orderBy:'points':true | limitTo: (showAllStandings ? standings.length : 4)">
-                                <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
-                                <div class="st-img-wrapper">
-                                    <img ng-src="{{driver.image || 'https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'}}"
-                                        class="st-img"
-                                        onerror="this.src='https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/driver-fallback-image.png.transform/2col/image.png'"
-                                        loading="lazy">
-                                </div>
-                                <div class="st-info">
-                                    <div class="st-name">{{driver.name}}</div>
-                                    <div class="st-team">{{driver.team}}</div>
-                                </div>
-                                <div class="st-pts">{{driver.points}} PTS</div>
-                            </div>
-                        </div>
-
-                        <div ng-show="standingsView === 'constructors'">
-                            <div class="standing-row"
-                                ng-repeat="team in constructors | orderBy:'points':true | limitTo: (showAllStandings ? constructors.length : 3)">
-                                <div class="st-pos" ng-class="'p' + ($index+1)">{{$index + 1}}</div>
-                                <div class="st-info" style="margin-left: 10px;">
-                                    <div class="st-name">{{team.name}}</div>
-                                </div>
-                                <div class="st-pts">{{team.points}} PTS</div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <button class="view-more-btn" ng-click="toggleStandings()"
-                        ng-if="(standingsView === 'drivers' && standings.length > 4) || (standingsView === 'constructors' && constructors.length > 3)">
-                        {{ showAllStandings ? 'Collapse' : 'View All' }}
-                    </button>
                 </div>
             </div>
         </div>
@@ -1922,11 +1840,11 @@
         </div>
 
         <div class="countdown-brand">
-            WatchF1<span>.Live</span>
+            WatchFIFA<span>.Live</span>
         </div>
 
         <div class="countdown-gp-info" ng-if="raceData.name">
-            Round {{raceData.round || 'N/A'}} <span>• {{raceData.name}}</span>
+            EVENT <span>• {{raceData.name}}</span>
         </div>
 
         <!-- Timer Card -->
@@ -2188,6 +2106,22 @@
 
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
+            
+            function applyFifaTheme() {
+                const theme = {
+                    primary: '#00ff55', // FIFA Pitch Green
+                    glow: 'rgba(0, 255, 85, 0.15)',
+                    name: 'FIFA Pitch Green Theme'
+                };
+                const root = document.documentElement;
+                root.style.setProperty('--f1-red', theme.primary);
+                root.style.setProperty('--glow-color', theme.glow);
+                $scope.activeThemeName = theme.name;
+                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.vantaInstance.setOptions({ color: vantaColor });
+                }
+            }
 
             $scope.activeThemeName = '';
 
@@ -2321,14 +2255,6 @@
                 // Handle siteMode View Mode
                 $scope.siteMode = data.siteMode || 'main';
 
-                // Redirect to FIFA if active sport is FIFA
-                $scope.activeSport = data.activeSport || 'f1';
-                if ($scope.activeSport === 'fifa') {
-                    var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                    window.location.href = isLocal ? 'fifa.html' : '/fifa';
-                    return;
-                }
-
                 // Handle customTimer Countdown config
                 $scope.customTimer = data.customTimer || { enabled: false, label: '', target: '' };
 
@@ -2351,10 +2277,16 @@
                 var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
                 $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
 
-                // Trigger dynamic theming based on race location or theme override
-                if (!$scope.themeOverrideActive) {
-                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                // Redirect to F1 if active sport is F1
+                $scope.activeSport = data.activeSport || 'f1';
+                if ($scope.activeSport !== 'fifa') {
+                    var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    window.location.href = isLocal ? 'index.html' : '/';
+                    return;
                 }
+
+                // Trigger FIFA dynamic theme
+                applyFifaTheme();
 
                 $scope.nextRace = data.nextRace || {};
                 $scope.streamLinks = data.streamLinks || [];
