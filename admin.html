@@ -850,19 +850,7 @@
                 </div>
             </div>
 
-            <!-- Active Sport Mode Panel -->
-            <div class="admin-section animate-in" style="margin-bottom: 25px;">
-                <h3><span><i class="fa-solid fa-trophy" style="color: var(--primary); margin-right: 10px;"></i> Active Sport Mode</span></h3>
-                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Switch the default active sport mode on the main website (updates site themes and default views in real-time).</p>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <button class="tab-btn" ng-style="{'background': config.activeSport !== 'fifa' ? 'var(--primary)' : 'rgba(255,255,255,0.02)', 'color': config.activeSport !== 'fifa' ? '#fff' : 'var(--text-muted)', 'border-color': config.activeSport !== 'fifa' ? 'var(--primary-bright)' : 'var(--border)'}" ng-click="config.activeSport = 'f1'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
-                        <i class="fa-solid fa-car-side" style="margin-right: 8px;"></i> Formula 1 Mode
-                    </button>
-                    <button class="tab-btn" ng-style="{'background': config.activeSport === 'fifa' ? '#00ff55' : 'rgba(255,255,255,0.02)', 'color': config.activeSport === 'fifa' ? '#000' : 'var(--text-muted)', 'border-color': config.activeSport === 'fifa' ? '#00ff88' : 'var(--border)'}" ng-click="config.activeSport = 'fifa'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
-                        <i class="fa-solid fa-futbol" style="margin-right: 8px;"></i> FIFA Soccer Mode
-                    </button>
-                </div>
-            </div>
+
 
             <!-- Custom Countdown Timer Panel -->
             <div class="admin-section animate-in" style="margin-bottom: 25px;" ng-show="adminSportView === 'f1'">
