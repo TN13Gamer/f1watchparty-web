@@ -865,7 +865,7 @@
             <!-- Widget Visibility Panel -->
             <div class="admin-section animate-in" style="margin-bottom: 25px;">
                 <h3><span><i class="fa-solid fa-toggle-on" style="color: var(--primary); margin-right: 10px;"></i> Widget Visibility Controls</span></h3>
-                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the main site in real-time (excluding Championship Standings).</p>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the main site in real-time.</p>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                     <div class="switch-container">
                         <span class="switch-label"><i class="fa-solid fa-video"></i> Video Player</span>
@@ -899,6 +899,13 @@
                         <span class="switch-label"><i class="fa-solid fa-stopwatch"></i> Weekend Schedule</span>
                         <label class="switch">
                             <input type="checkbox" ng-model="config.widgets.schedule">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <span class="switch-label"><i class="fa-solid fa-trophy"></i> Standings</span>
+                        <label class="switch">
+                            <input type="checkbox" ng-model="config.widgets.standings">
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -1337,13 +1344,15 @@
                                 videoPlayer: true,
                                 eventDetails: true,
                                 weather: true,
-                                schedule: true
+                                schedule: true,
+                                standings: true
                             };
                         } else {
                             if ($scope.config.widgets.videoPlayer === undefined) $scope.config.widgets.videoPlayer = true;
                             if ($scope.config.widgets.eventDetails === undefined) $scope.config.widgets.eventDetails = true;
                             if ($scope.config.widgets.weather === undefined) $scope.config.widgets.weather = true;
                             if ($scope.config.widgets.schedule === undefined) $scope.config.widgets.schedule = true;
+                            if ($scope.config.widgets.standings === undefined) $scope.config.widgets.standings = true;
                         }
                         
                         // Initialize siteMode default to 'main'

@@ -1822,7 +1822,7 @@
                     </div>
                 </div>
 
-                <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
 
                     <!-- Card Title -->
@@ -2330,12 +2330,14 @@
                     videoPlayer: true,
                     eventDetails: true,
                     weather: true,
-                    schedule: true
+                    schedule: true,
+                    standings: true
                 };
                 if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
                 if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
                 if ($scope.widgets.weather === undefined) $scope.widgets.weather = true;
                 if ($scope.widgets.schedule === undefined) $scope.widgets.schedule = true;
+                if ($scope.widgets.standings === undefined) $scope.widgets.standings = true;
 
                 // Build the Twitch chat embed URL (parent must match the page hostname)
                 var parent = $window.location.hostname || 'localhost';
