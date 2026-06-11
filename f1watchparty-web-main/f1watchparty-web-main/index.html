@@ -1754,8 +1754,7 @@
 
         <div class="container">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer" data-tilt data-tilt-mobile="false" data-tilt-max="2" data-tilt-speed="400"
-                    data-tilt-glare data-tilt-max-glare="0.2" data-tilt-perspective="1000">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer">
                     <div class="video-responsive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
