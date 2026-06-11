@@ -837,7 +837,7 @@
             </div>
 
             <!-- Active Site View Mode Panel -->
-            <div class="admin-section animate-in" style="margin-bottom: 25px;">
+            <div class="admin-section animate-in" style="margin-bottom: 25px;" ng-show="adminSportView === 'f1'">
                 <h3><span><i class="fa-solid fa-sliders" style="color: var(--primary); margin-right: 10px;"></i> Active Site View Mode</span></h3>
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Switch the main website homepage between a landing countdown page and the full streaming dashboard.</p>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -865,7 +865,7 @@
             </div>
 
             <!-- Custom Countdown Timer Panel -->
-            <div class="admin-section animate-in" style="margin-bottom: 25px;">
+            <div class="admin-section animate-in" style="margin-bottom: 25px;" ng-show="adminSportView === 'f1'">
                 <h3><span><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Custom Countdown Timer</span></h3>
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the automatic weekend schedule countdown with a custom target time.</p>
                 <div style="margin-bottom: 15px;">
@@ -887,7 +887,7 @@
             </div>
 
             <!-- Widget Visibility Panel -->
-            <div class="admin-section animate-in" style="margin-bottom: 25px;">
+            <div class="admin-section animate-in" style="margin-bottom: 25px;" ng-show="adminSportView === 'f1'">
                 <h3><span><i class="fa-solid fa-toggle-on" style="color: var(--primary); margin-right: 10px;"></i> Widget Visibility Controls</span></h3>
                 <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the main site in real-time.</p>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
@@ -1118,6 +1118,75 @@
 
             <!-- FIFA Settings View -->
             <div ng-show="adminSportView === 'fifa'">
+                <!-- FIFA Active Site View Mode Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-sliders" style="color: #00ff55; margin-right: 10px;"></i> FIFA Active Site View Mode</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Switch the FIFA website homepage between a landing countdown page and the full streaming dashboard.</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="tab-btn" ng-style="{'background': config.fifa.siteMode === 'countdown' ? '#00ff55' : 'rgba(255,255,255,0.02)', 'color': config.fifa.siteMode === 'countdown' ? '#000' : 'var(--text-muted)', 'border-color': config.fifa.siteMode === 'countdown' ? '#00ff88' : 'var(--border)'}" ng-click="config.fifa.siteMode = 'countdown'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
+                            <i class="fa-solid fa-clock" style="margin-right: 8px;"></i> Countdown Landing Page
+                        </button>
+                        <button class="tab-btn" ng-style="{'background': config.fifa.siteMode === 'main' ? '#00ff55' : 'rgba(255,255,255,0.02)', 'color': config.fifa.siteMode === 'main' ? '#000' : 'var(--text-muted)', 'border-color': config.fifa.siteMode === 'main' ? '#00ff88' : 'var(--border)'}" ng-click="config.fifa.siteMode = 'main'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
+                            <i class="fa-solid fa-video" style="margin-right: 8px;"></i> Main Stream Dashboard
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FIFA Custom Countdown Timer Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the automatic weekend schedule countdown with a custom target time for FIFA.</p>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;">
+                            <input type="checkbox" ng-model="config.fifa.customTimer.enabled" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <span>Enable Custom Timer (Overrides schedule timers)</span>
+                        </label>
+                    </div>
+                    <div class="grid-row" ng-if="config.fifa.customTimer.enabled">
+                        <div class="input-group">
+                            <label>Timer Label / Title</label>
+                            <input type="text" ng-model="config.fifa.customTimer.label" placeholder="e.g. MATCH KICKS OFF" ng-change="saveLiveConfig(true)">
+                        </div>
+                        <div class="input-group">
+                            <label>Target Date-Time (Format: YYYY-MM-DDTHH:MM:00)</label>
+                            <input type="text" ng-model="config.fifa.customTimer.target" placeholder="e.g. 2026-06-07T22:30:00" ng-change="saveLiveConfig(true)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIFA Widget Visibility Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-toggle-on" style="color: #00ff55; margin-right: 10px;"></i> FIFA Widget Visibility Controls</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the FIFA site in real-time.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                        <div class="switch-container">
+                            <span class="switch-label"><i class="fa-solid fa-video"></i> Video Player</span>
+                            <label class="switch">
+                                <input type="checkbox" ng-model="config.fifa.widgets.videoPlayer">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label"><i class="fa-solid fa-calendar-day"></i> Match Details</span>
+                            <label class="switch">
+                                <input type="checkbox" ng-model="config.fifa.widgets.eventDetails">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIFA Twitch Channel Settings -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-brands fa-twitch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Twitch Chat Channel</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Set the Twitch channel username to embed the chat stream next to the player.</p>
+                    <div class="input-group">
+                        <label>Twitch Channel Name</label>
+                        <input type="text" ng-model="config.fifa.twitchChannel" placeholder="e.g. watchf1olive" style="border-left-color: #00ff55;">
+                    </div>
+                </div>
+
+                <!-- FIFA Match Details -->
                 <div class="admin-section">
                     <h3><span><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match Details</span></h3>
                     <div class="grid-row">
@@ -1134,6 +1203,7 @@
                     </div>
                 </div>
 
+                <!-- FIFA Stream Sources -->
                 <div class="admin-section">
                     <h3><i class="fa-solid fa-video" style="color: #00ff55; margin-right: 10px;"></i> FIFA Stream Sources</h3>
                     <div ng-repeat="link in config.fifa.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
@@ -1277,9 +1347,20 @@
                 <h3><i class="fa-solid fa-thumbtack" style="color: var(--primary); margin-right: 10px;"></i> Pinned Announcement</h3>
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Pin a message that appears as a banner above the Twitch chat on the viewer page.</p>
 
-                <div ng-if="config.pinnedMessage" style="background: rgba(225,6,0,0.08); border: 1px solid var(--primary); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <!-- FIFA currently pinned -->
+                <div ng-if="adminSportView === 'fifa' && config.fifa.pinnedMessage" style="background: rgba(0,255,85,0.08); border: 1px solid #00ff55; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                     <div>
-                        <span style="font-size: 9px; color: var(--primary); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px;"><i class="fa-solid fa-thumbtack"></i> Currently Pinned</span>
+                        <span style="font-size: 9px; color: #00ff55; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px;"><i class="fa-solid fa-thumbtack"></i> Currently Pinned (FIFA)</span>
+                        <span style="font-weight: 700; color: {{config.fifa.pinnedMessage.color || '#a970ff'}};">{{config.fifa.pinnedMessage.username}}</span>:
+                        <span style="color: #eee; font-weight: 600;"> {{config.fifa.pinnedMessage.text}}</span>
+                    </div>
+                    <button class="danger-btn" ng-click="unpinMessage()" style="height: 36px; padding: 0 16px; white-space: nowrap;"><i class="fa-solid fa-thumbtack-slash"></i> Unpin</button>
+                </div>
+
+                <!-- F1 currently pinned -->
+                <div ng-if="adminSportView !== 'fifa' && config.pinnedMessage" style="background: rgba(225,6,0,0.08); border: 1px solid var(--primary); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div>
+                        <span style="font-size: 9px; color: var(--primary); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px;"><i class="fa-solid fa-thumbtack"></i> Currently Pinned (F1)</span>
                         <span style="font-weight: 700; color: {{config.pinnedMessage.color || '#a970ff'}};">{{config.pinnedMessage.username}}</span>:
                         <span style="color: #eee; font-weight: 600;"> {{config.pinnedMessage.text}}</span>
                     </div>
@@ -1434,13 +1515,31 @@
 
                         // Initialize FIFA settings if undefined
                         if (!$scope.config.fifa) {
-                            $scope.config.fifa = {
-                                raceData: { round: '', name: '', location: '', circuit: '', date: '', laps: '' },
-                                streamLinks: []
+                            $scope.config.fifa = {};
+                        }
+                        if (!$scope.config.fifa.raceData) {
+                            $scope.config.fifa.raceData = { round: '', name: '', location: '', circuit: '', date: '', laps: '' };
+                        }
+                        if (!$scope.config.fifa.streamLinks) {
+                            $scope.config.fifa.streamLinks = [];
+                        }
+                        if (!$scope.config.fifa.siteMode) {
+                            $scope.config.fifa.siteMode = 'main';
+                        }
+                        if (!$scope.config.fifa.customTimer) {
+                            $scope.config.fifa.customTimer = { enabled: false, label: '', target: '' };
+                        }
+                        if (!$scope.config.fifa.widgets) {
+                            $scope.config.fifa.widgets = {
+                                videoPlayer: true,
+                                eventDetails: true,
+                                weather: false,
+                                schedule: false,
+                                standings: false
                             };
-                        } else {
-                            if (!$scope.config.fifa.raceData) $scope.config.fifa.raceData = { round: '', name: '', location: '', circuit: '', date: '', laps: '' };
-                            if (!$scope.config.fifa.streamLinks) $scope.config.fifa.streamLinks = [];
+                        }
+                        if (!$scope.config.fifa.twitchChannel) {
+                            $scope.config.fifa.twitchChannel = 'watchf1olive';
                         }
                     });
                 });
@@ -1486,15 +1585,27 @@
 
             $scope.pinCustomMessage = function() {
                 if (!$scope.pinForm.text || !$scope.pinForm.username) return;
-                db.collection("app_data").doc("live_config").update({
-                    pinnedMessage: {
+                
+                let updateData = {};
+                if ($scope.adminSportView === 'fifa') {
+                    updateData["fifa.pinnedMessage"] = {
+                        username: $scope.pinForm.username,
+                        text: $scope.pinForm.text,
+                        color: '#00ff55',
+                        isAdmin: true,
+                        timestamp: Date.now()
+                    };
+                } else {
+                    updateData["pinnedMessage"] = {
                         username: $scope.pinForm.username,
                         text: $scope.pinForm.text,
                         color: '#e10600',
                         isAdmin: true,
                         timestamp: Date.now()
-                    }
-                }).then(() => {
+                    };
+                }
+
+                db.collection("app_data").doc("live_config").update(updateData).then(() => {
                     $scope.pinForm.text = '';
                     $scope.showToast("Announcement pinned successfully!", "success");
                 }).catch((err) => {
@@ -1503,9 +1614,14 @@
             };
 
             $scope.unpinMessage = function() {
-                db.collection("app_data").doc("live_config").update({
-                    pinnedMessage: firebase.firestore.FieldValue.delete()
-                }).then(() => {
+                let updateData = {};
+                if ($scope.adminSportView === 'fifa') {
+                    updateData["fifa.pinnedMessage"] = firebase.firestore.FieldValue.delete();
+                } else {
+                    updateData["pinnedMessage"] = firebase.firestore.FieldValue.delete();
+                }
+
+                db.collection("app_data").doc("live_config").update(updateData).then(() => {
                     $scope.showToast("The message has been unpinned.", "success");
                 }).catch((err) => {
                     $scope.showToast("Failed to unpin message: " + err.message, "error");

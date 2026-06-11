@@ -2269,36 +2269,6 @@
             });
 
             function processData(data) {
-                // Map FIFA specific settings
-                $scope.raceData = (data.fifa && data.fifa.raceData) ? data.fifa.raceData : {};
-                $scope.twitchChannel = data.twitchChannel || 'watchf1olive';
-                $scope.pinnedMessage = data.pinnedMessage || null;
-
-                // Handle siteMode View Mode
-                $scope.siteMode = data.siteMode || 'main';
-
-                // Handle customTimer Countdown config
-                $scope.customTimer = data.customTimer || { enabled: false, label: '', target: '' };
-
-                // Handle new widgets visibility config
-                $scope.widgets = data.widgets || {
-                    videoPlayer: true,
-                    eventDetails: true,
-                    weather: true,
-                    schedule: true,
-                    standings: true
-                };
-                if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
-                if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
-                if ($scope.widgets.weather === undefined) $scope.widgets.weather = true;
-                if ($scope.widgets.schedule === undefined) $scope.widgets.schedule = true;
-                if ($scope.widgets.standings === undefined) $scope.widgets.standings = true;
-
-                // Build the Twitch chat embed URL (parent must match the page hostname)
-                var parent = $window.location.hostname || 'localhost';
-                var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
-                $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
-
                 // Check if activeSport has changed to handle override reset
                 $scope.activeSport = data.activeSport || 'f1';
                 var lastSport = sessionStorage.getItem('f1_last_active_sport');
@@ -2317,15 +2287,37 @@
                 // Trigger FIFA dynamic theme
                 applyFifaTheme();
 
-                $scope.nextRace = data.nextRace || {};
-                $scope.streamLinks = (data.fifa && data.fifa.streamLinks) ? data.fifa.streamLinks : [];
-                $scope.standings = data.standings || [];
-                $scope.constructors = data.constructors || [];
-                $scope.weather = data.weather || null;
+                // Map FIFA specific settings from data.fifa
+                const fifa = data.fifa || {};
+                $scope.raceData = fifa.raceData || {};
+                $scope.twitchChannel = fifa.twitchChannel || 'watchf1olive';
+                $scope.pinnedMessage = fifa.pinnedMessage || null;
+                $scope.siteMode = fifa.siteMode || 'main';
+                $scope.customTimer = fifa.customTimer || { enabled: false, label: '', target: '' };
+                $scope.widgets = fifa.widgets || {
+                    videoPlayer: true,
+                    eventDetails: true,
+                    weather: false,
+                    schedule: false,
+                    standings: false
+                };
+                if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
+                if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
+                
+                // Build the Twitch chat embed URL (parent must match the page hostname)
+                var parent = $window.location.hostname || 'localhost';
+                var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
+                $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
+
+                $scope.nextRace = fifa.nextRace || {};
+                $scope.streamLinks = fifa.streamLinks || [];
+                $scope.standings = []; // FIFA has no F1 driver standings
+                $scope.constructors = []; // FIFA has no F1 constructor standings
+                $scope.weather = fifa.weather || null;
                 $scope.nextUp = null;
                 $scope.activeSession = null;
-                if (data.schedule) {
-                    $scope.schedule = data.schedule.map(function (s) {
+                if (fifa.schedule) {
+                    $scope.schedule = fifa.schedule.map(function (s) {
                         var startDate = safeDate(s.timer);
                         var startTime = startDate ? startDate.getTime() : NaN;
                         var endTime = startTime + (2 * 60 * 60 * 1000);
@@ -2338,13 +2330,15 @@
                         }
                         return { ...s, start: startTime, end: endTime, status: 'upcoming' };
                     });
+                } else {
+                    $scope.schedule = [];
                 }
 
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];
                 }
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
-                console.log("🏎️ Data Sync:", $scope.lastSyncTime, data);
+                console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, fifa);
                 updateTimers();
             }
 
