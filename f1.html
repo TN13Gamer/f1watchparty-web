@@ -1747,14 +1747,17 @@
                     <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                     </div>
                 </div>
-                <div class="status-pill countdown" ng-if="customTimerActive">
+                <div class="status-pill live" ng-if="widgets.videoPlayer">
+                    <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
+                    LIVE: {{activeSession.name || raceData.name || 'STREAM'}}
+                </div>
+                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && customTimerActive">
                     <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
                 </div>
-                <div class="status-pill live" ng-if="!customTimerActive && activeSession">LIVE: {{activeSession.name}}</div>
-                <div class="status-pill countdown" ng-if="!customTimerActive && !activeSession && nextUp">
+                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && !customTimerActive && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!customTimerActive && !activeSession && !nextUp">
+                <div class="status-pill offline" ng-if="!widgets.videoPlayer && !customTimerActive && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>

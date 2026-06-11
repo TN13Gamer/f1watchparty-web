@@ -546,7 +546,7 @@
 
             if (isLive) {
                 badge.className = 'status-badge live';
-                textEl.innerText = raceData.location ? `LIVE NOW: ${raceData.location}` : 'Live Stream Active';
+                textEl.innerText = raceData.name ? `LIVE NOW: ${raceData.name}` : 'Live Stream Active';
             } else if (customTimer.enabled && customTimer.target) {
                 badge.className = 'status-badge';
                 startCountdown(customTimer.target, customTimer.label || 'Starts In', textEl, (intervalId) => {
@@ -578,7 +578,7 @@
 
             if (isLive) {
                 badge.className = 'status-badge live';
-                textEl.innerText = raceData.location ? `LIVE NOW: ${raceData.location}` : 'Live Stream Active';
+                textEl.innerText = raceData.name ? `LIVE NOW: ${raceData.name}` : 'Live Stream Active';
             } else if (customTimer.enabled && customTimer.target) {
                 badge.className = 'status-badge';
                 startCountdown(customTimer.target, customTimer.label || 'Starts In', textEl, (intervalId) => {

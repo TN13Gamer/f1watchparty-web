@@ -1740,14 +1740,17 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill countdown" ng-if="customTimerActive">
+                <div class="status-pill live" ng-if="widgets.videoPlayer">
+                    <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
+                    LIVE: {{raceData.name || 'STREAM'}}
+                </div>
+                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && customTimerActive">
                     <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
                 </div>
-                <div class="status-pill live" ng-if="!customTimerActive && activeSession">LIVE: {{activeSession.name}}</div>
-                <div class="status-pill countdown" ng-if="!customTimerActive && !activeSession && nextUp">
+                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && !customTimerActive && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!customTimerActive && !activeSession && !nextUp">
+                <div class="status-pill offline" ng-if="!widgets.videoPlayer && !customTimerActive && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1804,9 +1807,9 @@
                     </div>
                     <div class="meta-grid">
                         <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
-                        <div class="meta-item"><strong>Circuit</strong>{{raceData.circuit}}</div>
+                        <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
                         <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
-                        <div class="meta-item"><strong>Laps</strong>{{raceData.laps}}</div>
+                        <div class="meta-item"><strong>Duration</strong>{{raceData.laps}}</div>
                     </div>
                 </div>
             </div>
