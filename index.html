@@ -597,13 +597,14 @@
                         const h = Math.floor(timeRemaining / 3600000);
                         const m = Math.floor((timeRemaining % 3600000) / 60000);
                         const s = Math.floor((timeRemaining % 60000) / 1000);
-                        textEl.innerText = `LIVE (Ends in ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')})`;
+                        textEl.innerText = `LIVE: ${activeSession.name || 'STREAM'} (Ends in ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')})`;
                     }
                     tickLive();
                     const interval = setInterval(tickLive, 1000);
                     registerInterval(interval);
                 } else {
-                    textEl.innerText = 'LIVE NOW';
+                    const eventName = sportData.raceData ? sportData.raceData.name : 'STREAM';
+                    textEl.innerText = `LIVE: ${eventName}`;
                 }
             } else if (customTimer.enabled && customTimer.target) {
                 badge.className = 'status-badge';
