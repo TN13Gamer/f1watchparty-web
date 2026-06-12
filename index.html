@@ -557,7 +557,8 @@
             }
 
             const widgets = sportData.widgets || {};
-            const isLive = widgets.videoPlayer === true;
+            const streamLinks = sportData.streamLinks || [];
+            const isLive = widgets.videoPlayer === true && streamLinks.length > 0;
             const customTimer = sportData.customTimer || { enabled: false };
 
             // Find active session in schedule

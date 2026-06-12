@@ -1740,17 +1740,17 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer">
+                <div class="status-pill live" ng-if="widgets.videoPlayer && streamLinks.length > 0">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE: {{raceData.name || 'STREAM'}}
                 </div>
-                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && customTimerActive">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && customTimerActive">
                     <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
                 </div>
-                <div class="status-pill countdown" ng-if="!widgets.videoPlayer && !customTimerActive && nextUp">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && !customTimerActive && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!widgets.videoPlayer && !customTimerActive && !nextUp">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && !customTimerActive && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1769,13 +1769,13 @@
 
         <div class="container" style="grid-template-columns: 1fr;">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer && streamLinks.length > 0">
                     <div class="video-responsive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && streamLinks.length > 0">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                     <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
@@ -2445,7 +2445,7 @@
 
         // Added 3D Net Telemetry Overlay on top of Video (only initialized on desktop for performance)
         document.addEventListener("DOMContentLoaded", function () {
-            if (typeof VANTA !== 'undefined' && window.innerWidth > 768) {
+            if (typeof VANTA !== 'undefined') {
                 const initialColor = window.pendingVantaColor || 0xe60000;
                 window.vantaInstance = VANTA.NET({
                     el: "#vanta-overlay",
