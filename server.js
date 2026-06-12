@@ -281,7 +281,7 @@ async function syncToFirebase() {
 // Polling intervals (only start in long-running mode, not on Vercel serverless)
 if (!process.env.VERCEL) {
     setInterval(fetchLatestSession, 60000);
-    setInterval(syncToFirebase, 30000);
+    setInterval(syncToFirebase, 60000);
 }
 
 // --- API: Live Leaderboard (scraped from F1.com) ---

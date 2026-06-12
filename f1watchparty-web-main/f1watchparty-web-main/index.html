@@ -520,6 +520,27 @@
             return new Date(val);
         }
 
+        function parseFifaDate(dateStr) {
+            if (!dateStr) return null;
+            let cleanStr = dateStr.trim();
+            const currentYear = new Date().getFullYear();
+            if (!cleanStr.includes(currentYear.toString())) {
+                const parts = cleanStr.split(/\s+/);
+                if (parts.length >= 3) {
+                    if (parts[2].includes(':')) {
+                        parts.splice(2, 0, currentYear.toString());
+                        cleanStr = parts.join(' ');
+                    } else {
+                        cleanStr = cleanStr + ' ' + currentYear;
+                    }
+                } else {
+                    cleanStr = cleanStr + ' ' + currentYear;
+                }
+            }
+            const d = new Date(cleanStr);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
         db.collection("app_data").doc("live_config").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -614,6 +635,36 @@
                 } else {
                     const eventName = sportData.raceData ? sportData.raceData.name : 'STREAM';
                     textEl.innerText = `LIVE: ${eventName}`;
+                }
+            } else if (sportKey === 'fifa') {
+                const matchDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
+                if (matchDate && !isNaN(matchDate.getTime()) && now < matchDate.getTime()) {
+                    badge.className = 'status-badge';
+                    const targetTime = matchDate.getTime();
+                    
+                    function tickCountdown() {
+                        const diff = targetTime - Date.now();
+                        if (diff <= 0) {
+                            textEl.innerText = 'Live Soon';
+                            return;
+                        }
+                        const days = Math.floor(diff / 86400000);
+                        const hours = Math.floor((diff % 86400000) / 3600000);
+                        const minutes = Math.floor((diff % 3600000) / 60000);
+                        const seconds = Math.floor((diff % 60000) / 1000);
+
+                        let timeStr = '';
+                        if (days > 0) timeStr += `${days}d `;
+                        timeStr += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                        textEl.innerText = `${customTimer.label || 'Starts In'}: ${timeStr}`;
+                    }
+                    tickCountdown();
+                    const interval = setInterval(tickCountdown, 1000);
+                    registerInterval(interval);
+                } else {
+                    badge.className = 'status-badge';
+                    textEl.innerText = 'Offline';
                 }
             } else if (customTimer.enabled && customTimer.target) {
                 badge.className = 'status-badge';

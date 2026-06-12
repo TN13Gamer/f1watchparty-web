@@ -1695,77 +1695,6 @@
                 right: 0;
             }
         }
-
-        /* Premium Sliding Sport Toggle */
-        .sport-toggle-container {
-            display: flex;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 4px;
-            border-radius: 30px;
-            position: relative;
-            margin-left: 20px;
-            backdrop-filter: blur(5px);
-            user-select: none;
-        }
-
-        .sport-toggle-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-gray);
-            padding: 6px 18px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 2;
-        }
-
-        .sport-toggle-btn.active {
-            background: var(--f1-red);
-            color: #fff;
-            box-shadow: 0 0 12px var(--glow-color);
-        }
-
-        .sport-toggle-btn:hover:not(.active) {
-            color: #fff;
-        }
-
-        /* Floating Back Button on Landing Page */
-        .back-to-home-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-gray);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1000;
-        }
-
-        .back-to-home-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(-3px);
-        }
     </style>
 </head>
 
@@ -1788,14 +1717,25 @@
         <header>
             <div class="header-left">
                 <span class="logo-text">WatchFIFA <span style="color: var(--f1-red);">2026</span></span>
-                <div class="sport-toggle-container">
-                    <button class="sport-toggle-btn" ng-click="goToF1()">
-                        <i class="fa-solid fa-car-side"></i> F1 Party
-                    </button>
-                    <button class="sport-toggle-btn active">
-                        <i class="fa-solid fa-futbol"></i> FIFA Party
-                    </button>
-                </div>
+                <button class="sport-switch-btn" ng-click="goToF1()" style="
+                    margin-left: 15px;
+                    background: rgba(230, 0, 0, 0.1);
+                    border: 1px solid rgba(230, 0, 0, 0.3);
+                    color: #e60000;
+                    padding: 5px 12px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(230, 0, 0, 0.2)'; this.style.boxShadow='0 0 10px rgba(230, 0, 0, 0.3)'" onmouseout="this.style.background='rgba(230, 0, 0, 0.1)'; this.style.boxShadow='none'">
+                    <i class="fa-solid fa-car-side"></i> F1 PARTY
+                </button>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -1810,13 +1750,13 @@
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE: {{raceData.name || 'STREAM'}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && customTimerActive">
-                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && showCustomTimer">
+                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && !customTimerActive && nextUp">
-                    <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && !showCustomTimer && matchFuture">
+                    <i class="fa-regular fa-clock"></i> MATCH IN {{matchCountdownStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive) && !customTimerActive && !nextUp">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive) && !showCustomTimer && !matchFuture">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1899,25 +1839,25 @@
                         The live watch party stream is not active right now. The action will begin shortly.
                     </p>
  
-                    <div ng-if="customTimerActive" style="margin-top: 10px;">
-                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
-                            {{customTimer.label || 'MATCH KICKS OFF IN'}}
+                    <div ng-if="showCustomTimer" style="margin-top: 10px;">
+                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #00ff55; text-transform: uppercase; margin-bottom: 8px;">
+                            {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' : (customTimer.label || 'MATCH KICKS OFF IN')}}
                         </div>
                         <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
                             {{customTimerCountdown}}
                         </div>
                     </div>
                     
-                    <div ng-if="!customTimerActive && nextUp" style="margin-top: 10px;">
+                    <div ng-if="!showCustomTimer && matchFuture" style="margin-top: 10px;">
                         <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
-                            NEXT MATCH: {{nextUp.name}} IN
+                            MATCH KICKS OFF IN
                         </div>
                         <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
-                            {{nextUp.timerStr || nextUp.countdown}}
+                            {{matchCountdownStr}}
                         </div>
                     </div>
  
-                    <div ng-if="!customTimerActive && !nextUp" style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <div ng-if="!showCustomTimer && !matchFuture" style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                         No upcoming match timers scheduled.
                     </div>
                 </div>
@@ -1995,11 +1935,6 @@
 
     <!-- Countdown Landing Page Mode -->
     <div class="countdown-page-container ng-cloak animate-in" ng-if="dataLoaded && siteMode === 'countdown'">
-        <!-- Back Button -->
-        <a href="index.html" class="back-to-home-btn" ng-click="goBack($event)">
-            <i class="fa-solid fa-arrow-left"></i> Back to Selection
-        </a>
-
         <!-- Up Next Marquee Banner at the very top -->
         <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
             <div class="landing-marquee-text">
@@ -2019,9 +1954,9 @@
         <!-- Timer Card -->
         <div class="countdown-timer-box">
             <!-- 0. Custom Countdown Timer (if enabled & active) -->
-            <div ng-if="customTimerActive">
+            <div ng-if="showCustomTimer">
                 <div class="countdown-session-title">
-                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM STARTS'}}
+                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' : (customTimer.label || 'STREAM STARTS')}}
                 </div>
                 <div class="countdown-digits">
                     {{customTimerCountdown || '00:00:00'}}
@@ -2029,7 +1964,7 @@
             </div>
 
             <!-- 1. Live Session -->
-            <div ng-if="!customTimerActive && activeSession">
+            <div ng-if="!showCustomTimer && activeSession">
                 <div class="countdown-session-title" style="color: var(--f1-green);">
                     <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
                 </div>
@@ -2039,22 +1974,22 @@
             </div>
 
             <!-- 2. Upcoming Session Countdown -->
-            <div ng-if="!customTimerActive && !activeSession && nextUp">
+            <div ng-if="!showCustomTimer && !activeSession && matchFuture">
                 <div class="countdown-session-title">
-                    <i class="fa-regular fa-clock"></i> Up Next: {{nextUp.name}}
+                    <i class="fa-regular fa-clock"></i> MATCH KICKS OFF IN
                 </div>
                 <div class="countdown-digits">
-                    {{nextUp.timerStr || nextUp.countdown || '00:00:00'}}
+                    {{matchCountdownStr || '00:00:00'}}
                 </div>
             </div>
 
             <!-- 3. Offline State -->
-            <div class="countdown-offline" ng-if="!customTimerActive && !activeSession && !nextUp">
+            <div class="countdown-offline" ng-if="!showCustomTimer && !activeSession && !matchFuture">
                 <div class="countdown-offline-badge">
                     <i class="fa-solid fa-circle" style="color: #444; font-size: 10px;"></i> Offline
                 </div>
                 <div class="countdown-offline-text">
-                    Watch Party is currently offline. Timers will start with the next weekend session.
+                    Watch Party is currently offline. No upcoming matches scheduled.
                 </div>
             </div>
         </div>
@@ -2175,12 +2110,6 @@
             $scope.goToF1 = function () {
                 var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 window.location.href = isLocal ? 'f1.html' : '/f1';
-            };
-
-            $scope.goBack = function ($event) {
-                if ($event) $event.preventDefault();
-                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                window.location.href = isLocal ? 'index.html' : '/';
             };
 
             $scope.dataLoaded = false;
@@ -2435,6 +2364,28 @@
                 return new Date(val);
             }
 
+            function parseFifaDate(dateStr) {
+                if (!dateStr) return null;
+                let cleanStr = dateStr.trim();
+                const currentYear = new Date().getFullYear();
+                if (!cleanStr.includes(currentYear.toString())) {
+                    const parts = cleanStr.split(/\s+/);
+                    if (parts.length >= 3) {
+                        if (parts[2].includes(':')) {
+                            parts.splice(2, 0, currentYear.toString());
+                            cleanStr = parts.join(' ');
+                        } else {
+                            cleanStr = cleanStr + ' ' + currentYear;
+                        }
+                    } else {
+                        cleanStr = cleanStr + ' ' + currentYear;
+                    }
+                }
+                const d = new Date(cleanStr);
+                return isNaN(d.getTime()) ? null : d;
+            }
+
+
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -2460,10 +2411,6 @@
                 $scope.twitchChannel = fifa.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = fifa.pinnedMessage || null;
                 $scope.siteMode = fifa.siteMode || 'main';
-                var urlParams = new URLSearchParams($window.location.search);
-                if (urlParams.has('siteMode')) {
-                    $scope.siteMode = urlParams.get('siteMode');
-                }
                 $scope.customTimer = fifa.customTimer || { enabled: false, label: '', target: '' };
                 $scope.widgets = fifa.widgets || {
                     videoPlayer: true,
@@ -2521,6 +2468,7 @@
                     var targetTime = safeDate($scope.customTimer.target);
                     if (targetTime && !isNaN(targetTime.getTime())) {
                         var dist = targetTime.getTime() - now;
+                        $scope.showCustomTimer = true;
                         if (dist > 0) {
                             var d = Math.floor(dist / (1000 * 60 * 60 * 24));
                             var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -2535,10 +2483,37 @@
                     } else {
                         $scope.customTimerCountdown = "";
                         $scope.customTimerActive = false;
+                        $scope.showCustomTimer = false;
                     }
                 } else {
                     $scope.customTimerCountdown = "";
                     $scope.customTimerActive = false;
+                    $scope.showCustomTimer = false;
+                }
+
+                // Compute FIFA Match Details date/time countdown
+                if ($scope.raceData && $scope.raceData.date) {
+                    var matchDate = parseFifaDate($scope.raceData.date);
+                    if (matchDate && !isNaN(matchDate.getTime())) {
+                        var dist = matchDate.getTime() - now;
+                        if (dist > 0) {
+                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((dist % (1000 * 60)) / 1000);
+                            $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                            $scope.matchFuture = true;
+                        } else {
+                            $scope.matchCountdownStr = "";
+                            $scope.matchFuture = false;
+                        }
+                    } else {
+                        $scope.matchCountdownStr = "";
+                        $scope.matchFuture = false;
+                    }
+                } else {
+                    $scope.matchCountdownStr = "";
+                    $scope.matchFuture = false;
                 }
 
                 if (!$scope.schedule) return;

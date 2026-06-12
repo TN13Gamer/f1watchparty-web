@@ -1037,7 +1037,7 @@
                     <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
                         <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
                             <input type="checkbox" ng-model="config.autoSyncStreams" style="width: auto; height: auto; margin: 0; accent-color: var(--tech-blue);">
-                            <span>Enable Auto-Sync Streams (Automatically updates links every 30s via backend cron)</span>
+                            <span>Enable Auto-Sync Streams (Automatically updates links every 60s via backend cron)</span>
                         </label>
                     </div>
                 </div>
@@ -1233,6 +1233,33 @@
                 <!-- FIFA Stream Sources -->
                 <div class="admin-section">
                     <h3><i class="fa-solid fa-video" style="color: #00ff55; margin-right: 10px;"></i> FIFA Stream Sources</h3>
+
+                    <!-- Auto-Fetch Stream Widget (FIFA) -->
+                    <div style="background: rgba(0, 255, 85, 0.05); border: 1px solid rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 5px;"></i> Auto-Fetch Streams
+                        </h4>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                            Fetch football embed links automatically from streamed.pk based on the match name.
+                        </p>
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Search Keyword</label>
+                                <input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Canada VS Bosnia and Herzegovina" style="margin-bottom: 0; border-left-color: #00ff55;">
+                            </div>
+                            <button type="button" class="action-btn" ng-click="autoFetchFifaStreams()" ng-disabled="fetchingFifaStreams" style="height: 44px; padding: 0 20px; background-color: #00ff55; color: #000; border-color: #00ff88;">
+                                <i class="fa-solid" ng-class="fetchingFifaStreams ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                                {{ fetchingFifaStreams ? 'Fetching...' : 'Fetch & Import' }}
+                            </button>
+                        </div>
+                        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
+                                <input type="checkbox" ng-model="config.fifa.autoSyncStreams" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                                <span>Enable Auto-Sync Streams (Automatically updates links every 60s via backend cron)</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div ng-repeat="link in config.fifa.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
                         <div class="grid-row" style="margin-bottom: 10px;">
                             <input type="text" ng-model="link.name" placeholder="Name (e.g. English Stream)">
@@ -1262,7 +1289,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
                     <div>
                         <h3><i class="fa-solid fa-trophy" style="color: var(--primary); margin-right: 10px;"></i> Driver Standings</h3>
-                        <p style="font-size: 11px; color: var(--text-muted);">Auto-synced from official F1 API every 30s via server. Last sync: <strong>{{standingsLastUpdated || 'checking...'}}</strong></p>
+                        <p style="font-size: 11px; color: var(--text-muted);">Auto-synced from official F1 API every 60s via server. Last sync: <strong>{{standingsLastUpdated || 'checking...'}}</strong></p>
                     </div>
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                         <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #eee; font-weight: bold; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -1572,6 +1599,9 @@
                         if (!$scope.config.fifa.twitchChannel) {
                             $scope.config.fifa.twitchChannel = 'watchf1olive';
                         }
+                        if ($scope.config.fifa.autoSyncStreams === undefined) {
+                            $scope.config.fifa.autoSyncStreams = true;
+                        }
                     });
                 });
 
@@ -1734,7 +1764,7 @@
             }, 10000); // 10 seconds
 
             // --- STANDINGS SYNC ---
-            // /api/sync-standings (Vercel serverless) is called by cron-job.org every 30s.
+            // /api/sync-standings (Vercel serverless) is called by cron-job.org every 60s.
             // Admin panel just re-reads from Firestore to show what the server has already synced.
             $scope.fetchingStandings = false;
             $scope.standingsLastUpdated = null;
@@ -1825,7 +1855,9 @@
                                 $scope.addLog(`Auto-fetched weather for ${searchLoc}`);
                             }
                             // Auto-save silently so viewers get the update immediately
-                            $scope.saveLiveConfig(true);
+                            db.collection("app_data").doc("live_config").update({
+                                weather: $scope.config.weather
+                            }).catch(err => console.error("Error auto-saving weather:", err));
                         });
                     })
                     .catch(e => {
@@ -2078,6 +2110,53 @@
                     $scope.addLog("Deleted FIFA Stream link");
                     if (!$scope.$$phase) $scope.$apply();
                 }, "Delete FIFA Stream");
+            };
+
+            $scope.fetchingFifaStreams = false;
+            $scope.autoFetchFifaStreams = function() {
+                if ($scope.fetchingFifaStreams) return;
+                $scope.fetchingFifaStreams = true;
+                $scope.showToast("Saving changes & fetching streams from streamed.pk...", "info");
+
+                // Step 1: Save the current configuration to Firestore first so backend sees the updated match details
+                let dataToSave = angular.copy($scope.config);
+                if (dataToSave.schedule) {
+                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
+                }
+                
+                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
+                    .then(() => {
+                        // Step 2: Trigger backend standings and FIFA stream sync
+                        var primaryUrl = '/api/sync-standings?manual=true';
+                        var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                        var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                        return $http.get(targetUrl);
+                    })
+                    .then(() => {
+                        // Step 3: Fetch updated document from Firestore
+                        return db.collection("app_data").doc("live_config").get();
+                    })
+                    .then((doc) => {
+                        if (doc.exists) {
+                            $scope.$apply(() => {
+                                const data = doc.data();
+                                if (data.fifa && data.fifa.streamLinks) {
+                                    $scope.config.fifa.streamLinks = data.fifa.streamLinks;
+                                }
+                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
+                                $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
+                            });
+                        }
+                        $scope.fetchingFifaStreams = false;
+                        if (!$scope.$$phase) $scope.$apply();
+                    })
+                    .catch(err => {
+                        $scope.fetchingFifaStreams = false;
+                        var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
+                        $scope.showToast("Fetch streams failed: " + errMsg, "error");
+                        if (!$scope.$$phase) $scope.$apply();
+                    });
             };
 
             // --- STREAM AUTOFETCH LOGIC ---

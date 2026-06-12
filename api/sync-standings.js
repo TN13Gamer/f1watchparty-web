@@ -1,12 +1,41 @@
 /**
  * /api/sync-standings — Vercel Serverless Function
- * Called by cron-job.org every 30 seconds.
+ * Called by cron-job.org every 60 seconds.
  * Tries f1.com API first, falls back to Jolpica (official FIA data).
  */
 
 const axios = require('axios');
 const admin = require('firebase-admin');
 const cheerio = require('cheerio');
+
+async function fetchJson(url) {
+  try {
+    const { exec } = require('child_process');
+    return await new Promise((resolve, reject) => {
+      const cmd = `curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+      exec(cmd, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+        if (error) {
+          return reject(error);
+        }
+        try {
+          const data = JSON.parse(stdout);
+          resolve(data);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+  } catch (e) {
+    const { data } = await axios.get(url, {
+      timeout: 8000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    return data;
+  }
+}
+
 
 if (!admin.apps.length) {
   try {
@@ -308,6 +337,112 @@ async function syncStreamsAutomatically(config, ref) {
   }
 }
 
+async function syncFifaStreams(config, ref) {
+  const fifa = config.fifa || {};
+  if (fifa.autoSyncStreams === false) return;
+
+  const matchName = fifa.raceData?.name;
+  if (!matchName) {
+    console.log('[sync-fifa] No match name in FIFA config.');
+    return;
+  }
+
+  // Tokenize match name (e.g. "Canada VS Bosnia and Herzegovina" -> ["canada", "bosnia", "herzegovina"])
+  const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
+  const tokens = matchName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 0 && !commonWords.has(t));
+
+  if (tokens.length === 0) {
+    console.log('[sync-fifa] No valid search tokens extracted from:', matchName);
+    return;
+  }
+
+  try {
+    console.log(`[sync-fifa] Fetching matches to match tokens: ${tokens.join(' ')}`);
+    const matches = await fetchJson('https://streamed.pk/api/matches/all');
+
+    if (!Array.isArray(matches)) {
+      console.log('[sync-fifa] Matches response is not an array.');
+      return;
+    }
+
+    // Filter by category: football
+    const footballMatches = matches.filter(m => m.category === 'football');
+
+    // Find the best matching match
+    let bestMatch = null;
+    let maxMatchCount = 0;
+
+    footballMatches.forEach(m => {
+      if (!m.title) return;
+      const titleLower = m.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+      let matchCount = 0;
+      tokens.forEach(t => {
+        if (titleLower.includes(t)) matchCount++;
+      });
+
+      if (matchCount > maxMatchCount) {
+        maxMatchCount = matchCount;
+        bestMatch = m;
+      }
+    });
+
+    if (!bestMatch || maxMatchCount === 0) {
+      console.log('[sync-fifa] No matching football match found on streamed.pk.');
+      return;
+    }
+
+    console.log(`[sync-fifa] Found matching match: "${bestMatch.title}" with ${maxMatchCount} matching tokens.`);
+
+    // Fetch stream links for each source
+    if (bestMatch.sources && bestMatch.sources.length > 0) {
+      const streamLinks = [];
+      
+      const streamPromises = bestMatch.sources.map(async (src) => {
+        try {
+          const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+          const streams = await fetchJson(streamUrl);
+          
+          if (Array.isArray(streams)) {
+            streams.forEach((stream, idx) => {
+              if (stream.embedUrl) {
+                const name = `${src.source.toUpperCase()} ${stream.language || 'EN'} ${stream.hd ? '(HD)' : ''}`.trim();
+                streamLinks.push({
+                  name: name,
+                  id: `src_fifa_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                  url: stream.embedUrl
+                });
+              }
+            });
+          }
+        } catch (err) {
+          console.error(`[sync-fifa] Failed to fetch streams for source ${src.source}:`, err.message);
+        }
+      });
+
+      await Promise.all(streamPromises);
+
+      if (streamLinks.length > 0) {
+        // Update fifa.streamLinks field in Firestore
+        const updatedFifa = {
+          ...fifa,
+          streamLinks: streamLinks
+        };
+        await ref.update({ fifa: updatedFifa });
+        console.log(`[sync-fifa] Successfully updated ${streamLinks.length} FIFA stream links in Firestore.`);
+      } else {
+        console.log('[sync-fifa] No active stream URLs found for matched match.');
+      }
+    } else {
+      console.log('[sync-fifa] Matched match has no sources.');
+    }
+  } catch (err) {
+    console.error('[sync-fifa] Error during auto-sync:', err.message);
+  }
+}
+
 module.exports = async (req, res) => {
   if (!['GET','POST'].includes(req.method)) return res.status(405).end();
 
@@ -399,6 +534,9 @@ module.exports = async (req, res) => {
 
     // Automatically sync streams from pushembdz if enabled
     await syncStreamsAutomatically(config, ref);
+
+    // Automatically sync FIFA streams from streamed.pk
+    await syncFifaStreams(config, ref);
 
     res.json({ ok: true, updated: changed, syncedAt, source });
   } catch(err) {
