@@ -22,7 +22,9 @@
                 primary = '#00cc7a'; glow = 'rgba(0, 204, 122, 0.15)';
             } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
                 primary = '#ff7700'; glow = 'rgba(255, 119, 0, 0.15)';
-            } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+            } else if (loc.includes('las vegas') || loc.includes('vegas')) {
+                primary = '#b500ff'; glow = 'rgba(181, 0, 255, 0.2)';
+            } else if (loc.includes('singapore') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
                 primary = '#00ffcc'; glow = 'rgba(0, 255, 204, 0.2)';
             } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
                 primary = '#00e5ff'; glow = 'rgba(0, 229, 255, 0.2)';
@@ -38,6 +40,10 @@
                 primary = '#ff2200'; glow = 'rgba(255, 34, 0, 0.15)';
             } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
                 primary = '#00ff33'; glow = 'rgba(0, 255, 51, 0.15)';
+            } else if (loc.includes('hungar') || loc.includes('budapest')) {
+                primary = '#ff007f'; glow = 'rgba(255, 0, 127, 0.2)';
+            } else if (loc.includes('mexic')) {
+                primary = '#00875a'; glow = 'rgba(0, 135, 90, 0.15)';
             }
             document.documentElement.style.setProperty('--f1-red', primary);
             document.documentElement.style.setProperty('--glow-color', glow);
@@ -2334,7 +2340,13 @@
                         glow: 'rgba(255, 119, 0, 0.15)',
                         name: 'Dutch GP Theme (Orange)'
                     };
-                } else if (loc.includes('singapore') || loc.includes('las vegas') || loc.includes('vegas') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                } else if (loc.includes('las vegas') || loc.includes('vegas')) {
+                    theme = {
+                        primary: '#b500ff', // Las Vegas Neon Violet
+                        glow: 'rgba(181, 0, 255, 0.2)',
+                        name: 'Las Vegas GP Theme (Neon Violet)'
+                    };
+                } else if (loc.includes('singapore') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
                     theme = {
                         primary: '#00ffcc', // Cyber Neon Teal
                         glow: 'rgba(0, 255, 204, 0.2)',
@@ -2381,6 +2393,18 @@
                         primary: '#00ff33', // Brazilian Green
                         glow: 'rgba(0, 255, 51, 0.15)',
                         name: 'Brazilian GP Theme (Senna Green)'
+                    };
+                } else if (loc.includes('hungar') || loc.includes('budapest')) {
+                    theme = {
+                        primary: '#ff007f', // Hungarian GP Fuchsia
+                        glow: 'rgba(255, 0, 127, 0.2)',
+                        name: 'Hungarian GP Theme (Fuchsia)'
+                    };
+                } else if (loc.includes('mexic')) {
+                    theme = {
+                        primary: '#00875a', // Mexican GP Green
+                        glow: 'rgba(0, 135, 90, 0.15)',
+                        name: 'Mexican GP Theme (Emerald Green)'
                     };
                 }
 
@@ -2577,6 +2601,7 @@
                 { name: 'Monza (Scarlet Red)', loc: 'Monza' },
                 { name: 'Silverstone (Racing Green)', loc: 'Silverstone' },
                 { name: 'Zandvoort (Dutch Orange)', loc: 'Zandvoort' },
+                { name: 'Las Vegas (Neon Violet)', loc: 'Las Vegas' },
                 { name: 'Singapore (Neon Teal)', loc: 'Singapore' },
                 { name: 'Yas Marina (Desert Cyan)', loc: 'Abu Dhabi' },
                 { name: 'Spa (Eau Rouge Gold)', loc: 'Spa' },
@@ -2585,6 +2610,8 @@
                 { name: 'Montreal (Maple Red)', loc: 'Canada' },
                 { name: 'Shanghai (Chinese Red)', loc: 'China' },
                 { name: 'Brazil (Senna Green)', loc: 'Brazil' },
+                { name: 'Hungary (Neon Fuchsia)', loc: 'Hungary' },
+                { name: 'Mexico (Emerald Green)', loc: 'Mexico' },
                 { name: 'Classic F1 (Default Red)', loc: 'Default' }
             ];
 
