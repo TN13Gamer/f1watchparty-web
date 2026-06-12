@@ -1753,21 +1753,15 @@
                     <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                     </div>
                 </div>
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimer.enabled">
-                    <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
+                <!-- Pill: always driven by Weekend Schedule only -->
+                <div class="status-pill live" ng-if="activeSession">
+                    <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
                     LIVE: {{activeSession.name || raceData.name || 'STREAM'}}
                 </div>
-                <div class="status-pill countdown" ng-if="customTimer.enabled && customTimerActive">
-                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
-                </div>
-                <div class="status-pill live" ng-if="customTimer.enabled && !customTimerActive" style="background: rgba(0,200,100,0.15); border-color: #00c864;">
-                    <i class="fa-solid fa-circle" style="color: #00c864; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
-                    {{customTimer.label || 'STREAM'}} STARTING SOON
-                </div>
-                <div class="status-pill countdown" ng-if="!customTimer.enabled && !widgets.videoPlayer && nextUp">
+                <div class="status-pill countdown" ng-if="!activeSession && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!customTimer.enabled && !widgets.videoPlayer && !nextUp">
+                <div class="status-pill offline" ng-if="!activeSession && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
