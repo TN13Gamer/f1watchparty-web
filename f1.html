@@ -1747,17 +1747,17 @@
                     <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                     </div>
                 </div>
-                <div class="status-pill live" ng-if="widgets.videoPlayer && streamLinks.length > 0">
+                <div class="status-pill live" ng-if="widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive">
                     <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE: {{activeSession.name || raceData.name || 'STREAM'}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && customTimerActive">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive) && customTimerActive">
                     <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM'}} IN {{customTimerCountdown}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && !customTimerActive && nextUp">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive) && !customTimerActive && nextUp">
                     <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && streamLinks.length > 0) && !customTimerActive && !nextUp">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive) && !customTimerActive && !nextUp">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1776,13 +1776,13 @@
 
         <div class="container">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer && streamLinks.length > 0">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive">
                     <div class="video-responsive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                 </div>
-                <div class="video-wrapper countdown-card" ng-if="widgets.videoPlayer && streamLinks.length === 0" style="
+                <div class="video-wrapper countdown-card" ng-if="widgets.videoPlayer && (streamLinks.length === 0 || customTimerActive)" style="
                     aspect-ratio: 16/9;
                     background: rgba(10, 10, 15, 0.65);
                     backdrop-filter: blur(25px);
@@ -1845,7 +1845,7 @@
                         No upcoming session timers scheduled.
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer && streamLinks.length > 0">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && streamLinks.length > 0 && !customTimerActive">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                     <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"

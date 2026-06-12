@@ -558,8 +558,17 @@
 
             const widgets = sportData.widgets || {};
             const streamLinks = sportData.streamLinks || [];
-            const isLive = widgets.videoPlayer === true && streamLinks.length > 0;
             const customTimer = sportData.customTimer || { enabled: false };
+
+            let customTimerActive = false;
+            if (customTimer.enabled && customTimer.target) {
+                const targetTime = safeDate(customTimer.target);
+                if (targetTime && !isNaN(targetTime.getTime()) && Date.now() < targetTime.getTime()) {
+                    customTimerActive = true;
+                }
+            }
+
+            const isLive = widgets.videoPlayer === true && streamLinks.length > 0 && !customTimerActive;
 
             // Find active session in schedule
             let activeSession = null;
