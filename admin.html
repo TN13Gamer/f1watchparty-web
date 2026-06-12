@@ -1198,6 +1198,28 @@
                             <input type="text" ng-model="config.fifa.customTimer.target" placeholder="e.g. 2026-06-07T22:30:00" ng-change="updateCustomTimerFifa()" style="border-left-color: #00ff55;">
                         </div>
                     </div>
+                    <div class="input-group">
+                        <label style="color: #00ff55;">Active Theme (Override)</label>
+                        <select ng-model="config.fifa.raceData.theme" style="border-left-color: #00ff55;">
+                            <option value="">Auto-Detect (Based on Location)</option>
+                            <option value="monaco">Monaco Theme (Red & White)</option>
+                            <option value="monza">Italian Theme (Scarlet Red)</option>
+                            <option value="silverstone">British Theme (Racing Green)</option>
+                            <option value="zandvoort">Dutch Theme (Orange)</option>
+                            <option value="las vegas">Las Vegas Theme (Neon Violet)</option>
+                            <option value="singapore">Night GP Theme (Cyber Neon Teal)</option>
+                            <option value="abu dhabi">Desert GP Theme (Electric Blue)</option>
+                            <option value="spa">Belgian Theme (Gold)</option>
+                            <option value="suzuka">Japanese Theme (Sakura Pink)</option>
+                            <option value="melbourne">Australian Theme (Aussie Gold)</option>
+                            <option value="canada">Canadian Theme (Maple Red)</option>
+                            <option value="china">Chinese Theme (Dragon Red)</option>
+                            <option value="brazil">Brazilian Theme (Senna Green)</option>
+                            <option value="hungary">Hungarian Theme (Fuchsia)</option>
+                            <option value="mexico">Mexican Theme (Emerald Green)</option>
+                            <option value="default">Default FIFA Theme (Green)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- FIFA Stream Sources -->
@@ -1515,7 +1537,10 @@
                             $scope.config.fifa = {};
                         }
                         if (!$scope.config.fifa.raceData) {
-                            $scope.config.fifa.raceData = { round: '', name: '', location: '', circuit: '', date: '', laps: '' };
+                            $scope.config.fifa.raceData = { round: '', name: '', location: '', circuit: '', date: '', laps: '', theme: '' };
+                        }
+                        if ($scope.config.fifa.raceData.theme === undefined) {
+                            $scope.config.fifa.raceData.theme = '';
                         }
                         if (!$scope.config.fifa.streamLinks) {
                             $scope.config.fifa.streamLinks = [];
