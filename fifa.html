@@ -12,8 +12,8 @@
             const savedOverride = localStorage.getItem('f1_theme_override') || '';
             let key = (savedOverride !== '') ? savedOverride : savedLoc;
             const loc = key.toLowerCase();
-            let primary = '#e60000';
-            let glow = 'rgba(230, 0, 0, 0.15)';
+            let primary = '#00ff55';
+            let glow = 'rgba(0, 255, 85, 0.15)';
             if (loc.includes('monaco') || loc.includes('monte carlo')) {
                 primary = '#e2001a'; glow = 'rgba(226, 0, 26, 0.15)';
             } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
@@ -2240,9 +2240,9 @@
                 localStorage.setItem('f1_theme_override', themeOverride || '');
                 const loc = key.toLowerCase();
                 let theme = {
-                    primary: '#e60000',      // Default F1 Red
-                    glow: 'rgba(230, 0, 0, 0.15)',
-                    name: 'Classic F1 Theme'
+                    primary: '#00ff55',      // Default FIFA Green
+                    glow: 'rgba(0, 255, 85, 0.15)',
+                    name: 'FIFA 2026 Theme'
                 };
 
                 if (loc.includes('monaco') || loc.includes('monte carlo')) {
@@ -2378,12 +2378,14 @@
                 // Set activeSport bound value
                 $scope.activeSport = data.activeSport || 'f1';
 
-                // Trigger FIFA dynamic theme
-                applyFifaTheme();
-
                 // Map FIFA specific settings from data.fifa
                 const fifa = data.fifa || {};
                 $scope.raceData = fifa.raceData || {};
+
+                // Trigger dynamic theming based on FIFA match location or theme override
+                if (!$scope.themeOverrideActive) {
+                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                }
                 $scope.twitchChannel = fifa.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = fifa.pinnedMessage || null;
                 $scope.siteMode = fifa.siteMode || 'main';
