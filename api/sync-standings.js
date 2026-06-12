@@ -165,71 +165,81 @@ async function syncStreamsAutomatically(config, ref) {
   if (!config.autoSyncStreams) return;
 
   try {
-    let rawLocation = config.raceData?.location || "";
-    if (!rawLocation && config.raceData?.name) {
-      rawLocation = config.raceData.name;
-    }
-    
-    let location = "";
-    if (rawLocation) {
-      let parts = rawLocation.split(',');
-      let lastPart = parts[parts.length - 1].trim();
-      location = lastPart.replace(/[0-9]/g, '').trim();
-    }
-
-    if (!location) return;
-
-    let sessionAbbr = "FP1"; // Fallback
-    if (config.schedule && config.schedule.length > 0) {
-      const now = Date.now();
-      let closestFutureTime = Infinity;
-      let activeSess = null;
-
-      config.schedule.forEach(s => {
-        if (!s.timer) return;
-        const start = new Date(s.timer).getTime();
-        if (isNaN(start)) return;
-        
-        let end = start + (2 * 60 * 60 * 1000); 
-        if (s.endTime && s.endTime.includes(':')) {
-          const parts = s.endTime.split(':');
-          const d = new Date(s.timer);
-          d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
-          end = d.getTime();
-          if (end < start) end += 86400000;
+    let searchTokens = [];
+    if (config.streamKeyword) {
+      searchTokens = config.streamKeyword.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(t => t.length > 0);
+    } else {
+      let rawLocation = config.raceData?.location || "";
+      if (!rawLocation && config.raceData?.name) {
+        rawLocation = config.raceData.name;
+      }
+      
+      let location = "";
+      if (rawLocation) {
+        let parts = rawLocation.split(',');
+        if (parts.length >= 2) {
+          location = parts[parts.length - 2].trim().replace(/[0-9]/g, '').trim();
+        } else {
+          location = parts[parts.length - 1].trim().replace(/[0-9]/g, '').trim();
         }
-
-        if (now >= start && now < end) {
-          activeSess = s;
-        } else if (now < start && start < closestFutureTime) {
-          closestFutureTime = start;
-          if (!activeSess) activeSess = s;
-        }
-      });
-
-      if (!activeSess && config.schedule.length > 0) {
-         activeSess = config.schedule[0];
       }
 
-      if (activeSess && activeSess.name) {
-        let nameLower = activeSess.name.toLowerCase();
-        if (nameLower.includes("practice 1") || nameLower.includes("fp1")) {
-          sessionAbbr = "FP1";
-        } else if (nameLower.includes("practice 2") || nameLower.includes("fp2")) {
-          sessionAbbr = "FP2";
-        } else if (nameLower.includes("practice 3") || nameLower.includes("fp3")) {
-          sessionAbbr = "FP3";
-        } else if (nameLower.includes("qualifying") || nameLower.includes("qualy") || nameLower.includes("qual")) {
-          sessionAbbr = "Qualifying";
-        } else if (nameLower.includes("sprint")) {
-          sessionAbbr = "Sprint";
-        } else if (nameLower.includes("race") || nameLower.includes("grand prix")) {
-          sessionAbbr = "Race";
+      if (!location) return;
+
+      let sessionAbbr = "FP1"; // Fallback
+      if (config.schedule && config.schedule.length > 0) {
+        const now = Date.now();
+        let closestFutureTime = Infinity;
+        let activeSess = null;
+
+        config.schedule.forEach(s => {
+          if (!s.timer) return;
+          const start = new Date(s.timer).getTime();
+          if (isNaN(start)) return;
+          
+          let end = start + (2 * 60 * 60 * 1000); 
+          if (s.endTime && s.endTime.includes(':')) {
+            const parts = s.endTime.split(':');
+            const d = new Date(s.timer);
+            d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+            end = d.getTime();
+            if (end < start) end += 86400000;
+          }
+
+          if (now >= start && now < end) {
+            activeSess = s;
+          } else if (now < start && start < closestFutureTime) {
+            closestFutureTime = start;
+            if (!activeSess) activeSess = s;
+          }
+        });
+
+        if (!activeSess && config.schedule.length > 0) {
+           activeSess = config.schedule[0];
+        }
+
+        if (activeSess && activeSess.name) {
+          let nameLower = activeSess.name.toLowerCase();
+          if (nameLower.includes("practice 1") || nameLower.includes("fp1")) {
+            sessionAbbr = "FP1";
+          } else if (nameLower.includes("practice 2") || nameLower.includes("fp2")) {
+            sessionAbbr = "FP2";
+          } else if (nameLower.includes("practice 3") || nameLower.includes("fp3")) {
+            sessionAbbr = "FP3";
+          } else if (nameLower.includes("qualifying") || nameLower.includes("qualy") || nameLower.includes("qual")) {
+            sessionAbbr = "Qualifying";
+          } else if (nameLower.includes("sprint")) {
+            sessionAbbr = "Sprint";
+          } else if (nameLower.includes("race") || nameLower.includes("grand prix")) {
+            sessionAbbr = "Race";
+          }
         }
       }
+
+      searchTokens = ["f1", location.toLowerCase(), sessionAbbr.toLowerCase()];
     }
 
-    let searchTokens = ["f1", location.toLowerCase(), sessionAbbr.toLowerCase()];
+    if (searchTokens.length === 0) return;
 
     const { data } = await axios.get('https://api.pushembdz.store/v1/streams', { 
       timeout: 8000,
@@ -288,7 +298,9 @@ async function syncStreamsAutomatically(config, ref) {
         });
 
         await ref.update({ streamLinks: newLinks });
-        console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore.`);
+        console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore matching: ${searchTokens.join(' ')}`);
+      } else {
+        console.log(`[sync] No matching streams found for tokens: ${searchTokens.join(' ')}`);
       }
     }
   } catch (err) {

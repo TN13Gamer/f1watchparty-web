@@ -1019,7 +1019,15 @@
                     <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 200px;">
                             <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Search Keyword</label>
-                            <input type="text" ng-model="streamFetchQuery" placeholder="e.g. F1 - Monaco - FP1" style="margin-bottom: 0;">
+                            <input type="text" ng-model="config.streamKeyword" placeholder="e.g. F1 - Monaco - FP1" style="margin-bottom: 0;">
+                            <div style="font-size: 11px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span style="color: var(--text-muted);">
+                                    Suggested: <strong style="color: var(--primary);">{{suggestedKeyword}}</strong>
+                                </span>
+                                <button type="button" class="dashed-btn" ng-click="config.streamKeyword = suggestedKeyword" style="padding: 2px 8px; font-size: 9px; height: auto; margin: 0; border-radius: 4px;">
+                                    Use Suggestion
+                                </button>
+                            </div>
                         </div>
                         <button class="action-btn" ng-click="autoFetchStreams()" ng-disabled="fetchingStreams" style="height: 44px; padding: 0 20px;">
                             <i class="fa-solid" ng-class="fetchingStreams ? 'fa-spinner fa-spin' : 'fa-download'"></i>
@@ -1499,6 +1507,7 @@
                         if (!$scope.config.weather) $scope.config.weather = { air: 0, track: 0, condition: 'sunny' };
                         if (!$scope.config.raceData) $scope.config.raceData = {};
                         if (!$scope.config.nextRace) $scope.config.nextRace = {};
+                        if (!$scope.config.streamKeyword) $scope.config.streamKeyword = "";
                         
                         // Initialize widgets settings with default true
                         if (!$scope.config.widgets) {
@@ -2073,7 +2082,7 @@
 
             // --- STREAM AUTOFETCH LOGIC ---
             $scope.fetchingStreams = false;
-            $scope.streamFetchQuery = "";
+            $scope.suggestedKeyword = "";
 
             $scope.updateFetchQuerySuggestion = function() {
                 if (!$scope.config || !$scope.config.raceData) return;
@@ -2083,14 +2092,15 @@
                     rawLocation = $scope.config.raceData.name;
                 }
                 
-                // Clean location: extract city/country if it's a full address
+                // Clean location: extract city (second to last part if comma separated) or fallback to last part
                 let location = "";
                 if (rawLocation) {
-                    // Take the last part of comma-separated string (usually city/country)
                     let parts = rawLocation.split(',');
-                    let lastPart = parts[parts.length - 1].trim();
-                    // Remove all numbers (zip codes, road numbers)
-                    location = lastPart.replace(/[0-9]/g, '').trim();
+                    if (parts.length >= 2) {
+                        location = parts[parts.length - 2].trim().replace(/[0-9]/g, '').trim();
+                    } else {
+                        location = parts[parts.length - 1].trim().replace(/[0-9]/g, '').trim();
+                    }
                 }
                 
                 let sessionAbbr = "FP1"; // Fallback
@@ -2118,9 +2128,14 @@
                 }
                 
                 if (location) {
-                    $scope.streamFetchQuery = "F1 - " + location + " - " + sessionAbbr;
+                    $scope.suggestedKeyword = "F1 - " + location + " - " + sessionAbbr;
                 } else {
-                    $scope.streamFetchQuery = "F1 - - " + sessionAbbr;
+                    $scope.suggestedKeyword = "F1 - - " + sessionAbbr;
+                }
+                
+                // Only overwrite config.streamKeyword if it is currently empty or undefined
+                if (!$scope.config.streamKeyword) {
+                    $scope.config.streamKeyword = $scope.suggestedKeyword;
                 }
             };
 
@@ -2136,7 +2151,7 @@
                 if ($scope.fetchingStreams) return;
                 $scope.fetchingStreams = true;
 
-                const rawQuery = ($scope.streamFetchQuery || "").trim().toLowerCase();
+                const rawQuery = ($scope.config.streamKeyword || "").trim().toLowerCase();
                 if (!rawQuery) {
                     $scope.showToast("Please enter a search keyword.", "error");
                     $scope.fetchingStreams = false;
@@ -2201,7 +2216,7 @@
                     }
 
                     if (matched.length === 0) {
-                        $scope.showToast("No matching streams found for '" + $scope.streamFetchQuery + "'", "error");
+                        $scope.showToast("No matching streams found for '" + $scope.config.streamKeyword + "'", "error");
                         return;
                     }
 
@@ -2227,7 +2242,7 @@
 
                     $scope.config.streamLinks = newLinks;
                     $scope.showToast("Imported " + newLinks.length + " streams matching query!", "success");
-                    $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.streamFetchQuery + "'");
+                    $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.config.streamKeyword + "'");
                 }
 
                 $http.get(targetUrl)
