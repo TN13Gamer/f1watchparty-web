@@ -528,7 +528,7 @@
                 updateSportStatus('f1', data, statusF1El, (intervalId) => { f1TimerInterval = intervalId; }, f1TimerInterval);
                 
                 // --- Update FIFA Status ---
-                updateSportStatus('fifa', data.fifa, statusFifaEl, (intervalId) => { fifaTimerInterval = intervalId; }, fifaTimerInterval);
+                updateFifaStatus(data.fifa, statusFifaEl, (intervalId) => { fifaTimerInterval = intervalId; }, fifaTimerInterval);
             } else {
                 setOffline(statusF1El, f1TimerInterval);
                 setOffline(statusFifaEl, fifaTimerInterval);
@@ -632,6 +632,75 @@
 
             } else {
                 // Nothing scheduled — Offline
+                badge.className = 'status-badge';
+                textEl.innerText = 'Offline';
+            }
+        }
+
+        // FIFA-specific badge: uses customTimer.target as match start (2h match window)
+        function updateFifaStatus(fifaData, badge, registerInterval, currentInterval) {
+            if (currentInterval) clearInterval(currentInterval);
+            const textEl = badge.querySelector('.status-text');
+
+            if (!fifaData) {
+                badge.className = 'status-badge';
+                textEl.innerText = 'Offline';
+                return;
+            }
+
+            const now = Date.now();
+            const customTimer = fifaData.customTimer || {};
+            const raceData = fifaData.raceData || {};
+            const matchName = raceData.name || 'Match';
+
+            // Use customTimer.target as match kick-off time (if enabled + set)
+            const targetDate = (customTimer.enabled && customTimer.target)
+                ? safeDate(customTimer.target)
+                : null;
+
+            if (targetDate && !isNaN(targetDate.getTime())) {
+                const matchStart = targetDate.getTime();
+                const matchEnd = matchStart + (2 * 60 * 60 * 1000); // 2h match window
+
+                if (now >= matchStart && now < matchEnd) {
+                    // LIVE — match is ongoing
+                    badge.className = 'status-badge live';
+                    function tickLive() {
+                        const remaining = matchEnd - Date.now();
+                        if (remaining <= 0) { textEl.innerText = 'LIVE NOW'; return; }
+                        const h = Math.floor(remaining / 3600000);
+                        const m = Math.floor((remaining % 3600000) / 60000);
+                        const s = Math.floor((remaining % 60000) / 1000);
+                        textEl.innerText = `LIVE: ${matchName} (Ends in ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')})`;
+                    }
+                    tickLive();
+                    registerInterval(setInterval(tickLive, 1000));
+
+                } else if (now < matchStart) {
+                    // Upcoming — countdown to kick-off
+                    badge.className = 'status-badge';
+                    function tickCountdown() {
+                        const diff = matchStart - Date.now();
+                        if (diff <= 0) { textEl.innerText = `${matchName}: Kick-off Now`; return; }
+                        const days = Math.floor(diff / 86400000);
+                        const hours = Math.floor((diff % 86400000) / 3600000);
+                        const minutes = Math.floor((diff % 3600000) / 60000);
+                        const seconds = Math.floor((diff % 60000) / 1000);
+                        let timeStr = '';
+                        if (days > 0) timeStr += `${days}d `;
+                        timeStr += `${hours.toString().padStart(2,'0')}h ${minutes.toString().padStart(2,'0')}m ${seconds.toString().padStart(2,'0')}s`;
+                        textEl.innerText = `${matchName} IN ${timeStr}`;
+                    }
+                    tickCountdown();
+                    registerInterval(setInterval(tickCountdown, 1000));
+
+                } else {
+                    // Match time has fully passed
+                    badge.className = 'status-badge';
+                    textEl.innerText = 'Offline';
+                }
+            } else {
+                // No timer configured
                 badge.className = 'status-badge';
                 textEl.innerText = 'Offline';
             }
