@@ -1191,7 +1191,30 @@
                 <!-- FIFA Match Details -->
                 <div class="admin-section">
                     <h3><span><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match Details</span></h3>
-                    <div class="grid-row">
+
+                    <!-- Auto-Sync Details from worldcup26.ir -->
+                    <div style="background: rgba(0,255,85,0.05); border: 1px solid rgba(0,255,85,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-globe" style="margin-right: 5px;"></i> Auto-Detect Match from worldcup26.ir
+                        </h4>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                            Automatically detects the current live or next upcoming FIFA World Cup 2026 match and updates Match Title, Round, Stadium, Date &amp; Timer every 60s via backend cron.
+                        </p>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: bold; letter-spacing: normal; flex: 1;">
+                                <input type="checkbox" ng-model="config.fifa.autoSyncDetails" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                                <span>Enable Auto-Detect Match Details (60s cron)</span>
+                            </label>
+                            <button type="button" class="action-btn" ng-click="autoFetchFifaDetails()" ng-disabled="fetchingFifaDetails" style="height: 40px; padding: 0 16px; background-color: #00ff55; color: #000; border-color: #00ff88; white-space: nowrap;">
+                                <i class="fa-solid" ng-class="fetchingFifaDetails ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
+                                {{ fetchingFifaDetails ? 'Syncing...' : 'Sync Now' }}
+                            </button>
+                        </div>
+                        <div ng-if="lastFifaDetailsSync" style="margin-top: 8px; font-size: 11px; color: #00ff55;">
+                            ✓ Last synced: <strong>{{lastFifaDetailsSync}}</strong> — <span style="color:#eee;">{{config.fifa.raceData.name}}</span>
+                        </div>
+                    </div>
+
                         <div class="input-group"><label>Match / Tournament Round</label><input type="text" ng-model="config.fifa.raceData.round" placeholder="e.g. Group A / Final"></div>
                         <div class="input-group"><label>Match Title (Teams)</label><input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Argentina vs France"></div>
                     </div>
@@ -1252,7 +1275,7 @@
                                 {{ fetchingFifaStreams ? 'Fetching...' : 'Fetch & Import' }}
                             </button>
                         </div>
-                        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; display: flex; gap: 15px; flex-wrap: wrap;">
                             <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
                                 <input type="checkbox" ng-model="config.fifa.autoSyncStreams" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
                                 <span>Enable Auto-Sync Streams (Automatically updates links every 60s via backend cron)</span>
@@ -2179,6 +2202,49 @@
                         $scope.fetchingFifaStreams = false;
                         var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
                         $scope.showToast("Fetch streams failed: " + errMsg, "error");
+                        if (!$scope.$$phase) $scope.$apply();
+                    });
+            };
+
+            $scope.fetchingFifaDetails = false;
+            $scope.lastFifaDetailsSync = null;
+            $scope.autoFetchFifaDetails = function() {
+                if ($scope.fetchingFifaDetails) return;
+                $scope.fetchingFifaDetails = true;
+                $scope.showToast("Detecting next match from worldcup26.ir...", "info");
+
+                var primaryUrl = '/api/sync-standings?manual=true';
+                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+
+                $http.get(targetUrl)
+                    .then(() => db.collection("app_data").doc("live_config").get())
+                    .then((doc) => {
+                        if (doc.exists) {
+                            $scope.$apply(() => {
+                                const data = doc.data();
+                                if (data.fifa) {
+                                    if (data.fifa.raceData) {
+                                        $scope.config.fifa.raceData = data.fifa.raceData;
+                                    }
+                                    if (data.fifa.customTimer) {
+                                        $scope.config.fifa.customTimer = data.fifa.customTimer;
+                                    }
+                                }
+                                const now = new Date();
+                                $scope.lastFifaDetailsSync = now.toLocaleTimeString();
+                                const matchName = data.fifa && data.fifa.raceData && data.fifa.raceData.name;
+                                $scope.showToast("Match details updated: " + (matchName || "?"), "success");
+                                $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
+                            });
+                        }
+                        $scope.fetchingFifaDetails = false;
+                        if (!$scope.$$phase) $scope.$apply();
+                    })
+                    .catch(err => {
+                        $scope.fetchingFifaDetails = false;
+                        var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
+                        $scope.showToast("FIFA details sync failed: " + errMsg, "error");
                         if (!$scope.$$phase) $scope.$apply();
                     });
             };

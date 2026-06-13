@@ -1895,7 +1895,19 @@
                     <div class="meta-grid">
                         <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
                         <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
-                        <div class="meta-item"><strong>Date</strong>{{raceData.date}}</div>
+                        <div class="meta-item"><strong>Kickoff</strong>{{raceData.date}}</div>
+                        <div class="meta-item" ng-if="raceData.isLive">
+                            <strong>Score</strong>
+                            <span style="font-weight: 900; font-size: 20px; color: #00ff55; letter-spacing: 2px;">
+                                {{raceData.homeScore}} – {{raceData.awayScore}}
+                            </span>
+                            <span style="margin-left: 6px; background: #00ff55; color: #000; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">LIVE</span>
+                        </div>
+                        <div class="meta-item" ng-if="raceData.isFinished && !raceData.isLive">
+                            <strong>Final Score</strong>
+                            <span style="font-weight: 900; font-size: 18px; color: #fff;">{{raceData.homeScore}} – {{raceData.awayScore}}</span>
+                            <span style="margin-left: 6px; background: #555; color: #ccc; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">FT</span>
+                        </div>
                     </div>
                 </div>
             </div>

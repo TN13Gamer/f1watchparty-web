@@ -30,7 +30,11 @@ app.use(express.static(path.join(__dirname)));
 // Firebase initialization
 let db;
 try {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  if (admin.apps.length) {
+    // Already initialized (e.g. by a required module like sync-standings.js)
+    db = admin.firestore();
+    console.log('[server] Reusing existing Firebase app instance.');
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     // Vercel / Production mode: load from environment variable
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
@@ -253,6 +257,105 @@ async function syncStreamsAutomatically(config, ref) {
     }
 }
 
+const STADIUM_MAP_SERVER = {
+    '1':  { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico' },
+    '2':  { name: 'Estadio Akron', city: 'Guadalajara', country: 'Mexico' },
+    '3':  { name: 'Estadio BBVA', city: 'Monterrey', country: 'Mexico' },
+    '4':  { name: 'AT&T Stadium', city: 'Dallas', country: 'United States' },
+    '5':  { name: 'NRG Stadium', city: 'Houston', country: 'United States' },
+    '6':  { name: 'GEHA Field at Arrowhead Stadium', city: 'Kansas City', country: 'United States' },
+    '7':  { name: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'United States' },
+    '8':  { name: 'Hard Rock Stadium', city: 'Miami', country: 'United States' },
+    '9':  { name: 'Gillette Stadium', city: 'Boston', country: 'United States' },
+    '10': { name: 'Lincoln Financial Field', city: 'Philadelphia', country: 'United States' },
+    '11': { name: 'MetLife Stadium', city: 'New York/New Jersey', country: 'United States' },
+    '12': { name: 'BMO Field', city: 'Toronto', country: 'Canada' },
+    '13': { name: 'BC Place', city: 'Vancouver', country: 'Canada' },
+    '14': { name: 'Lumen Field', city: 'Seattle', country: 'United States' },
+    '15': { name: "Levi's Stadium", city: 'San Francisco Bay Area', country: 'United States' },
+    '16': { name: 'SoFi Stadium', city: 'Los Angeles', country: 'United States' },
+};
+
+async function syncFifaMatchDetailsLocal(config, ref) {
+    try {
+        const response = await axios.get('https://worldcup26.ir/get/games', {
+            timeout: 8000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        const games = response.data && response.data.games;
+        if (!Array.isArray(games) || games.length === 0) return;
+
+        const now = Date.now();
+        function parseGameDate(localDate) {
+            if (!localDate) return null;
+            const [datePart, timePart] = localDate.split(' ');
+            const [month, day, year] = datePart.split('/');
+            const [hour, minute] = timePart.split(':');
+            return Date.UTC(parseInt(year), parseInt(month)-1, parseInt(day), parseInt(hour)+4, parseInt(minute));
+        }
+
+        let chosen = games.find(g => g.time_elapsed === 'live');
+        if (!chosen) {
+            const upcoming = games
+                .filter(g => g.time_elapsed === 'notstarted')
+                .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date) }))
+                .filter(g => g._kickoffMs && g._kickoffMs > now)
+                .sort((a, b) => a._kickoffMs - b._kickoffMs);
+            chosen = upcoming[0] || null;
+        }
+        if (!chosen) return;
+
+        const isKnockout = !chosen.home_team_name_en;
+        const matchName = isKnockout
+            ? `${chosen.home_team_label || 'TBD'} vs ${chosen.away_team_label || 'TBD'}`
+            : `${chosen.home_team_name_en} vs ${chosen.away_team_name_en}`;
+
+        const roundMap = { group: `Group ${chosen.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
+        const round = roundMap[chosen.type] || chosen.group || 'World Cup 2026';
+
+        const stadium = STADIUM_MAP_SERVER[chosen.stadium_id] || { name: 'Stadium', city: '', country: '' };
+        const location = `${stadium.city}, ${stadium.country}`;
+
+        const [datePart, timePart] = (chosen.local_date || '').split(' ');
+        const [mm, dd, yyyy] = (datePart || '').split('/');
+        const isoTarget = `${yyyy}-${mm}-${dd}T${timePart}:00`;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const friendlyDate = `${parseInt(dd, 10)} ${months[parseInt(mm, 10)-1]} ${timePart}`;
+
+        const isLive = chosen.time_elapsed === 'live';
+        const isFinished = chosen.finished === 'TRUE';
+        const currentFifa = config.fifa || {};
+        const currentRaceData = currentFifa.raceData || {};
+
+        const updatedFifa = {
+            ...currentFifa,
+            raceData: {
+                ...currentRaceData,
+                name: matchName,
+                round: round,
+                circuit: stadium.name,
+                location: location,
+                date: friendlyDate,
+                homeScore: chosen.home_score || '0',
+                awayScore: chosen.away_score || '0',
+                isLive: isLive,
+                isFinished: isFinished,
+            },
+            customTimer: {
+                ...(currentFifa.customTimer || {}),
+                enabled: true,
+                target: isoTarget,
+                label: isLive ? 'LIVE NOW' : 'MATCH KICKS OFF',
+            }
+        };
+
+        await ref.update({ fifa: updatedFifa });
+        console.log(`[local-sync] FIFA: "${matchName}" | ${round} | ${stadium.name} | Kickoff: ${isoTarget} | Live: ${isLive}`);
+    } catch (err) {
+        console.error('[local-sync] FIFA details error:', err.message);
+    }
+}
+
 async function syncToFirebase() {
     if (!db) {
         console.log('Simulating sync to Firebase...', new Date().toLocaleTimeString());
@@ -272,6 +375,15 @@ async function syncToFirebase() {
         if (configDoc.exists) {
             const config = configDoc.data();
             await syncStreamsAutomatically(config, liveConfigRef);
+
+            // Auto-sync FIFA match details from worldcup26.ir
+            if (config.fifa && config.fifa.autoSyncDetails !== false) {
+                try {
+                    await syncFifaMatchDetailsLocal(config, liveConfigRef);
+                } catch(fe) {
+                    console.error('[local-sync] FIFA details sync error:', fe.message);
+                }
+            }
         }
     } catch (e) {
         console.error('Firebase sync error:', e);

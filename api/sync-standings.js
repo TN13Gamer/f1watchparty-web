@@ -346,6 +346,152 @@ async function syncStreamsAutomatically(config, ref) {
   }
 }
 
+// Stadium ID → name/city/country map (built from worldcup26.ir data)
+const STADIUM_MAP = {
+  '1':  { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico' },
+  '2':  { name: 'Estadio Akron', city: 'Guadalajara', country: 'Mexico' },
+  '3':  { name: 'Estadio BBVA', city: 'Monterrey', country: 'Mexico' },
+  '4':  { name: 'AT&T Stadium', city: 'Dallas', country: 'United States' },
+  '5':  { name: 'NRG Stadium', city: 'Houston', country: 'United States' },
+  '6':  { name: 'GEHA Field at Arrowhead Stadium', city: 'Kansas City', country: 'United States' },
+  '7':  { name: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'United States' },
+  '8':  { name: 'Hard Rock Stadium', city: 'Miami', country: 'United States' },
+  '9':  { name: 'Gillette Stadium', city: 'Boston', country: 'United States' },
+  '10': { name: 'Lincoln Financial Field', city: 'Philadelphia', country: 'United States' },
+  '11': { name: 'MetLife Stadium', city: 'New York/New Jersey', country: 'United States' },
+  '12': { name: 'BMO Field', city: 'Toronto', country: 'Canada' },
+  '13': { name: 'BC Place', city: 'Vancouver', country: 'Canada' },
+  '14': { name: 'Lumen Field', city: 'Seattle', country: 'United States' },
+  '15': { name: "Levi's Stadium", city: 'San Francisco Bay Area', country: 'United States' },
+  '16': { name: 'SoFi Stadium', city: 'Los Angeles', country: 'United States' },
+};
+
+/**
+ * Fetch current/next FIFA match from worldcup26.ir and update Firestore details.
+ * Updates: raceData.name, raceData.round, raceData.circuit, raceData.location,
+ *          raceData.date (for pill countdown), customTimer.target (for kickoff),
+ *          raceData.homeScore, raceData.awayScore, raceData.isLive, raceData.isFinished
+ */
+async function syncFifaMatchDetails(config, ref) {
+  const fifa = config.fifa || {};
+  // Only auto-update if autoSyncDetails is true (or not set — defaults to on)
+  if (fifa.autoSyncDetails === false) {
+    console.log('[sync-fifa-details] autoSyncDetails is disabled. Skipping.');
+    return;
+  }
+
+  try {
+    const response = await axios.get('https://worldcup26.ir/get/games', {
+      timeout: 8000,
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    const games = response.data && response.data.games;
+    if (!Array.isArray(games) || games.length === 0) {
+      console.log('[sync-fifa-details] No games returned from worldcup26.ir.');
+      return;
+    }
+
+    const now = Date.now();
+
+    // Helper: parse local_date "MM/DD/YYYY HH:MM" → UTC ms (assume US Eastern = UTC-4 during summer)
+    function parseGameDate(localDate) {
+      if (!localDate) return null;
+      // Format: "06/12/2026 18:00"
+      const [datePart, timePart] = localDate.split(' ');
+      const [month, day, year] = datePart.split('/');
+      const [hour, minute] = timePart.split(':');
+      // US Eastern Daylight Time (UTC-4) during the tournament
+      const utcMs = Date.UTC(parseInt(year), parseInt(month)-1, parseInt(day), parseInt(hour)+4, parseInt(minute));
+      return utcMs;
+    }
+
+    // 1) Find live match first
+    let chosen = games.find(g => g.time_elapsed === 'live');
+
+    // 2) If none live, pick next upcoming (closest future kickoff)
+    if (!chosen) {
+      const upcoming = games
+        .filter(g => g.time_elapsed === 'notstarted')
+        .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date) }))
+        .filter(g => g._kickoffMs && g._kickoffMs > now)
+        .sort((a, b) => a._kickoffMs - b._kickoffMs);
+      chosen = upcoming[0] || null;
+    }
+
+    if (!chosen) {
+      console.log('[sync-fifa-details] No live or upcoming group matches found.');
+      return;
+    }
+
+    // Build match name — for group matches use team names; for knockouts use labels
+    const isKnockout = !chosen.home_team_name_en;
+    const matchName = isKnockout
+      ? `${chosen.home_team_label || 'TBD'} vs ${chosen.away_team_label || 'TBD'}`
+      : `${chosen.home_team_name_en} vs ${chosen.away_team_name_en}`;
+
+    // Round label
+    const roundMap = { group: `Group ${chosen.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
+    const round = roundMap[chosen.type] || chosen.group || 'World Cup 2026';
+
+    // Stadium info
+    const stadium = STADIUM_MAP[chosen.stadium_id] || { name: 'Stadium', city: '', country: '' };
+    const location = `${stadium.city}, ${stadium.country}`;
+
+    // Kickoff datetime for timer (ISO format compatible with customTimer.target)
+    const kickoffMs = parseGameDate(chosen.local_date);
+    // Format as YYYY-MM-DDTHH:MM:00 in local time (treat as the raw local time from the API)
+    const [datePart, timePart] = (chosen.local_date || '').split(' ');
+    const [mm, dd, yyyy] = (datePart || '').split('/');
+    const isoTarget = `${yyyy}-${mm}-${dd}T${timePart}:00`;
+
+    // Friendly date string for display (e.g. "13 Jun 18:00")
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthIdx = parseInt(mm, 10) - 1;
+    const friendlyDate = `${parseInt(dd, 10)} ${months[monthIdx]} ${timePart}`;
+
+    const isLive = chosen.time_elapsed === 'live';
+    const isFinished = chosen.finished === 'TRUE';
+    const homeScore = chosen.home_score || '0';
+    const awayScore = chosen.away_score || '0';
+
+    // Build updated fifa object (preserve existing keys, only update match-related fields)
+    const currentFifa = config.fifa || {};
+    const currentRaceData = currentFifa.raceData || {};
+    const updatedFifa = {
+      ...currentFifa,
+      autoSyncDetails: currentFifa.autoSyncDetails !== false, // preserve flag
+      raceData: {
+        ...currentRaceData,
+        name: matchName,
+        round: round,
+        circuit: stadium.name,
+        location: location,
+        date: friendlyDate,
+        homeScore: homeScore,
+        awayScore: awayScore,
+        isLive: isLive,
+        isFinished: isFinished,
+      },
+      // Auto-update customTimer target to kickoff time (enable it too)
+      customTimer: {
+        ...(currentFifa.customTimer || {}),
+        enabled: true,
+        target: isoTarget,
+        label: isLive ? 'LIVE NOW' : 'MATCH KICKS OFF',
+      }
+    };
+
+    await ref.update({ fifa: updatedFifa });
+    console.log(`[sync-fifa-details] Updated FIFA match: "${matchName}" | ${round} | ${stadium.name}, ${location} | Kickoff: ${isoTarget} | Live: ${isLive}`);
+
+    // Return the updated config so syncFifaStreams can use the new name
+    return updatedFifa;
+  } catch (err) {
+    console.error('[sync-fifa-details] Error:', err.message);
+    // Non-fatal — streams sync should still run
+  }
+}
+
 async function syncFifaStreams(config, ref) {
   const fifa = config.fifa || {};
   console.log('[sync-fifa] Starting FIFA stream sync. config.fifa exists:', !!config.fifa, 'autoSyncStreams:', fifa.autoSyncStreams);
@@ -472,7 +618,7 @@ module.exports = async (req, res) => {
     const doc = await ref.get();
     if (!doc.exists) return res.json({ ok: false, message: 'live_config not found' });
 
-    const config = doc.data();
+    let config = doc.data();
 
     // 1. Sync F1 Standings (if allowed and standings available)
     let standingsSynced = false;
@@ -580,7 +726,23 @@ module.exports = async (req, res) => {
       f1StreamsError = err.message;
     }
 
-    // 3. Automatically sync FIFA streams from streamed.pk
+    // 3. Auto-update FIFA match details from worldcup26.ir (name, score, venue, timer)
+    let fifaDetailsSynced = false;
+    let fifaDetailsError = null;
+    let updatedFifaConfig = null;
+    try {
+      updatedFifaConfig = await syncFifaMatchDetails(config, ref);
+      if (updatedFifaConfig) {
+        // Refresh config so stream sync uses the newly set match name
+        config = { ...config, fifa: updatedFifaConfig };
+      }
+      fifaDetailsSynced = true;
+    } catch (err) {
+      console.error('[sync] FIFA details sync error:', err.message);
+      fifaDetailsError = err.message;
+    }
+
+    // 4. Automatically sync FIFA streams from streamed.pk
     let fifaStreamsSynced = false;
     let fifaStreamsError = null;
     try {
@@ -595,6 +757,7 @@ module.exports = async (req, res) => {
       ok: true,
       standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
       f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
+      fifaDetails: { synced: fifaDetailsSynced, error: fifaDetailsError },
       fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
     });
   } catch(err) {
