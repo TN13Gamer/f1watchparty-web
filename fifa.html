@@ -125,7 +125,7 @@
             height: 100vh;
             background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9));
             /* Gradient overlay */
-            z-index: -2;
+            z-index: -3;
         }
 
         #vanta-overlay {
@@ -135,8 +135,66 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.5;
+            opacity: 0.75;
             pointer-events: none;
+        }
+
+        /* World Cup 2026 Wavy Background */
+        .fifa-wavy-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #030612 0%, #010206 100%);
+            pointer-events: none;
+        }
+
+        .fifa-gradient-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 20%, rgba(1, 2, 6, 0.85) 90%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .fifa-waves-svg {
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            opacity: 0.85;
+            filter: blur(25px);
+        }
+
+        .fifa-waves-svg path {
+            transform-origin: center;
+            animation: wave-float-fifa 25s infinite alternate ease-in-out;
+        }
+
+        .fifa-waves-svg path:nth-child(1) { animation-duration: 22s; animation-delay: 0s; }
+        .fifa-waves-svg path:nth-child(2) { animation-duration: 28s; animation-delay: -4s; }
+        .fifa-waves-svg path:nth-child(3) { animation-duration: 32s; animation-delay: -8s; }
+        .fifa-waves-svg path:nth-child(4) { animation-duration: 36s; animation-delay: -12s; }
+        .fifa-waves-svg path:nth-child(5) { animation-duration: 42s; animation-delay: -16s; }
+
+        @keyframes wave-float-fifa {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            50% { transform: translate(2%, 3%) rotate(3deg) scale(1.06); }
+            100% { transform: translate(-2%, -2%) rotate(-3deg) scale(0.97); }
+        }
+
+        .logo-text.fifa-logo-gradient {
+            background: linear-gradient(135deg, #00ff55 0%, #00e5ff 30%, #ffcc00 70%, #ff3b30 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
         }
 
         /* 3D Depth Utilities */
@@ -159,7 +217,8 @@
             background-position: 0 0, 0 0, 5px 5px;
             background-size: 100% 100%, 10px 10px, 10px 10px;
 
-            border-bottom: 2px solid var(--f1-red);
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, #3cac3b, #2a398d, #e61d25, #ff9900, #1d70b8) 1;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             padding: 15px 30px;
             display: flex;
@@ -1772,6 +1831,18 @@
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
     <div class="video-overlay"></div>
+    <div class="fifa-wavy-bg">
+        <div class="fifa-gradient-mask"></div>
+        <svg class="fifa-waves-svg" viewBox="0 0 1440 1000" preserveAspectRatio="none">
+            <!-- Wavy contour tracks from World Cup 2026 theme -->
+            <path d="M-100,300 C300,100 600,500 1000,200 C1200,80 1400,150 1600,100 L1600,1200 L-100,1200 Z" fill="#2a398d" opacity="0.85"/>
+            <path d="M-100,450 C400,200 700,600 1100,350 C1300,220 1450,280 1600,200 L1600,1200 L-100,1200 Z" fill="#1d70b8" opacity="0.75"/>
+            <path d="M-100,580 C350,400 800,750 1200,500 C1350,380 1500,420 1600,350 L1600,1200 L-100,1200 Z" fill="#3cac3b" opacity="0.7"/>
+            <path d="M-100,700 C450,550 900,850 1300,680 C1420,580 1520,600 1600,520 L1600,1200 L-100,1200 Z" fill="#00ff55" opacity="0.6"/>
+            <path d="M-100,820 C500,700 1000,980 1400,800 L1600,700 L1600,1200 L-100,1200 Z" fill="#ff9900" opacity="0.55"/>
+            <path d="M-100,920 C600,850 1100,1080 1500,900 L1600,820 L1600,1200 L-100,1200 Z" fill="#e61d25" opacity="0.5"/>
+        </svg>
+    </div>
     <div id="vanta-overlay"></div>
 
     <!-- Loading Animation -->
@@ -1787,7 +1858,7 @@
     <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
         <header>
             <div class="header-left">
-                <span class="logo-text">WatchFIFA <span style="color: var(--f1-red);">2026</span></span>
+                <span class="logo-text fifa-logo-gradient">WatchFIFA <span>2026</span></span>
                 <div class="sport-toggle-container">
                     <button class="sport-toggle-btn" ng-click="goToF1()">
                         <i class="fa-solid fa-car-side"></i> F1 Party
@@ -1806,17 +1877,17 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive">
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE: {{raceData.name || 'STREAM'}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && showCustomTimer">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive) && !showCustomTimer && matchFuture">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && matchFuture">
                     <i class="fa-regular fa-clock"></i> MATCH IN {{matchCountdownStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive) && !showCustomTimer && !matchFuture">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && !matchFuture">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1833,7 +1904,7 @@
             </div>
         </div>
 
-        <div class="container" style="grid-template-columns: 1fr;">
+        <div class="container">
             <div class="main-column">
                 <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive">
                     <div class="video-responsive" ng-if="streamLinks.length > 0">
@@ -1967,6 +2038,94 @@
                             <strong>Final Score</strong>
                             <span style="font-weight: 900; font-size: 18px; color: #fff;">{{raceData.homeScore}} – {{raceData.awayScore}}</span>
                             <span style="margin-left: 6px; background: #555; color: #ccc; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">FT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <!-- FIFA Fixtures Card -->
+                <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    <div class="card-title">
+                        <i class="fa-solid fa-calendar-days"></i> Match Fixtures
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                        <div class="schedule-row" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}">
+                            <div class="sess-info" style="flex: 1; min-width: 0; padding-right: 10px;">
+                                <span class="sess-name" style="font-size: 13px; font-weight: 700; white-space: normal; display: block; overflow: hidden; text-overflow: ellipsis;">
+                                    {{match.homeTeam}} vs {{match.awayTeam}}
+                                </span>
+                                <span class="sess-status" style="color: #00ff55; font-size: 9px; font-weight: 800;" ng-if="match.status === 'live'">
+                                    LIVE: {{match.homeScore}} - {{match.awayScore}}
+                                </span>
+                                <span class="sess-status" style="color: var(--text-gray); font-size: 9px;" ng-if="match.status === 'notstarted'">
+                                    {{match.round}}
+                                </span>
+                                <span class="sess-status" style="color: #666; font-size: 9px;" ng-if="match.finished">
+                                    FT: {{match.homeScore}} - {{match.awayScore}}
+                                </span>
+                            </div>
+                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0;">
+                                <div class="sess-time" style="font-size: 12px; font-weight: 700;">{{match.localDate.split(' ')[1]}}</div>
+                                <div class="sess-day" style="font-size: 10px; color: var(--text-gray);">{{match.localDate.split(' ')[0]}}</div>
+                            </div>
+                        </div>
+                        <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
+                            No fixtures available.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIFA Standings Card -->
+                <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 15px;">
+                        <div class="card-title" style="margin-bottom:0;">
+                            <i class="fa-solid fa-trophy"></i> Standings
+                        </div>
+                        <select ng-model="selectedGroup" ng-options="g as g.name for g in groups" style="
+                            background: rgba(15, 15, 20, 0.6);
+                            color: #fff;
+                            border: 1px solid var(--border);
+                            padding: 4px 8px;
+                            border-radius: 8px;
+                            font-weight: 700;
+                            font-size: 11px;
+                            outline: none;
+                            cursor: pointer;
+                            max-width: 110px;
+                        "></select>
+                    </div>
+
+                    <div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">
+                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">POS</th>
+                                    <th style="padding: 6px 2px;">TEAM</th>
+                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">P</th>
+                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">GD</th>
+                                    <th style="padding: 6px 2px; text-align: center; width: 30px;">PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="t in selectedGroup.teams" style="border-bottom: 1px solid rgba(255,255,255,0.03); height: 36px;">
+                                    <td style="padding: 6px 2px; text-align: center; font-weight: 800; color: var(--text-gray);" ng-class="{'p1': $index === 0, 'p2': $index === 1, 'p3': $index === 2}">
+                                        {{$index + 1}}
+                                    </td>
+                                    <td style="padding: 6px 2px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; height: 36px;">
+                                        <img ng-src="{{t.flag}}" alt="" style="width: 16px; height: 11px; object-fit: cover; border-radius: 1px;" onerror="this.style.display='none'">
+                                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;" title="{{t.name}}">{{t.name}}</span>
+                                    </td>
+                                    <td style="padding: 6px 2px; text-align: center; font-weight: 600;">{{t.mp}}</td>
+                                    <td style="padding: 6px 2px; text-align: center; color: var(--text-gray);">{{t.gd > 0 ? '+' : ''}}{{t.gd}}</td>
+                                    <td style="padding: 6px 2px; text-align: center; font-weight: 900; color: #00ff55;">{{t.pts}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div ng-if="groups.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
+                            No standings available.
                         </div>
                     </div>
                 </div>
@@ -2554,6 +2713,14 @@
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
                 console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, fifa);
                 updateTimers();
+
+                // FIFA fixtures & standings dynamic sync
+                if (!$scope.fifaDataLoaded) {
+                    $scope.loadFifaData();
+                    $scope.fifaDataLoaded = true;
+                } else {
+                    $scope.autoSelectGroup();
+                }
             }
 
             function updateTimers() {
@@ -2640,6 +2807,45 @@
 
             $interval(updateTimers, 1000);
 
+            $scope.fixtures = [];
+            $scope.groups = [];
+            $scope.selectedGroup = null;
+
+            $scope.loadFifaData = function() {
+                $http.get('/api/fifa/fixtures').then(function(res) {
+                    $scope.fixtures = res.data;
+                }, function(err) {
+                    console.error('Failed to load FIFA fixtures:', err);
+                });
+
+                $http.get('/api/fifa/standings').then(function(res) {
+                    $scope.groups = res.data;
+                    $scope.autoSelectGroup();
+                }, function(err) {
+                    console.error('Failed to load FIFA standings:', err);
+                });
+            };
+
+            $scope.autoSelectGroup = function() {
+                if ($scope.groups && $scope.groups.length > 0) {
+                    if ($scope.raceData && $scope.raceData.round) {
+                        const roundStr = $scope.raceData.round.toLowerCase();
+                        const found = $scope.groups.find(g => roundStr.includes(g.name.toLowerCase()) || g.name.toLowerCase().includes(roundStr));
+                        if (found) {
+                            $scope.selectedGroup = found;
+                            return;
+                        }
+                    }
+                    if (!$scope.selectedGroup) {
+                        $scope.selectedGroup = $scope.groups[0];
+                    }
+                }
+            };
+
+            $interval(function() {
+                $scope.loadFifaData();
+            }, 60000);
+
             function pad(num) { return num < 10 ? '0' + num : num; }
 
             $scope.formatTime12 = function (t) {
@@ -2715,7 +2921,8 @@
                     color: initialColor,
                     color2: 0x9146ff, // Purple accent color for World Cup theme
                     size: 1.10,
-                    backgroundColor: 0x050508
+                    backgroundColor: 0x050508,
+                    backgroundAlpha: 0.0
                 });
             }
         });

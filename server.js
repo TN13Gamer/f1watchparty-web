@@ -427,6 +427,123 @@ app.get('/api/fetch-streams', async (req, res) => {
     }
 });
 
+// Cache variables for FIFA APIs
+let cacheFixtures = null;
+let cacheFixturesTime = 0;
+let cacheStandings = null;
+let cacheStandingsTime = 0;
+
+// --- API: Fetch FIFA Fixtures ---
+app.get('/api/fifa/fixtures', async (req, res) => {
+    try {
+        if (cacheFixtures && (Date.now() - cacheFixturesTime < 30000)) {
+            return res.json(cacheFixtures);
+        }
+        const response = await axios.get('https://worldcup26.ir/get/games', {
+            timeout: 8000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        const games = response.data && response.data.games;
+        if (!Array.isArray(games)) {
+            return res.json([]);
+        }
+        const formatted = games.map(g => {
+            const stadium = STADIUM_MAP_SERVER[g.stadium_id] || { name: 'Stadium', city: '', country: '' };
+            const isLive = g.time_elapsed === 'live';
+            const isFinished = g.finished === 'TRUE';
+            const roundMap = { group: `Group ${g.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
+            const round = roundMap[g.type] || g.group || 'World Cup 2026';
+            
+            let friendlyDate = g.local_date || '';
+            try {
+                const parts = (g.local_date || '').split(' ');
+                if (parts.length >= 2) {
+                    const dateParts = parts[0].split('/');
+                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    const mm = parseInt(dateParts[0], 10);
+                    const dd = parseInt(dateParts[1], 10);
+                    if (!isNaN(mm) && !isNaN(dd)) {
+                        friendlyDate = `${dd} ${months[mm - 1]} ${parts[1]}`;
+                    }
+                }
+            } catch (e) {}
+
+            return {
+                id: g.id,
+                homeTeam: g.home_team_name_en || g.home_team_label || 'TBD',
+                awayTeam: g.away_team_name_en || g.away_team_label || 'TBD',
+                homeScore: g.home_score || '0',
+                awayScore: g.away_score || '0',
+                localDate: friendlyDate,
+                status: g.time_elapsed,
+                finished: isFinished,
+                round: round,
+                stadium: stadium.name
+            };
+        });
+        cacheFixtures = formatted;
+        cacheFixturesTime = Date.now();
+        res.json(formatted);
+    } catch (e) {
+        console.error('Error fetching FIFA fixtures:', e.message);
+        res.json(cacheFixtures || []);
+    }
+});
+
+// --- API: Fetch FIFA Standings ---
+app.get('/api/fifa/standings', async (req, res) => {
+    try {
+        if (cacheStandings && (Date.now() - cacheStandingsTime < 30000)) {
+            return res.json(cacheStandings);
+        }
+        const [groupsRes, teamsRes] = await Promise.all([
+            axios.get('https://worldcup26.ir/get/groups', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
+            axios.get('https://worldcup26.ir/get/teams', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+        ]);
+        const groupsData = groupsRes.data && groupsRes.data.groups;
+        const teamsData = teamsRes.data && teamsRes.data.teams;
+        if (!Array.isArray(groupsData) || !Array.isArray(teamsData)) {
+            return res.json([]);
+        }
+        const teamsMap = {};
+        teamsData.forEach(t => {
+            teamsMap[t.id] = {
+                name: t.name_en,
+                flag: t.flag,
+                code: t.fifa_code
+            };
+        });
+        const formatted = groupsData.map(g => {
+            return {
+                name: `Group ${g.name}`,
+                teams: (g.teams || []).map(t => {
+                    const teamInfo = teamsMap[t.team_id] || { name: `Team ${t.team_id}`, flag: '', code: '' };
+                    return {
+                        teamId: t.team_id,
+                        name: teamInfo.name,
+                        flag: teamInfo.flag,
+                        code: teamInfo.code,
+                        mp: parseInt(t.mp || 0),
+                        w: parseInt(t.w || 0),
+                        d: parseInt(t.d || 0),
+                        l: parseInt(t.l || 0),
+                        gf: parseInt(t.gf || 0),
+                        ga: parseInt(t.ga || 0),
+                        gd: parseInt(t.gd || 0),
+                        pts: parseInt(t.pts || 0)
+                    };
+                }).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+            };
+        });
+        cacheStandings = formatted;
+        cacheStandingsTime = Date.now();
+        res.json(formatted);
+    } catch (e) {
+        console.error('Error fetching FIFA standings:', e.message);
+        res.json(cacheStandings || []);
+    }
+});
+
 // --- API: Sync Standings (Vercel cron handler) ---
 app.all('/api/sync-standings', require('./api/sync-standings.js'));
 

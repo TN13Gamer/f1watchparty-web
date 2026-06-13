@@ -942,12 +942,6 @@
                         <div class="input-group"><label>Date String</label><input type="text" ng-model="config.raceData.date"></div>
                         <div class="input-group"><label>Laps / Duration</label><input type="text" ng-model="config.raceData.laps"></div>
                     </div>
-                    <div class="grid-row">
-                        <div class="input-group">
-                            <label style="color: var(--primary);">Live Timer Target (Format: YYYY-MM-DDTHH:MM:00)</label>
-                            <input type="text" ng-model="config.customTimer.target" placeholder="e.g. 2026-06-07T22:30:00" ng-change="updateCustomTimerF1()" style="border-left-color: var(--primary);">
-                        </div>
-                    </div>
                     <div class="input-group">
                         <label style="color: var(--primary);">Active Theme (Override)</label>
                         <select ng-model="config.raceData.theme" style="border-left-color: var(--primary);">
@@ -1225,10 +1219,6 @@
                     </div>
                     <div class="grid-row">
                         <div class="input-group"><label>Date & Time String</label><input type="text" ng-model="config.fifa.raceData.date" placeholder="e.g. 18 Dec 2022, 18:00 UTC" style="border-left-color: #00ff55;"></div>
-                        <div class="input-group">
-                            <label style="color: #00ff55;">Live Timer Target (Format: YYYY-MM-DDTHH:MM:00)</label>
-                            <input type="text" ng-model="config.fifa.customTimer.target" placeholder="e.g. 2026-06-07T22:30:00" ng-change="updateCustomTimerFifa()" style="border-left-color: #00ff55;">
-                        </div>
                     </div>
                     <div class="input-group">
                         <label style="color: #00ff55;">Active Theme (Override)</label>

@@ -54,8 +54,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -2;
+            z-index: -1;
             opacity: 0.35;
+            pointer-events: none;
         }
 
         /* Ambient blur spots */
@@ -406,7 +407,7 @@
         }
 
         body.transitioning-fifa {
-            background-color: #000c02;
+            background-color: #00020e;
             transition: background-color 0.6s ease;
         }
 
@@ -416,8 +417,73 @@
         }
 
         body.transitioning-fifa #vanta-bg {
-            opacity: 0.85 !important;
+            opacity: 0.95 !important;
             transition: opacity 0.6s ease;
+        }
+
+        body.hover-fifa #vanta-bg {
+            opacity: 0.8 !important;
+            transition: opacity 0.6s ease;
+        }
+
+        /* World Cup 2026 Wavy Background */
+        .fifa-wavy-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #030612 0%, #010206 100%);
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            transform: scale(1.02);
+        }
+
+        body.hover-fifa .fifa-wavy-bg,
+        body.transitioning-fifa .fifa-wavy-bg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .fifa-gradient-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 20%, rgba(1, 2, 6, 0.85) 90%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .fifa-waves-svg {
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            opacity: 0.85;
+            filter: blur(25px);
+        }
+
+        .fifa-waves-svg path {
+            transform-origin: center;
+            animation: wave-float 25s infinite alternate ease-in-out;
+        }
+
+        .fifa-waves-svg path:nth-child(1) { animation-duration: 22s; animation-delay: 0s; }
+        .fifa-waves-svg path:nth-child(2) { animation-duration: 28s; animation-delay: -4s; }
+        .fifa-waves-svg path:nth-child(3) { animation-duration: 32s; animation-delay: -8s; }
+        .fifa-waves-svg path:nth-child(4) { animation-duration: 36s; animation-delay: -12s; }
+        .fifa-waves-svg path:nth-child(5) { animation-duration: 42s; animation-delay: -16s; }
+
+        @keyframes wave-float {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            50% { transform: translate(2%, 3%) rotate(3deg) scale(1.06); }
+            100% { transform: translate(-2%, -2%) rotate(-3deg) scale(0.97); }
         }
 
         .container {
@@ -429,6 +495,18 @@
 <body>
 
     <div id="vanta-bg"></div>
+    <div class="fifa-wavy-bg">
+        <div class="fifa-gradient-mask"></div>
+        <svg class="fifa-waves-svg" viewBox="0 0 1440 1000" preserveAspectRatio="none">
+            <!-- Wavy contour tracks from World Cup 2026 theme -->
+            <path d="M-100,300 C300,100 600,500 1000,200 C1200,80 1400,150 1600,100 L1600,1200 L-100,1200 Z" fill="#2a398d" opacity="0.85"/>
+            <path d="M-100,450 C400,200 700,600 1100,350 C1300,220 1450,280 1600,200 L1600,1200 L-100,1200 Z" fill="#1d70b8" opacity="0.75"/>
+            <path d="M-100,580 C350,400 800,750 1200,500 C1350,380 1500,420 1600,350 L1600,1200 L-100,1200 Z" fill="#3cac3b" opacity="0.7"/>
+            <path d="M-100,700 C450,550 900,850 1300,680 C1420,580 1520,600 1600,520 L1600,1200 L-100,1200 Z" fill="#00ff55" opacity="0.6"/>
+            <path d="M-100,820 C500,700 1000,980 1400,800 L1600,700 L1600,1200 L-100,1200 Z" fill="#ff9900" opacity="0.55"/>
+            <path d="M-100,920 C600,850 1100,1080 1500,900 L1600,820 L1600,1200 L-100,1200 Z" fill="#e61d25" opacity="0.5"/>
+        </svg>
+    </div>
     <div class="ambient-glow ambient-red"></div>
     <div class="ambient-glow ambient-green"></div>
     <div class="grid-overlay"></div>
@@ -583,6 +661,7 @@
 
             if (cardFifa) {
                 cardFifa.addEventListener('mouseenter', () => {
+                    document.body.classList.add('hover-fifa');
                     if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
                         window.vantaInstance.setOptions({
                             color: 0x00ff55,
@@ -597,6 +676,7 @@
                 });
 
                 cardFifa.addEventListener('mouseleave', () => {
+                    document.body.classList.remove('hover-fifa');
                     // Only reset if we are not currently transitioning to the next page
                     if (!document.body.classList.contains('transitioning-f1') && !document.body.classList.contains('transitioning-fifa')) {
                         if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
@@ -716,7 +796,7 @@
                 }
             }
 
-            const isLive = widgets.videoPlayer === true && !customTimerActive;
+            const isLive = widgets.videoPlayer === true && !customTimerActive && (sportKey === 'f1' || streamLinks.length > 0);
 
             // Find active session in schedule
             let activeSession = null;
@@ -736,7 +816,7 @@
                         if (endTime < startTime) endTime += 86400000;
                     }
                     if (now >= startTime && now < endTime) {
-                        activeSession = { start: startTime, end: endTime };
+                        activeSession = { name: s.name, start: startTime, end: endTime };
                     }
                 });
             }
@@ -760,7 +840,7 @@
                     const interval = setInterval(tickLive, 1000);
                     registerInterval(interval);
                 } else {
-                    const eventName = sportData.raceData ? sportData.raceData.name : 'STREAM';
+                    const eventName = (sportData.raceData && sportData.raceData.name) ? sportData.raceData.name : 'STREAM';
                     textEl.innerText = `LIVE: ${eventName}`;
                 }
             } else if (sportKey === 'fifa') {
