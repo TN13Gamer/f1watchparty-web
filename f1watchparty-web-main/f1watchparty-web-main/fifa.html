@@ -1882,17 +1882,17 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && matchFuture">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && !showCustomTimer && matchFuture">
                     <i class="fa-regular fa-clock"></i> MATCH IN {{matchCountdownStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && !matchFuture">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && !showCustomTimer && !matchFuture">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -1911,13 +1911,13 @@
 
         <div class="container">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
                     <div class="video-responsive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                 </div>
-                <div class="video-wrapper countdown-card" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0)" style="
+                <div class="video-wrapper countdown-card" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive)" style="
                     aspect-ratio: 16/9;
                     background: rgba(10, 10, 15, 0.65);
                     backdrop-filter: blur(25px);
@@ -1980,7 +1980,7 @@
                         No upcoming match timers scheduled.
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && matchIsTimelyLive">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                     <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
@@ -2743,10 +2743,16 @@
                 }
 
                 // Compute FIFA Match Details date/time countdown
+                $scope.matchIsTimelyLive = false; // true only within a 4-hour live window
                 if ($scope.raceData && $scope.raceData.date) {
                     var matchDate = parseFifaDate($scope.raceData.date);
                     if (matchDate && !isNaN(matchDate.getTime())) {
-                        var dist = matchDate.getTime() - now;
+                        var matchMs = matchDate.getTime();
+                        var dist = matchMs - now;
+                        // Live window: 30 min before kickoff until 4 hours after kickoff
+                        if (dist < (30 * 60 * 1000) && dist > -(4 * 60 * 60 * 1000)) {
+                            $scope.matchIsTimelyLive = true;
+                        }
                         if (dist > 0) {
                             var d = Math.floor(dist / (1000 * 60 * 60 * 24));
                             var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

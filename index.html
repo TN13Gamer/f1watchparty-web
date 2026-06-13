@@ -796,7 +796,22 @@
                 }
             }
 
-            const isLive = widgets.videoPlayer === true && !customTimerActive && (sportKey === 'f1' || streamLinks.length > 0);
+            // For FIFA: check if the match date is within the live window (30 min before - 4 hours after)
+            let matchIsTimelyLive = true; // default true for F1 (no match date gate)
+            if (sportKey === 'fifa') {
+                matchIsTimelyLive = false;
+                const fifaRaceDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
+                if (fifaRaceDate && !isNaN(fifaRaceDate.getTime())) {
+                    const dist = fifaRaceDate.getTime() - now;
+                    // 30 min before kickoff until 4 hours after kickoff
+                    if (dist < (30 * 60 * 1000) && dist > -(4 * 60 * 60 * 1000)) {
+                        matchIsTimelyLive = true;
+                    }
+                }
+                // If no match date is set at all, don't show live
+            }
+
+            const isLive = widgets.videoPlayer === true && !customTimerActive && matchIsTimelyLive && (sportKey === 'f1' || streamLinks.length > 0);
 
             // Find active session in schedule
             let activeSession = null;
