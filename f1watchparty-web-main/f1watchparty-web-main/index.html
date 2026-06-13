@@ -398,6 +398,31 @@
                 padding: 35px 25px;
             }
         }
+
+        /* Interactive transitions */
+        body.transitioning-f1 {
+            background-color: #0a0000;
+            transition: background-color 0.6s ease;
+        }
+
+        body.transitioning-fifa {
+            background-color: #000c02;
+            transition: background-color 0.6s ease;
+        }
+
+        body.transitioning-f1 #vanta-bg {
+            opacity: 0.85 !important;
+            transition: opacity 0.6s ease;
+        }
+
+        body.transitioning-fifa #vanta-bg {
+            opacity: 0.85 !important;
+            transition: opacity 0.6s ease;
+        }
+
+        .container {
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
     </style>
 </head>
 
@@ -461,15 +486,43 @@
         // Check if running locally or production to handle direct URL routing
         function navigateTo(event, localHtml, prodRoute) {
             event.preventDefault();
+            const card = event.currentTarget;
+            const isF1 = card.id === 'card-f1';
+            
+            // Storing destination
             const isLocal = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1';
-            window.location.href = isLocal ? localHtml : prodRoute;
+            const destination = isLocal ? localHtml : prodRoute;
+
+            // Apply transition styles
+            document.body.classList.add(isF1 ? 'transitioning-f1' : 'transitioning-fifa');
+            
+            // Intensify 3D Vanta background parameters for selection transition
+            if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                window.vantaInstance.setOptions({
+                    color: isF1 ? 0xe60000 : 0x00ff55,
+                    points: 25.00,
+                    maxDistance: 28.00,
+                    spacing: 12.00
+                });
+            }
+            
+            // Scale and fade out container elements
+            const container = document.querySelector('.container');
+            if (container) {
+                container.style.opacity = '0';
+                container.style.transform = 'scale(0.96)';
+            }
+            
+            setTimeout(() => {
+                window.location.href = destination;
+            }, 600);
         }
 
         // Initialize Vanta Net Background Effect
         try {
-            VANTA.NET({
+            window.vantaInstance = VANTA.NET({
                 el: "#vanta-bg",
                 mouseControls: true,
                 touchControls: true,
@@ -487,6 +540,80 @@
         } catch (e) {
             console.error("Vanta initialization failed: ", e);
         }
+
+        // Bind interactive mouseenter / mouseleave triggers to sports cards for dynamic 3D transitions
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardF1 = document.getElementById('card-f1');
+            const cardFifa = document.getElementById('card-fifa');
+            const ambientRed = document.querySelector('.ambient-red');
+            const ambientGreen = document.querySelector('.ambient-green');
+
+            if (cardF1) {
+                cardF1.addEventListener('mouseenter', () => {
+                    if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                        window.vantaInstance.setOptions({
+                            color: 0xe60000,
+                            points: 18.00,
+                            maxDistance: 24.00
+                        });
+                    }
+                    if (ambientRed) {
+                        ambientRed.style.opacity = '0.35';
+                        ambientRed.style.transform = 'scale(1.25)';
+                    }
+                });
+
+                cardF1.addEventListener('mouseleave', () => {
+                    // Only reset if we are not currently transitioning to the next page
+                    if (!document.body.classList.contains('transitioning-f1') && !document.body.classList.contains('transitioning-fifa')) {
+                        if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                            window.vantaInstance.setOptions({
+                                color: 0x222222,
+                                points: 12.00,
+                                maxDistance: 20.00
+                            });
+                        }
+                        if (ambientRed) {
+                            ambientRed.style.opacity = '0.1';
+                            ambientRed.style.transform = 'none';
+                        }
+                    }
+                });
+            }
+
+            if (cardFifa) {
+                cardFifa.addEventListener('mouseenter', () => {
+                    if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                        window.vantaInstance.setOptions({
+                            color: 0x00ff55,
+                            points: 18.00,
+                            maxDistance: 24.00
+                        });
+                    }
+                    if (ambientGreen) {
+                        ambientGreen.style.opacity = '0.35';
+                        ambientGreen.style.transform = 'scale(1.25)';
+                    }
+                });
+
+                cardFifa.addEventListener('mouseleave', () => {
+                    // Only reset if we are not currently transitioning to the next page
+                    if (!document.body.classList.contains('transitioning-f1') && !document.body.classList.contains('transitioning-fifa')) {
+                        if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                            window.vantaInstance.setOptions({
+                                color: 0x222222,
+                                points: 12.00,
+                                maxDistance: 20.00
+                            });
+                        }
+                        if (ambientGreen) {
+                            ambientGreen.style.opacity = '0.1';
+                            ambientGreen.style.transform = 'none';
+                        }
+                    }
+                });
+            }
+        });
 
         // Firebase Configuration
         const firebaseConfig = {
