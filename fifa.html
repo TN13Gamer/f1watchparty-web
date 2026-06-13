@@ -2307,10 +2307,14 @@
             };
 
             $scope.dataLoaded = false;
+            $scope.fifaDataLoaded = false;
             $scope.streamLinks = [];
             $scope.currentStream = {};
             $scope.raceData = {};
             $scope.nextRace = {};
+            $scope.fixtures = [];
+            $scope.groups = [];
+            $scope.selectedGroup = null;
 
             $scope.standings = [];
             $scope.constructors = [];
@@ -2657,13 +2661,8 @@
                 console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, fifa);
                 updateTimers();
 
-                // FIFA fixtures & standings dynamic sync
-                if (!$scope.fifaDataLoaded) {
-                    $scope.loadFifaData();
-                    $scope.fifaDataLoaded = true;
-                } else {
-                    $scope.autoSelectGroup();
-                }
+                // FIFA fixtures & standings: always refresh on Firestore sync
+                $scope.loadFifaData();
             }
 
             function updateTimers() {
@@ -2777,24 +2776,31 @@
 
             $interval(updateTimers, 1000);
 
-            $scope.fixtures = [];
-            $scope.groups = [];
-            $scope.selectedGroup = null;
 
             $scope.loadFifaData = function() {
                 $http.get('/api/fifa/fixtures').then(function(res) {
-                    $scope.fixtures = res.data;
+                    $scope.fixtures = res.data || [];
+                    console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
                 }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
                 });
 
                 $http.get('/api/fifa/standings').then(function(res) {
-                    $scope.groups = res.data;
+                    $scope.groups = res.data || [];
                     $scope.autoSelectGroup();
+                    console.log('⚽ Standings loaded:', $scope.groups.length, 'groups');
                 }, function(err) {
                     console.error('Failed to load FIFA standings:', err);
                 });
             };
+
+            // Load immediately on page init
+            $scope.loadFifaData();
+
+            // Refresh every 5 minutes
+            $interval(function() { $scope.loadFifaData(); }, 5 * 60 * 1000);
+
+
 
             $scope.autoSelectGroup = function() {
                 if ($scope.groups && $scope.groups.length > 0) {
@@ -2811,10 +2817,6 @@
                     }
                 }
             };
-
-            $interval(function() {
-                $scope.loadFifaData();
-            }, 60000);
 
             function pad(num) { return num < 10 ? '0' + num : num; }
 
