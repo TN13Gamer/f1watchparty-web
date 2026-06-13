@@ -2187,7 +2187,7 @@
                     })
                     .then((doc) => {
                         if (doc.exists) {
-                            $scope.$apply(() => {
+                            $timeout(() => {
                                 const data = doc.data();
                                 if (data.fifa && data.fifa.streamLinks) {
                                     $scope.config.fifa.streamLinks = data.fifa.streamLinks;
@@ -2197,7 +2197,6 @@
                             });
                         }
                         $scope.fetchingFifaStreams = false;
-                        if (!$scope.$$phase) $scope.$apply();
                     })
                     .catch(err => {
                         $scope.fetchingFifaStreams = false;
@@ -2222,7 +2221,7 @@
                     .then(() => db.collection("app_data").doc("live_config").get())
                     .then((doc) => {
                         if (doc.exists) {
-                            $scope.$apply(() => {
+                            $timeout(() => {
                                 const data = doc.data();
                                 if (data.fifa) {
                                     if (data.fifa.raceData) {
@@ -2240,7 +2239,6 @@
                             });
                         }
                         $scope.fetchingFifaDetails = false;
-                        if (!$scope.$$phase) $scope.$apply();
                     })
                     .catch(err => {
                         $scope.fetchingFifaDetails = false;
