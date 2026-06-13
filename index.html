@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -10,9 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <!-- 3D Library for Premium Visualizer Background -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
@@ -276,54 +273,7 @@
             min-height: 45px;
         }
 
-        /* Status Badge */
-        .status-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            padding: 8px 18px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: var(--text-gray);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 35px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
 
-        .status-badge.live {
-            background: rgba(230, 0, 0, 0.1);
-            border-color: rgba(230, 0, 0, 0.3);
-            color: #ff3b30;
-        }
-
-        .sport-card:nth-child(2) .status-badge.live {
-            background: rgba(0, 255, 85, 0.08);
-            border-color: rgba(0, 255, 85, 0.25);
-            color: var(--fifa-green);
-        }
-
-        .status-pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-            display: none;
-        }
-
-        .status-badge.live .status-pulse {
-            display: block;
-            animation: pulse-ring 1.8s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.5; }
-        }
 
         /* Action Buttons */
         .enter-btn {
@@ -527,10 +477,7 @@
                 </div>
                 <h2 class="sport-title">Formula 1</h2>
                 <p class="sport-desc">Live timing, Grand Prix race streams, schedule countdowns, and championship standings.</p>
-                <div class="status-badge" id="status-f1">
-                    <span class="status-pulse"></span>
-                    <span class="status-text">Connecting...</span>
-                </div>
+
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -543,10 +490,7 @@
                 </div>
                 <h2 class="sport-title">FIFA 2026</h2>
                 <p class="sport-desc">Live soccer streams, match details, match schedules, and real-time custom fan chat.</p>
-                <div class="status-badge" id="status-fifa">
-                    <span class="status-pulse"></span>
-                    <span class="status-text">Connecting...</span>
-                </div>
+
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -694,237 +638,6 @@
                 });
             }
         });
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
-            authDomain: "f1-stream-live.firebaseapp.com",
-            projectId: "f1-stream-live",
-            storageBucket: "f1-stream-live.firebasestorage.app",
-            messagingSenderId: "426806288804",
-            appId: "1:426806288804:web:f8ee225776596ebc39e131",
-            measurementId: "G-50FMFWY32X"
-        };
-
-        // Initialize Firebase
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Listen for Real-Time configurations
-        const statusF1El = document.getElementById('status-f1');
-        const statusFifaEl = document.getElementById('status-fifa');
-        
-        let f1TimerInterval = null;
-        let fifaTimerInterval = null;
-
-        function safeDate(val) {
-            if (!val) return null;
-            if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
-            if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
-                var parts = val.trim().split(/[\s\-:]/);
-                return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
-            }
-            return new Date(val);
-        }
-
-        function parseFifaDate(dateStr) {
-            if (!dateStr) return null;
-            let cleanStr = dateStr.trim();
-            const currentYear = new Date().getFullYear();
-            if (!cleanStr.includes(currentYear.toString())) {
-                const parts = cleanStr.split(/\s+/);
-                if (parts.length >= 3) {
-                    if (parts[2].includes(':')) {
-                        parts.splice(2, 0, currentYear.toString());
-                        cleanStr = parts.join(' ');
-                    } else {
-                        cleanStr = cleanStr + ' ' + currentYear;
-                    }
-                } else {
-                    cleanStr = cleanStr + ' ' + currentYear;
-                }
-            }
-            const d = new Date(cleanStr);
-            return isNaN(d.getTime()) ? null : d;
-        }
-
-        db.collection("app_data").doc("live_config").onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                
-                // --- Update F1 Status ---
-                updateSportStatus('f1', data, statusF1El, (intervalId) => { f1TimerInterval = intervalId; }, f1TimerInterval);
-                
-                // --- Update FIFA Status ---
-                updateSportStatus('fifa', data.fifa, statusFifaEl, (intervalId) => { fifaTimerInterval = intervalId; }, fifaTimerInterval);
-            } else {
-                setOffline(statusF1El, f1TimerInterval);
-                setOffline(statusFifaEl, fifaTimerInterval);
-            }
-        }, (error) => {
-            console.error("Firestore listener error:", error);
-            setOffline(statusF1El, f1TimerInterval);
-            setOffline(statusFifaEl, fifaTimerInterval);
-        });
-
-        function setOffline(badge, intervalId) {
-            if (intervalId) clearInterval(intervalId);
-            badge.className = 'status-badge';
-            badge.querySelector('.status-text').innerText = 'Offline';
-        }
-
-        function updateSportStatus(sportKey, sportData, badge, registerInterval, currentInterval) {
-            if (currentInterval) clearInterval(currentInterval);
-
-            const textEl = badge.querySelector('.status-text');
-
-            if (!sportData) {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-                return;
-            }
-
-            const widgets   = sportData.widgets   || {};
-            const streamLinks = sportData.streamLinks || [];
-            const customTimer = sportData.customTimer || { enabled: false };
-            const raceData  = sportData.raceData   || {};
-            const now = Date.now();
-
-            // ── 1. customTimerActive: timer is set and in the future
-            let customTimerActive = false;
-            if (customTimer.enabled && customTimer.target) {
-                const tgt = safeDate(customTimer.target);
-                if (tgt && !isNaN(tgt.getTime()) && now < tgt.getTime()) {
-                    customTimerActive = true;
-                }
-            }
-
-            // ── 2. matchIsTimelyLive: for FIFA, are we in the 2-hour live window?
-            //       For F1, always true (no match date gate needed)
-            let matchIsTimelyLive = (sportKey === 'f1');
-            if (sportKey === 'fifa') {
-                // prefer customTimer.target (ISO), fall back to raceData.date
-                let refDate = (customTimer.enabled && customTimer.target) ? safeDate(customTimer.target) : null;
-                if (!refDate || isNaN(refDate.getTime())) {
-                    refDate = parseFifaDate(raceData.date);
-                }
-                if (refDate && !isNaN(refDate.getTime())) {
-                    const d = refDate.getTime() - now;
-                    // window: 30 min before kickoff → 2 hours after kickoff
-                    matchIsTimelyLive = (d < 30 * 60 * 1000) && (d > -2 * 60 * 60 * 1000);
-                }
-            }
-
-            // ── 3. isLive: all conditions met
-            const isLive = widgets.videoPlayer === true
-                && !customTimerActive
-                && matchIsTimelyLive
-                && (sportKey === 'f1' || streamLinks.length > 0);
-
-            // ── 4. Find active F1 schedule session (for live label)
-            let activeSession = null;
-            if (sportData.schedule && Array.isArray(sportData.schedule)) {
-                sportData.schedule.forEach((s) => {
-                    const startDate = safeDate(s.timer);
-                    if (!startDate) return;
-                    const startTime = startDate.getTime();
-                    let endTime = startTime + 2 * 60 * 60 * 1000;
-                    if (s.endTime && s.endTime.includes(':')) {
-                        const [hh, mm] = s.endTime.split(':');
-                        const ed = new Date(startDate);
-                        ed.setHours(parseInt(hh), parseInt(mm), 0);
-                        endTime = ed.getTime();
-                        if (endTime < startTime) endTime += 86400000;
-                    }
-                    if (now >= startTime && now < endTime) {
-                        activeSession = { name: s.name, start: startTime, end: endTime };
-                    }
-                });
-            }
-
-            // ── 5. Render badge
-            if (isLive) {
-                badge.className = 'status-badge live';
-                if (activeSession) {
-                    const tick = () => {
-                        const rem = activeSession.end - Date.now();
-                        if (rem <= 0) { textEl.innerText = '🔴 LIVE NOW'; return; }
-                        const h = String(Math.floor(rem / 3600000)).padStart(2, '0');
-                        const m = String(Math.floor((rem % 3600000) / 60000)).padStart(2, '0');
-                        const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
-                        textEl.innerText = `🔴 LIVE: ${activeSession.name} (${h}:${m}:${s})`;
-                    };
-                    tick();
-                    registerInterval(setInterval(tick, 1000));
-                } else {
-                    // FIFA live with no named session
-                    const label = sportKey === 'fifa'
-                        ? (raceData.name || 'LIVE')
-                        : (raceData.name || 'STREAM');
-                    textEl.innerText = `🔴 LIVE: ${label}`;
-                }
-
-            } else if (sportKey === 'fifa') {
-                // FIFA not live — show countdown to next match, or offline
-                // Prefer customTimer.target; fall back to raceData.date
-                let nextMatchTime = null;
-                if (customTimer.enabled && customTimer.target) {
-                    const t = safeDate(customTimer.target);
-                    if (t && !isNaN(t.getTime()) && t.getTime() > now) nextMatchTime = t.getTime();
-                }
-                if (!nextMatchTime) {
-                    const md = parseFifaDate(raceData.date);
-                    if (md && !isNaN(md.getTime()) && md.getTime() > now) nextMatchTime = md.getTime();
-                }
-
-                if (nextMatchTime) {
-                    badge.className = 'status-badge';
-                    const label = customTimer.label || raceData.name || 'Next Match';
-                    const tick = () => {
-                        const diff = nextMatchTime - Date.now();
-                        if (diff <= 0) { textEl.innerText = 'Starting Soon'; return; }
-                        const days  = Math.floor(diff / 86400000);
-                        const hrs   = Math.floor((diff % 86400000) / 3600000);
-                        const mins  = Math.floor((diff % 3600000) / 60000);
-                        const secs  = Math.floor((diff % 60000) / 1000);
-                        const t = (days > 0 ? `${days}d ` : '') +
-                                  `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-                        textEl.innerText = `${label} in ${t}`;
-                    };
-                    tick();
-                    registerInterval(setInterval(tick, 1000));
-                } else {
-                    badge.className = 'status-badge';
-                    textEl.innerText = 'Offline';
-                }
-
-            } else if (customTimer.enabled && customTimer.target) {
-                // F1 custom countdown
-                const tgt = safeDate(customTimer.target);
-                if (tgt && !isNaN(tgt.getTime())) {
-                    badge.className = 'status-badge';
-                    const tick = () => {
-                        const diff = tgt.getTime() - Date.now();
-                        if (diff <= 0) { textEl.innerText = 'Starting Soon'; return; }
-                        const days  = Math.floor(diff / 86400000);
-                        const hrs   = Math.floor((diff % 86400000) / 3600000);
-                        const mins  = Math.floor((diff % 3600000) / 60000);
-                        const secs  = Math.floor((diff % 60000) / 1000);
-                        const t = (days > 0 ? `${days}d ` : '') +
-                                  `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-                        textEl.innerText = `${customTimer.label || 'Starts In'}: ${t}`;
-                    };
-                    tick();
-                    registerInterval(setInterval(tick, 1000));
-                } else {
-                    badge.className = 'status-badge';
-                    textEl.innerText = 'Offline';
-                }
-            } else {
-                badge.className = 'status-badge';
-                textEl.innerText = 'Offline';
-            }
-        }
 
     </script>
 </body>
