@@ -148,7 +148,7 @@
             height: 100vh;
             z-index: -2;
             overflow: hidden;
-            background: radial-gradient(circle at 50% 50%, #030612 0%, #010206 100%);
+            background: radial-gradient(circle at 50% 50%, rgba(3, 6, 18, 0.45) 0%, rgba(1, 2, 6, 0.75) 100%);
             pointer-events: none;
         }
 
@@ -1830,6 +1830,11 @@
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
+    <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
+        <iframe src="https://www.youtube.com/embed/HmpzUm5j4OE?autoplay=1&mute=1&loop=1&playlist=HmpzUm5j4OE&controls=0&showinfo=0&rel=0&playsinline=1&enablejsapi=1" 
+                style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.35;" 
+                frameborder="0" allow="autoplay; encrypted-media"></iframe>
+    </div>
     <div class="video-overlay"></div>
     <div class="fifa-wavy-bg">
         <div class="fifa-gradient-mask"></div>
@@ -1906,30 +1911,13 @@
 
         <div class="container">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive">
-                    <div class="video-responsive" ng-if="streamLinks.length > 0">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                    <div class="video-responsive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
-                    <div ng-if="streamLinks.length === 0" style="
-                        aspect-ratio: 16/9;
-                        background: rgba(10, 10, 15, 0.45);
-                        backdrop-filter: blur(20px);
-                        border-radius: 12px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        text-align: center;
-                        padding: 40px;
-                        color: #fff;
-                    ">
-                        <i class="fa-solid fa-video-slash" style="font-size: 48px; color: #00ff55; margin-bottom: 15px; opacity: 0.8;"></i>
-                        <h3 style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">No Stream Sources Configured</h3>
-                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">The administrator has not added any live stream links for this match yet. Please check back shortly.</p>
-                    </div>
                 </div>
-                <div class="video-wrapper countdown-card" ng-if="!widgets.videoPlayer || customTimerActive" style="
+                <div class="video-wrapper countdown-card" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0)" style="
                     aspect-ratio: 16/9;
                     background: rgba(10, 10, 15, 0.65);
                     backdrop-filter: blur(25px);
