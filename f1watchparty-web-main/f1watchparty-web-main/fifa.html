@@ -2714,22 +2714,48 @@
             function updateTimers() {
                 var now = new Date().getTime();
 
-                // Compute custom timer countdown
+                // ── STEP 1: Compute matchIsTimelyLive (must come FIRST)
+                // Prefer customTimer.target (ISO, reliable); fall back to raceData.date
+                $scope.matchIsTimelyLive = false;
+                var _liveRefDate = null;
+                if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
+                    _liveRefDate = safeDate($scope.customTimer.target);
+                }
+                if ((!_liveRefDate || isNaN(_liveRefDate.getTime())) && $scope.raceData && $scope.raceData.date) {
+                    _liveRefDate = parseFifaDate($scope.raceData.date);
+                }
+                if (_liveRefDate && !isNaN(_liveRefDate.getTime())) {
+                    var distToMatch = _liveRefDate.getTime() - now;
+                    // Live window: 30 min BEFORE kickoff → 2 hours AFTER kickoff
+                    if (distToMatch < (30 * 60 * 1000) && distToMatch > -(2 * 60 * 60 * 1000)) {
+                        $scope.matchIsTimelyLive = true;
+                    }
+                }
+
+                // ── STEP 2: Compute custom timer countdown (uses matchIsTimelyLive)
                 if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
                     var targetTime = safeDate($scope.customTimer.target);
                     if (targetTime && !isNaN(targetTime.getTime())) {
                         var dist = targetTime.getTime() - now;
-                        $scope.showCustomTimer = true;
                         if (dist > 0) {
+                            // Counting down — show timer
                             var d = Math.floor(dist / (1000 * 60 * 60 * 24));
                             var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                             var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
                             var s = Math.floor((dist % (1000 * 60)) / 1000);
                             $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
                             $scope.customTimerActive = true;
-                        } else {
+                            $scope.showCustomTimer = true;
+                        } else if ($scope.matchIsTimelyLive) {
+                            // Target passed but still within live window — show LIVE NOW
                             $scope.customTimerCountdown = "LIVE NOW";
                             $scope.customTimerActive = false;
+                            $scope.showCustomTimer = true;
+                        } else {
+                            // Target passed and outside live window — hide timer, show offline
+                            $scope.customTimerCountdown = "";
+                            $scope.customTimerActive = false;
+                            $scope.showCustomTimer = false;
                         }
                     } else {
                         $scope.customTimerCountdown = "";
@@ -2742,25 +2768,7 @@
                     $scope.showCustomTimer = false;
                 }
 
-                // Compute FIFA Match Details date/time countdown
-                // Use customTimer.target (ISO, reliable) as primary; fall back to raceData.date
-                $scope.matchIsTimelyLive = false;
-                var _liveRefDate = null;
-                if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
-                    _liveRefDate = safeDate($scope.customTimer.target);
-                }
-                if ((!_liveRefDate || isNaN(_liveRefDate.getTime())) && $scope.raceData && $scope.raceData.date) {
-                    _liveRefDate = parseFifaDate($scope.raceData.date);
-                }
-                if (_liveRefDate && !isNaN(_liveRefDate.getTime())) {
-                    var matchMs = _liveRefDate.getTime();
-                    var distToMatch = matchMs - now;
-                    // Live window: 30 min BEFORE kickoff → 2 hours AFTER kickoff
-                    if (distToMatch < (30 * 60 * 1000) && distToMatch > -(2 * 60 * 60 * 1000)) {
-                        $scope.matchIsTimelyLive = true;
-                    }
-                }
-                // Separate countdown display using raceData.date
+                // ── STEP 3: Match countdown display (using raceData.date for display)
                 if ($scope.raceData && $scope.raceData.date) {
                     var matchDate = parseFifaDate($scope.raceData.date);
                     if (matchDate && !isNaN(matchDate.getTime())) {
@@ -2785,7 +2793,7 @@
                     $scope.matchFuture = false;
                 }
 
-
+                // ── STEP 4: Schedule session status
                 if (!$scope.schedule) return;
                 $scope.nextUp = null; $scope.activeSession = null;
                 $scope.schedule.forEach(function (session) {
