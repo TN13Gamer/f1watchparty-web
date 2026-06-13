@@ -775,7 +775,7 @@
 
         function updateSportStatus(sportKey, sportData, badge, registerInterval, currentInterval) {
             if (currentInterval) clearInterval(currentInterval);
-            
+
             const textEl = badge.querySelector('.status-text');
 
             if (!sportData) {
@@ -784,56 +784,56 @@
                 return;
             }
 
-            const widgets = sportData.widgets || {};
+            const widgets   = sportData.widgets   || {};
             const streamLinks = sportData.streamLinks || [];
             const customTimer = sportData.customTimer || { enabled: false };
+            const raceData  = sportData.raceData   || {};
+            const now = Date.now();
 
+            // ── 1. customTimerActive: timer is set and in the future
             let customTimerActive = false;
             if (customTimer.enabled && customTimer.target) {
-                const targetTime = safeDate(customTimer.target);
-                if (targetTime && !isNaN(targetTime.getTime()) && Date.now() < targetTime.getTime()) {
+                const tgt = safeDate(customTimer.target);
+                if (tgt && !isNaN(tgt.getTime()) && now < tgt.getTime()) {
                     customTimerActive = true;
                 }
             }
 
-            // For FIFA: check if we are within the live window (30 min before → 2 hours after kickoff)
-            // Prefer customTimer.target (ISO, reliable); fall back to raceData.date
-            let matchIsTimelyLive = true; // default true for F1
+            // ── 2. matchIsTimelyLive: for FIFA, are we in the 2-hour live window?
+            //       For F1, always true (no match date gate needed)
+            let matchIsTimelyLive = (sportKey === 'f1');
             if (sportKey === 'fifa') {
-                matchIsTimelyLive = false;
-                let liveRefDate = null;
-                const ct = sportData.customTimer;
-                if (ct && ct.enabled && ct.target) liveRefDate = safeDate(ct.target);
-                if (!liveRefDate || isNaN(liveRefDate.getTime())) {
-                    liveRefDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
+                // prefer customTimer.target (ISO), fall back to raceData.date
+                let refDate = (customTimer.enabled && customTimer.target) ? safeDate(customTimer.target) : null;
+                if (!refDate || isNaN(refDate.getTime())) {
+                    refDate = parseFifaDate(raceData.date);
                 }
-                if (liveRefDate && !isNaN(liveRefDate.getTime())) {
-                    const dist = liveRefDate.getTime() - now;
-                    // 30 min before kickoff → 2 hours after kickoff
-                    if (dist < (30 * 60 * 1000) && dist > -(2 * 60 * 60 * 1000)) {
-                        matchIsTimelyLive = true;
-                    }
+                if (refDate && !isNaN(refDate.getTime())) {
+                    const d = refDate.getTime() - now;
+                    // window: 30 min before kickoff → 2 hours after kickoff
+                    matchIsTimelyLive = (d < 30 * 60 * 1000) && (d > -2 * 60 * 60 * 1000);
                 }
-                // No valid date → never show live
             }
 
-            const isLive = widgets.videoPlayer === true && !customTimerActive && matchIsTimelyLive && (sportKey === 'f1' || streamLinks.length > 0);
+            // ── 3. isLive: all conditions met
+            const isLive = widgets.videoPlayer === true
+                && !customTimerActive
+                && matchIsTimelyLive
+                && (sportKey === 'f1' || streamLinks.length > 0);
 
-            // Find active session in schedule
+            // ── 4. Find active F1 schedule session (for live label)
             let activeSession = null;
-            const now = Date.now();
-
             if (sportData.schedule && Array.isArray(sportData.schedule)) {
                 sportData.schedule.forEach((s) => {
                     const startDate = safeDate(s.timer);
                     if (!startDate) return;
                     const startTime = startDate.getTime();
-                    let endTime = startTime + (2 * 60 * 60 * 1000); // 2 hours default
+                    let endTime = startTime + 2 * 60 * 60 * 1000;
                     if (s.endTime && s.endTime.includes(':')) {
-                        const parts = s.endTime.split(':');
-                        const endDate = new Date(startDate);
-                        endDate.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
-                        endTime = endDate.getTime();
+                        const [hh, mm] = s.endTime.split(':');
+                        const ed = new Date(startDate);
+                        ed.setHours(parseInt(hh), parseInt(mm), 0);
+                        endTime = ed.getTime();
                         if (endTime < startTime) endTime += 86400000;
                     }
                     if (now >= startTime && now < endTime) {
@@ -842,87 +842,90 @@
                 });
             }
 
+            // ── 5. Render badge
             if (isLive) {
                 badge.className = 'status-badge live';
                 if (activeSession) {
-                    // Start timer countdown for active session
-                    function tickLive() {
-                        const timeRemaining = activeSession.end - Date.now();
-                        if (timeRemaining <= 0) {
-                            textEl.innerText = 'LIVE NOW';
-                            return;
-                        }
-                        const h = Math.floor(timeRemaining / 3600000);
-                        const m = Math.floor((timeRemaining % 3600000) / 60000);
-                        const s = Math.floor((timeRemaining % 60000) / 1000);
-                        textEl.innerText = `LIVE: ${activeSession.name || 'STREAM'} (Ends in ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')})`;
-                    }
-                    tickLive();
-                    const interval = setInterval(tickLive, 1000);
-                    registerInterval(interval);
+                    const tick = () => {
+                        const rem = activeSession.end - Date.now();
+                        if (rem <= 0) { textEl.innerText = '🔴 LIVE NOW'; return; }
+                        const h = String(Math.floor(rem / 3600000)).padStart(2, '0');
+                        const m = String(Math.floor((rem % 3600000) / 60000)).padStart(2, '0');
+                        const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+                        textEl.innerText = `🔴 LIVE: ${activeSession.name} (${h}:${m}:${s})`;
+                    };
+                    tick();
+                    registerInterval(setInterval(tick, 1000));
                 } else {
-                    const eventName = sportKey === 'fifa' ? 'STREAM' : ((sportData.raceData && sportData.raceData.name) ? sportData.raceData.name : 'STREAM');
-                    textEl.innerText = `LIVE: ${eventName}`;
+                    // FIFA live with no named session
+                    const label = sportKey === 'fifa'
+                        ? (raceData.name || 'LIVE')
+                        : (raceData.name || 'STREAM');
+                    textEl.innerText = `🔴 LIVE: ${label}`;
                 }
+
             } else if (sportKey === 'fifa') {
-                const matchDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
-                if (matchDate && !isNaN(matchDate.getTime()) && now < matchDate.getTime()) {
+                // FIFA not live — show countdown to next match, or offline
+                // Prefer customTimer.target; fall back to raceData.date
+                let nextMatchTime = null;
+                if (customTimer.enabled && customTimer.target) {
+                    const t = safeDate(customTimer.target);
+                    if (t && !isNaN(t.getTime()) && t.getTime() > now) nextMatchTime = t.getTime();
+                }
+                if (!nextMatchTime) {
+                    const md = parseFifaDate(raceData.date);
+                    if (md && !isNaN(md.getTime()) && md.getTime() > now) nextMatchTime = md.getTime();
+                }
+
+                if (nextMatchTime) {
                     badge.className = 'status-badge';
-                    const targetTime = matchDate.getTime();
-                    
-                    function tickCountdown() {
-                        const diff = targetTime - Date.now();
-                        if (diff <= 0) {
-                            textEl.innerText = 'Live Soon';
-                            return;
-                        }
-                        const days = Math.floor(diff / 86400000);
-                        const hours = Math.floor((diff % 86400000) / 3600000);
-                        const minutes = Math.floor((diff % 3600000) / 60000);
-                        const seconds = Math.floor((diff % 60000) / 1000);
-
-                        let timeStr = '';
-                        if (days > 0) timeStr += `${days}d `;
-                        timeStr += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                        textEl.innerText = `${customTimer.label || 'Starts In'}: ${timeStr}`;
-                    }
-                    tickCountdown();
-                    const interval = setInterval(tickCountdown, 1000);
-                    registerInterval(interval);
+                    const label = customTimer.label || raceData.name || 'Next Match';
+                    const tick = () => {
+                        const diff = nextMatchTime - Date.now();
+                        if (diff <= 0) { textEl.innerText = 'Starting Soon'; return; }
+                        const days  = Math.floor(diff / 86400000);
+                        const hrs   = Math.floor((diff % 86400000) / 3600000);
+                        const mins  = Math.floor((diff % 3600000) / 60000);
+                        const secs  = Math.floor((diff % 60000) / 1000);
+                        const t = (days > 0 ? `${days}d ` : '') +
+                                  `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+                        textEl.innerText = `${label} in ${t}`;
+                    };
+                    tick();
+                    registerInterval(setInterval(tick, 1000));
                 } else {
                     badge.className = 'status-badge';
                     textEl.innerText = 'Offline';
                 }
+
             } else if (customTimer.enabled && customTimer.target) {
-                badge.className = 'status-badge';
-                const targetTime = safeDate(customTimer.target).getTime();
-                
-                function tickCountdown() {
-                    const diff = targetTime - Date.now();
-                    if (diff <= 0) {
-                        textEl.innerText = 'Live Soon';
-                        return;
-                    }
-                    const days = Math.floor(diff / 86400000);
-                    const hours = Math.floor((diff % 86400000) / 3600000);
-                    const minutes = Math.floor((diff % 3600000) / 60000);
-                    const seconds = Math.floor((diff % 60000) / 1000);
-
-                    let timeStr = '';
-                    if (days > 0) timeStr += `${days}d `;
-                    timeStr += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                    textEl.innerText = `${customTimer.label || 'Starts In'}: ${timeStr}`;
+                // F1 custom countdown
+                const tgt = safeDate(customTimer.target);
+                if (tgt && !isNaN(tgt.getTime())) {
+                    badge.className = 'status-badge';
+                    const tick = () => {
+                        const diff = tgt.getTime() - Date.now();
+                        if (diff <= 0) { textEl.innerText = 'Starting Soon'; return; }
+                        const days  = Math.floor(diff / 86400000);
+                        const hrs   = Math.floor((diff % 86400000) / 3600000);
+                        const mins  = Math.floor((diff % 3600000) / 60000);
+                        const secs  = Math.floor((diff % 60000) / 1000);
+                        const t = (days > 0 ? `${days}d ` : '') +
+                                  `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+                        textEl.innerText = `${customTimer.label || 'Starts In'}: ${t}`;
+                    };
+                    tick();
+                    registerInterval(setInterval(tick, 1000));
+                } else {
+                    badge.className = 'status-badge';
+                    textEl.innerText = 'Offline';
                 }
-                tickCountdown();
-                const interval = setInterval(tickCountdown, 1000);
-                registerInterval(interval);
             } else {
                 badge.className = 'status-badge';
                 textEl.innerText = 'Offline';
             }
         }
+
     </script>
 </body>
 
