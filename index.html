@@ -543,10 +543,6 @@
                 </div>
                 <h2 class="sport-title">FIFA 2026</h2>
                 <p class="sport-desc">Live soccer streams, match details, match schedules, and real-time custom fan chat.</p>
-                <div class="status-badge" id="status-fifa">
-                    <span class="status-pulse"></span>
-                    <span class="status-text">Connecting...</span>
-                </div>
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
                 </button>
@@ -769,6 +765,7 @@
 
         function setOffline(badge, intervalId) {
             if (intervalId) clearInterval(intervalId);
+            if (!badge) return;
             badge.className = 'status-badge';
             badge.querySelector('.status-text').innerText = 'Offline';
         }
@@ -776,6 +773,7 @@
         function updateSportStatus(sportKey, sportData, badge, registerInterval, currentInterval) {
             if (currentInterval) clearInterval(currentInterval);
             
+            if (!badge) return;
             const textEl = badge.querySelector('.status-text');
 
             if (!sportData) {
