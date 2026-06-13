@@ -1884,7 +1884,7 @@
             <div class="status-area">
                 <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
-                    LIVE: {{raceData.name || 'STREAM'}}
+                    LIVE
                 </div>
                 <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
@@ -2015,7 +2015,7 @@
                         <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
                         <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
                         <div class="meta-item"><strong>Kickoff</strong>{{raceData.date}}</div>
-                        <div class="meta-item" ng-if="raceData.isLive">
+                        <div class="meta-item" ng-if="raceData.isLive && streamLinks.length > 0">
                             <strong>Score</strong>
                             <span style="font-weight: 900; font-size: 20px; color: #00ff55; letter-spacing: 2px;">
                                 {{raceData.homeScore}} – {{raceData.awayScore}}
