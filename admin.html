@@ -1521,7 +1521,7 @@
 
             // --- AUTH ---
             auth.onAuthStateChanged(user => {
-                $scope.$apply(() => {
+                $timeout(() => {
                     $scope.isLoggedIn = !!user;
                     if(user) {
                         $scope.loadAllData();
@@ -1538,7 +1538,7 @@
                         }, {merge: true});
                         $scope.addLog("Admin manually logged in.");
                     })
-                    .catch(e => $scope.$apply(() => $scope.loginError = e.message));
+                    .catch(e => $timeout(() => $scope.loginError = e.message));
             };
             
             $scope.logout = () => {
@@ -1553,7 +1553,7 @@
                 if (unsubscribeConfig) unsubscribeConfig();
                 unsubscribeConfig = db.collection("app_data").doc("live_config").onSnapshot(doc => {
                     if (!doc.exists) return;
-                    $scope.$apply(() => {
+                    $timeout(() => {
                         const data = doc.data();
                         
                         if (!$scope.config) {
@@ -1779,9 +1779,10 @@
                             db.collection("chat_messages").get()
                                 .then(snap => {
                                     if (snap.size === 0) {
-                                        $scope.clearingChat = false;
-                                        $scope.showToast("No chat messages found to clear.", "success");
-                                        if (!$scope.$$phase) $scope.$apply();
+                                        $timeout(() => {
+                                            $scope.clearingChat = false;
+                                            $scope.showToast("No chat messages found to clear.", "success");
+                                        });
                                         return;
                                     }
                                     let batch = db.batch();
@@ -1789,15 +1790,17 @@
                                     return batch.commit();
                                 })
                                 .then(() => {
-                                    $scope.clearingChat = false;
-                                    $scope.showToast("Chat messages cleared via client database!", "success");
-                                    $scope.addLog("Cleared all custom chat messages via client database");
-                                    if (!$scope.$$phase) $scope.$apply();
+                                    $timeout(() => {
+                                        $scope.clearingChat = false;
+                                        $scope.showToast("Chat messages cleared via client database!", "success");
+                                        $scope.addLog("Cleared all custom chat messages via client database");
+                                    });
                                 })
                                 .catch(clientErr => {
-                                    $scope.clearingChat = false;
-                                    $scope.showToast("Clear failed: " + clientErr.message, "error");
-                                    if (!$scope.$$phase) $scope.$apply();
+                                    $timeout(() => {
+                                        $scope.clearingChat = false;
+                                        $scope.showToast("Clear failed: " + clientErr.message, "error");
+                                    });
                                 });
                         });
                 }, "Clear Chat Messages");
@@ -1823,9 +1826,10 @@
                     $timeout(function() {
                         db.collection('app_data').doc('live_config').get().then(function(doc) {
                             if (doc.exists && doc.data().lastStandingsSync) {
-                                var d = new Date(doc.data().lastStandingsSync);
-                                $scope.standingsLastUpdated = d.toLocaleTimeString();
-                                if (!$scope.$$phase) $scope.$apply();
+                                $timeout(function() {
+                                    var d = new Date(doc.data().lastStandingsSync);
+                                    $scope.standingsLastUpdated = d.toLocaleTimeString();
+                                });
                             }
                         });
                     }, 1500);
@@ -1841,27 +1845,30 @@
 
                 $http.get(targetUrl).then(function(res) {
                     db.collection('app_data').doc('live_config').get().then(function(doc) {
-                        if (doc.exists) {
-                            var data = doc.data();
-                            if (data.standings)    $scope.config.standings    = data.standings;
-                            if (data.constructors) $scope.config.constructors = data.constructors;
-                            if (data.lastStandingsSync) {
-                                $scope.standingsLastUpdated = new Date(data.lastStandingsSync).toLocaleTimeString();
+                        $timeout(function() {
+                            if (doc.exists) {
+                                var data = doc.data();
+                                if (data.standings)    $scope.config.standings    = data.standings;
+                                if (data.constructors) $scope.config.constructors = data.constructors;
+                                if (data.lastStandingsSync) {
+                                    $scope.standingsLastUpdated = new Date(data.lastStandingsSync).toLocaleTimeString();
+                                }
+                                $scope.showToast('Standings sync succeeded and loaded!', 'success');
                             }
-                            $scope.showToast('Standings sync succeeded and loaded!', 'success');
-                        }
-                        $scope.fetchingStandings = false;
-                        if (!$scope.$$phase) $scope.$apply();
+                            $scope.fetchingStandings = false;
+                        });
                     }).catch(function(err) {
-                        $scope.fetchingStandings = false;
-                        $scope.showToast('Failed to load updated standings: ' + err.message, 'error');
-                        if (!$scope.$$phase) $scope.$apply();
+                        $timeout(function() {
+                            $scope.fetchingStandings = false;
+                            $scope.showToast('Failed to load updated standings: ' + err.message, 'error');
+                        });
                     });
                 }).catch(function(err) {
-                    $scope.fetchingStandings = false;
-                    var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
-                    $scope.showToast('Sync API failed: ' + errMsg, 'error');
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(function() {
+                        $scope.fetchingStandings = false;
+                        var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
+                        $scope.showToast('Sync API failed: ' + errMsg, 'error');
+                    });
                 });
             };
 
@@ -1884,7 +1891,7 @@
                 fetch(`https://wttr.in/${encodeURIComponent(searchLoc)}?format=j1`)
                     .then(res => res.json())
                     .then(data => {
-                        $scope.$apply(() => {
+                        $timeout(() => {
                             let temp = data.current_condition[0].temp_C;
                             let desc = data.current_condition[0].weatherDesc[0].value.toLowerCase();
                             
@@ -1909,7 +1916,7 @@
                         });
                     })
                     .catch(e => {
-                        $scope.$apply(() => {
+                        $timeout(() => {
                             $scope.fetchingWeather = false;
                             if (!silent) $scope.showToast("Failed to fetch. API limit reached or invalid location.", "error");
                         });
@@ -1920,24 +1927,26 @@
             $scope.quickClearStreams = function() {
                 const sportText = $scope.adminSportView === 'fifa' ? "FIFA " : "";
                 $scope.showConfirm("Are you sure you want to delete ALL " + sportText + "stream sources?", function() {
-                    if ($scope.adminSportView === 'fifa') {
-                        $scope.config.fifa.streamLinks = [];
-                    } else {
-                        $scope.config.streamLinks = [];
-                    }
-                    $scope.showToast(sportText + "Stream list cleared. Don't forget to Save.", "success");
-                    $scope.addLog("Cleared all " + sportText + "Stream Sources");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        if ($scope.adminSportView === 'fifa') {
+                            $scope.config.fifa.streamLinks = [];
+                        } else {
+                            $scope.config.streamLinks = [];
+                        }
+                        $scope.showToast(sportText + "Stream list cleared. Don't forget to Save.", "success");
+                        $scope.addLog("Cleared all " + sportText + "Stream Sources");
+                    });
                 }, "Clear Streams");
             };
             
 
             $scope.quickResetTimers = function() {
                 $scope.showConfirm("Are you sure you want to clear all Session Timers?", function() {
-                    $scope.config.schedule.forEach(s => s.timer = "");
-                    $scope.showToast("Timers cleared. Don't forget to Save.", "success");
-                    $scope.addLog("Reset all Schedule Timers");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.schedule.forEach(s => s.timer = "");
+                        $scope.showToast("Timers cleared. Don't forget to Save.", "success");
+                        $scope.addLog("Reset all Schedule Timers");
+                    });
                 }, "Reset Timers");
             };
 
@@ -1949,8 +1958,9 @@
                         adminVisits: 0,
                         logs: [{ action: "Analytics Reset by Admin", time: Date.now() }]
                     }).then(() => {
-                        $scope.showToast("Analytics reset successfully.", "success");
-                        if (!$scope.$$phase) $scope.$apply();
+                        $timeout(() => {
+                            $scope.showToast("Analytics reset successfully.", "success");
+                        });
                     });
                 }, "Reset Analytics");
             };
@@ -1984,7 +1994,7 @@
                 
                 db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
                     .then(() => {
-                        $scope.$apply(() => { 
+                        $timeout(() => { 
                             if (!silent) {
                                 $scope.savingLive = false; 
                                 $scope.statusText = "LIVE"; 
@@ -1995,7 +2005,7 @@
                         });
                     })
                     .catch(e => {
-                        $scope.$apply(() => {
+                        $timeout(() => {
                             $scope.savingLive = false; 
                             if (!silent) $scope.showToast("Error: " + e.message, "error");
                         });
@@ -2090,9 +2100,10 @@
             // --- HELPER FUNCTIONS ---
             $scope.removeItem = (arr, i, typeName) => { 
                 $scope.showConfirm("Delete this item?", function() {
-                    arr.splice(i, 1); 
-                    if(typeName) $scope.addLog(`Removed a ${typeName}`);
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        arr.splice(i, 1); 
+                        if(typeName) $scope.addLog(`Removed a ${typeName}`);
+                    });
                 }, "Delete Item");
             };
             $scope.moveUp = (arr, i) => { if(i>0) [arr[i], arr[i-1]] = [arr[i-1], arr[i]]; };
@@ -2104,9 +2115,10 @@
             };
             $scope.sortDrivers = () => { 
                 $scope.showConfirm("Sort Drivers by points?", function() {
-                    $scope.config.standings.sort((a,b) => b.points - a.points); 
-                    $scope.addLog("Sorted Driver Standings");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.standings.sort((a,b) => b.points - a.points); 
+                        $scope.addLog("Sorted Driver Standings");
+                    });
                 }, "Sort Drivers");
             };
             
@@ -2116,9 +2128,10 @@
             };
             $scope.sortConstructors = () => { 
                 $scope.showConfirm("Sort Teams by points?", function() {
-                    $scope.config.constructors.sort((a,b) => b.points - a.points); 
-                    $scope.addLog("Sorted Team Standings");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.constructors.sort((a,b) => b.points - a.points); 
+                        $scope.addLog("Sorted Team Standings");
+                    });
                 }, "Sort Teams");
             };
             
@@ -2128,9 +2141,10 @@
             };
             $scope.removeSession = (i) => { 
                 $scope.showConfirm("Delete Session?", function() {
-                    $scope.config.schedule.splice(i, 1); 
-                    $scope.addLog("Deleted Schedule Session");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.schedule.splice(i, 1); 
+                        $scope.addLog("Deleted Schedule Session");
+                    });
                 }, "Delete Session");
             };
             $scope.moveSessionUp = (i) => $scope.moveUp($scope.config.schedule, i);
@@ -2142,9 +2156,10 @@
             };
             $scope.removeStream = (i) => { 
                 $scope.showConfirm("Delete Stream?", function() {
-                    $scope.config.streamLinks.splice(i, 1); 
-                    $scope.addLog("Deleted Stream link");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.streamLinks.splice(i, 1); 
+                        $scope.addLog("Deleted Stream link");
+                    });
                 }, "Delete Stream");
             };
 
@@ -2154,9 +2169,10 @@
             };
             $scope.removeFifaStream = (i) => { 
                 $scope.showConfirm("Delete FIFA Stream?", function() {
-                    $scope.config.fifa.streamLinks.splice(i, 1); 
-                    $scope.addLog("Deleted FIFA Stream link");
-                    if (!$scope.$$phase) $scope.$apply();
+                    $timeout(() => {
+                        $scope.config.fifa.streamLinks.splice(i, 1); 
+                        $scope.addLog("Deleted FIFA Stream link");
+                    });
                 }, "Delete FIFA Stream");
             };
 
@@ -2186,23 +2202,24 @@
                         return db.collection("app_data").doc("live_config").get();
                     })
                     .then((doc) => {
-                        if (doc.exists) {
-                            $timeout(() => {
+                        $timeout(() => {
+                            if (doc.exists) {
                                 const data = doc.data();
                                 if (data.fifa && data.fifa.streamLinks) {
                                     $scope.config.fifa.streamLinks = data.fifa.streamLinks;
                                 }
                                 $scope.showToast("FIFA streams fetched and updated successfully!", "success");
                                 $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
-                            });
-                        }
-                        $scope.fetchingFifaStreams = false;
+                            }
+                            $scope.fetchingFifaStreams = false;
+                        });
                     })
                     .catch(err => {
-                        $scope.fetchingFifaStreams = false;
-                        var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
-                        $scope.showToast("Fetch streams failed: " + errMsg, "error");
-                        if (!$scope.$$phase) $scope.$apply();
+                        $timeout(() => {
+                            $scope.fetchingFifaStreams = false;
+                            var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
+                            $scope.showToast("Fetch streams failed: " + errMsg, "error");
+                        });
                     });
             };
 
@@ -2220,8 +2237,8 @@
                 $http.get(targetUrl)
                     .then(() => db.collection("app_data").doc("live_config").get())
                     .then((doc) => {
-                        if (doc.exists) {
-                            $timeout(() => {
+                        $timeout(() => {
+                            if (doc.exists) {
                                 const data = doc.data();
                                 if (data.fifa) {
                                     if (data.fifa.raceData) {
@@ -2236,15 +2253,16 @@
                                 const matchName = data.fifa && data.fifa.raceData && data.fifa.raceData.name;
                                 $scope.showToast("Match details updated: " + (matchName || "?"), "success");
                                 $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
-                            });
-                        }
-                        $scope.fetchingFifaDetails = false;
+                            }
+                            $scope.fetchingFifaDetails = false;
+                        });
                     })
                     .catch(err => {
-                        $scope.fetchingFifaDetails = false;
-                        var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
-                        $scope.showToast("FIFA details sync failed: " + errMsg, "error");
-                        if (!$scope.$$phase) $scope.$apply();
+                        $timeout(() => {
+                            $scope.fetchingFifaDetails = false;
+                            var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
+                            $scope.showToast("FIFA details sync failed: " + errMsg, "error");
+                        });
                     });
             };
 
