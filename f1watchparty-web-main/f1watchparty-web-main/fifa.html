@@ -1911,73 +1911,28 @@
 
         <div class="container">
             <div class="main-column">
-                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
-                    <div class="video-responsive">
+                <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
+                <div class="video-wrapper">
+                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
-                </div>
-                <div class="video-wrapper countdown-card" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive)" style="
-                    aspect-ratio: 16/9;
-                    background: rgba(10, 10, 15, 0.65);
-                    backdrop-filter: blur(25px);
-                    -webkit-backdrop-filter: blur(25px);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    border-radius: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                    padding: 40px;
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-                ">
-                    <div style="
-                        position: absolute;
-                        width: 250px;
-                        height: 250px;
-                        background: #00ff55;
-                        filter: blur(100px);
-                        opacity: 0.1;
-                        top: -50px;
-                        left: -50px;
-                        pointer-events: none;
-                    "></div>
-                    
-                    <div style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: #00ff55; text-transform: uppercase; margin-bottom: 15px;">
-                        <i class="fa-regular fa-clock" style="margin-right: 6px;"></i> MATCH STATUS: OFFLINE
-                    </div>
-                    
-                    <h2 style="font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 12px; font-family: 'Titillium Web', sans-serif;">
-                        {{raceData.name || 'FIFA Watch Party'}}
-                    </h2>
-                    
-                    <p style="font-size: 14px; color: #8a8a98; max-width: 450px; margin-bottom: 30px; line-height: 1.6; font-weight: 400;">
-                        The live watch party stream is not active right now. The action will begin shortly.
-                    </p>
- 
-                    <div ng-if="showCustomTimer" style="margin-top: 10px;">
-                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #00ff55; text-transform: uppercase; margin-bottom: 8px;">
-                            {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' : (customTimer.label || 'MATCH KICKS OFF IN')}}
-                        </div>
-                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
-                            {{customTimerCountdown}}
-                        </div>
-                    </div>
-                    
-                    <div ng-if="!showCustomTimer && matchFuture" style="margin-top: 10px;">
-                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
-                            MATCH KICKS OFF IN
-                        </div>
-                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
-                            {{matchCountdownStr}}
-                        </div>
-                    </div>
- 
-                    <div ng-if="!showCustomTimer && !matchFuture" style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        No upcoming match timers scheduled.
+                    <!-- Dark placeholder when no live stream -->
+                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive)" style="
+                        aspect-ratio: 16/9;
+                        background: rgba(8, 8, 12, 0.85);
+                        border-radius: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #333;
+                        font-size: 13px;
+                        font-weight: 700;
+                        letter-spacing: 2px;
+                        text-transform: uppercase;
+                        gap: 10px;
+                    ">
+                        <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
                 </div>
                 <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && matchIsTimelyLive">
