@@ -1882,20 +1882,21 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && showCustomTimer">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
                 </div>
-                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && !showCustomTimer && matchFuture">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && matchFuture">
                     <i class="fa-regular fa-clock"></i> MATCH IN {{matchCountdownStr}}
                 </div>
-                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive) && !showCustomTimer && !matchFuture">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && !matchFuture">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
+
         </header>
 
         <!-- NOTIFICATION TOASTS (Now on the side) -->
@@ -1913,12 +1914,12 @@
             <div class="main-column">
                 <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
                 <div class="video-wrapper">
-                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive">
+                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                     <!-- Dark placeholder when no live stream -->
-                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && matchIsTimelyLive)" style="
+                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0)" style="
                         aspect-ratio: 16/9;
                         background: rgba(8, 8, 12, 0.85);
                         border-radius: 16px;
@@ -1935,7 +1936,7 @@
                         <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && matchIsTimelyLive">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                     <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
