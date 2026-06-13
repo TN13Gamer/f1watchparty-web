@@ -796,19 +796,25 @@
                 }
             }
 
-            // For FIFA: check if the match date is within the live window (30 min before - 4 hours after)
-            let matchIsTimelyLive = true; // default true for F1 (no match date gate)
+            // For FIFA: check if we are within the live window (30 min before → 2 hours after kickoff)
+            // Prefer customTimer.target (ISO, reliable); fall back to raceData.date
+            let matchIsTimelyLive = true; // default true for F1
             if (sportKey === 'fifa') {
                 matchIsTimelyLive = false;
-                const fifaRaceDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
-                if (fifaRaceDate && !isNaN(fifaRaceDate.getTime())) {
-                    const dist = fifaRaceDate.getTime() - now;
-                    // 30 min before kickoff until 4 hours after kickoff
-                    if (dist < (30 * 60 * 1000) && dist > -(4 * 60 * 60 * 1000)) {
+                let liveRefDate = null;
+                const ct = sportData.customTimer;
+                if (ct && ct.enabled && ct.target) liveRefDate = safeDate(ct.target);
+                if (!liveRefDate || isNaN(liveRefDate.getTime())) {
+                    liveRefDate = sportData.raceData ? parseFifaDate(sportData.raceData.date) : null;
+                }
+                if (liveRefDate && !isNaN(liveRefDate.getTime())) {
+                    const dist = liveRefDate.getTime() - now;
+                    // 30 min before kickoff → 2 hours after kickoff
+                    if (dist < (30 * 60 * 1000) && dist > -(2 * 60 * 60 * 1000)) {
                         matchIsTimelyLive = true;
                     }
                 }
-                // If no match date is set at all, don't show live
+                // No valid date → never show live
             }
 
             const isLive = widgets.videoPlayer === true && !customTimerActive && matchIsTimelyLive && (sportKey === 'f1' || streamLinks.length > 0);

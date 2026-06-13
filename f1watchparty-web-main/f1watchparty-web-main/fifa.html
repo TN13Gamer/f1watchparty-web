@@ -2743,21 +2743,33 @@
                 }
 
                 // Compute FIFA Match Details date/time countdown
-                $scope.matchIsTimelyLive = false; // true only within a 4-hour live window
+                // Use customTimer.target (ISO, reliable) as primary; fall back to raceData.date
+                $scope.matchIsTimelyLive = false;
+                var _liveRefDate = null;
+                if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
+                    _liveRefDate = safeDate($scope.customTimer.target);
+                }
+                if ((!_liveRefDate || isNaN(_liveRefDate.getTime())) && $scope.raceData && $scope.raceData.date) {
+                    _liveRefDate = parseFifaDate($scope.raceData.date);
+                }
+                if (_liveRefDate && !isNaN(_liveRefDate.getTime())) {
+                    var matchMs = _liveRefDate.getTime();
+                    var distToMatch = matchMs - now;
+                    // Live window: 30 min BEFORE kickoff → 2 hours AFTER kickoff
+                    if (distToMatch < (30 * 60 * 1000) && distToMatch > -(2 * 60 * 60 * 1000)) {
+                        $scope.matchIsTimelyLive = true;
+                    }
+                }
+                // Separate countdown display using raceData.date
                 if ($scope.raceData && $scope.raceData.date) {
                     var matchDate = parseFifaDate($scope.raceData.date);
                     if (matchDate && !isNaN(matchDate.getTime())) {
-                        var matchMs = matchDate.getTime();
-                        var dist = matchMs - now;
-                        // Live window: 30 min before kickoff until 4 hours after kickoff
-                        if (dist < (30 * 60 * 1000) && dist > -(4 * 60 * 60 * 1000)) {
-                            $scope.matchIsTimelyLive = true;
-                        }
-                        if (dist > 0) {
-                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
-                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                            var s = Math.floor((dist % (1000 * 60)) / 1000);
+                        var distCd = matchDate.getTime() - now;
+                        if (distCd > 0) {
+                            var d = Math.floor(distCd / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((distCd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((distCd % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((distCd % (1000 * 60)) / 1000);
                             $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
                             $scope.matchFuture = true;
                         } else {
@@ -2772,6 +2784,7 @@
                     $scope.matchCountdownStr = "";
                     $scope.matchFuture = false;
                 }
+
 
                 if (!$scope.schedule) return;
                 $scope.nextUp = null; $scope.activeSession = null;
