@@ -1215,6 +1215,7 @@
                         </div>
                     </div>
 
+                    <div class="grid-row">
                         <div class="input-group"><label>Match / Tournament Round</label><input type="text" ng-model="config.fifa.raceData.round" placeholder="e.g. Group A / Final"></div>
                         <div class="input-group"><label>Match Title (Teams)</label><input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Argentina vs France"></div>
                     </div>
@@ -1686,7 +1687,7 @@
                             snap.forEach(doc => doc.ref.delete());
                         });
                 }, 60000);
-            };
+
 
 
             $scope.pinForm = { username: 'ADMIN', text: '' };
@@ -1834,8 +1835,8 @@
                 if ($scope.fetchingStandings) return;
                 $scope.fetchingStandings = true;
 
-                var primaryUrl = '/api/sync-standings?manual=true';
-                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                var primaryUrl = '/api/sync-standings?manual=true&type=standings';
+                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=standings';
                 var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
 
                 $http.get(targetUrl).then(function(res) {
@@ -2174,8 +2175,8 @@
                 db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
                     .then(() => {
                         // Step 2: Trigger backend standings and FIFA stream sync
-                        var primaryUrl = '/api/sync-standings?manual=true';
-                        var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                        var primaryUrl = '/api/sync-standings?manual=true&type=fifastreams';
+                        var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=fifastreams';
                         var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
 
                         return $http.get(targetUrl);
@@ -2213,8 +2214,8 @@
                 $scope.fetchingFifaDetails = true;
                 $scope.showToast("Detecting next match from worldcup26.ir...", "info");
 
-                var primaryUrl = '/api/sync-standings?manual=true';
-                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true';
+                var primaryUrl = '/api/sync-standings?manual=true&type=fifadetails';
+                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=fifadetails';
                 var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
 
                 $http.get(targetUrl)

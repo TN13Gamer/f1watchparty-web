@@ -610,15 +610,24 @@ async function syncFifaStreams(config, ref) {
 }
 
 module.exports = async (req, res) => {
-  if (!['GET','POST'].includes(req.method)) return res.status(405).end();
+  console.log(`[sync-standings API] Received request: ${req.method} ${req.url}`);
+  if (!['GET','POST'].includes(req.method)) {
+    console.log(`[sync-standings API] Invalid method: ${req.method}`);
+    return res.status(405).end();
+  }
 
   try {
+    console.log('[sync-standings API] Accessing Firestore...');
     const db = admin.firestore();
     const ref = db.collection('app_data').doc('live_config');
     const doc = await ref.get();
+    console.log('[sync-standings API] Firestore live_config doc exists:', doc.exists);
     if (!doc.exists) return res.json({ ok: false, message: 'live_config not found' });
 
     let config = doc.data();
+
+    const requestedType = req.query.type; // standings, f1streams, fifadetails, fifastreams
+    const runAll = !requestedType;
 
     // 1. Sync F1 Standings (if allowed and standings available)
     let standingsSynced = false;
@@ -627,132 +636,151 @@ module.exports = async (req, res) => {
     let source = null;
     let changed = false;
 
-    // Check if auto-sync is disabled.
-    // Allow manual triggers (?manual=true) to bypass this check.
-    if (config.autoSyncStandings !== false || req.query.manual === 'true') {
-      try {
-        const result = await fetchStandings();
-        const dl = result.dl;
-        const cl = result.cl;
-        source = result.source;
+    if (runAll || requestedType === 'standings') {
+      console.log('[sync-standings API] config.autoSyncStandings:', config.autoSyncStandings, 'manual:', req.query.manual);
+      // Check if auto-sync is disabled.
+      // Allow manual triggers (?manual=true) to bypass this check.
+      if (config.autoSyncStandings !== false || req.query.manual === 'true') {
+        console.log('[sync-standings API] Triggering fetchStandings...');
+        try {
+          const result = await fetchStandings();
+          const dl = result.dl;
+          const cl = result.cl;
+          source = result.source;
 
-        if (dl && dl.length > 0) {
-          const standings = config.standings || [];
-          const constructors = config.constructors || [];
-          
-          // Filter out dummy/placeholder driver entries if any
-          for (let i = standings.length - 1; i >= 0; i--) {
-            if (standings[i].name === 'Driver' && standings[i].team === 'Team') {
-              standings.splice(i, 1);
-              changed = true;
-            }
-          }
-
-          dl.forEach(entry => {
-            const fullName = entry.Driver?.fullName || (entry.Driver?.givenName + ' ' + entry.Driver?.familyName);
-            const lastName = (entry.Driver?.familyName || '').toLowerCase();
-            const pts = parseInt(entry.points || 0);
-            const match = standings.find(d => d.name && d.name.toLowerCase().includes(lastName));
-            if (match) {
-              if (match.points !== pts) {
-                match.points = pts;
+          if (dl && dl.length > 0) {
+            const standings = config.standings || [];
+            const constructors = config.constructors || [];
+            
+            // Filter out dummy/placeholder driver entries if any
+            for (let i = standings.length - 1; i >= 0; i--) {
+              if (standings[i].name === 'Driver' && standings[i].team === 'Team') {
+                standings.splice(i, 1);
                 changed = true;
               }
-              if (entry.image && match.image !== entry.image) {
-                match.image = entry.image;
-                changed = true;
-              }
-            } else {
-              standings.push({
-                name: fullName,
-                team: entry.Constructor?.name || '',
-                points: pts,
-                image: entry.image || ''
-              });
-              changed = true;
             }
-          });
-          standings.sort((a, b) => (b.points||0) - (a.points||0));
 
-          if (cl?.length) {
-            cl.forEach(entry => {
-              const name = entry.Constructor?.name || '';
+            dl.forEach(entry => {
+              const fullName = entry.Driver?.fullName || (entry.Driver?.givenName + ' ' + entry.Driver?.familyName);
+              const lastName = (entry.Driver?.familyName || '').toLowerCase();
               const pts = parseInt(entry.points || 0);
-              const aliases = TEAM_ALIASES[name] || [name.toLowerCase()];
-              const match = constructors.find(c => {
-                if (!c.name) return false;
-                const n = c.name.toLowerCase();
-                return aliases.some(a => n.includes(a));
-              });
+              const match = standings.find(d => d.name && d.name.toLowerCase().includes(lastName));
               if (match) {
                 if (match.points !== pts) {
                   match.points = pts;
                   changed = true;
                 }
+                if (entry.image && match.image !== entry.image) {
+                  match.image = entry.image;
+                  changed = true;
+                }
               } else {
-                constructors.push({
-                  name: name,
-                  points: pts
+                standings.push({
+                  name: fullName,
+                  team: entry.Constructor?.name || '',
+                  points: pts,
+                  image: entry.image || ''
                 });
                 changed = true;
               }
             });
-            constructors.sort((a, b) => (b.points||0) - (a.points||0));
-          }
+            standings.sort((a, b) => (b.points||0) - (a.points||0));
 
-          syncedAt = new Date().toISOString();
-          await ref.set({ standings, constructors, lastStandingsSync: syncedAt, standingsSource: source }, { merge: true });
-          if (changed) console.log('[sync] Updated Firestore standings', syncedAt, source);
-          standingsSynced = true;
-        } else {
-          console.log('[sync] No driver standings data retrieved (e.g. empty driver standings list).');
+            if (cl?.length) {
+              cl.forEach(entry => {
+                const name = entry.Constructor?.name || '';
+                const pts = parseInt(entry.points || 0);
+                const aliases = TEAM_ALIASES[name] || [name.toLowerCase()];
+                const match = constructors.find(c => {
+                  if (!c.name) return false;
+                  const n = c.name.toLowerCase();
+                  return aliases.some(a => n.includes(a));
+                });
+                if (match) {
+                  if (match.points !== pts) {
+                    match.points = pts;
+                    changed = true;
+                  }
+                } else {
+                  constructors.push({
+                    name: name,
+                    points: pts
+                  });
+                  changed = true;
+                }
+              });
+              constructors.sort((a, b) => (b.points||0) - (a.points||0));
+            }
+
+            syncedAt = new Date().toISOString();
+            await ref.set({ standings, constructors, lastStandingsSync: syncedAt, standingsSource: source }, { merge: true });
+            if (changed) console.log('[sync] Updated Firestore standings', syncedAt, source);
+            standingsSynced = true;
+          } else {
+            console.log('[sync] No driver standings data retrieved (e.g. empty driver standings list).');
+          }
+        } catch (err) {
+          console.error('[sync] Error syncing F1 standings:', err.message);
+          standingsError = err.message;
         }
-      } catch (err) {
-        console.error('[sync] Error syncing F1 standings:', err.message);
-        standingsError = err.message;
+      } else {
+        console.log('[sync] Standings auto-sync is disabled. Skipping.');
       }
-    } else {
-      console.log('[sync] Standings auto-sync is disabled. Skipping.');
     }
 
     // 2. Automatically sync F1 streams from pushembdz if enabled
     let f1StreamsSynced = false;
     let f1StreamsError = null;
-    try {
-      await syncStreamsAutomatically(config, ref);
-      f1StreamsSynced = true;
-    } catch (err) {
-      console.error('[sync] F1 streams auto-fetch error:', err.message);
-      f1StreamsError = err.message;
+    if (runAll || requestedType === 'f1streams') {
+      console.log('[sync-standings API] Starting F1 streams sync...');
+      try {
+        await syncStreamsAutomatically(config, ref);
+        console.log('[sync-standings API] F1 streams sync complete.');
+        f1StreamsSynced = true;
+      } catch (err) {
+        console.error('[sync] F1 streams auto-fetch error:', err.message);
+        f1StreamsError = err.message;
+      }
     }
 
     // 3. Auto-update FIFA match details from worldcup26.ir (name, score, venue, timer)
     let fifaDetailsSynced = false;
     let fifaDetailsError = null;
     let updatedFifaConfig = null;
-    try {
-      updatedFifaConfig = await syncFifaMatchDetails(config, ref);
-      if (updatedFifaConfig) {
-        // Refresh config so stream sync uses the newly set match name
-        config = { ...config, fifa: updatedFifaConfig };
+    if (runAll || requestedType === 'fifadetails') {
+      console.log('[sync-standings API] Starting FIFA details sync...');
+      try {
+        updatedFifaConfig = await syncFifaMatchDetails(config, ref);
+        if (updatedFifaConfig) {
+          console.log('[sync-standings API] FIFA details config updated.');
+          // Refresh config so stream sync uses the newly set match name
+          config = { ...config, fifa: updatedFifaConfig };
+        } else {
+          console.log('[sync-standings API] FIFA details returned no update.');
+        }
+        fifaDetailsSynced = true;
+      } catch (err) {
+        console.error('[sync] FIFA details sync error:', err.message);
+        fifaDetailsError = err.message;
       }
-      fifaDetailsSynced = true;
-    } catch (err) {
-      console.error('[sync] FIFA details sync error:', err.message);
-      fifaDetailsError = err.message;
     }
 
     // 4. Automatically sync FIFA streams from streamed.pk
     let fifaStreamsSynced = false;
     let fifaStreamsError = null;
-    try {
-      await syncFifaStreams(config, ref);
-      fifaStreamsSynced = true;
-    } catch (err) {
-      console.error('[sync] FIFA streams auto-sync error:', err.message);
-      fifaStreamsError = err.message;
+    if (runAll || requestedType === 'fifastreams') {
+      console.log('[sync-standings API] Starting FIFA streams sync...');
+      try {
+        await syncFifaStreams(config, ref);
+        console.log('[sync-standings API] FIFA streams sync complete.');
+        fifaStreamsSynced = true;
+      } catch (err) {
+        console.error('[sync] FIFA streams auto-sync error:', err.message);
+        fifaStreamsError = err.message;
+      }
     }
 
+    console.log('[sync-standings API] Sending response...');
     res.json({
       ok: true,
       standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
@@ -761,7 +789,8 @@ module.exports = async (req, res) => {
       fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
     });
   } catch(err) {
-    console.error('[sync] Error in main sync handler:', err.message);
+    console.error('[sync-standings API] Error in main sync handler:', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
+
 };

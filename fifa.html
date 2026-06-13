@@ -1695,6 +1695,77 @@
                 right: 0;
             }
         }
+
+        /* Floating Back Button on Landing Page */
+        .back-to-home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-gray);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        .back-to-home-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-3px);
+        }
+
+        /* Premium Sliding Sport Toggle */
+        .sport-toggle-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px;
+            border-radius: 30px;
+            position: relative;
+            margin-left: 20px;
+            backdrop-filter: blur(5px);
+            user-select: none;
+        }
+
+        .sport-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-gray);
+            padding: 6px 18px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2;
+        }
+
+        .sport-toggle-btn.active {
+            background: #00ff55; /* FIFA Green theme primary */
+            color: #000;
+            box-shadow: 0 0 12px rgba(0, 255, 85, 0.3);
+        }
+
+        .sport-toggle-btn:hover:not(.active) {
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -1717,25 +1788,14 @@
         <header>
             <div class="header-left">
                 <span class="logo-text">WatchFIFA <span style="color: var(--f1-red);">2026</span></span>
-                <button class="sport-switch-btn" ng-click="goToF1()" style="
-                    margin-left: 15px;
-                    background: rgba(230, 0, 0, 0.1);
-                    border: 1px solid rgba(230, 0, 0, 0.3);
-                    color: #e60000;
-                    padding: 5px 12px;
-                    border-radius: 12px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(230, 0, 0, 0.2)'; this.style.boxShadow='0 0 10px rgba(230, 0, 0, 0.3)'" onmouseout="this.style.background='rgba(230, 0, 0, 0.1)'; this.style.boxShadow='none'">
-                    <i class="fa-solid fa-car-side"></i> F1 PARTY
-                </button>
+                <div class="sport-toggle-container">
+                    <button class="sport-toggle-btn" ng-click="goToF1()">
+                        <i class="fa-solid fa-car-side"></i> F1 Party
+                    </button>
+                    <button class="sport-toggle-btn active">
+                        <i class="fa-solid fa-futbol"></i> FIFA Party
+                    </button>
+                </div>
             </div>
 
             <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
@@ -1947,6 +2007,20 @@
 
     <!-- Countdown Landing Page Mode -->
     <div class="countdown-page-container ng-cloak animate-in" ng-if="dataLoaded && siteMode === 'countdown'">
+        <!-- Back Button -->
+        <a href="index.html" class="back-to-home-btn" ng-click="goBack($event)">
+            <i class="fa-solid fa-arrow-left"></i> Back to Selection
+        </a>
+
+        <!-- Sport Switch Toggle -->
+        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
+            <button class="sport-toggle-btn" ng-click="goToF1()">
+                <i class="fa-solid fa-car-side"></i> F1 Party
+            </button>
+            <button class="sport-toggle-btn active">
+                <i class="fa-solid fa-futbol"></i> FIFA Party
+            </button>
+        </div>
         <!-- Up Next Marquee Banner at the very top -->
         <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
             <div class="landing-marquee-text">
@@ -2122,6 +2196,12 @@
             $scope.goToF1 = function () {
                 var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                 window.location.href = isLocal ? 'f1.html' : '/f1';
+            };
+
+            $scope.goBack = function ($event) {
+                if ($event) $event.preventDefault();
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                window.location.href = isLocal ? 'index.html' : '/';
             };
 
             $scope.dataLoaded = false;
@@ -2423,6 +2503,10 @@
                 $scope.twitchChannel = fifa.twitchChannel || 'watchf1olive';
                 $scope.pinnedMessage = fifa.pinnedMessage || null;
                 $scope.siteMode = fifa.siteMode || 'main';
+                var urlParams = new URLSearchParams($window.location.search);
+                if (urlParams.has('siteMode')) {
+                    $scope.siteMode = urlParams.get('siteMode');
+                }
                 $scope.customTimer = fifa.customTimer || { enabled: false, label: '', target: '' };
                 $scope.widgets = fifa.widgets || {
                     videoPlayer: true,

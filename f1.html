@@ -2085,6 +2085,16 @@
             <i class="fa-solid fa-arrow-left"></i> Back to Selection
         </a>
 
+        <!-- Sport Switch Toggle -->
+        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
+            <button class="sport-toggle-btn active">
+                <i class="fa-solid fa-car-side"></i> F1 Party
+            </button>
+            <button class="sport-toggle-btn" ng-click="goToFifa()">
+                <i class="fa-solid fa-futbol"></i> FIFA Party
+            </button>
+        </div>
+
         <!-- Up Next Marquee Banner at the very top -->
         <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
             <div class="landing-marquee-text">
