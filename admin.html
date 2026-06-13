@@ -1519,14 +1519,37 @@
             
             $scope.logout = () => {
                 $scope.addLog("Admin logged out.");
+                if (unsubscribeConfig) unsubscribeConfig();
                 auth.signOut();
             };
 
             // --- DATA LOADING ---
+            let unsubscribeConfig = null;
             $scope.loadAllData = function() {
-                db.collection("app_data").doc("live_config").get().then(doc => {
+                if (unsubscribeConfig) unsubscribeConfig();
+                unsubscribeConfig = db.collection("app_data").doc("live_config").onSnapshot(doc => {
+                    if (!doc.exists) return;
                     $scope.$apply(() => {
-                        $scope.config = doc.exists ? doc.data() : {};
+                        const data = doc.data();
+                        
+                        if (!$scope.config) {
+                            $scope.config = data;
+                        } else {
+                            // Merge only background-synced fields to avoid resetting active text inputs
+                            $scope.config.standings = data.standings || [];
+                            $scope.config.constructors = data.constructors || []; 
+                            $scope.config.streamLinks = data.streamLinks || [];
+                            $scope.config.weather = data.weather || { air: 0, track: 0, condition: 'sunny' };
+                            $scope.config.lastStandingsSync = data.lastStandingsSync || "";
+                            $scope.config.standingsSource = data.standingsSource || "";
+                            $scope.config.lastAutoSync = data.lastAutoSync || null;
+
+                            if (data.fifa) {
+                                if (!$scope.config.fifa) $scope.config.fifa = {};
+                                $scope.config.fifa.streamLinks = data.fifa.streamLinks || [];
+                            }
+                        }
+                        
                         if (!$scope.config.standings) $scope.config.standings = [];
                         if (!$scope.config.constructors) $scope.config.constructors = []; 
                         if (!$scope.config.streamLinks) $scope.config.streamLinks = [];
@@ -1604,6 +1627,7 @@
                         }
                     });
                 });
+            };
 
                 // Listen to Analytics Live with $timeout to fix UI freezing
                 db.collection("app_data").doc("analytics").onSnapshot((doc) => {

@@ -10,29 +10,37 @@ const cheerio = require('cheerio');
 
 async function fetchJson(url) {
   try {
-    const { exec } = require('child_process');
-    return await new Promise((resolve, reject) => {
-      const cmd = `curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
-      exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: 8000 }, (error, stdout, stderr) => {
-        if (error) {
-          return reject(error);
-        }
-        try {
-          const data = JSON.parse(stdout);
-          resolve(data);
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
-  } catch (e) {
+    // Try Axios first (much faster and avoids process spawning overhead/hanging)
     const { data } = await axios.get(url, {
-      timeout: 8000,
+      timeout: 6000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://streamed.pk/category/football'
       }
     });
     return data;
+  } catch (e) {
+    // Fallback to native curl (helps bypass Cloudflare/Ddos-guard TLS fingerprints on serverless environments)
+    console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
+    try {
+      const { exec } = require('child_process');
+      return await new Promise((resolve, reject) => {
+        const cmd = `curl -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: 6000 }, (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          try {
+            const data = JSON.parse(stdout);
+            resolve(data);
+          } catch (jsonErr) {
+            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+          }
+        });
+      });
+    } catch (curlErr) {
+      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+    }
   }
 }
 
@@ -334,12 +342,17 @@ async function syncStreamsAutomatically(config, ref) {
     }
   } catch (err) {
     console.error('[sync] Stream auto-fetch error:', err.message);
+    throw err;
   }
 }
 
 async function syncFifaStreams(config, ref) {
   const fifa = config.fifa || {};
-  if (fifa.autoSyncStreams === false) return;
+  console.log('[sync-fifa] Starting FIFA stream sync. config.fifa exists:', !!config.fifa, 'autoSyncStreams:', fifa.autoSyncStreams);
+  if (fifa.autoSyncStreams === false) {
+    console.log('[sync-fifa] Auto-sync disabled (autoSyncStreams is false).');
+    return;
+  }
 
   const matchName = fifa.raceData?.name;
   if (!matchName) {
@@ -399,6 +412,7 @@ async function syncFifaStreams(config, ref) {
     // Fetch stream links for each source
     if (bestMatch.sources && bestMatch.sources.length > 0) {
       const streamLinks = [];
+      const fetchErrors = [];
       
       const streamPromises = bestMatch.sources.map(async (src) => {
         try {
@@ -416,9 +430,12 @@ async function syncFifaStreams(config, ref) {
                 });
               }
             });
+          } else {
+            fetchErrors.push(`${src.source}: response was not an array`);
           }
         } catch (err) {
           console.error(`[sync-fifa] Failed to fetch streams for source ${src.source}:`, err.message);
+          fetchErrors.push(`${src.source}: ${err.message}`);
         }
       });
 
@@ -434,12 +451,15 @@ async function syncFifaStreams(config, ref) {
         console.log(`[sync-fifa] Successfully updated ${streamLinks.length} FIFA stream links in Firestore.`);
       } else {
         console.log('[sync-fifa] No active stream URLs found for matched match.');
+        throw new Error(`Failed to resolve any stream URLs. Errors: ${fetchErrors.join(' | ')}`);
       }
     } else {
       console.log('[sync-fifa] Matched match has no sources.');
+      throw new Error('Matched match has no sources.');
     }
   } catch (err) {
     console.error('[sync-fifa] Error during auto-sync:', err.message);
+    throw err;
   }
 }
 
