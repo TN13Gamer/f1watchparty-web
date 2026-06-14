@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -54,6 +54,12 @@
             z-index: -1;
             opacity: 0.35;
             pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            #vanta-bg {
+                display: none !important;
+            }
         }
 
         /* Ambient blur spots */
@@ -542,26 +548,56 @@
             }, 600);
         }
 
-        // Initialize Vanta Net Background Effect
-        try {
-            window.vantaInstance = VANTA.NET({
-                el: "#vanta-bg",
-                mouseControls: true,
-                touchControls: true,
-                gyroControls: false,
-                minHeight: 200.00,
-                minWidth: 200.00,
-                scale: 1.00,
-                scaleMobile: 1.00,
-                color: 0x222222,
-                backgroundColor: 0x050505,
-                points: 12.00,
-                maxDistance: 20.00,
-                spacing: 16.00
-            });
-        } catch (e) {
-            console.error("Vanta initialization failed: ", e);
+        // Vanta Net Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
+
+        function initVanta() {
+            if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
+                try {
+                    window.vantaInstance = VANTA.NET({
+                        el: "#vanta-bg",
+                        mouseControls: true,
+                        touchControls: false,
+                        gyroControls: false,
+                        minHeight: 200.00,
+                        minWidth: 200.00,
+                        scale: 1.00,
+                        scaleMobile: 1.00,
+                        color: 0x222222,
+                        backgroundColor: 0x050505,
+                        points: 12.00,
+                        maxDistance: 20.00,
+                        spacing: 16.00
+                    });
+                } catch (e) {
+                    console.error("Vanta initialization failed: ", e);
+                }
+            }
         }
+
+        function destroyVanta() {
+            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
+                window.vantaInstance.destroy();
+                window.vantaInstance = null;
+            }
+        }
+
+        // Initialize on DOM load
+        document.addEventListener("DOMContentLoaded", function () {
+            initVanta();
+        });
+
+        // Dynamic resize cleanup/re-initialization
+        window.addEventListener("resize", function () {
+            if (isMobileDevice) return;
+            if (window.innerWidth <= 768) {
+                destroyVanta();
+            } else {
+                initVanta();
+            }
+        });
 
         // Bind interactive mouseenter / mouseleave triggers to sports cards for dynamic 3D transitions
         document.addEventListener('DOMContentLoaded', () => {

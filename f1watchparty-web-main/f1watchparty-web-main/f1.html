@@ -139,6 +139,12 @@
             pointer-events: none;
         }
 
+        @media (max-width: 768px) {
+            #vanta-overlay {
+                display: none !important;
+            }
+        }
+
         /* 3D Depth Utilities */
         .glass-card,
         .video-wrapper {
@@ -1944,7 +1950,7 @@
                     </button>
                 </div>
                 <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
-                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="event-header">
                         <div>
                             <span class="event-round">ROUND {{raceData.round}}</span>
@@ -1968,7 +1974,7 @@
 
             <div class="sidebar">
                 <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <video autoplay loop muted playsinline class="card-video-bg">
                         <source src="racing.mp4" type="video/mp4">
                     </video>
@@ -1989,7 +1995,7 @@
                 </div>
 
                 <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    data-tilt-speed="400" data-tilt-perspective="1000">
 
                     <!-- Card Title -->
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
@@ -2712,14 +2718,18 @@
             };
         });
 
-        // Added 3D Net Telemetry Overlay on top of Video (only initialized on desktop for performance)
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof VANTA !== 'undefined') {
+        // Vanta Net Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
+
+        function initVanta() {
+            if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
                 const initialColor = window.pendingVantaColor || 0xe60000;
                 window.vantaInstance = VANTA.NET({
                     el: "#vanta-overlay",
                     mouseControls: true,
-                    touchControls: true,
+                    touchControls: false,
                     gyroControls: false,
                     minHeight: 200.00,
                     minWidth: 200.00,
@@ -2732,6 +2742,26 @@
                     maxDistance: 24.00,
                     spacing: 16.00
                 });
+            }
+        }
+
+        function destroyVanta() {
+            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
+                window.vantaInstance.destroy();
+                window.vantaInstance = null;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initVanta();
+        });
+
+        window.addEventListener("resize", function () {
+            if (isMobileDevice) return;
+            if (window.innerWidth <= 768) {
+                destroyVanta();
+            } else {
+                initVanta();
             }
         });
 
