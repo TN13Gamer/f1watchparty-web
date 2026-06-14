@@ -4,53 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>watchf1.live | Live Stream</title>
+    <title>watchfifa.live | FIFA Watch Party</title>
 
     <script>
         (function () {
-            const savedLoc = localStorage.getItem('f1_theme_loc') || 'default';
-            const savedOverride = localStorage.getItem('f1_theme_override') || '';
-            let key = (savedOverride !== '') ? savedOverride : savedLoc;
-            const loc = key.toLowerCase();
-            let primary = '#00ff55';
-            let glow = 'rgba(0, 255, 85, 0.15)';
-            if (loc.includes('monaco') || loc.includes('monte carlo')) {
-                primary = '#e2001a'; glow = 'rgba(226, 0, 26, 0.15)';
-            } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
-                primary = '#ff1801'; glow = 'rgba(255, 24, 1, 0.15)';
-            } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
-                primary = '#00cc7a'; glow = 'rgba(0, 204, 122, 0.15)';
-            } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
-                primary = '#ff7700'; glow = 'rgba(255, 119, 0, 0.15)';
-            } else if (loc.includes('las vegas') || loc.includes('vegas')) {
-                primary = '#b500ff'; glow = 'rgba(181, 0, 255, 0.2)';
-            } else if (loc.includes('singapore') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
-                primary = '#00ffcc'; glow = 'rgba(0, 255, 204, 0.2)';
-            } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
-                primary = '#00e5ff'; glow = 'rgba(0, 229, 255, 0.2)';
-            } else if (loc.includes('spa') || loc.includes('belgium')) {
-                primary = '#ffb700'; glow = 'rgba(255, 183, 0, 0.15)';
-            } else if (loc.includes('suzuka') || loc.includes('japan')) {
-                primary = '#ff66a3'; glow = 'rgba(255, 102, 163, 0.2)';
-            } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
-                primary = '#ffcc00'; glow = 'rgba(255, 204, 0, 0.15)';
-            } else if (loc.includes('canada') || loc.includes('montreal')) {
-                primary = '#ff3333'; glow = 'rgba(255, 51, 51, 0.15)';
-            } else if (loc.includes('china') || loc.includes('shanghai')) {
-                primary = '#ff2200'; glow = 'rgba(255, 34, 0, 0.15)';
-            } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
-                primary = '#00ff33'; glow = 'rgba(0, 255, 51, 0.15)';
-            } else if (loc.includes('hungar') || loc.includes('budapest')) {
-                primary = '#ff007f'; glow = 'rgba(255, 0, 127, 0.2)';
-            } else if (loc.includes('mexic')) {
-                primary = '#00875a'; glow = 'rgba(0, 135, 90, 0.15)';
-            }
-            document.documentElement.style.setProperty('--f1-red', primary);
-            document.documentElement.style.setProperty('--glow-color', glow);
+            document.documentElement.style.setProperty('--f1-red', '#00ff55');
+            document.documentElement.style.setProperty('--glow-color', 'rgba(0, 255, 85, 0.15)');
         })();
     </script>
 
-    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 
@@ -74,7 +37,7 @@
         }
 
         :root {
-            --f1-red: #e60000;
+            --f1-red: #00ff55;
             --f1-carbon: #101010;
             --f1-silver: #d1d1d1;
             --f1-green: #00d26a;
@@ -83,7 +46,7 @@
             --glass-border: rgba(255, 255, 255, 0.05);
             --text-white: #ffffff;
             --text-gray: #999999;
-            --glow-color: rgba(230, 0, 0, 0.15);
+            --glow-color: rgba(0, 255, 85, 0.15);
             --border: #24242e;
             --tech-blue: #00e5ff;
         }
@@ -943,10 +906,10 @@
         }
 
         .stream-btn.active {
-            background: #e60000 !important;
-            color: white !important;
-            border-color: #e60000 !important;
-            box-shadow: 0 0 15px rgba(230, 0, 0, 0.4) !important;
+            background: var(--f1-red) !important;
+            color: black !important;
+            border-color: var(--f1-red) !important;
+            box-shadow: 0 0 15px var(--glow-color) !important;
         }
 
         .spacer {
@@ -1345,7 +1308,7 @@
             border-top-color: var(--f1-red);
             animation: spin 0.8s ease-in-out infinite;
             margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(230, 0, 0, 0.2);
+            box-shadow: 0 0 20px var(--glow-color);
         }
 
         @keyframes spin {
@@ -1825,15 +1788,27 @@
         .sport-toggle-btn:hover:not(.active) {
             color: #fff;
         }
+
+        .fixtures-scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+            padding-right: 5px;
+        }
+
+        .fixtures-scroll-container::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
     </style>
 </head>
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
     <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
-        <iframe src="https://www.youtube.com/embed/HmpzUm5j4OE?autoplay=1&mute=1&loop=1&playlist=HmpzUm5j4OE&controls=0&showinfo=0&rel=0&playsinline=1&enablejsapi=1" 
-                style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.35;" 
-                frameborder="0" allow="autoplay; encrypted-media"></iframe>
+        <video autoplay loop muted playsinline style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.15;" src="fifa.mp4"></video>
     </div>
     <div class="video-overlay"></div>
     <div class="fifa-wavy-bg">
@@ -1854,7 +1829,7 @@
     <div class="loader" ng-class="{'hide': dataLoaded}">
         <div class="loading-logo-container">
             <svg class="loading-logo-svg" viewBox="0 0 600 100">
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchF1.live</text>
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA 2026</text>
             </svg>
         </div>
     </div>
@@ -1864,20 +1839,12 @@
         <header>
             <div class="header-left">
                 <span class="logo-text fifa-logo-gradient">WatchFIFA <span>2026</span></span>
-                <div class="sport-toggle-container">
-                    <button class="sport-toggle-btn" ng-click="goToF1()">
-                        <i class="fa-solid fa-car-side"></i> F1 Party
-                    </button>
-                    <button class="sport-toggle-btn active">
-                        <i class="fa-solid fa-futbol"></i> FIFA Party
-                    </button>
-                </div>
             </div>
 
-            <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
+            <div class="header-marquee-container" ng-if="nextMatch">
                 <div class="header-marquee-text">
-                    <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
-                    UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+                    <i class="fa-solid fa-futbol" style="color: var(--f1-red); margin-right: 8px;"></i>
+                    UP NEXT: <span>{{nextMatch.homeTeam}} vs {{nextMatch.awayTeam}}</span> • {{nextMatch.localDate}} • <span>Stadium: {{nextMatch.stadium}}</span>
                 </div>
             </div>
 
@@ -1991,28 +1958,46 @@
                 <!-- FIFA Fixtures Card -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.1" data-tilt-perspective="1000">
+                    <video class="card-video-bg" autoplay loop muted playsinline src="fifa.mp4"></video>
                     <div class="card-title">
                         <i class="fa-solid fa-calendar-days"></i> Match Fixtures
                     </div>
-                    <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                        <div class="schedule-row" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}">
-                            <div class="sess-info" style="flex: 1; min-width: 0; padding-right: 10px;">
-                                <span class="sess-name" style="font-size: 13px; font-weight: 700; white-space: normal; display: block; overflow: hidden; text-overflow: ellipsis;">
-                                    {{match.homeTeam}} vs {{match.awayTeam}}
-                                </span>
-                                <span class="sess-status" style="color: #00ff55; font-size: 9px; font-weight: 800;" ng-if="match.status === 'live'">
-                                    LIVE: {{match.homeScore}} - {{match.awayScore}}
-                                </span>
-                                <span class="sess-status" style="color: var(--text-gray); font-size: 9px;" ng-if="match.status === 'notstarted'">
-                                    {{match.round}}
-                                </span>
-                                <span class="sess-status" style="color: #666; font-size: 9px;" ng-if="match.finished">
-                                    FT: {{match.homeScore}} - {{match.awayScore}}
-                                </span>
+                    <div class="fixtures-scroll-container">
+                        <div class="schedule-row" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
+                            <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                <!-- Home Team (Flag with Text Fallback) -->
+                                <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
+                                    <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.homeTeam}}">
+                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                    </div>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.homeTeam}}">
+                                </div>
+
+                                <!-- Big Score or VS -->
+                                <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
+                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live' || match.finished">
+                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.homeScore}}</span>
+                                        <span style="color: #555; margin: 0 1px;">-</span>
+                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.awayScore}}</span>
+                                    </span>
+                                    <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
+                                </div>
+
+                                <!-- Away Team (Flag with Text Fallback) -->
+                                <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.awayTeam}}">
+                                    <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.awayTeam}}">
+                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0;">
-                                <div class="sess-time" style="font-size: 12px; font-weight: 700;">{{match.localDate.split(' ')[1]}}</div>
-                                <div class="sess-day" style="font-size: 10px; color: var(--text-gray);">{{match.localDate.split(' ')[0]}}</div>
+
+                            <!-- Kickoff Time / Status -->
+                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 45px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
+                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[1]}}</div>
+                                <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}}</div>
+                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
+                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
                             </div>
                         </div>
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
@@ -2115,22 +2100,8 @@
             <i class="fa-solid fa-arrow-left"></i> Back to Selection
         </a>
 
-        <!-- Sport Switch Toggle -->
-        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
-            <button class="sport-toggle-btn" ng-click="goToF1()">
-                <i class="fa-solid fa-car-side"></i> F1 Party
-            </button>
-            <button class="sport-toggle-btn active">
-                <i class="fa-solid fa-futbol"></i> FIFA Party
-            </button>
-        </div>
-        <!-- Up Next Marquee Banner at the very top -->
-        <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
-            <div class="landing-marquee-text">
-                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
-                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
-            </div>
-        </div>
+        <!-- Sport Switch Toggle removed (FIFA only) -->
+        <!-- Up Next Marquee Banner removed (FIFA only) -->
 
         <div class="countdown-brand">
             WatchFIFA 2026
@@ -2193,17 +2164,7 @@
             }
         };
 
-        document.addEventListener('mousemove', e => {
-            requestAnimationFrame(() => {
-                const x = e.clientX; const y = e.clientY;
-                document.body.style.setProperty('--mouse-x', x + 'px');
-                document.body.style.setProperty('--mouse-y', y + 'px');
-                const normX = (x / window.innerWidth) * 2 - 1;
-                const normY = (y / window.innerHeight) * 2 - 1;
-                document.body.style.setProperty('--mouse-norm-x', normX);
-                document.body.style.setProperty('--mouse-norm-y', normY);
-            });
-        });
+        // Mousemove event listener removed for optimization (prevent layout recalculation overhead)
 
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
@@ -2329,51 +2290,31 @@
             let raceFinishedAnnounced = false;
             let initialLoadHandled = false;
 
-            $scope.$watch('standings', function (newStandings) {
-                if (!newStandings || newStandings.length === 0) return;
-
-                // 1. Fastest Lap Detection
-                const currentFL = newStandings.find(d => d.isFastestLap);
-
-                // Skip the very first detection on page load
-                if (!initialLoadHandled && currentFL) {
-                    lastFLDriver = currentFL.name;
-                    return;
-                }
-
-                if (currentFL && currentFL.name !== lastFLDriver) {
-                    lastFLDriver = currentFL.name;
-                    $scope.showPopup({
-                        type: 'fastest-lap',
-                        icon: 'fa-stopwatch',
-                        title: 'PURPLE SECTOR',
-                        msg: currentFL.name + ' set the FASTEST LAP!'
-                    });
-                }
-            }, true);
-
-            $scope.$watch('activeSession', function (session) {
-                if (!session) return;
-
-                // Skip the very first detection on page load
-                if (!initialLoadHandled && (session.name.includes('Finished') || session.status === 'finished')) {
+            // Watch for match finished state
+            $scope.$watch('raceData.isFinished', function (isFinished) {
+                // Skip initial detection if already finished when page loads
+                if (!initialLoadHandled && isFinished) {
                     raceFinishedAnnounced = true;
                     return;
                 }
 
-                if ((session.name.includes('Finished') || session.status === 'finished') && !raceFinishedAnnounced) {
+                if (isFinished && !raceFinishedAnnounced) {
                     raceFinishedAnnounced = true;
                     $scope.showPopup({
                         type: 'checkered-flag',
-                        icon: 'fa-flag-checkered',
-                        title: 'SESSION FINISHED',
-                        msg: 'The checkered flag has been waved!'
+                        icon: 'fa-futbol',
+                        title: 'MATCH FINISHED',
+                        msg: 'The final whistle has blown!'
                     });
                 }
-
-                // Once we have a session, we can mark initial load as done
-                if (session) initialLoadHandled = true;
             });
+
+            // Mark initial load done when raceData is sync'd
+            $scope.$watch('raceData', function (newVal) {
+                if (newVal && Object.keys(newVal).length > 0) {
+                    initialLoadHandled = true;
+                }
+            }, true);
 
             $scope.showPopup = function (data) {
                 $scope.activePopup = data;
@@ -2434,118 +2375,21 @@
             $scope.activeThemeName = '';
 
             function applyDynamicTheme(location, themeOverride) {
-                let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
-                localStorage.setItem('f1_theme_loc', location || '');
-                localStorage.setItem('f1_theme_override', themeOverride || '');
-                const loc = key.toLowerCase();
-                let theme = {
-                    primary: '#00ff55',      // Default FIFA Green
+                // Always use FIFA 2026 Green theme (no GP overrides)
+                const theme = {
+                    primary: '#00ff55',      // FIFA Green
                     glow: 'rgba(0, 255, 85, 0.15)',
                     name: 'FIFA 2026 Theme'
                 };
 
-                if (loc.includes('monaco') || loc.includes('monte carlo')) {
-                    theme = {
-                        primary: '#e2001a', // Monaco Red
-                        glow: 'rgba(226, 0, 26, 0.15)',
-                        name: 'Monaco GP Theme (Red & White)'
-                    };
-                } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
-                    theme = {
-                        primary: '#ff1801', // Italian Scarlet Red
-                        glow: 'rgba(255, 24, 1, 0.15)',
-                        name: 'Italian GP Theme (Red)'
-                    };
-                } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
-                    theme = {
-                        primary: '#00cc7a', // British Racing Green
-                        glow: 'rgba(0, 204, 122, 0.15)',
-                        name: 'British GP Theme (Green)'
-                    };
-                } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
-                    theme = {
-                        primary: '#ff7700', // Dutch Orange
-                        glow: 'rgba(255, 119, 0, 0.15)',
-                        name: 'Dutch GP Theme (Orange)'
-                    };
-                } else if (loc.includes('las vegas') || loc.includes('vegas')) {
-                    theme = {
-                        primary: '#b500ff', // Las Vegas Neon Violet
-                        glow: 'rgba(181, 0, 255, 0.2)',
-                        name: 'Las Vegas GP Theme (Neon Violet)'
-                    };
-                } else if (loc.includes('singapore') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
-                    theme = {
-                        primary: '#00ffcc', // Cyber Neon Teal
-                        glow: 'rgba(0, 255, 204, 0.2)',
-                        name: 'Night GP Theme (Cyber Neon)'
-                    };
-                } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
-                    theme = {
-                        primary: '#00e5ff', // Yas Marina Cyan
-                        glow: 'rgba(0, 229, 255, 0.2)',
-                        name: 'Desert GP Theme (Electric Blue)'
-                    };
-                } else if (loc.includes('spa') || loc.includes('belgium')) {
-                    theme = {
-                        primary: '#ffb700', // Eau Rouge Gold
-                        glow: 'rgba(255, 183, 0, 0.15)',
-                        name: 'Belgian GP Theme (Gold)'
-                    };
-                } else if (loc.includes('suzuka') || loc.includes('japan')) {
-                    theme = {
-                        primary: '#ff66a3', // Sakura Pink
-                        glow: 'rgba(255, 102, 163, 0.2)',
-                        name: 'Japanese GP Theme (Sakura Pink)'
-                    };
-                } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
-                    theme = {
-                        primary: '#ffcc00', // Aussie Gold
-                        glow: 'rgba(255, 204, 0, 0.15)',
-                        name: 'Australian GP Theme (Aussie Gold)'
-                    };
-                } else if (loc.includes('canada') || loc.includes('montreal')) {
-                    theme = {
-                        primary: '#ff3333', // Maple Red
-                        glow: 'rgba(255, 51, 51, 0.15)',
-                        name: 'Canadian GP Theme (Red)'
-                    };
-                } else if (loc.includes('china') || loc.includes('shanghai')) {
-                    theme = {
-                        primary: '#ff2200', // Chinese Red
-                        glow: 'rgba(255, 34, 0, 0.15)',
-                        name: 'Chinese GP Theme (Dragon Red)'
-                    };
-                } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
-                    theme = {
-                        primary: '#00ff33', // Brazilian Green
-                        glow: 'rgba(0, 255, 51, 0.15)',
-                        name: 'Brazilian GP Theme (Senna Green)'
-                    };
-                } else if (loc.includes('hungar') || loc.includes('budapest')) {
-                    theme = {
-                        primary: '#ff007f', // Hungarian GP Fuchsia
-                        glow: 'rgba(255, 0, 127, 0.2)',
-                        name: 'Hungarian GP Theme (Fuchsia)'
-                    };
-                } else if (loc.includes('mexic')) {
-                    theme = {
-                        primary: '#00875a', // Mexican GP Green
-                        glow: 'rgba(0, 135, 90, 0.15)',
-                        name: 'Mexican GP Theme (Emerald Green)'
-                    };
-                }
-
-                // Apply variables to document root
                 const root = document.documentElement;
                 root.style.setProperty('--f1-red', theme.primary);
                 root.style.setProperty('--glow-color', theme.glow);
                 $scope.activeThemeName = theme.name;
 
-                // Dynamic Vanta points color update if initialized
                 if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
                     const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.vantaInstance.setOptions({ color: vantaColor });
+                    window.vantaInstance.setOptions({ color: vantaColor, color2: 0x9146ff });
                 } else {
                     const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
                     window.pendingVantaColor = vantaColor;
@@ -2630,7 +2474,7 @@
                 var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
                 $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
 
-                $scope.nextRace = fifa.nextRace || {};
+                $scope.nextMatch = null;
                 $scope.streamLinks = fifa.streamLinks || [];
                 $scope.standings = []; // FIFA has no F1 driver standings
                 $scope.constructors = []; // FIFA has no F1 constructor standings
@@ -2782,6 +2626,13 @@
                 $http.get('/api/fifa/fixtures').then(function(res) {
                     $scope.fixtures = res.data || [];
                     console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
+                    // Find the next upcoming match (first 'notstarted' match)
+                    const upcoming = $scope.fixtures.find(m => m.status === 'notstarted');
+                    if (upcoming) {
+                        $scope.nextMatch = upcoming;
+                    } else {
+                        $scope.nextMatch = null;
+                    }
                 }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
                 });
@@ -2795,8 +2646,7 @@
                 });
             };
 
-            // Load immediately on page init
-            $scope.loadFifaData();
+            // Load immediately handled by doc onSnapshot update on page init
 
             // Refresh every 5 minutes
             $interval(function() { $scope.loadFifaData(); }, 5 * 60 * 1000);
@@ -2840,42 +2690,8 @@
                 return '☀️';
             };
 
-            // --- Theme Test Mode System ---
-            $scope.isTestMode = $window.location.search.includes('testThemes=true');
+            // --- Theme Test Mode System Removed (FIFA only) ---
             $scope.themeOverrideActive = false;
-            $scope.currentOverrideLoc = '';
-
-            $scope.testThemesList = [
-                { name: 'Monaco (Red/White)', loc: 'Monaco' },
-                { name: 'Monza (Scarlet Red)', loc: 'Monza' },
-                { name: 'Silverstone (Racing Green)', loc: 'Silverstone' },
-                { name: 'Zandvoort (Dutch Orange)', loc: 'Zandvoort' },
-                { name: 'Las Vegas (Neon Violet)', loc: 'Las Vegas' },
-                { name: 'Singapore (Neon Teal)', loc: 'Singapore' },
-                { name: 'Yas Marina (Desert Cyan)', loc: 'Abu Dhabi' },
-                { name: 'Spa (Eau Rouge Gold)', loc: 'Spa' },
-                { name: 'Suzuka (Sakura Pink)', loc: 'Suzuka' },
-                { name: 'Melbourne (Aussie Gold)', loc: 'Melbourne' },
-                { name: 'Montreal (Maple Red)', loc: 'Canada' },
-                { name: 'Shanghai (Chinese Red)', loc: 'China' },
-                { name: 'Brazil (Senna Green)', loc: 'Brazil' },
-                { name: 'Hungary (Neon Fuchsia)', loc: 'Hungary' },
-                { name: 'Mexico (Emerald Green)', loc: 'Mexico' },
-                { name: 'Classic F1 (Default Red)', loc: 'Default' }
-            ];
-
-            $scope.selectTestTheme = function (loc) {
-                $scope.themeOverrideActive = true;
-                $scope.currentOverrideLoc = loc;
-                $scope.raceData.location = loc === 'Default' ? 'Default GP' : loc;
-                applyDynamicTheme(loc);
-            };
-
-            $scope.resetThemeTest = function () {
-                $scope.themeOverrideActive = false;
-                $scope.currentOverrideLoc = '';
-                applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
-            };
         });
 
         // Added 3D Globe Background Overlay
@@ -2903,75 +2719,7 @@
 
 
     </script>
-    <!-- Floating Theme Test Control Panel -->
-    <div class="theme-test-panel animate-in ng-cloak" ng-if="isTestMode" style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(10, 10, 14, 0.9);
-        backdrop-filter: blur(12px);
-        border: 2px solid var(--f1-red);
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px var(--glow-color);
-        z-index: 9999;
-        width: 280px;
-        max-height: 400px;
-        overflow-y: auto;
-        color: #fff;
-        font-family: 'Titillium Web', sans-serif;
-    ">
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
-            <div
-                style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
-                <i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Theme Test Mode
-            </div>
-            <button ng-if="themeOverrideActive" ng-click="resetThemeTest()" style="
-                background: rgba(255,255,255,0.05);
-                border: 1px solid rgba(255,255,255,0.15);
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 8px;
-                cursor: pointer;
-                text-transform: uppercase;
-                color: #fff;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            ">Reset</button>
-        </div>
-        <div style="font-size: 10px; color: #8a8a9c; margin-bottom: 12px; line-height: 1.4;">
-            Select a location theme to test how the site styling and background telemetry net color adapt.
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)"
-                ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}"
-                style="
-                background: rgba(255,255,255,0.02);
-                border: 1px solid rgba(255,255,255,0.05);
-                border-left: 3px solid transparent;
-                text-align: left;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 10px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-                color: #eee;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                text-transform: none;
-                letter-spacing: 0.5px;
-            ">
-                <span>{{t.name}}</span>
-                <i class="fa-solid fa-chevron-right" style="font-size: 8px; opacity: 0.5;"></i>
-            </button>
-        </div>
-        <div style="margin-top: 10px; font-size: 8px; text-align: center; color: #6a6a7c;">
-            Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
-        </div>
-    </div>
+    <!-- Floating Theme Test Control Panel removed (FIFA only) -->
 </body>
 
 </html>

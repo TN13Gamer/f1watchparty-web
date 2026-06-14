@@ -433,23 +433,176 @@ let cacheFixturesTime = 0;
 let cacheStandings = null;
 let cacheStandingsTime = 0;
 
+// Hardcoded country name -> flag URL for fixture flags
+const COUNTRY_FLAG_MAP_SERVER = {
+    'mexico': 'https://flagcdn.com/w80/mx.png',
+    'south africa': 'https://flagcdn.com/w80/za.png',
+    'south korea': 'https://flagcdn.com/w80/kr.png',
+    'czech republic': 'https://flagcdn.com/w80/cz.png',
+    'canada': 'https://flagcdn.com/w80/ca.png',
+    'bosnia and herzegovina': 'https://flagcdn.com/w80/ba.png',
+    'united states': 'https://flagcdn.com/w80/us.png',
+    'paraguay': 'https://flagcdn.com/w80/py.png',
+    'haiti': 'https://flagcdn.com/w80/ht.png',
+    'scotland': 'https://flagcdn.com/w80/gb-sct.png',
+    'australia': 'https://flagcdn.com/w80/au.png',
+    'turkey': 'https://flagcdn.com/w80/tr.png',
+    'brazil': 'https://flagcdn.com/w80/br.png',
+    'morocco': 'https://flagcdn.com/w80/ma.png',
+    'qatar': 'https://flagcdn.com/w80/qa.png',
+    'switzerland': 'https://flagcdn.com/w80/ch.png',
+    'ivory coast': 'https://flagcdn.com/w80/ci.png',
+    'ecuador': 'https://flagcdn.com/w80/ec.png',
+    'germany': 'https://flagcdn.com/w80/de.png',
+    'curaçao': 'https://flagcdn.com/w80/cw.png',
+    'curacao': 'https://flagcdn.com/w80/cw.png',
+    'netherlands': 'https://flagcdn.com/w80/nl.png',
+    'japan': 'https://flagcdn.com/w80/jp.png',
+    'sweden': 'https://flagcdn.com/w80/se.png',
+    'tunisia': 'https://flagcdn.com/w80/tn.png',
+    'iran': 'https://flagcdn.com/w80/ir.png',
+    'new zealand': 'https://flagcdn.com/w80/nz.png',
+    'spain': 'https://flagcdn.com/w80/es.png',
+    'cape verde': 'https://flagcdn.com/w80/cv.png',
+    'belgium': 'https://flagcdn.com/w80/be.png',
+    'egypt': 'https://flagcdn.com/w80/eg.png',
+    'saudi arabia': 'https://flagcdn.com/w80/sa.png',
+    'uruguay': 'https://flagcdn.com/w80/uy.png',
+    'france': 'https://flagcdn.com/w80/fr.png',
+    'senegal': 'https://flagcdn.com/w80/sn.png',
+    'iraq': 'https://flagcdn.com/w80/iq.png',
+    'norway': 'https://flagcdn.com/w80/no.png',
+    'argentina': 'https://flagcdn.com/w80/ar.png',
+    'algeria': 'https://flagcdn.com/w80/dz.png',
+    'austria': 'https://flagcdn.com/w80/at.png',
+    'jordan': 'https://flagcdn.com/w80/jo.png',
+    'portugal': 'https://flagcdn.com/w80/pt.png',
+    'democratic republic of the congo': 'https://flagcdn.com/w80/cd.png',
+    'england': 'https://flagcdn.com/w80/gb-eng.png',
+    'croatia': 'https://flagcdn.com/w80/hr.png',
+    'uzbekistan': 'https://flagcdn.com/w80/uz.png',
+    'colombia': 'https://flagcdn.com/w80/co.png',
+    'ghana': 'https://flagcdn.com/w80/gh.png',
+    'panama': 'https://flagcdn.com/w80/pa.png',
+};
+
+// Proactive background refresh of fixtures (every 2 minutes)
+async function refreshFifaFixtures() {
+    try {
+        const [gamesRes, teamsRes] = await Promise.all([
+            axios.get('https://worldcup26.ir/get/games', { timeout: 12000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
+            axios.get('https://worldcup26.ir/get/teams', { timeout: 12000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+        ]);
+        const games = gamesRes.data && gamesRes.data.games;
+        const teams = teamsRes.data && teamsRes.data.teams;
+        if (!Array.isArray(games)) return;
+
+        // Auto-save to fallback files so data survives server restarts
+        try {
+            fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_games.json'), JSON.stringify({ games }, null, 2));
+            if (Array.isArray(teams)) fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), JSON.stringify({ teams }, null, 2));
+            const finished = games.filter(g => g.finished === 'TRUE').length;
+            const live = games.filter(g => g.time_elapsed === 'live').length;
+            console.log(`[fifa-refresh] Updated fallback data: ${games.length} games, ${finished} finished, ${live} live`);
+        } catch(writeErr) {
+            console.error('[fifa-refresh] Failed to save fallback:', writeErr.message);
+        }
+
+        // Build teams maps
+        const teamsById = {}, teamsByName = {};
+        if (Array.isArray(teams)) {
+            teams.forEach(t => {
+                if (t && t.id) {
+                    const entry = { flag: t.flag || '' };
+                    teamsById[String(t.id)] = entry;
+                    if (t.name_en) teamsByName[t.name_en.toLowerCase()] = entry;
+                }
+            });
+        }
+        function getFlag(id, name) {
+            const byId = teamsById[String(id)];
+            if (byId && byId.flag) return byId.flag;
+            const byName = teamsByName[(name || '').toLowerCase()];
+            if (byName && byName.flag) return byName.flag;
+            return COUNTRY_FLAG_MAP_SERVER[(name || '').toLowerCase()] || '';
+        }
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const roundMap = { group: null, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
+        const formatted = games.map(g => {
+            const stadium = STADIUM_MAP_SERVER[g.stadium_id] || { name: 'Stadium' };
+            const round = g.type === 'group' ? `Group ${g.group}` : (roundMap[g.type] || g.group || 'World Cup 2026');
+            let friendlyDate = g.local_date || '';
+            try {
+                const parts = (g.local_date || '').split(' ');
+                if (parts.length >= 2) {
+                    const dp = parts[0].split('/');
+                    const mm = parseInt(dp[0], 10), dd = parseInt(dp[1], 10);
+                    if (!isNaN(mm) && !isNaN(dd)) friendlyDate = `${dd} ${months[mm - 1]} ${parts[1]}`;
+                }
+            } catch(e) {}
+            const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
+            const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
+            return {
+                id: g.id, homeTeam: homeName, awayTeam: awayName,
+                homeFlag: getFlag(g.home_team_id, homeName),
+                awayFlag: getFlag(g.away_team_id, awayName),
+                homeScore: g.home_score || '0', awayScore: g.away_score || '0',
+                localDate: friendlyDate, status: g.time_elapsed,
+                finished: g.finished === 'TRUE', round, stadium: stadium.name
+            };
+        });
+        cacheFixtures = formatted;
+        cacheFixturesTime = Date.now();
+    } catch(e) {
+        console.error('[fifa-refresh] Failed to refresh fixtures:', e.message);
+    }
+}
+
+// Start proactive background refresh every 2 minutes
+if (!process.env.VERCEL) {
+    setInterval(refreshFifaFixtures, 2 * 60 * 1000);
+    // Also run immediately on startup
+    setTimeout(refreshFifaFixtures, 3000);
+}
+
 // --- API: Fetch FIFA Fixtures ---
 app.get('/api/fifa/fixtures', async (req, res) => {
     try {
-        if (cacheFixtures && (Date.now() - cacheFixturesTime < 30000)) {
+        if (cacheFixtures && (Date.now() - cacheFixturesTime < 60000)) {
             return res.json(cacheFixtures);
         }
-        const response = await axios.get('https://worldcup26.ir/get/games', {
-            timeout: 8000,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
-        const games = response.data && response.data.games;
+        const [gamesRes, teamsRes] = await Promise.all([
+            axios.get('https://worldcup26.ir/get/games', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
+            axios.get('https://worldcup26.ir/get/teams', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+        ]);
+        const games = gamesRes.data && gamesRes.data.games;
         if (!Array.isArray(games)) {
             return res.json([]);
         }
+
+        // Build teams map by ID and name for flag lookup
+        const teamsById = {};
+        const teamsByName = {};
+        if (teamsRes.data && Array.isArray(teamsRes.data.teams)) {
+            teamsRes.data.teams.forEach(t => {
+                if (t && t.id) {
+                    const entry = { flag: t.flag || '' };
+                    teamsById[String(t.id)] = entry;
+                    if (t.name_en) teamsByName[t.name_en.toLowerCase()] = entry;
+                }
+            });
+        }
+
+        function getFlag(id, name) {
+            const byId = teamsById[String(id)];
+            if (byId && byId.flag) return byId.flag;
+            const byName = teamsByName[(name || '').toLowerCase()];
+            if (byName && byName.flag) return byName.flag;
+            return COUNTRY_FLAG_MAP_SERVER[(name || '').toLowerCase()] || '';
+        }
+
         const formatted = games.map(g => {
             const stadium = STADIUM_MAP_SERVER[g.stadium_id] || { name: 'Stadium', city: '', country: '' };
-            const isLive = g.time_elapsed === 'live';
             const isFinished = g.finished === 'TRUE';
             const roundMap = { group: `Group ${g.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
             const round = roundMap[g.type] || g.group || 'World Cup 2026';
@@ -468,10 +621,15 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                 }
             } catch (e) {}
 
+            const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
+            const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
+
             return {
                 id: g.id,
-                homeTeam: g.home_team_name_en || g.home_team_label || 'TBD',
-                awayTeam: g.away_team_name_en || g.away_team_label || 'TBD',
+                homeTeam: homeName,
+                awayTeam: awayName,
+                homeFlag: getFlag(g.home_team_id, homeName),
+                awayFlag: getFlag(g.away_team_id, awayName),
                 homeScore: g.home_score || '0',
                 awayScore: g.away_score || '0',
                 localDate: friendlyDate,
@@ -483,12 +641,67 @@ app.get('/api/fifa/fixtures', async (req, res) => {
         });
         cacheFixtures = formatted;
         cacheFixturesTime = Date.now();
+        // Auto-save fresh data to fallback files
+        try {
+            fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_games.json'), JSON.stringify({ games }, null, 2));
+            if (Array.isArray(teamsRes.data && teamsRes.data.teams)) fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), JSON.stringify({ teams: teamsRes.data.teams }, null, 2));
+        } catch(we) { /* silent */ }
         res.json(formatted);
     } catch (e) {
         console.error('Error fetching FIFA fixtures:', e.message);
-        res.json(cacheFixtures || []);
+        // Fallback: serve cached or static fallback with flags
+        if (cacheFixtures) return res.json(cacheFixtures);
+        // Build from local fallback files
+        try {
+            const fbGames = JSON.parse(fs.readFileSync(path.join(__dirname, 'api/fifa/fallback_games.json'), 'utf8')).games || [];
+            const fbTeams = JSON.parse(fs.readFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), 'utf8')).teams || [];
+            const fbTeamsById = {};
+            const fbTeamsByName = {};
+            fbTeams.forEach(t => {
+                if (t && t.id) {
+                    fbTeamsById[String(t.id)] = { flag: t.flag || '' };
+                    if (t.name_en) fbTeamsByName[t.name_en.toLowerCase()] = { flag: t.flag || '' };
+                }
+            });
+            function getFlagFb(id, name) {
+                const byId = fbTeamsById[String(id)];
+                if (byId && byId.flag) return byId.flag;
+                const byName = fbTeamsByName[(name || '').toLowerCase()];
+                if (byName && byName.flag) return byName.flag;
+                return COUNTRY_FLAG_MAP_SERVER[(name || '').toLowerCase()] || '';
+            }
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const roundMap = { group: null, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
+            const fallback = fbGames.map(g => {
+                const stadium = STADIUM_MAP_SERVER[g.stadium_id] || { name: 'Stadium' };
+                const round = g.type === 'group' ? `Group ${g.group}` : (roundMap[g.type] || g.group || 'World Cup 2026');
+                let friendlyDate = g.local_date || '';
+                try {
+                    const parts = (g.local_date || '').split(' ');
+                    if (parts.length >= 2) {
+                        const dateParts = parts[0].split('/');
+                        const mm = parseInt(dateParts[0], 10), dd = parseInt(dateParts[1], 10);
+                        if (!isNaN(mm) && !isNaN(dd)) friendlyDate = `${dd} ${months[mm - 1]} ${parts[1]}`;
+                    }
+                } catch(e2) {}
+                const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
+                const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
+                return {
+                    id: g.id, homeTeam: homeName, awayTeam: awayName,
+                    homeFlag: getFlagFb(g.home_team_id, homeName),
+                    awayFlag: getFlagFb(g.away_team_id, awayName),
+                    homeScore: g.home_score || '0', awayScore: g.away_score || '0',
+                    localDate: friendlyDate, status: g.time_elapsed,
+                    finished: g.finished === 'TRUE', round, stadium: stadium.name
+                };
+            });
+            res.json(fallback);
+        } catch(fe) {
+            res.json([]);
+        }
     }
 });
+
 
 // --- API: Fetch FIFA Standings ---
 app.get('/api/fifa/standings', async (req, res) => {
