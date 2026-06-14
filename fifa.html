@@ -2713,6 +2713,28 @@
                     backgroundColor: 0x050508,
                     backgroundAlpha: 0.0
                 });
+
+                // Remove lighting to make the 3D globe flat
+                if (window.vantaInstance && window.vantaInstance.scene) {
+                    const scene = window.vantaInstance.scene;
+                    const lights = [];
+                    scene.traverse((obj) => {
+                        if (obj.isLight) {
+                            lights.push(obj);
+                        }
+                        if (obj.isMesh && obj.material && !obj.material.isMeshBasicMaterial) {
+                            const oldColor = obj.material.color;
+                            obj.material = new THREE.MeshBasicMaterial({ color: oldColor });
+                        }
+                    });
+                    lights.forEach(light => {
+                        if (light.parent) {
+                            light.parent.remove(light);
+                        } else {
+                            scene.remove(light);
+                        }
+                    });
+                }
             }
         });
 
