@@ -1839,6 +1839,14 @@
         <header>
             <div class="header-left">
                 <span class="logo-text fifa-logo-gradient">WatchFIFA <span>2026</span></span>
+                <div class="sport-toggle-container">
+                    <button class="sport-toggle-btn" ng-click="goToF1()">
+                        <i class="fa-solid fa-car-side"></i> F1 Party
+                    </button>
+                    <button class="sport-toggle-btn active">
+                        <i class="fa-solid fa-futbol"></i> FIFA Party
+                    </button>
+                </div>
             </div>
 
             <div class="header-marquee-container" ng-if="nextMatch">
@@ -2100,7 +2108,15 @@
             <i class="fa-solid fa-arrow-left"></i> Back to Selection
         </a>
 
-        <!-- Sport Switch Toggle removed (FIFA only) -->
+        <!-- Sport Switch Toggle -->
+        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
+            <button class="sport-toggle-btn" ng-click="goToF1()">
+                <i class="fa-solid fa-car-side"></i> F1 Party
+            </button>
+            <button class="sport-toggle-btn active">
+                <i class="fa-solid fa-futbol"></i> FIFA Party
+            </button>
+        </div>
         <!-- Up Next Marquee Banner removed (FIFA only) -->
 
         <div class="countdown-brand">
