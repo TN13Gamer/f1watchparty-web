@@ -2961,6 +2961,7 @@
                 // Map FIFA specific settings from data.fifa
                 const fifa = data.fifa || {};
                 $scope.raceData = fifa.raceData || {};
+                $scope.autoSyncDetails = fifa.autoSyncDetails !== false;
 
                 // Trigger dynamic theming based on FIFA match location or theme override
                 if (!$scope.themeOverrideActive) {
@@ -3156,21 +3157,34 @@
                     $scope.fixtures = live.concat(upcoming).concat(finished);
 
                     // ── Auto-sync live score from fixtures API into raceData ──
-                    // raceData.homeScore/awayScore is set by admin but doesn't live-update.
-                    // After each fixture refresh, find the current match and pull the latest score.
-                    if ($scope.raceData && $scope.raceData.name) {
-                        var rName = $scope.raceData.name.toLowerCase();
-                        var matchedFixture = raw.find(function(m) {
-                            // Match by "Home vs Away" name pattern
+                    // Only do this if autoSyncDetails is true! Otherwise, respect the admin's manual scores.
+                    if ($scope.autoSyncDetails) {
+                        if ($scope.raceData && $scope.raceData.name) {
+                            var rName = $scope.raceData.name.toLowerCase();
+                            var matchedFixture = raw.find(function(m) {
+                                // Match by "Home vs Away" name pattern
+                                var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
+                                return fName === rName;
+                            });
+                            if (matchedFixture) {
+                                $scope.raceData.homeScore = matchedFixture.homeScore || '0';
+                                $scope.raceData.awayScore = matchedFixture.awayScore || '0';
+                                // Also sync live/finished status from the API
+                                if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
+                                if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
+                            }
+                        }
+                    }
+
+                    // Update poll flags if we have a match
+                    if ($scope.poll.matchId && $scope.raceData && $scope.raceData.name) {
+                        var matchedFixture = $scope.fixtures.find(function(m) {
                             var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
-                            return fName === rName;
+                            return fName === $scope.raceData.name.toLowerCase();
                         });
                         if (matchedFixture) {
-                            $scope.raceData.homeScore = matchedFixture.homeScore || '0';
-                            $scope.raceData.awayScore = matchedFixture.awayScore || '0';
-                            // Also sync live/finished status from the API
-                            if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
-                            if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
+                            $scope.poll.homeFlag = matchedFixture.homeFlag;
+                            $scope.poll.awayFlag = matchedFixture.awayFlag;
                         }
                     }
 
@@ -3210,17 +3224,33 @@
 
             // Smart refresh: 20s when a match is live, 2 min otherwise
             var _fixtureRefreshInterval = null;
+            var _lastRefreshIntervalLive = null;
             function scheduleFixtureRefresh() {
-                if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
                 var isLive = ($scope.raceData && $scope.raceData.isLive) ||
                              ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+                
+                // If the live state hasn't changed, and we already have a timer running, do nothing
+                if (_fixtureRefreshInterval && _lastRefreshIntervalLive === isLive) {
+                    return;
+                }
+
+                if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
+                _lastRefreshIntervalLive = isLive;
                 var delay = isLive ? 20 * 1000 : 2 * 60 * 1000;
+                
+                console.log('⚽ Scheduling next fixture refresh in', delay / 1000, 'seconds (isLive:', isLive, ')');
                 _fixtureRefreshInterval = $interval(function() {
                     $scope.loadFifaData();
-                    scheduleFixtureRefresh(); // re-evaluate after each load
-                }, delay, 1); // run once, then reschedule
+                }, delay, 1);
             }
-            scheduleFixtureRefresh();
+
+            // Watch for changes in live states to immediately adjust the polling speed
+            $scope.$watch(function() {
+                return ($scope.raceData && $scope.raceData.isLive) ||
+                       ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+            }, function() {
+                scheduleFixtureRefresh();
+            });
 
             // Helper: live + upcoming fixtures
             $scope.liveAndUpcomingFixtures = function() {
@@ -3288,10 +3318,13 @@
             }
 
             function fetchPollCounts(matchId) {
-                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId))
+                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         $scope.$apply(function() {
+                            $scope.poll.home = data.home || 0;
+                            $scope.poll.away = data.away || 0;
+                            $scope.poll.draw = data.draw || 0;
                             calcPollPct(data);
                             $scope.poll.loaded = true;
 
@@ -3299,20 +3332,30 @@
                             // resubmit the vote to make sure it is saved on the server!
                             if ($scope.poll.userVote && data[$scope.poll.userVote] === 0) {
                                 console.log('[poll] Auto-submitting vote to server for:', matchId);
-                                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId), {
+                                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ choice: $scope.poll.userVote })
                                 })
                                 .then(function(r) { return r.json(); })
                                 .then(function(newData) {
-                                    $scope.$apply(function() { calcPollPct(newData); });
+                                    $scope.$apply(function() {
+                                        $scope.poll.home = newData.home || 0;
+                                        $scope.poll.away = newData.away || 0;
+                                        $scope.poll.draw = newData.draw || 0;
+                                        calcPollPct(newData);
+                                    });
                                 })
                                 .catch(function(e) { console.warn('[poll] auto-vote error:', e); });
                             }
                         });
                     })
-                    .catch(function(e) { console.warn('[poll] fetch error:', e); });
+                    .catch(function(e) {
+                        console.warn('[poll] fetch error:', e);
+                        $scope.$apply(function() {
+                            $scope.poll.loaded = true;
+                        });
+                    });
             }
 
             $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
@@ -3346,18 +3389,36 @@
                 $scope.poll.userVote = choice;
                 localStorage.setItem(voteKey, choice);
 
+                // Optimistically increment local count
+                $scope.poll.totalVotes = ($scope.poll.totalVotes || 0) + 1;
+                var localCounts = {
+                    home: ($scope.poll.home || 0) + (choice === 'home' ? 1 : 0),
+                    away: ($scope.poll.away || 0) + (choice === 'away' ? 1 : 0),
+                    draw: ($scope.poll.draw || 0) + (choice === 'draw' ? 1 : 0),
+                    total: $scope.poll.totalVotes
+                };
+                calcPollPct(localCounts);
+
                 // Send vote to server API (uses Firebase Admin, bypasses Firestore rules)
-                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId), {
+                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ choice: choice })
                 })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    $scope.$apply(function() { calcPollPct(data); });
+                    $scope.$apply(function() {
+                        $scope.poll.home = data.home || 0;
+                        $scope.poll.away = data.away || 0;
+                        $scope.poll.draw = data.draw || 0;
+                        calcPollPct(data);
+                    });
                 })
                 .catch(function(e) {
                     console.error('[poll] vote error:', e);
+                    $scope.$apply(function() {
+                        $scope.poll.loaded = true;
+                    });
                 });
             };
 

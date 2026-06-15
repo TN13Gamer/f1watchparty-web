@@ -1164,6 +1164,27 @@
                 <div class="admin-section">
                     <h3><span><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match Details</span></h3>
 
+                    <!-- Auto-Sync Details Toggle & Button -->
+                    <div style="background: rgba(0, 255, 85, 0.05); border: 1px solid rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-arrows-rotate" style="margin-right: 5px;"></i> Match Details Sync
+                        </h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" ng-model="config.fifa.autoSyncDetails" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                                <label style="margin: 0; font-size: 12px; font-weight: 600; color: #eee; cursor: pointer;">
+                                    Auto-Sync Match Details (Scores, Status, Venue) from worldcup26.ir API
+                                </label>
+                            </div>
+                            <button type="button" class="action-btn" ng-click="autoFetchFifaDetails()" ng-disabled="fetchingFifaDetails" style="height: 34px; padding: 0 15px; background-color: #00ff55; color: #000; border-color: #00ff88; font-size: 11px; font-weight: 700; border-radius: 4px;">
+                                <i class="fa-solid" ng-class="fetchingFifaDetails ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i> Sync Now
+                            </button>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 5px;" ng-if="lastFifaDetailsSync">
+                            Last synced: {{lastFifaDetailsSync}}
+                        </div>
+                    </div>
+
                     <div class="grid-row">
                         <div class="input-group"><label>Match / Tournament Round</label><input type="text" ng-model="config.fifa.raceData.round" placeholder="e.g. Group A / Final"></div>
                         <div class="input-group"><label>Match Title (Teams)</label><input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Argentina vs France"></div>
@@ -1174,6 +1195,26 @@
                     </div>
                     <div class="grid-row">
                         <div class="input-group"><label>Date & Time String</label><input type="text" ng-model="config.fifa.raceData.date" placeholder="e.g. 18 Dec 2022, 18:00 UTC" style="border-left-color: #00ff55;"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group">
+                            <label>Home Team Score <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-synced)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.homeScore" placeholder="e.g. 0" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;">
+                        </div>
+                        <div class="input-group">
+                            <label>Away Team Score <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-synced)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.awayScore" placeholder="e.g. 0" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;">
+                        </div>
+                    </div>
+                    <div class="grid-row" style="margin-top: 10px; margin-bottom: 15px;">
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.raceData.isLive" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;">Match is LIVE <span style="font-size:9px; color:var(--text-muted); font-weight:normal;" ng-if="config.fifa.autoSyncDetails">(Auto)</span></label>
+                        </div>
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.raceData.isFinished" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;">Match is Finished <span style="font-size:9px; color:var(--text-muted); font-weight:normal;" ng-if="config.fifa.autoSyncDetails">(Auto)</span></label>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label style="color: #00ff55;">Active Theme (Override)</label>
@@ -1617,6 +1658,9 @@
                         }
                         if ($scope.config.fifa.autoSyncStreams === undefined) {
                             $scope.config.fifa.autoSyncStreams = true;
+                        }
+                        if ($scope.config.fifa.autoSyncDetails === undefined) {
+                            $scope.config.fifa.autoSyncDetails = true;
                         }
                     });
                 });

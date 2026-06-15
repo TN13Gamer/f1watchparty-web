@@ -866,20 +866,26 @@ module.exports = async (req, res) => {
     let fifaDetailsError = null;
     let updatedFifaConfig = null;
     if (runAll || requestedType === 'fifadetails') {
-      console.log('[sync-standings API] Starting FIFA details sync...');
-      try {
-        updatedFifaConfig = await syncFifaMatchDetails(config, ref);
-        if (updatedFifaConfig) {
-          console.log('[sync-standings API] FIFA details config updated.');
-          // Refresh config so stream sync uses the newly set match name
-          config = { ...config, fifa: updatedFifaConfig };
-        } else {
-          console.log('[sync-standings API] FIFA details returned no update.');
+      const fifa = config.fifa || {};
+      const shouldSync = fifa.autoSyncDetails !== false || req.query.manual === 'true';
+      if (shouldSync) {
+        console.log('[sync-standings API] Starting FIFA details sync...');
+        try {
+          updatedFifaConfig = await syncFifaMatchDetails(config, ref);
+          if (updatedFifaConfig) {
+            console.log('[sync-standings API] FIFA details config updated.');
+            // Refresh config so stream sync uses the newly set match name
+            config = { ...config, fifa: updatedFifaConfig };
+          } else {
+            console.log('[sync-standings API] FIFA details returned no update.');
+          }
+          fifaDetailsSynced = true;
+        } catch (err) {
+          console.error('[sync] FIFA details sync error:', err.message);
+          fifaDetailsError = err.message;
         }
-        fifaDetailsSynced = true;
-      } catch (err) {
-        console.error('[sync] FIFA details sync error:', err.message);
-        fifaDetailsError = err.message;
+      } else {
+        console.log('[sync-standings API] FIFA details auto-sync is disabled. Skipping.');
       }
     }
 

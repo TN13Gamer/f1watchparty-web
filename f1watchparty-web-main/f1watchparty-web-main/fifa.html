@@ -31,9 +31,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- 3D Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <!-- Tilt effect library (Vanta Globe removed for FIFA performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
@@ -66,7 +64,7 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-white: #ffffff;
             --text-gray: #CCCCCC;
-            --glow-color: rgba(255, 0, 85, 0.15);
+            --glow-color: rgba(168, 85, 247, 0.12);
             --border: rgba(255, 255, 255, 0.1);
             --tech-blue: var(--blue);
         }
@@ -124,7 +122,7 @@
             animation: float-blob 20s infinite alternate ease-in-out;
         }
         .blob-1 {
-            background: var(--green);
+            background: transparent;
             top: -10%;
             left: -10%;
         }
@@ -987,7 +985,7 @@
 
         .carbon-schedule-card {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             background-color: #0c0c0f !important;
             background-image:
                 linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
@@ -1009,6 +1007,8 @@
             z-index: 1;
             opacity: 0.18;
             pointer-events: none;
+            border-radius: inherit;
+            clip-path: inset(0 round 24px);
         }
 
         .carbon-schedule-card>*:not(.card-video-bg) {
@@ -1381,6 +1381,7 @@
         .loader.hide {
             opacity: 0;
             pointer-events: none;
+            visibility: hidden;
         }
 
         .loading-logo-container {
@@ -1690,9 +1691,31 @@
             .stream-btn {
                 flex: 0 0 auto !important;
                 text-align: center;
-                font-size: 13px;
-                padding: 10px 18px;
-                border-radius: 12px;
+                font-size: 12px;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+
+            /* Theater/Chat buttons: icon-only on mobile to save toolbar space */
+            .control-btn {
+                padding: 8px 10px !important;
+                min-width: 34px;
+            }
+            .control-btn .btn-label {
+                display: none;
+            }
+            .control-btn i {
+                margin-right: 0 !important;
+            }
+
+            /* Hide SOURCE: label on very narrow screens */
+            @media (max-width: 480px) {
+                .source-label { display: none !important; }
+            }
+
+            /* Fix carbon-schedule-card clip-path for mobile 16px border-radius */
+            .carbon-schedule-card .card-video-bg {
+                clip-path: inset(0 round 16px);
             }
 
             .tab-btn {
@@ -1868,6 +1891,226 @@
             width: 0 !important;
             height: 0 !important;
         }
+
+        /* Past matches toggle btn (FIFA) */
+        .past-sessions-toggle {
+            width: 100%;
+            background: transparent;
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: var(--text-gray);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 9px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 10px;
+        }
+        .past-sessions-toggle:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-color: rgba(255,255,255,0.25);
+        }
+        .past-matches-list {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .past-matches-list::-webkit-scrollbar { display: none; }
+
+        /* ── Poll Card ── */
+        .poll-card {
+            background: linear-gradient(135deg, rgba(255,0,85,0.06) 0%, rgba(10,10,14,0.95) 100%);
+            border: 1px solid rgba(255,0,85,0.15);
+        }
+        .poll-team-btn {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 11px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            text-align: left;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .poll-team-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        .poll-team-btn.voted-this {
+            border-color: var(--f1-red);
+            background: rgba(255,0,85,0.1);
+        }
+        .poll-team-btn.voted-this .poll-bar-fill {
+            background: var(--f1-red);
+        }
+        .poll-team-btn.voted-other {
+            opacity: 0.6;
+        }
+        .poll-team-btn.voted-other .poll-bar-fill {
+            background: rgba(255,255,255,0.2);
+        }
+        .poll-team-btn:disabled { cursor: default; }
+        .poll-bar-track {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+        }
+        .poll-bar-fill {
+            height: 100%;
+            background: var(--f1-red);
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+            border-radius: 0 2px 0 0;
+        }
+        .poll-flag {
+            width: 28px; height: 20px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .poll-team-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.3px;
+        }
+        .poll-pct {
+            font-size: 13px;
+            font-weight: 900;
+            color: #fff;
+            opacity: 0.7;
+            flex-shrink: 0;
+            min-width: 36px;
+            text-align: right;
+        }
+        .poll-votes-total {
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .poll-divider {
+            text-align: center;
+            font-size: 9px;
+            font-weight: 800;
+            color: #444;
+            letter-spacing: 2px;
+            margin: 4px 0;
+        }
+
+        /* Collapsed post-vote summary strip */
+        .poll-collapsed {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px 10px;
+        }
+        .poll-col-team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .poll-col-flag {
+            width: 36px;
+            height: 24px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .poll-col-pct {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+        .poll-col-pct.winner {
+            color: var(--f1-red);
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+        }
+        .poll-col-vs {
+            font-size: 11px;
+            font-weight: 800;
+            color: #444;
+            letter-spacing: 1.5px;
+        }
+        .poll-voted-badge {
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--f1-red);
+            letter-spacing: 1.5px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        /* Mobile Performance Optimizations */
+        @media (max-width: 768px) {
+            /* Disable heavy visual elements */
+            .blob {
+                display: none !important;
+            }
+            .fifa-waves-svg {
+                display: none !important;
+            }
+            .video-background-container {
+                display: none !important;
+            }
+
+            /* Remove expensive backdrop-filters and supply flat opaque background backups */
+            header {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(10, 12, 22, 0.98) !important;
+            }
+            .glass-card {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(12, 12, 16, 0.95) !important;
+            }
+            .header-marquee-container {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 0, 85, 0.1) !important;
+            }
+            .countdown-timer-box {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(12, 12, 16, 0.95) !important;
+            }
+            .sport-toggle-container {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+            }
+        }
     </style>
 </head>
 
@@ -1930,9 +2173,15 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                <!-- LIVE: kickoff passed, streams available -->
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown !== 'STARTING SOON'">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE
+                </div>
+                <!-- STARTING SOON: pre-match streams available -->
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown === 'STARTING SOON'" style="background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #a855f7;">
+                    <i class="fa-solid fa-circle" style="color: #a855f7; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                    STARTING SOON
                 </div>
                 <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
@@ -1993,14 +2242,13 @@
                         <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
                     </div>
                     <div class="spacer" style="flex-shrink: 0;"></div>
-                    <button class="stream-btn" ng-click="toggleTheater()" style="flex-shrink: 0;">
-                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
-                            style="margin-right: 5px;"></i>
-                        {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                    <button class="stream-btn control-btn" ng-click="toggleTheater()" style="flex-shrink: 0;" title="Theater Mode">
+                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'" style="margin-right: 5px;"></i>
+                        <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
                     </button>
-                    <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;">
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;" title="Chat">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
-                        {{ isChatOpen ? 'Chat' : 'Chat' }}
+                        <span class="btn-label">Chat</span>
                     </button>
                 </div>
                 <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
@@ -2041,32 +2289,40 @@
                 <!-- FIFA Fixtures Card -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
-                    <video class="card-video-bg" autoplay loop muted playsinline src="fifa.mp4"></video>
-                    <div class="card-title">
-                        <i class="fa-solid fa-calendar-days"></i> Match Fixtures
+                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline src="fifa.mp4"></video>
+                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
+                        <!-- Fast refresh indicator when live -->
+                        <span ng-if="hasLiveMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
+                            LIVE · FAST REFRESH
+                        </span>
                     </div>
+
+                    <!-- Live & Upcoming Matches -->
                     <div class="fixtures-scroll-container">
-                        <div class="schedule-row" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
+                        <div ng-if="liveAndUpcomingFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
+                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming matches
+                        </div>
+                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
                             <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                <!-- Home Team (Flag with Text Fallback) -->
+                                <!-- Home Team Flag -->
                                 <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
                                     <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.homeTeam}}">
                                         <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
                                     </div>
                                     <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.homeTeam}}">
                                 </div>
-
-                                <!-- Big Score or VS -->
+                                <!-- Score or VS -->
                                 <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
-                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live' || match.finished">
-                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.homeScore}}</span>
+                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
+                                        <span style="color:#00ff55;">{{match.homeScore}}</span>
                                         <span style="color: #555; margin: 0 1px;">-</span>
-                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.awayScore}}</span>
+                                        <span style="color:#00ff55;">{{match.awayScore}}</span>
                                     </span>
                                     <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
                                 </div>
-
-                                <!-- Away Team (Flag with Text Fallback) -->
+                                <!-- Away Team Flag -->
                                 <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
                                     <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.awayTeam}}">
                                     <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.awayTeam}}">
@@ -2074,18 +2330,109 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Kickoff Time / Status -->
+                            <!-- Kickoff Time / Live status -->
                             <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}}</div>
-                                <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
-                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
-                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
+                                <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
+                                <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
+                                <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
                             </div>
                         </div>
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
                             No fixtures available.
                         </div>
+                    </div>
+
+                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
+                    <button class="past-sessions-toggle" ng-show="pastFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
+                        <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastFixtures().length + ')' }}
+                    </button>
+
+                    <!-- Past matches list: shown/hidden with ng-show -->
+                    <div class="past-matches-list" ng-show="ui.showPastMatches">
+                        <div class="schedule-row ended" ng-repeat="match in pastFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                            <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                <!-- Home -->
+                                <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                </div>
+                                <!-- Score -->
+                                <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
+                                    {{match.homeScore}} – {{match.awayScore}}
+                                </div>
+                                <!-- Away -->
+                                <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
+                                </div>
+                            </div>
+                            <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ⚽ Match Poll Card -->
+                <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
+                    <div class="card-title" style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-chart-simple"></i> Who Will Win?</span>
+                        <span style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red); opacity:0.8;">LIVE POLL</span>
+                    </div>
+
+                    <!-- ── BEFORE VOTING: full buttons ── -->
+                    <div ng-if="poll.userVote === null">
+                        <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}} · {{raceData.round}}</div>
+
+                        <button class="poll-team-btn" ng-click="castVote('home')">
+                            <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                            <span class="poll-team-name">{{poll.homeTeam}}</span>
+                            <span class="poll-pct">Vote</span>
+                        </button>
+
+                        <div class="poll-divider">VS</div>
+
+                        <button class="poll-team-btn" ng-click="castVote('away')">
+                            <img class="poll-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
+                            <span class="poll-team-name">{{poll.awayTeam}}</span>
+                            <span class="poll-pct">Vote</span>
+                        </button>
+
+                        <button class="poll-team-btn" style="margin-bottom:0;" ng-click="castVote('draw')">
+                            <i class="fa-solid fa-handshake" style="color:#888; font-size:16px; flex-shrink:0;"></i>
+                            <span class="poll-team-name" style="color:#aaa;">Draw</span>
+                            <span class="poll-pct" style="color:#555;">Vote</span>
+                        </button>
+
+                        <div class="poll-votes-total">
+                            <span ng-if="poll.totalVotes > 0" style="color:#555;">{{poll.totalVotes}} votes cast</span>
+                            <span ng-if="poll.totalVotes === 0" style="color:#333;">Be the first to vote!</span>
+                        </div>
+                    </div>
+
+                    <!-- ── AFTER VOTING: compact collapsed strip ── -->
+                    <div ng-if="poll.userVote !== null" class="poll-collapsed">
+                        <!-- Home team -->
+                        <div class="poll-col-team">
+                            <img class="poll-col-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                            <span class="poll-col-pct" ng-class="{'winner': poll.homePct > poll.awayPct && poll.homePct > poll.drawPct}">{{poll.homePct}}%</span>
+                        </div>
+                        <!-- Separator / Draw -->
+                        <div class="poll-col-vs" style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                            <span>VS</span>
+                            <span style="font-size:8px; font-weight:700; color:#555;" ng-if="poll.drawPct > 0">Draw: {{poll.drawPct}}%</span>
+                        </div>
+                        <!-- Away team -->
+                        <div class="poll-col-team">
+                            <span class="poll-col-pct" ng-class="{'winner': poll.awayPct > poll.homePct && poll.awayPct > poll.drawPct}">{{poll.awayPct}}%</span>
+                            <img class="poll-col-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    <div class="poll-voted-badge" ng-if="poll.userVote !== null">
+                        ✓ VOTED &nbsp;·&nbsp;
+                        <span ng-if="!poll.loaded">counting...</span>
+                        <span ng-if="poll.loaded && poll.totalVotes > 0">{{poll.totalVotes}} {{poll.totalVotes === 1 ? 'vote' : 'votes'}}</span>
+                        <span ng-if="poll.loaded && poll.totalVotes === 0">1 vote</span>
                     </div>
                 </div>
 
@@ -2257,6 +2604,11 @@
 
         // Mousemove event listener removed for optimization (prevent layout recalculation overhead)
 
+        // Mobile device detection
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
+
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
             authDomain: "f1-stream-live.firebaseapp.com",
@@ -2275,6 +2627,7 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
+                    if (isMobileDevice) return;
                     $timeout(function () {
                         if (typeof VanillaTilt !== 'undefined' && !element[0].vanillaTilt) {
                             VanillaTilt.init(element[0], {
@@ -2293,6 +2646,7 @@
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            $scope.isMobile = isMobileDevice;
             // Check if entered from home page or already entered in this session
             const urlParamsForEntry = new URLSearchParams($window.location.search);
             const enteredFromHome = urlParamsForEntry.has('enter') || sessionStorage.getItem('fifa_entered') === 'true';
@@ -2306,7 +2660,7 @@
                 // Play audio and video on click to bypass autoplay restrictions
                 const bgVideo = document.getElementById('bg-video');
                 const introAudio = document.getElementById('intro-audio');
-                if (bgVideo) {
+                if (bgVideo && !isMobileDevice) {
                     bgVideo.play().catch(e => console.log('Video play failed:', e));
                 }
                 if (introAudio) {
@@ -2319,7 +2673,7 @@
                 if ($scope.hasEntered) {
                     const bgVideo = document.getElementById('bg-video');
                     const introAudio = document.getElementById('intro-audio');
-                    if (bgVideo) {
+                    if (bgVideo && !isMobileDevice) {
                         bgVideo.play().catch(e => console.log('Video autoplay failed:', e));
                     }
                     if (introAudio) {
@@ -2410,6 +2764,26 @@
             $scope.weather = null;
             $scope.standingsView = 'drivers';
 
+            // ── LocalStorage instant pre-render ──
+            // Render cached fixtures & standings immediately (before Firestore arrives)
+            try {
+                var _cachedFixtures = localStorage.getItem('fifa_cached_fixtures');
+                if (_cachedFixtures) {
+                    $scope.fixtures = JSON.parse(_cachedFixtures);
+                    const upcoming = $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
+                    $scope.nextMatch = upcoming || null;
+                    console.log('⚽ [cache] Pre-rendered', $scope.fixtures.length, 'fixtures from LocalStorage');
+                }
+            } catch(e) {}
+            try {
+                var _cachedGroups = localStorage.getItem('fifa_cached_groups');
+                if (_cachedGroups) {
+                    $scope.groups = JSON.parse(_cachedGroups);
+                    $scope.autoSelectGroup();
+                    console.log('⚽ [cache] Pre-rendered', $scope.groups.length, 'groups from LocalStorage');
+                }
+            } catch(e) {}
+
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
             let lastFLDriver = null;
@@ -2484,27 +2858,23 @@
             
             function applyFifaTheme() {
                 const theme = {
-                    primary: '#00ff55', // FIFA 2026 Green
-                    glow: 'rgba(0, 255, 85, 0.15)',
+                    primary: '#a855f7', // FIFA 2026 Purple accent
+                    glow: 'rgba(168, 85, 247, 0.12)',
                     name: 'FIFA 2026 Theme'
                 };
                 const root = document.documentElement;
                 root.style.setProperty('--f1-red', theme.primary);
                 root.style.setProperty('--glow-color', theme.glow);
                 $scope.activeThemeName = theme.name;
-                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.vantaInstance.setOptions({ color: vantaColor, color2: 0x9146ff });
-                }
             }
 
             $scope.activeThemeName = '';
 
             function applyDynamicTheme(location, themeOverride) {
-                // Always use FIFA 2026 Green theme (no GP overrides)
+                // FIFA 2026 Purple accent theme
                 const theme = {
-                    primary: '#00ff55',      // FIFA Green
-                    glow: 'rgba(0, 255, 85, 0.15)',
+                    primary: '#a855f7',
+                    glow: 'rgba(168, 85, 247, 0.12)',
                     name: 'FIFA 2026 Theme'
                 };
 
@@ -2512,14 +2882,6 @@
                 root.style.setProperty('--f1-red', theme.primary);
                 root.style.setProperty('--glow-color', theme.glow);
                 $scope.activeThemeName = theme.name;
-
-                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.vantaInstance.setOptions({ color: vantaColor, color2: 0x9146ff });
-                } else {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.pendingVantaColor = vantaColor;
-                }
             }
 
             function safeDate(val) {
@@ -2554,6 +2916,20 @@
                 return isNaN(d.getTime()) ? null : d;
             }
 
+            function getFixtureDisplayTime(match) {
+                if (match && typeof match.sortTs === 'number') return match.sortTs;
+                if (match && typeof match.kickoffTs === 'number') return match.kickoffTs;
+                var parsed = parseFifaDate(match && match.localDate);
+                return parsed ? parsed.getTime() : 9007199254740991;
+            }
+
+            function apiUrl(path) {
+                if (window.location.protocol === 'file:') {
+                    return 'http://localhost:3000' + path;
+                }
+                return path;
+            }
+
 
             const startTime = Date.now();
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
@@ -2570,13 +2946,13 @@
                 }
             });
 
-            // Safety timeout: in case Firebase fails/stalls, hide the loader after 4 seconds anyway
+            // Safety timeout: in case Firebase fails/stalls, hide the loader after 2.5s anyway
             $timeout(function () {
                 if (!$scope.dataLoaded) {
                     console.warn("Firebase snapshot took too long; bypassing loader.");
                     $scope.dataLoaded = true;
                 }
-            }, 4000);
+            }, 2500);
 
             function processData(data) {
                 // Set activeSport bound value
@@ -2585,6 +2961,7 @@
                 // Map FIFA specific settings from data.fifa
                 const fifa = data.fifa || {};
                 $scope.raceData = fifa.raceData || {};
+                $scope.autoSyncDetails = fifa.autoSyncDetails !== false;
 
                 // Trigger dynamic theming based on FIFA match location or theme override
                 if (!$scope.themeOverrideActive) {
@@ -2644,9 +3021,6 @@
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
                 console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, fifa);
                 updateTimers();
-
-                // FIFA fixtures & standings: always refresh on Firestore sync
-                $scope.loadFifaData();
             }
 
             function updateTimers() {
@@ -2676,14 +3050,22 @@
                     if (targetTime && !isNaN(targetTime.getTime())) {
                         var dist = targetTime.getTime() - now;
                         if (dist > 0) {
-                            // Counting down — show timer
-                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
-                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                            var s = Math.floor((dist % (1000 * 60)) / 1000);
-                            $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
-                            $scope.customTimerActive = true;
-                            $scope.showCustomTimer = true;
+                            // Counting down — check if streams are ready (within 10 min pre-match window)
+                            var tenMinMs = 10 * 60 * 1000;
+                            if ($scope.streamLinks && $scope.streamLinks.length > 0 && dist <= tenMinMs) {
+                                // Streams are live — let the player show even though kickoff hasn't happened yet
+                                $scope.customTimerCountdown = "STARTING SOON";
+                                $scope.customTimerActive = false;
+                                $scope.showCustomTimer = true;
+                            } else {
+                                var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                                var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                                var s = Math.floor((dist % (1000 * 60)) / 1000);
+                                $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                                $scope.customTimerActive = true;
+                                $scope.showCustomTimer = true;
+                            }
                         } else if ($scope.matchIsTimelyLive) {
                             // Target passed but still within live window — show LIVE NOW
                             $scope.customTimerCountdown = "LIVE NOW";
@@ -2762,22 +3144,74 @@
 
 
             $scope.loadFifaData = function() {
-                $http.get('/api/fifa/fixtures').then(function(res) {
-                    $scope.fixtures = res.data || [];
-                    console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
-                    // Find the next upcoming match (first 'notstarted' match)
-                    const upcoming = $scope.fixtures.find(m => m.status === 'notstarted');
-                    if (upcoming) {
-                        $scope.nextMatch = upcoming;
-                    } else {
-                        $scope.nextMatch = null;
+                $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
+                    var raw = res.data || [];
+
+                    // Sort: LIVE first, then upcoming (earliest first), then finished (latest first)
+                    var live    = raw.filter(function(m) { return m.status === 'live'; });
+                    var upcoming = raw.filter(function(m) { return m.status === 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(a) - getFixtureDisplayTime(b); });
+                    var finished = raw.filter(function(m) { return m.status !== 'live' && m.status !== 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(b) - getFixtureDisplayTime(a); });
+
+                    $scope.fixtures = live.concat(upcoming).concat(finished);
+
+                    // ── Auto-sync live score from fixtures API into raceData ──
+                    // Only do this if autoSyncDetails is true! Otherwise, respect the admin's manual scores.
+                    if ($scope.autoSyncDetails) {
+                        if ($scope.raceData && $scope.raceData.name) {
+                            var rName = $scope.raceData.name.toLowerCase();
+                            var matchedFixture = raw.find(function(m) {
+                                // Match by "Home vs Away" name pattern
+                                var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
+                                return fName === rName;
+                            });
+                            if (matchedFixture) {
+                                $scope.raceData.homeScore = matchedFixture.homeScore || '0';
+                                $scope.raceData.awayScore = matchedFixture.awayScore || '0';
+                                // Also sync live/finished status from the API
+                                if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
+                                if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
+                            }
+                        }
                     }
+
+                    // Update poll flags if we have a match
+                    if ($scope.poll.matchId && $scope.raceData && $scope.raceData.name) {
+                        var matchedFixture = $scope.fixtures.find(function(m) {
+                            var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
+                            return fName === $scope.raceData.name.toLowerCase();
+                        });
+                        if (matchedFixture) {
+                            $scope.poll.homeFlag = matchedFixture.homeFlag;
+                            $scope.poll.awayFlag = matchedFixture.awayFlag;
+                        }
+                    }
+
+                    // Cache to LocalStorage for instant next-load
+                    try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
+                    console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches (live:', live.length, 'upcoming:', upcoming.length, 'finished:', finished.length + ')');
+
+                    // Find the next upcoming match (first 'notstarted' match)
+                    const nextUp = live[0] || upcoming[0] || null;
+                    $scope.nextMatch = nextUp;
+
+                    // Auto-scroll fixtures list to the first live/upcoming match
+                    $timeout(function() {
+                        var container = document.querySelector('.fixtures-scroll-container');
+                        if (container) {
+                            container.scrollTop = 0; // Live/upcoming is now at the top
+                        }
+                    }, 100);
+
                 }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
                 });
 
-                $http.get('/api/fifa/standings').then(function(res) {
+                $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
                     $scope.groups = res.data || [];
+                    // Cache to LocalStorage for instant next-load
+                    try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch(e) {}
                     $scope.autoSelectGroup();
                     console.log('⚽ Standings loaded:', $scope.groups.length, 'groups');
                 }, function(err) {
@@ -2785,10 +3219,228 @@
                 });
             };
 
-            // Load immediately handled by doc onSnapshot update on page init
+            // Load fixtures & standings immediately on boot (don't wait for Firestore)
+            $scope.loadFifaData();
 
-            // Refresh every 5 minutes
-            $interval(function() { $scope.loadFifaData(); }, 5 * 60 * 1000);
+            // Smart refresh: 20s when a match is live, 2 min otherwise
+            var _fixtureRefreshInterval = null;
+            var _lastRefreshIntervalLive = null;
+            function scheduleFixtureRefresh() {
+                var isLive = ($scope.raceData && $scope.raceData.isLive) ||
+                             ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+                
+                // If the live state hasn't changed, and we already have a timer running, do nothing
+                if (_fixtureRefreshInterval && _lastRefreshIntervalLive === isLive) {
+                    return;
+                }
+
+                if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
+                _lastRefreshIntervalLive = isLive;
+                var delay = isLive ? 20 * 1000 : 2 * 60 * 1000;
+                
+                console.log('⚽ Scheduling next fixture refresh in', delay / 1000, 'seconds (isLive:', isLive, ')');
+                _fixtureRefreshInterval = $interval(function() {
+                    $scope.loadFifaData();
+                }, delay, 1);
+            }
+
+            // Watch for changes in live states to immediately adjust the polling speed
+            $scope.$watch(function() {
+                return ($scope.raceData && $scope.raceData.isLive) ||
+                       ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+            }, function() {
+                scheduleFixtureRefresh();
+            });
+
+            // Helper: live + upcoming fixtures
+            $scope.liveAndUpcomingFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.status === 'live' || m.status === 'notstarted';
+                });
+            };
+
+            // Helper: past (finished) fixtures
+            $scope.pastFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.finished || (m.status !== 'live' && m.status !== 'notstarted');
+                });
+            };
+
+            // Helper: any live match right now?
+            $scope.hasLiveMatches = function() {
+                if (!$scope.fixtures) return false;
+                return $scope.fixtures.some(function(m) { return m.status === 'live'; });
+            };
+
+            // UI state object — avoids AngularJS prototype chain issues with ng-if child scopes
+            $scope.ui = { showPastMatches: false };
+
+            // ── Poll System (uses server API to bypass Firestore rules) ──
+            $scope.poll = {
+                matchId: null,
+                homeTeam: '', awayTeam: '',
+                homeFlag: '', awayFlag: '',
+                userVote: null,
+                home: 0, away: 0, draw: 0,
+                homePct: 0, awayPct: 0, drawPct: 0,
+                totalVotes: 0,
+                loaded: false
+            };
+
+            var _pollInterval = null;
+
+            function calcPollPct(p) {
+                var home = p.home || 0;
+                var away = p.away || 0;
+                var draw = p.draw || 0;
+
+                // Store the REAL server total for the badge (never inflated)
+                $scope.poll.totalVotes = (p.total != null) ? p.total : (home + away + draw);
+
+                // For percentage display: ensure the user's local vote appears even if
+                // the server hasn't registered it yet (e.g. race condition / first fetch).
+                // This only affects the % bars, not the vote count shown in the badge.
+                var h = home, a = away, d = draw;
+                if ($scope.poll.userVote === 'home' && h === 0) h = 1;
+                if ($scope.poll.userVote === 'away' && a === 0) a = 1;
+                if ($scope.poll.userVote === 'draw' && d === 0) d = 1;
+
+                var displayTotal = h + a + d;
+                if (displayTotal === 0) {
+                    $scope.poll.homePct = $scope.poll.awayPct = $scope.poll.drawPct = 0;
+                } else {
+                    $scope.poll.homePct = Math.round(h / displayTotal * 100);
+                    $scope.poll.awayPct = Math.round(a / displayTotal * 100);
+                    $scope.poll.drawPct = 100 - $scope.poll.homePct - $scope.poll.awayPct;
+                }
+            }
+
+            function fetchPollCounts(matchId) {
+                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        $scope.$apply(function() {
+                            $scope.poll.home = data.home || 0;
+                            $scope.poll.away = data.away || 0;
+                            $scope.poll.draw = data.draw || 0;
+                            calcPollPct(data);
+                            $scope.poll.loaded = true;
+
+                            // Self-healing: if user voted locally, but server says 0 votes for their choice,
+                            // resubmit the vote to make sure it is saved on the server!
+                            if ($scope.poll.userVote && data[$scope.poll.userVote] === 0) {
+                                console.log('[poll] Auto-submitting vote to server for:', matchId);
+                                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ choice: $scope.poll.userVote })
+                                })
+                                .then(function(r) { return r.json(); })
+                                .then(function(newData) {
+                                    $scope.$apply(function() {
+                                        $scope.poll.home = newData.home || 0;
+                                        $scope.poll.away = newData.away || 0;
+                                        $scope.poll.draw = newData.draw || 0;
+                                        calcPollPct(newData);
+                                    });
+                                })
+                                .catch(function(e) { console.warn('[poll] auto-vote error:', e); });
+                            }
+                        });
+                    })
+                    .catch(function(e) {
+                        console.warn('[poll] fetch error:', e);
+                        $scope.$apply(function() {
+                            $scope.poll.loaded = true;
+                        });
+                    });
+            }
+
+            $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
+                if (!matchId || $scope.poll.matchId === matchId) return;
+
+                // Stop previous poll interval
+                if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
+
+                $scope.poll.matchId   = matchId;
+                $scope.poll.homeTeam  = homeTeam;
+                $scope.poll.awayTeam  = awayTeam;
+                $scope.poll.homeFlag  = homeFlag;
+                $scope.poll.awayFlag  = awayFlag;
+                $scope.poll.loaded    = false;
+
+                // Restore user's previous vote for this match from localStorage
+                var voteKey = 'poll_vote_' + matchId;
+                $scope.poll.userVote = localStorage.getItem(voteKey) || null;
+
+                // Fetch initial counts, then poll every 15s for live updates
+                fetchPollCounts(matchId);
+                _pollInterval = setInterval(function() { fetchPollCounts(matchId); }, 15000);
+            };
+
+            $scope.castVote = function(choice) {
+                if (!$scope.poll.matchId || $scope.poll.userVote !== null) return;
+                var matchId  = $scope.poll.matchId;
+                var voteKey  = 'poll_vote_' + matchId;
+
+                // Optimistic update — show the collapsed view instantly
+                $scope.poll.userVote = choice;
+                localStorage.setItem(voteKey, choice);
+
+                // Optimistically increment local count
+                $scope.poll.totalVotes = ($scope.poll.totalVotes || 0) + 1;
+                var localCounts = {
+                    home: ($scope.poll.home || 0) + (choice === 'home' ? 1 : 0),
+                    away: ($scope.poll.away || 0) + (choice === 'away' ? 1 : 0),
+                    draw: ($scope.poll.draw || 0) + (choice === 'draw' ? 1 : 0),
+                    total: $scope.poll.totalVotes
+                };
+                calcPollPct(localCounts);
+
+                // Send vote to server API (uses Firebase Admin, bypasses Firestore rules)
+                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice: choice })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    $scope.$apply(function() {
+                        $scope.poll.home = data.home || 0;
+                        $scope.poll.away = data.away || 0;
+                        $scope.poll.draw = data.draw || 0;
+                        calcPollPct(data);
+                    });
+                })
+                .catch(function(e) {
+                    console.error('[poll] vote error:', e);
+                    $scope.$apply(function() {
+                        $scope.poll.loaded = true;
+                    });
+                });
+            };
+
+            // Watch raceData changes → init poll for current match
+            $scope.$watch('raceData', function(newVal) {
+                if (!newVal || !newVal.name) return;
+                // Build a stable match ID from name (slug)
+                var id = (newVal.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g,'_').substring(0, 40);
+                // Find the current match from fixtures to get flags
+                var match = null;
+                if ($scope.fixtures && $scope.fixtures.length) {
+                    match = $scope.fixtures.find(function(m) { return m.status === 'live'; })
+                         || $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
+                }
+                var homeFlag = match ? match.homeFlag : '';
+                var awayFlag = match ? match.awayFlag : '';
+                var home = (newVal.name || '').split(' vs ')[0] || '';
+                var away = (newVal.name || '').split(' vs ')[1] || '';
+                if (home && away) {
+                    $scope.initPoll(id, home.trim(), away.trim(), homeFlag, awayFlag);
+                }
+            }, true);
 
 
 
@@ -2833,73 +3485,7 @@
             $scope.themeOverrideActive = false;
         });
 
-        // Vanta Globe Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
-        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                             ('ontouchstart' in window) || 
-                             (navigator.maxTouchPoints > 0);
-
-        function initVanta() {
-            if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
-                const initialColor = window.pendingVantaColor || 0x00ff55;
-                window.vantaInstance = VANTA.GLOBE({
-                    el: "#vanta-overlay",
-                    mouseControls: true,
-                    touchControls: false,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    scale: 1.00,
-                    scaleMobile: 1.00,
-                    color: initialColor,
-                    color2: 0x9146ff, // Purple accent color for World Cup theme
-                    size: 1.10,
-                    backgroundColor: 0x050508,
-                    backgroundAlpha: 0.0
-                });
-
-                // Remove lighting to make the 3D globe flat
-                if (window.vantaInstance && window.vantaInstance.scene) {
-                    const scene = window.vantaInstance.scene;
-                    const lights = [];
-                    scene.traverse((obj) => {
-                        if (obj.isLight) {
-                            lights.push(obj);
-                        }
-                        if (obj.isMesh && obj.material && !obj.material.isMeshBasicMaterial) {
-                            const oldColor = obj.material.color;
-                            obj.material = new THREE.MeshBasicMaterial({ color: oldColor });
-                        }
-                    });
-                    lights.forEach(light => {
-                        if (light.parent) {
-                            light.parent.remove(light);
-                        } else {
-                            scene.remove(light);
-                        }
-                    });
-                }
-            }
-        }
-
-        function destroyVanta() {
-            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
-                window.vantaInstance.destroy();
-                window.vantaInstance = null;
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-            initVanta();
-        });
-
-        window.addEventListener("resize", function () {
-            if (isMobileDevice) return;
-            if (window.innerWidth <= 768) {
-                destroyVanta();
-            } else {
-                initVanta();
-            }
-        });
+        // 3D Vanta Globe background removed from FIFA for performance.
 
 
     </script>

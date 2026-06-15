@@ -40,7 +40,7 @@ async function fetchJson(url, timeoutMs = 25000) {
 
 let cache = null;
 let lastFetched = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 60 * 1000; // 60 seconds – standings update after goals/match ends
 
 // Load initial fallback data
 let fallbackGroups = [];
@@ -90,6 +90,7 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Cache-Control', 'no-store');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const now = Date.now();

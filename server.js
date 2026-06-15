@@ -664,9 +664,12 @@ async function syncToFirebase() {
             const config = configDoc.data();
             await syncStreamsAutomatically(config, liveConfigRef);
 
-            // Auto-sync FIFA match details from worldcup26.ir (Always Enabled)
+            // Auto-sync FIFA match details from worldcup26.ir (if enabled)
             try {
-                const updatedFifa = await syncFifaMatchDetailsLocal(config, liveConfigRef);
+                let updatedFifa = null;
+                if (config.fifa && config.fifa.autoSyncDetails !== false) {
+                    updatedFifa = await syncFifaMatchDetailsLocal(config, liveConfigRef);
+                }
                 const currentConfig = {
                     ...config,
                     fifa: updatedFifa || config.fifa || {}
