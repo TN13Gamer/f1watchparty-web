@@ -46,6 +46,19 @@ async function fetchJson(url, timeoutMs = 25000) {
 }
 
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+function formatFixtureIst(kickoffMs) {
+  if (!isFinite(kickoffMs) || kickoffMs === Number.MAX_SAFE_INTEGER) return '';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const istDate = new Date(kickoffMs + IST_OFFSET_MS);
+  const day = istDate.getUTCDate();
+  const month = months[istDate.getUTCMonth()];
+  const hour = String(istDate.getUTCHours()).padStart(2, '0');
+  const minute = String(istDate.getUTCMinutes()).padStart(2, '0');
+  return `${day} ${month} ${hour}:${minute}`;
+}
+
+
 if (!admin.apps.length) {
   try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -470,13 +483,8 @@ async function syncFifaMatchDetails(config, ref) {
     const kickoffMs = parseGameDate(chosen.local_date, chosen.stadium_id);
     const isoTarget = new Date(kickoffMs).toISOString();
 
-    const [datePart, timePart] = (chosen.local_date || '').split(' ');
-    const [mm, dd, yyyy] = (datePart || '').split('/');
-
-    // Friendly date string for display (e.g. "13 Jun 18:00")
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const monthIdx = parseInt(mm, 10) - 1;
-    const friendlyDate = `${parseInt(dd, 10)} ${months[monthIdx]} ${timePart}`;
+    // Friendly date string formatted in IST for display (e.g. "13 Jun 23:30")
+    const friendlyDate = formatFixtureIst(kickoffMs);
 
     const isLive = chosen.time_elapsed === 'live';
     const isFinished = chosen.finished === 'TRUE';
@@ -633,6 +641,9 @@ async function syncFifaStreams(config, ref) {
         const streamLinks = [];
         const streamPromises = bestMatch.sources.map(async (src) => {
           try {
+            if (['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport'].includes(src.source.toLowerCase())) {
+              return;
+            }
             const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
             const streams = await fetchJson(streamUrl);
             if (Array.isArray(streams)) {

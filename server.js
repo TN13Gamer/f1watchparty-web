@@ -417,8 +417,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
         const kickoffMs = parseGameDate(chosen.local_date, chosen.stadium_id);
         const isoTarget = new Date(kickoffMs).toISOString();
 
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const friendlyDate = `${parseInt(dd, 10)} ${months[parseInt(mm, 10)-1]} ${timePart}`;
+        const friendlyDate = formatFifaFixtureIst(kickoffMs);
 
         const isLive = chosen.time_elapsed === 'live';
         const isFinished = chosen.finished === 'TRUE';
@@ -564,6 +563,9 @@ async function syncFifaStreamsLocal(config, ref) {
         const streamLinks = [];
         const streamPromises = bestMatch.sources.map(async (src) => {
           try {
+            if (['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport'].includes(src.source.toLowerCase())) {
+              return;
+            }
             const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
             const streams = await fetchJson(streamUrl);
             if (Array.isArray(streams)) {
