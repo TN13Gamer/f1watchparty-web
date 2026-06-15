@@ -507,14 +507,14 @@ async function syncFifaStreamsLocal(config, ref) {
     return;
   }
 
-  // Clear stale streams if the match is >60 min away and not live
+  // Clear stale streams if the match is >10 min away and not live
   const customTimerTarget = fifa.customTimer?.target;
   if (customTimerTarget) {
     const kickoffMs = new Date(customTimerTarget).getTime();
     const now_s = Date.now();
     const isLive = fifa.raceData?.isLive;
-    if (!isLive && (kickoffMs - now_s) > 60 * 60 * 1000) {
-      console.log('[local-sync-fifa] Match is >60 min away and not live. Clearing stale stream links.');
+    if (!isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+      console.log('[local-sync-fifa] Match is >10 min away and not live. Clearing stale stream links.');
       const updatedFifa = { ...fifa, streamLinks: [] };
       await ref.update({ fifa: updatedFifa });
       return;

@@ -582,14 +582,14 @@ async function syncFifaStreams(config, ref) {
     return;
   }
 
-  // Check if the next match is >60 min away — don't push streams yet; clear any stale ones
+  // Check if the next match is >10 min away — don't push streams yet; clear any stale ones
   const customTimerTarget = fifa.customTimer?.target;
   if (customTimerTarget) {
     const kickoffMs = new Date(customTimerTarget).getTime();
     const now_s = Date.now();
     const isLive = fifa.raceData?.isLive;
-    if (!isLive && (kickoffMs - now_s) > 60 * 60 * 1000) {
-      console.log('[sync-fifa] Next match is >60 minutes away and not live. Clearing stale stream links.');
+    if (!isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+      console.log('[sync-fifa] Next match is >10 minutes away and not live. Clearing stale stream links.');
       const updatedFifa = { ...fifa, streamLinks: [] };
       await ref.update({ fifa: updatedFifa });
       return;
