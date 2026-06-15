@@ -3155,6 +3155,25 @@
 
                     $scope.fixtures = live.concat(upcoming).concat(finished);
 
+                    // ── Auto-sync live score from fixtures API into raceData ──
+                    // raceData.homeScore/awayScore is set by admin but doesn't live-update.
+                    // After each fixture refresh, find the current match and pull the latest score.
+                    if ($scope.raceData && $scope.raceData.name) {
+                        var rName = $scope.raceData.name.toLowerCase();
+                        var matchedFixture = raw.find(function(m) {
+                            // Match by "Home vs Away" name pattern
+                            var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
+                            return fName === rName;
+                        });
+                        if (matchedFixture) {
+                            $scope.raceData.homeScore = matchedFixture.homeScore || '0';
+                            $scope.raceData.awayScore = matchedFixture.awayScore || '0';
+                            // Also sync live/finished status from the API
+                            if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
+                            if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
+                        }
+                    }
+
                     // Cache to LocalStorage for instant next-load
                     try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                     console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches (live:', live.length, 'upcoming:', upcoming.length, 'finished:', finished.length + ')');
@@ -3189,12 +3208,13 @@
             // Load fixtures & standings immediately on boot (don't wait for Firestore)
             $scope.loadFifaData();
 
-            // Smart refresh: 30s when a match is live, 3 min otherwise
+            // Smart refresh: 20s when a match is live, 2 min otherwise
             var _fixtureRefreshInterval = null;
             function scheduleFixtureRefresh() {
                 if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
-                var isLive = $scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; });
-                var delay = isLive ? 30 * 1000 : 3 * 60 * 1000;
+                var isLive = ($scope.raceData && $scope.raceData.isLive) ||
+                             ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+                var delay = isLive ? 20 * 1000 : 2 * 60 * 1000;
                 _fixtureRefreshInterval = $interval(function() {
                     $scope.loadFifaData();
                     scheduleFixtureRefresh(); // re-evaluate after each load
