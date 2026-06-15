@@ -1441,6 +1441,7 @@
             $scope.isLoggedIn = false;
             $scope.creds = { email: "", pass: "" };
             $scope.config = {}; 
+            $scope.isFirstLoad = true;
             $scope.analytics = { activeViewers: 0, totalViews: 0, adminVisits: 0, logs: [] };
             $scope.savingLive = false;
             $scope.fetchingWeather = false;
@@ -1501,8 +1502,9 @@
                     $timeout(() => {
                         const data = doc.data();
                         
-                        if (!$scope.config) {
+                        if ($scope.isFirstLoad) {
                             $scope.config = data;
+                            $scope.isFirstLoad = false;
                         } else {
                             // Merge only background-synced fields to avoid resetting active text inputs
                             $scope.config.standings = data.standings || [];
