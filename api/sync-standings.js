@@ -8,7 +8,49 @@ const axios = require('axios');
 const admin = require('firebase-admin');
 const cheerio = require('cheerio');
 
+// Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
+async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
+  let browser;
+  try {
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: timeoutMs });
+    const text = await page.evaluate(() => document.body.innerText);
+    try {
+      return JSON.parse(text.trim());
+    } catch (e) {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      throw e;
+    }
+  } catch (err) {
+    console.error(`[fetchJsonWithPuppeteer] Puppeteer fetch failed for ${url}:`, err.message);
+    throw err;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
 async function fetchJson(url, timeoutMs = 25000) {
+  if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
+    try {
+      console.log(`[fetchJson] Using Puppeteer to fetch ${url}...`);
+      const data = await fetchJsonWithPuppeteer(url, timeoutMs);
+      return data;
+    } catch (e) {
+      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios/curl.`);
+    }
+  }
+
   try {
     // Try Axios first (much faster and avoids process spawning overhead/hanging)
     const { data } = await axios.get(url, {
@@ -502,6 +544,24 @@ async function syncFifaMatchDetails(config, ref) {
     const homeScore = chosen.home_score || '0';
     const awayScore = chosen.away_score || '0';
 
+    let matchTime = '';
+    if (isLive && kickoffMs) {
+      const elapsedMins = Math.floor((Date.now() - kickoffMs) / 60000);
+      if (elapsedMins < 0) {
+        matchTime = '0\'';
+      } else if (elapsedMins < 45) {
+        matchTime = `${elapsedMins}'`;
+      } else if (elapsedMins < 60) {
+        matchTime = 'HT';
+      } else if (elapsedMins < 105) {
+        matchTime = `${elapsedMins - 15}'`;
+      } else {
+        matchTime = '90+\'';
+      }
+    } else if (isFinished) {
+      matchTime = 'FT';
+    }
+
     // Build updated fifa object (preserve existing keys, only update match-related fields)
     const currentFifa = config.fifa || {};
     const currentRaceData = currentFifa.raceData || {};
@@ -518,6 +578,7 @@ async function syncFifaMatchDetails(config, ref) {
         awayScore: awayScore,
         isLive: isLive,
         isFinished: isFinished,
+        matchTime: matchTime,
       },
       // Auto-update customTimer target to kickoff time (enable it too)
       customTimer: {

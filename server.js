@@ -68,7 +68,50 @@ try {
 }
 
 // Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
+// Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
+async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
+  let browser;
+  try {
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: timeoutMs });
+    const text = await page.evaluate(() => document.body.innerText);
+    try {
+      return JSON.parse(text.trim());
+    } catch (e) {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      throw e;
+    }
+  } catch (err) {
+    console.error(`[fetchJsonWithPuppeteer] Puppeteer fetch failed for ${url}:`, err.message);
+    throw err;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
+
+// Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
 async function fetchJson(url, timeoutMs = 25000) {
+  if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
+    try {
+      console.log(`[fetchJson] Using Puppeteer to fetch ${url}...`);
+      const data = await fetchJsonWithPuppeteer(url, timeoutMs);
+      return data;
+    } catch (e) {
+      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios/curl.`);
+    }
+  }
+
   try {
     const { data } = await axios.get(url, {
       timeout: timeoutMs,
@@ -432,6 +475,25 @@ async function syncFifaMatchDetailsLocal(config, ref) {
 
         const isLive = chosen.time_elapsed === 'live';
         const isFinished = chosen.finished === 'TRUE';
+        
+        let matchTime = '';
+        if (isLive && kickoffMs) {
+            const elapsedMins = Math.floor((Date.now() - kickoffMs) / 60000);
+            if (elapsedMins < 0) {
+                matchTime = '0\'';
+            } else if (elapsedMins < 45) {
+                matchTime = `${elapsedMins}'`;
+            } else if (elapsedMins < 60) {
+                matchTime = 'HT';
+            } else if (elapsedMins < 105) {
+                matchTime = `${elapsedMins - 15}'`;
+            } else {
+                matchTime = '90+\'';
+            }
+        } else if (isFinished) {
+            matchTime = 'FT';
+        }
+
         const currentFifa = config.fifa || {};
         const currentRaceData = currentFifa.raceData || {};
 
@@ -448,6 +510,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
                 awayScore: chosen.away_score || '0',
                 isLive: isLive,
                 isFinished: isFinished,
+                matchTime: matchTime,
             },
             customTimer: {
                 ...(currentFifa.customTimer || {}),
@@ -458,7 +521,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
         };
 
         await ref.update({ fifa: updatedFifa });
-        console.log(`[local-sync] FIFA: "${matchName}" | ${round} | ${stadium.name} | Kickoff: ${isoTarget} | Live: ${isLive}`);
+        console.log(`[local-sync] FIFA: "${matchName}" | ${round} | ${stadium.name} | Kickoff: ${isoTarget} | Live: ${isLive} | Time: ${matchTime}`);
         return updatedFifa;
     } catch (err) {
         console.error('[local-sync] FIFA details error:', err.message);
@@ -879,13 +942,29 @@ async function refreshFifaFixtures() {
             const friendlyDate = formatFifaFixtureIst(kickoffTs);
             const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
             const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
+
+            const isFinished = g.finished === 'TRUE';
+            const isLive = g.time_elapsed === 'live';
+            let matchTime = '';
+            if (isLive && kickoffTs) {
+                const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
+                if (elapsedMins < 0) matchTime = '0\'';
+                else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
+                else if (elapsedMins < 60) matchTime = 'HT';
+                else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
+                else matchTime = '90+\'';
+            } else if (isFinished) {
+                matchTime = 'FT';
+            }
+
             return {
                 id: g.id, homeTeam: homeName, awayTeam: awayName,
                 homeFlag: getFlag(g.home_team_id, homeName),
                 awayFlag: getFlag(g.away_team_id, awayName),
                 homeScore: g.home_score || '0', awayScore: g.away_score || '0',
                 localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: g.time_elapsed,
-                finished: g.finished === 'TRUE', round, stadium: stadium.name
+                finished: isFinished, round, stadium: stadium.name,
+                matchTime: matchTime
             };
         });
         cacheFixtures = formatted;
@@ -950,6 +1029,19 @@ app.get('/api/fifa/fixtures', async (req, res) => {
             const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
             const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
 
+            const isLive = g.time_elapsed === 'live';
+            let matchTime = '';
+            if (isLive && kickoffTs) {
+                const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
+                if (elapsedMins < 0) matchTime = '0\'';
+                else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
+                else if (elapsedMins < 60) matchTime = 'HT';
+                else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
+                else matchTime = '90+\'';
+            } else if (isFinished) {
+                matchTime = 'FT';
+            }
+
             return {
                 id: g.id,
                 homeTeam: homeName,
@@ -965,7 +1057,8 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                 status: g.time_elapsed,
                 finished: isFinished,
                 round: round,
-                stadium: stadium.name
+                stadium: stadium.name,
+                matchTime: matchTime
             };
         });
         cacheFixtures = formatted;
@@ -1008,13 +1101,29 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                 const friendlyDate = formatFifaFixtureIst(kickoffTs);
                 const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
                 const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
+                
+                const isFinished = g.finished === 'TRUE';
+                const isLive = g.time_elapsed === 'live';
+                let matchTime = '';
+                if (isLive && kickoffTs) {
+                    const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
+                    if (elapsedMins < 0) matchTime = '0\'';
+                    else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
+                    else if (elapsedMins < 60) matchTime = 'HT';
+                    else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
+                    else matchTime = '90+\'';
+                } else if (isFinished) {
+                    matchTime = 'FT';
+                }
+
                 return {
                     id: g.id, homeTeam: homeName, awayTeam: awayName,
                     homeFlag: getFlagFb(g.home_team_id, homeName),
                     awayFlag: getFlagFb(g.away_team_id, awayName),
                     homeScore: g.home_score || '0', awayScore: g.away_score || '0',
                     localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: g.time_elapsed,
-                    finished: g.finished === 'TRUE', round, stadium: stadium.name
+                    finished: isFinished, round, stadium: stadium.name,
+                    matchTime: matchTime
                 };
             });
             res.json(fallback);

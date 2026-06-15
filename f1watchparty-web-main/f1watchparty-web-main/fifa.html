@@ -2275,6 +2275,7 @@
                                 {{raceData.homeScore}} – {{raceData.awayScore}}
                             </span>
                             <span style="margin-left: 6px; background: #00ff55; color: #000; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">LIVE</span>
+                            <span ng-if="raceData.matchTime" style="margin-left: 5px; background: rgba(0,255,85,0.15); color: #00ff55; font-size: 11px; font-weight: 900; border-radius: 3px; padding: 2px 6px; vertical-align: middle; border: 1px solid rgba(0,255,85,0.3);">{{raceData.matchTime}}</span>
                         </div>
                         <div class="meta-item" ng-if="raceData.isFinished && !raceData.isLive">
                             <strong>Final Score</strong>
@@ -2334,7 +2335,10 @@
                             <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
                                 <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
                                 <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
-                                <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
+                                <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                                    <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
+                                    <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
+                                </div>
                             </div>
                         </div>
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">

@@ -2,8 +2,43 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
+// Puppeteer-based helper to bypass Cloudflare DDoS protection
+async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
+  let browser;
+  try {
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: timeoutMs });
+    const text = await page.evaluate(() => document.body.innerText);
+    try {
+      return JSON.parse(text.trim());
+    } catch (e) {
+      const m = text.match(/\{[\s\S]*\}/);
+      if (m) return JSON.parse(m[0]);
+      throw e;
+    }
+  } catch (err) {
+    console.error(`[fetchJsonWithPuppeteer] Failed for ${url}:`, err.message);
+    throw err;
+  } finally {
+    if (browser) await browser.close();
+  }
+}
+
+// Helper to fetch JSON with high timeout and Puppeteer/curl fallbacks to bypass DDoS-guard blocks
 async function fetchJson(url, timeoutMs = 25000) {
+  if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
+    try {
+      return await fetchJsonWithPuppeteer(url, timeoutMs);
+    } catch (e) {
+      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios/curl.`);
+    }
+  }
   try {
     const { data } = await axios.get(url, {
       timeout: timeoutMs,
@@ -21,12 +56,9 @@ async function fetchJson(url, timeoutMs = 25000) {
         const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
         const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
         exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
-          if (error) {
-            return reject(error);
-          }
+          if (error) return reject(error);
           try {
-            const data = JSON.parse(stdout);
-            resolve(data);
+            resolve(JSON.parse(stdout));
           } catch (jsonErr) {
             reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
           }

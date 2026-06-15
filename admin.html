@@ -1206,6 +1206,15 @@
                             <input type="text" ng-model="config.fifa.raceData.awayScore" placeholder="e.g. 0" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;">
                         </div>
                     </div>
+                    <div class="grid-row">
+                        <div class="input-group">
+                            <label>Match Timing / Minute <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-calculated)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.matchTime" placeholder="e.g. 45' or HT or FT" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;" title="Auto-calculated when live. Shows e.g. 45', HT, 67', 90+', FT">
+                            <div style="font-size:10px; color:var(--text-muted); margin-top:3px;" ng-if="config.fifa.raceData.matchTime">
+                                Current: <strong style="color:#00ff55;">{{config.fifa.raceData.matchTime}}</strong>
+                            </div>
+                        </div>
+                    </div>
                     <div class="grid-row" style="margin-top: 10px; margin-bottom: 15px;">
                         <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
                             <input type="checkbox" ng-model="config.fifa.raceData.isLive" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
