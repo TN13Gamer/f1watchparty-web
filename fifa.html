@@ -1969,9 +1969,15 @@
             </div>
 
             <div class="status-area">
-                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                <!-- LIVE: kickoff passed, streams available -->
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown !== 'STARTING SOON'">
                     <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE
+                </div>
+                <!-- STARTING SOON: pre-match streams available -->
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown === 'STARTING SOON'" style="background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #a855f7;">
+                    <i class="fa-solid fa-circle" style="color: #a855f7; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                    STARTING SOON
                 </div>
                 <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
                     <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
@@ -2741,14 +2747,22 @@
                     if (targetTime && !isNaN(targetTime.getTime())) {
                         var dist = targetTime.getTime() - now;
                         if (dist > 0) {
-                            // Counting down — show timer
-                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
-                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                            var s = Math.floor((dist % (1000 * 60)) / 1000);
-                            $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
-                            $scope.customTimerActive = true;
-                            $scope.showCustomTimer = true;
+                            // Counting down — check if streams are ready (within 10 min pre-match window)
+                            var tenMinMs = 10 * 60 * 1000;
+                            if ($scope.streamLinks && $scope.streamLinks.length > 0 && dist <= tenMinMs) {
+                                // Streams are live — let the player show even though kickoff hasn't happened yet
+                                $scope.customTimerCountdown = "STARTING SOON";
+                                $scope.customTimerActive = false;
+                                $scope.showCustomTimer = true;
+                            } else {
+                                var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                                var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                                var s = Math.floor((dist % (1000 * 60)) / 1000);
+                                $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                                $scope.customTimerActive = true;
+                                $scope.showCustomTimer = true;
+                            }
                         } else if ($scope.matchIsTimelyLive) {
                             // Target passed but still within live window — show LIVE NOW
                             $scope.customTimerCountdown = "LIVE NOW";
