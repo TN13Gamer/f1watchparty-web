@@ -985,7 +985,7 @@
 
         .carbon-schedule-card {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             background-color: #0c0c0f !important;
             background-image:
                 linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
@@ -1007,6 +1007,8 @@
             z-index: 1;
             opacity: 0.18;
             pointer-events: none;
+            border-radius: inherit;
+            clip-path: inset(0 round 24px);
         }
 
         .carbon-schedule-card>*:not(.card-video-bg) {
@@ -1379,6 +1381,7 @@
         .loader.hide {
             opacity: 0;
             pointer-events: none;
+            visibility: hidden;
         }
 
         .loading-logo-container {
@@ -1688,9 +1691,31 @@
             .stream-btn {
                 flex: 0 0 auto !important;
                 text-align: center;
-                font-size: 13px;
-                padding: 10px 18px;
-                border-radius: 12px;
+                font-size: 12px;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+
+            /* Theater/Chat buttons: icon-only on mobile to save toolbar space */
+            .control-btn {
+                padding: 8px 10px !important;
+                min-width: 34px;
+            }
+            .control-btn .btn-label {
+                display: none;
+            }
+            .control-btn i {
+                margin-right: 0 !important;
+            }
+
+            /* Hide SOURCE: label on very narrow screens */
+            @media (max-width: 480px) {
+                .source-label { display: none !important; }
+            }
+
+            /* Fix carbon-schedule-card clip-path for mobile 16px border-radius */
+            .carbon-schedule-card .card-video-bg {
+                clip-path: inset(0 round 16px);
             }
 
             .tab-btn {
@@ -1867,6 +1892,139 @@
             height: 0 !important;
         }
 
+        /* Past matches toggle btn (FIFA) */
+        .past-sessions-toggle {
+            width: 100%;
+            background: transparent;
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: var(--text-gray);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 9px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 10px;
+        }
+        .past-sessions-toggle:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-color: rgba(255,255,255,0.25);
+        }
+        .past-matches-list {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .past-matches-list::-webkit-scrollbar { display: none; }
+
+        /* ── Poll Card ── */
+        .poll-card {
+            background: linear-gradient(135deg, rgba(255,0,85,0.06) 0%, rgba(10,10,14,0.95) 100%);
+            border: 1px solid rgba(255,0,85,0.15);
+        }
+        .poll-team-btn {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 11px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            text-align: left;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .poll-team-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        .poll-team-btn.voted-this {
+            border-color: var(--f1-red);
+            background: rgba(255,0,85,0.1);
+        }
+        .poll-team-btn.voted-this .poll-bar-fill {
+            background: var(--f1-red);
+        }
+        .poll-team-btn.voted-other {
+            opacity: 0.6;
+        }
+        .poll-team-btn.voted-other .poll-bar-fill {
+            background: rgba(255,255,255,0.2);
+        }
+        .poll-team-btn:disabled { cursor: default; }
+        .poll-bar-track {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+        }
+        .poll-bar-fill {
+            height: 100%;
+            background: var(--f1-red);
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+            border-radius: 0 2px 0 0;
+        }
+        .poll-flag {
+            width: 28px; height: 20px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .poll-team-name {
+            flex: 1;
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.3px;
+        }
+        .poll-pct {
+            font-size: 13px;
+            font-weight: 900;
+            color: #fff;
+            opacity: 0.7;
+            flex-shrink: 0;
+            min-width: 36px;
+            text-align: right;
+        }
+        .poll-votes-total {
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 6px;
+        }
+        .poll-divider {
+            text-align: center;
+            font-size: 9px;
+            font-weight: 800;
+            color: #444;
+            letter-spacing: 2px;
+            margin: 4px 0;
+        }
+
         /* Mobile Performance Optimizations */
         @media (max-width: 768px) {
             /* Disable heavy visual elements */
@@ -2038,14 +2196,13 @@
                         <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
                     </div>
                     <div class="spacer" style="flex-shrink: 0;"></div>
-                    <button class="stream-btn" ng-click="toggleTheater()" style="flex-shrink: 0;">
-                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
-                            style="margin-right: 5px;"></i>
-                        {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                    <button class="stream-btn control-btn" ng-click="toggleTheater()" style="flex-shrink: 0;" title="Theater Mode">
+                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'" style="margin-right: 5px;"></i>
+                        <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
                     </button>
-                    <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;">
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;" title="Chat">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
-                        {{ isChatOpen ? 'Chat' : 'Chat' }}
+                        <span class="btn-label">Chat</span>
                     </button>
                 </div>
                 <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
@@ -2087,31 +2244,39 @@
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline src="fifa.mp4"></video>
-                    <div class="card-title">
-                        <i class="fa-solid fa-calendar-days"></i> Match Fixtures
+                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
+                        <!-- Fast refresh indicator when live -->
+                        <span ng-if="hasLiveMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
+                            LIVE · FAST REFRESH
+                        </span>
                     </div>
+
+                    <!-- Live & Upcoming Matches -->
                     <div class="fixtures-scroll-container">
-                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
+                        <div ng-if="liveAndUpcomingFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
+                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming matches
+                        </div>
+                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
                             <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                <!-- Home Team (Flag with Text Fallback) -->
+                                <!-- Home Team Flag -->
                                 <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
                                     <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.homeTeam}}">
                                         <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
                                     </div>
                                     <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.homeTeam}}">
                                 </div>
-
-                                <!-- Big Score or VS -->
+                                <!-- Score or VS -->
                                 <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
-                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live' || match.finished">
-                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.homeScore}}</span>
+                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
+                                        <span style="color:#00ff55;">{{match.homeScore}}</span>
                                         <span style="color: #555; margin: 0 1px;">-</span>
-                                        <span ng-style="{'color': match.status === 'live' ? '#00ff55' : '#fff'}">{{match.awayScore}}</span>
+                                        <span style="color:#00ff55;">{{match.awayScore}}</span>
                                     </span>
                                     <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
                                 </div>
-
-                                <!-- Away Team (Flag with Text Fallback) -->
+                                <!-- Away Team Flag -->
                                 <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
                                     <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.awayTeam}}">
                                     <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.awayTeam}}">
@@ -2119,23 +2284,105 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Kickoff Time / Status -->
+                            <!-- Kickoff Time / Live status -->
                             <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
-                                <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
-                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
-                                <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
+                                <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
+                                <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
+                                <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
                             </div>
-                        </div>
-                        <!-- Divider before the first finished match: shown when the previous item was live/upcoming -->
-                        <div ng-if="fixtures[$index] && fixtures[$index].finished && $index > 0 && (fixtures[$index - 1].status === 'notstarted' || fixtures[$index - 1].status === 'live')"
-                             style="font-size: 9px; font-weight: 800; letter-spacing: 2px; color: #3a3a4a; text-align: center; padding: 6px 0 4px; text-transform: uppercase;">
-                            ─── Past Matches ───
                         </div>
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
                             No fixtures available.
                         </div>
+                    </div>
+
+                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
+                    <button class="past-sessions-toggle" ng-show="pastFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
+                        <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastFixtures().length + ')' }}
+                    </button>
+
+                    <!-- Past matches list: shown/hidden with ng-show -->
+                    <div class="past-matches-list" ng-show="ui.showPastMatches">
+                        <div class="schedule-row ended" ng-repeat="match in pastFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                            <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                <!-- Home -->
+                                <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                </div>
+                                <!-- Score -->
+                                <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
+                                    {{match.homeScore}} – {{match.awayScore}}
+                                </div>
+                                <!-- Away -->
+                                <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
+                                </div>
+                            </div>
+                            <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ⚽ Match Poll Card -->
+                <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
+                    <div class="card-title" style="margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-chart-simple"></i> Who Will Win?</span>
+                        <span style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red); opacity:0.8;">LIVE POLL</span>
+                    </div>
+
+                    <!-- Match name -->
+                    <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}} · {{raceData.round}}</div>
+
+                    <!-- Home team button -->
+                    <button class="poll-team-btn"
+                        ng-class="{'voted-this': poll.userVote === 'home', 'voted-other': poll.userVote && poll.userVote !== 'home'}"
+                        ng-click="castVote('home')"
+                        ng-disabled="poll.userVote !== null">
+                        <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                        <span class="poll-team-name">{{poll.homeTeam}}</span>
+                        <span class="poll-pct" ng-if="poll.userVote !== null">{{poll.homePct}}%</span>
+                        <span class="poll-pct" ng-if="poll.userVote === null">Vote</span>
+                        <div class="poll-bar-track"><div class="poll-bar-fill" ng-style="{'width': (poll.userVote !== null ? poll.homePct : 0) + '%'}"></div></div>
+                    </button>
+
+                    <div class="poll-divider">VS</div>
+
+                    <!-- Away team button -->
+                    <button class="poll-team-btn"
+                        ng-class="{'voted-this': poll.userVote === 'away', 'voted-other': poll.userVote && poll.userVote !== 'away'}"
+                        ng-click="castVote('away')"
+                        ng-disabled="poll.userVote !== null">
+                        <img class="poll-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
+                        <span class="poll-team-name">{{poll.awayTeam}}</span>
+                        <span class="poll-pct" ng-if="poll.userVote !== null">{{poll.awayPct}}%</span>
+                        <span class="poll-pct" ng-if="poll.userVote === null">Vote</span>
+                        <div class="poll-bar-track"><div class="poll-bar-fill" ng-style="{'width': (poll.userVote !== null ? poll.awayPct : 0) + '%'}"></div></div>
+                    </button>
+
+                    <!-- Draw option -->
+                    <button class="poll-team-btn" style="margin-bottom:0;"
+                        ng-class="{'voted-this': poll.userVote === 'draw', 'voted-other': poll.userVote && poll.userVote !== 'draw'}"
+                        ng-click="castVote('draw')"
+                        ng-disabled="poll.userVote !== null">
+                        <i class="fa-solid fa-handshake" style="color:#888; font-size:16px; flex-shrink:0;"></i>
+                        <span class="poll-team-name" style="color:#aaa;">Draw</span>
+                        <span class="poll-pct" ng-if="poll.userVote !== null">{{poll.drawPct}}%</span>
+                        <span class="poll-pct" ng-if="poll.userVote === null" style="color:#555;">Vote</span>
+                        <div class="poll-bar-track"><div class="poll-bar-fill" style="background:rgba(255,255,255,0.25);" ng-style="{'width': (poll.userVote !== null ? poll.drawPct : 0) + '%'}"></div></div>
+                    </button>
+
+                    <!-- Poll footer: votes count + voted confirmation -->
+                    <div class="poll-votes-total" ng-if="poll.userVote === null">
+                        <span ng-if="poll.totalVotes > 0" style="color:#555;">{{poll.totalVotes}} votes cast</span>
+                        <span ng-if="poll.totalVotes === 0" style="color:#333;">Be the first to vote!</span>
+                    </div>
+                    <div class="poll-votes-total" ng-if="poll.userVote !== null">
+                        <span style="color:var(--f1-red); font-weight:900;">✓ Voted!</span>
+                        <span ng-if="poll.totalVotes > 0" style="color:#555; margin-left:6px;">{{poll.totalVotes}} total votes</span>
                     </div>
                 </div>
 
@@ -2649,13 +2896,13 @@
                 }
             });
 
-            // Safety timeout: in case Firebase fails/stalls, hide the loader after 4 seconds anyway
+            // Safety timeout: in case Firebase fails/stalls, hide the loader after 2.5s anyway
             $timeout(function () {
                 if (!$scope.dataLoaded) {
                     console.warn("Firebase snapshot took too long; bypassing loader.");
                     $scope.dataLoaded = true;
                 }
-            }, 4000);
+            }, 2500);
 
             function processData(data) {
                 // Set activeSport bound value
@@ -2892,8 +3139,133 @@
             // Load fixtures & standings immediately on boot (don't wait for Firestore)
             $scope.loadFifaData();
 
-            // Refresh every 3 minutes in background
-            $interval(function() { $scope.loadFifaData(); }, 3 * 60 * 1000);
+            // Smart refresh: 30s when a match is live, 3 min otherwise
+            var _fixtureRefreshInterval = null;
+            function scheduleFixtureRefresh() {
+                if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
+                var isLive = $scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; });
+                var delay = isLive ? 30 * 1000 : 3 * 60 * 1000;
+                _fixtureRefreshInterval = $interval(function() {
+                    $scope.loadFifaData();
+                    scheduleFixtureRefresh(); // re-evaluate after each load
+                }, delay, 1); // run once, then reschedule
+            }
+            scheduleFixtureRefresh();
+
+            // Helper: live + upcoming fixtures
+            $scope.liveAndUpcomingFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.status === 'live' || m.status === 'notstarted';
+                });
+            };
+
+            // Helper: past (finished) fixtures
+            $scope.pastFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.finished || (m.status !== 'live' && m.status !== 'notstarted');
+                });
+            };
+
+            // Helper: any live match right now?
+            $scope.hasLiveMatches = function() {
+                if (!$scope.fixtures) return false;
+                return $scope.fixtures.some(function(m) { return m.status === 'live'; });
+            };
+
+            // UI state object — avoids AngularJS prototype chain issues with ng-if child scopes
+            $scope.ui = { showPastMatches: false };
+
+            // ── Poll System ──
+            $scope.poll = {
+                matchId: null,
+                homeTeam: '', awayTeam: '',
+                homeFlag: '', awayFlag: '',
+                userVote: null,
+                home: 0, away: 0, draw: 0,
+                homePct: 0, awayPct: 0, drawPct: 0,
+                totalVotes: 0
+            };
+
+            var _pollUnsub = null;
+
+            function calcPollPct(p) {
+                var total = (p.home || 0) + (p.away || 0) + (p.draw || 0);
+                $scope.poll.totalVotes = total;
+                if (total === 0) {
+                    $scope.poll.homePct = $scope.poll.awayPct = $scope.poll.drawPct = 0;
+                } else {
+                    $scope.poll.homePct = Math.round((p.home || 0) / total * 100);
+                    $scope.poll.awayPct = Math.round((p.away || 0) / total * 100);
+                    $scope.poll.drawPct = 100 - $scope.poll.homePct - $scope.poll.awayPct;
+                }
+            }
+
+            $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
+                if (!matchId || $scope.poll.matchId === matchId) return;
+
+                // Unsubscribe previous listener
+                if (_pollUnsub) { _pollUnsub(); _pollUnsub = null; }
+
+                $scope.poll.matchId   = matchId;
+                $scope.poll.homeTeam  = homeTeam;
+                $scope.poll.awayTeam  = awayTeam;
+                $scope.poll.homeFlag  = homeFlag;
+                $scope.poll.awayFlag  = awayFlag;
+
+                // Restore user's previous vote for this match from localStorage
+                var voteKey = 'poll_vote_' + matchId;
+                $scope.poll.userVote = localStorage.getItem(voteKey) || null;
+
+                // Listen to live vote counts
+                var pollRef = db.collection('app_data').doc('polls').collection('fifa').doc(matchId);
+                _pollUnsub = pollRef.onSnapshot(function(snap) {
+                    $scope.$apply(function() {
+                        var data = snap.exists ? snap.data() : { home: 0, away: 0, draw: 0 };
+                        calcPollPct(data);
+                    });
+                });
+            };
+
+            $scope.castVote = function(choice) {
+                if (!$scope.poll.matchId || $scope.poll.userVote !== null) return;
+                var matchId  = $scope.poll.matchId;
+                var voteKey  = 'poll_vote_' + matchId;
+
+                // Optimistic update
+                $scope.poll.userVote = choice;
+                localStorage.setItem(voteKey, choice);
+
+                // Increment in Firestore
+                var pollRef = db.collection('app_data').doc('polls').collection('fifa').doc(matchId);
+                var inc = firebase.firestore.FieldValue.increment(1);
+                var update = {};
+                update[choice] = inc;
+                pollRef.set(update, { merge: true }).catch(function(e) {
+                    console.error('[poll] vote error:', e);
+                });
+            };
+
+            // Watch raceData changes → init poll for current match
+            $scope.$watch('raceData', function(newVal) {
+                if (!newVal || !newVal.name) return;
+                // Build a stable match ID from name (slug)
+                var id = (newVal.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g,'_').substring(0, 40);
+                // Find the current match from fixtures to get flags
+                var match = null;
+                if ($scope.fixtures && $scope.fixtures.length) {
+                    match = $scope.fixtures.find(function(m) { return m.status === 'live'; })
+                         || $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
+                }
+                var homeFlag = match ? match.homeFlag : '';
+                var awayFlag = match ? match.awayFlag : '';
+                var home = (newVal.name || '').split(' vs ')[0] || '';
+                var away = (newVal.name || '').split(' vs ')[1] || '';
+                if (home && away) {
+                    $scope.initPoll(id, home.trim(), away.trim(), homeFlag, awayFlag);
+                }
+            }, true);
 
 
 
