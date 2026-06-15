@@ -2091,7 +2091,7 @@
                         <i class="fa-solid fa-calendar-days"></i> Match Fixtures
                     </div>
                     <div class="fixtures-scroll-container">
-                        <div class="schedule-row" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
+                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in fixtures" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted', 'ended': match.finished}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
                             <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
                                 <!-- Home Team (Flag with Text Fallback) -->
                                 <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
@@ -2127,6 +2127,11 @@
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
                             </div>
+                        </div>
+                        <!-- Divider before the first finished match: shown when the previous item was live/upcoming -->
+                        <div ng-if="fixtures[$index] && fixtures[$index].finished && $index > 0 && (fixtures[$index - 1].status === 'notstarted' || fixtures[$index - 1].status === 'live')"
+                             style="font-size: 9px; font-weight: 800; letter-spacing: 2px; color: #3a3a4a; text-align: center; padding: 6px 0 4px; text-transform: uppercase;">
+                            ─── Past Matches ───
                         </div>
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
                             No fixtures available.
@@ -2842,19 +2847,33 @@
 
             $scope.loadFifaData = function() {
                 $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
-                    $scope.fixtures = (res.data || []).slice().sort(function(a, b) {
-                        return getFixtureDisplayTime(a) - getFixtureDisplayTime(b);
-                    });
+                    var raw = res.data || [];
+
+                    // Sort: LIVE first, then upcoming (earliest first), then finished (latest first)
+                    var live    = raw.filter(function(m) { return m.status === 'live'; });
+                    var upcoming = raw.filter(function(m) { return m.status === 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(a) - getFixtureDisplayTime(b); });
+                    var finished = raw.filter(function(m) { return m.status !== 'live' && m.status !== 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(b) - getFixtureDisplayTime(a); });
+
+                    $scope.fixtures = live.concat(upcoming).concat(finished);
+
                     // Cache to LocalStorage for instant next-load
                     try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
-                    console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
+                    console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches (live:', live.length, 'upcoming:', upcoming.length, 'finished:', finished.length + ')');
+
                     // Find the next upcoming match (first 'notstarted' match)
-                    const upcoming = $scope.fixtures.find(m => m.status === 'notstarted');
-                    if (upcoming) {
-                        $scope.nextMatch = upcoming;
-                    } else {
-                        $scope.nextMatch = null;
-                    }
+                    const nextUp = live[0] || upcoming[0] || null;
+                    $scope.nextMatch = nextUp;
+
+                    // Auto-scroll fixtures list to the first live/upcoming match
+                    $timeout(function() {
+                        var container = document.querySelector('.fixtures-scroll-container');
+                        if (container) {
+                            container.scrollTop = 0; // Live/upcoming is now at the top
+                        }
+                    }, 100);
+
                 }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
                 });
