@@ -2415,18 +2415,23 @@
                         <!-- Home team -->
                         <div class="poll-col-team">
                             <img class="poll-col-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
-                            <span class="poll-col-pct" ng-class="{'winner': poll.homePct > poll.awayPct}">{{poll.homePct}}%</span>
+                            <span class="poll-col-pct" ng-class="{'winner': poll.homePct > poll.awayPct && poll.homePct > poll.drawPct}">{{poll.homePct}}%</span>
                         </div>
-                        <!-- Separator -->
-                        <div class="poll-col-vs">VS</div>
+                        <!-- Separator / Draw -->
+                        <div class="poll-col-vs" style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                            <span>VS</span>
+                            <span style="font-size:8px; font-weight:700; color:#555;" ng-if="poll.drawPct > 0">Draw: {{poll.drawPct}}%</span>
+                        </div>
                         <!-- Away team -->
                         <div class="poll-col-team">
-                            <span class="poll-col-pct" ng-class="{'winner': poll.awayPct > poll.homePct}">{{poll.awayPct}}%</span>
+                            <span class="poll-col-pct" ng-class="{'winner': poll.awayPct > poll.homePct && poll.awayPct > poll.drawPct}">{{poll.awayPct}}%</span>
                             <img class="poll-col-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
                         </div>
                     </div>
                     <div class="poll-voted-badge" ng-if="poll.userVote !== null">
-                        ✓ VOTED &nbsp;·&nbsp; {{poll.totalVotes > 0 ? poll.totalVotes + ' votes' : 'counting...'}}
+                        ✓ VOTED &nbsp;·&nbsp; 
+                        <span ng-if="!poll.loaded">counting...</span>
+                        <span ng-if="poll.loaded">{{ poll.totalVotes || 1 }} {{ (poll.totalVotes || 1) === 1 ? 'vote' : 'votes' }}</span>
                     </div>
                 </div>
 
@@ -3229,19 +3234,29 @@
                 userVote: null,
                 home: 0, away: 0, draw: 0,
                 homePct: 0, awayPct: 0, drawPct: 0,
-                totalVotes: 0
+                totalVotes: 0,
+                loaded: false
             };
 
             var _pollInterval = null;
 
             function calcPollPct(p) {
-                var total = (p.home || 0) + (p.away || 0) + (p.draw || 0);
+                var home = p.home || 0;
+                var away = p.away || 0;
+                var draw = p.draw || 0;
+
+                // Ensure local vote is counted even if server doesn't have it yet (or returned 0)
+                if ($scope.poll.userVote === 'home' && home === 0) home = 1;
+                if ($scope.poll.userVote === 'away' && away === 0) away = 1;
+                if ($scope.poll.userVote === 'draw' && draw === 0) draw = 1;
+
+                var total = home + away + draw;
                 $scope.poll.totalVotes = total;
                 if (total === 0) {
                     $scope.poll.homePct = $scope.poll.awayPct = $scope.poll.drawPct = 0;
                 } else {
-                    $scope.poll.homePct = Math.round((p.home || 0) / total * 100);
-                    $scope.poll.awayPct = Math.round((p.away || 0) / total * 100);
+                    $scope.poll.homePct = Math.round(home / total * 100);
+                    $scope.poll.awayPct = Math.round(away / total * 100);
                     $scope.poll.drawPct = 100 - $scope.poll.homePct - $scope.poll.awayPct;
                 }
             }
@@ -3250,7 +3265,26 @@
                 fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
-                        $scope.$apply(function() { calcPollPct(data); });
+                        $scope.$apply(function() {
+                            calcPollPct(data);
+                            $scope.poll.loaded = true;
+
+                            // Self-healing: if user voted locally, but server says 0 votes for their choice,
+                            // resubmit the vote to make sure it is saved on the server!
+                            if ($scope.poll.userVote && data[$scope.poll.userVote] === 0) {
+                                console.log('[poll] Auto-submitting vote to server for:', matchId);
+                                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId), {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ choice: $scope.poll.userVote })
+                                })
+                                .then(function(r) { return r.json(); })
+                                .then(function(newData) {
+                                    $scope.$apply(function() { calcPollPct(newData); });
+                                })
+                                .catch(function(e) { console.warn('[poll] auto-vote error:', e); });
+                            }
+                        });
                     })
                     .catch(function(e) { console.warn('[poll] fetch error:', e); });
             }
@@ -3266,6 +3300,7 @@
                 $scope.poll.awayTeam  = awayTeam;
                 $scope.poll.homeFlag  = homeFlag;
                 $scope.poll.awayFlag  = awayFlag;
+                $scope.poll.loaded    = false;
 
                 // Restore user's previous vote for this match from localStorage
                 var voteKey = 'poll_vote_' + matchId;
