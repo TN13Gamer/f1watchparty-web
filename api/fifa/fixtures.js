@@ -57,6 +57,27 @@ const STADIUM_MAP = {
     '16': { name: 'SoFi Stadium' },
 };
 
+const STADIUM_OFFSETS = {
+    '1': -6,
+    '2': -6,
+    '3': -6,
+    '4': -5,
+    '5': -5,
+    '6': -5,
+    '7': -4,
+    '8': -4,
+    '9': -4,
+    '10': -4,
+    '11': -4,
+    '12': -4,
+    '13': -7,
+    '14': -7,
+    '15': -7,
+    '16': -7,
+};
+
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
 let cache = null;
 let lastFetched = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -132,6 +153,52 @@ function getFlagByName(name) {
     return COUNTRY_FLAG_MAP[name.toLowerCase()] || '';
 }
 
+function getFixtureKickoffMs(game) {
+    const localDate = game && game.local_date;
+    if (!localDate) return Number.MAX_SAFE_INTEGER;
+
+    const parts = localDate.trim().split(/\s+/);
+    if (parts.length < 2) return Number.MAX_SAFE_INTEGER;
+
+    const dateParts = parts[0].split('/').map(Number);
+    const timeParts = parts[1].split(':').map(Number);
+    if (dateParts.length < 3 || timeParts.length < 2) return Number.MAX_SAFE_INTEGER;
+
+    const [month, day, year] = dateParts;
+    const [hour, minute] = timeParts;
+    const offset = STADIUM_OFFSETS[String(game.stadium_id)] ?? -4;
+    const kickoffMs = Date.UTC(year, month - 1, day, hour - offset, minute);
+    return isNaN(kickoffMs) ? Number.MAX_SAFE_INTEGER : kickoffMs;
+}
+
+function getFixtureSortMs(game) {
+    const localDate = game && game.local_date;
+    if (!localDate) return Number.MAX_SAFE_INTEGER;
+
+    const parts = localDate.trim().split(/\s+/);
+    if (parts.length < 2) return Number.MAX_SAFE_INTEGER;
+
+    const dateParts = parts[0].split('/').map(Number);
+    const timeParts = parts[1].split(':').map(Number);
+    if (dateParts.length < 3 || timeParts.length < 2) return Number.MAX_SAFE_INTEGER;
+
+    const [month, day, year] = dateParts;
+    const [hour, minute] = timeParts;
+    const sortMs = Date.UTC(year, month - 1, day, hour, minute);
+    return isNaN(sortMs) ? Number.MAX_SAFE_INTEGER : sortMs;
+}
+
+function formatFixtureIst(kickoffMs) {
+    if (!isFinite(kickoffMs) || kickoffMs === Number.MAX_SAFE_INTEGER) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const istDate = new Date(kickoffMs + IST_OFFSET_MS);
+    const day = istDate.getUTCDate();
+    const month = months[istDate.getUTCMonth()];
+    const hour = String(istDate.getUTCHours()).padStart(2, '0');
+    const minute = String(istDate.getUTCMinutes()).padStart(2, '0');
+    return `${day} ${month} ${hour}:${minute}`;
+}
+
 function formatData(games, teamsData) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const roundMap = {
@@ -172,24 +239,14 @@ function formatData(games, teamsData) {
         return { name: nameFromGame || 'TBD', flag: hardcodedFlag, code: '' };
     }
 
-    return games.map(g => {
+    return games.slice().sort((a, b) => getFixtureKickoffMs(a) - getFixtureKickoffMs(b)).map(g => {
         const stadium = STADIUM_MAP[g.stadium_id] || { name: 'Stadium' };
         const round = g.type === 'group'
             ? `Group ${g.group}`
             : (roundMap[g.type] || g.group || 'World Cup 2026');
 
-        let friendlyDate = g.local_date || '';
-        try {
-            const parts = (g.local_date || '').split(' ');
-            if (parts.length >= 2) {
-                const dateParts = parts[0].split('/');
-                const mm = parseInt(dateParts[0], 10);
-                const dd = parseInt(dateParts[1], 10);
-                if (!isNaN(mm) && !isNaN(dd)) {
-                    friendlyDate = `${dd} ${months[mm - 1]} ${parts[1]}`;
-                }
-            }
-        } catch (e) {}
+        const kickoffTs = getFixtureKickoffMs(g);
+        const friendlyDate = formatFixtureIst(kickoffTs);
 
         const homeInfo = lookupTeam(g.home_team_id, g.home_team_name_en || g.home_team_label);
         const awayInfo = lookupTeam(g.away_team_id, g.away_team_name_en || g.away_team_label);
@@ -205,6 +262,9 @@ function formatData(games, teamsData) {
             homeScore: g.home_score || '0',
             awayScore: g.away_score || '0',
             localDate: friendlyDate,
+            timezone: 'IST',
+            kickoffTs,
+            sortTs: kickoffTs,
             status: g.time_elapsed,
             finished: g.finished === 'TRUE',
             round,

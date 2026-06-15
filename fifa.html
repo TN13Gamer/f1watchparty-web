@@ -2077,7 +2077,7 @@
 
                             <!-- Kickoff Time / Status -->
                             <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}}</div>
+                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
                                 <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
@@ -2554,6 +2554,20 @@
                 return isNaN(d.getTime()) ? null : d;
             }
 
+            function getFixtureDisplayTime(match) {
+                if (match && typeof match.sortTs === 'number') return match.sortTs;
+                if (match && typeof match.kickoffTs === 'number') return match.kickoffTs;
+                var parsed = parseFifaDate(match && match.localDate);
+                return parsed ? parsed.getTime() : 9007199254740991;
+            }
+
+            function apiUrl(path) {
+                if (window.location.protocol === 'file:') {
+                    return 'http://localhost:3000' + path;
+                }
+                return path;
+            }
+
 
             const startTime = Date.now();
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
@@ -2762,8 +2776,10 @@
 
 
             $scope.loadFifaData = function() {
-                $http.get('/api/fifa/fixtures').then(function(res) {
-                    $scope.fixtures = res.data || [];
+                $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
+                    $scope.fixtures = (res.data || []).slice().sort(function(a, b) {
+                        return getFixtureDisplayTime(a) - getFixtureDisplayTime(b);
+                    });
                     console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
                     // Find the next upcoming match (first 'notstarted' match)
                     const upcoming = $scope.fixtures.find(m => m.status === 'notstarted');
@@ -2776,7 +2792,7 @@
                     console.error('Failed to load FIFA fixtures:', err);
                 });
 
-                $http.get('/api/fifa/standings').then(function(res) {
+                $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
                     $scope.groups = res.data || [];
                     $scope.autoSelectGroup();
                     console.log('⚽ Standings loaded:', $scope.groups.length, 'groups');
