@@ -388,7 +388,18 @@ async function syncFifaMatchDetailsLocal(config, ref) {
             return utcMs;
         }
 
-        let chosen = games.find(g => g.time_elapsed === 'live');
+        // 1) Find live match first — but only if kickoff was within 3.25 hours (prevents stale "live" labels)
+        const THREE_QUARTER_HOURS_MS = 3.25 * 60 * 60 * 1000;
+        let chosen = null;
+        const liveGame = games.find(g => g.time_elapsed === 'live');
+        if (liveGame) {
+            const liveKickoffMs = parseGameDate(liveGame.local_date, liveGame.stadium_id);
+            if (liveKickoffMs && (now - liveKickoffMs) < THREE_QUARTER_HOURS_MS) {
+                chosen = liveGame;
+            } else {
+                console.log(`[local-sync] Live match stale (kickoff >${THREE_QUARTER_HOURS_MS/3600000}h ago) — moving to next.`);
+            }
+        }
         if (!chosen) {
             const upcoming = games
                 .filter(g => g.time_elapsed === 'notstarted')
@@ -496,6 +507,20 @@ async function syncFifaStreamsLocal(config, ref) {
     return;
   }
 
+  // Clear stale streams if the match is >60 min away and not live
+  const customTimerTarget = fifa.customTimer?.target;
+  if (customTimerTarget) {
+    const kickoffMs = new Date(customTimerTarget).getTime();
+    const now_s = Date.now();
+    const isLive = fifa.raceData?.isLive;
+    if (!isLive && (kickoffMs - now_s) > 60 * 60 * 1000) {
+      console.log('[local-sync-fifa] Match is >60 min away and not live. Clearing stale stream links.');
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
+      return;
+    }
+  }
+
   // Tokenize match name
   const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
   const rawTokens = matchName.toLowerCase()
@@ -536,7 +561,9 @@ async function syncFifaStreamsLocal(config, ref) {
     });
 
     if (candidates.length === 0) {
-      console.log('[local-sync-fifa] No matching football matches found on streamed.pk.');
+      console.log('[local-sync-fifa] No matching football matches found on streamed.pk. Clearing stale stream links.');
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
       return;
     }
 
@@ -608,7 +635,9 @@ async function syncFifaStreamsLocal(config, ref) {
       await ref.update({ fifa: updatedFifa });
       console.log(`[local-sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
     } else {
-      console.log('[local-sync-fifa] None of the candidate matches yielded any active stream URLs.');
+      console.log('[local-sync-fifa] None of the candidate matches yielded any active stream URLs. Clearing stale links.');
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
     }
   } catch (err) {
     console.error('[local-sync-fifa] Error during auto-sync:', err.message);
@@ -654,8 +683,8 @@ async function syncToFirebase() {
 
 // Polling intervals (only start in long-running mode, not on Vercel serverless)
 if (!process.env.VERCEL) {
-    setInterval(fetchLatestSession, 60000);
-    setInterval(syncToFirebase, 60000);
+    setInterval(fetchLatestSession, 30000);
+    setInterval(syncToFirebase, 30000);
 }
 
 // --- API: Live Leaderboard (scraped from F1.com) ---

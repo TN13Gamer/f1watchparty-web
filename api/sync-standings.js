@@ -447,10 +447,20 @@ async function syncFifaMatchDetails(config, ref) {
       return utcMs;
     }
 
-    // 1) Find live match first
-    let chosen = games.find(g => g.time_elapsed === 'live');
+    // 1) Find live match first — but only if kickoff was within 3.25 hours (prevents stale "live" labels)
+    const THREE_QUARTER_HOURS_MS = 3.25 * 60 * 60 * 1000;
+    let chosen = null;
+    const liveGame = games.find(g => g.time_elapsed === 'live');
+    if (liveGame) {
+      const liveKickoffMs = parseGameDate(liveGame.local_date, liveGame.stadium_id);
+      if (liveKickoffMs && (now - liveKickoffMs) < THREE_QUARTER_HOURS_MS) {
+        chosen = liveGame; // still within live window
+      } else {
+        console.log(`[sync-fifa-details] Live match "${liveGame.home_team_name_en} vs ${liveGame.away_team_name_en}" kickoff was >${THREE_QUARTER_HOURS_MS/3600000}h ago — treating as finished, moving to next.`);
+      }
+    }
 
-    // 2) If none live, pick next upcoming (closest future kickoff)
+    // 2) If none live (or stale), pick next upcoming (closest future kickoff)
     if (!chosen) {
       const upcoming = games
         .filter(g => g.time_elapsed === 'notstarted')
@@ -464,6 +474,7 @@ async function syncFifaMatchDetails(config, ref) {
       console.log('[sync-fifa-details] No live or upcoming group matches found.');
       return;
     }
+
 
     // Build match name — for group matches use team names; for knockouts use labels
     const isKnockout = !chosen.home_team_name_en;
@@ -571,6 +582,20 @@ async function syncFifaStreams(config, ref) {
     return;
   }
 
+  // Check if the next match is >60 min away — don't push streams yet; clear any stale ones
+  const customTimerTarget = fifa.customTimer?.target;
+  if (customTimerTarget) {
+    const kickoffMs = new Date(customTimerTarget).getTime();
+    const now_s = Date.now();
+    const isLive = fifa.raceData?.isLive;
+    if (!isLive && (kickoffMs - now_s) > 60 * 60 * 1000) {
+      console.log('[sync-fifa] Next match is >60 minutes away and not live. Clearing stale stream links.');
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
+      return;
+    }
+  }
+
   // Tokenize match name (e.g. "Canada VS Bosnia and Herzegovina" -> ["canada", "bosnia", "herzegovina"])
   const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
   const rawTokens = matchName.toLowerCase()
@@ -612,7 +637,10 @@ async function syncFifaStreams(config, ref) {
     });
 
     if (candidates.length === 0) {
-      console.log('[sync-fifa] No matching football matches found on streamed.pk.');
+      console.log('[sync-fifa] No matching football matches found on streamed.pk. Clearing stale stream links.');
+      // Clear stale stream links so viewer doesn't see wrong match streams
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
       return;
     }
 
@@ -687,14 +715,17 @@ async function syncFifaStreams(config, ref) {
       await ref.update({ fifa: updatedFifa });
       console.log(`[sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
     } else {
-      console.log('[sync-fifa] None of the candidate matches yielded any active stream URLs.');
-      throw new Error('Failed to resolve any stream URLs across all candidates.');
+      // No streams found — clear any old stale links
+      console.log('[sync-fifa] None of the candidate matches yielded any active stream URLs. Clearing stale links.');
+      const updatedFifa = { ...fifa, streamLinks: [] };
+      await ref.update({ fifa: updatedFifa });
     }
   } catch (err) {
     console.error('[sync-fifa] Error during auto-sync:', err.message);
     throw err;
   }
 }
+
 
 module.exports = async (req, res) => {
   console.log(`[sync-standings API] Received request: ${req.method} ${req.url}`);

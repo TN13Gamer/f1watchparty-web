@@ -2297,6 +2297,21 @@
             $scope.weather = null;
             $scope.standingsView = 'drivers';
 
+            // ── LocalStorage instant pre-render ──
+            // Render cached data immediately (before Firestore arrives)
+            try {
+                var _cachedStandings = localStorage.getItem('f1_cached_standings');
+                if (_cachedStandings) { $scope.standings = JSON.parse(_cachedStandings); console.log('🏎️ [cache] Pre-rendered', $scope.standings.length, 'standings'); }
+            } catch(e) {}
+            try {
+                var _cachedConstructors = localStorage.getItem('f1_cached_constructors');
+                if (_cachedConstructors) { $scope.constructors = JSON.parse(_cachedConstructors); }
+            } catch(e) {}
+            try {
+                var _cachedSchedule = localStorage.getItem('f1_cached_schedule');
+                if (_cachedSchedule) { $scope.schedule = JSON.parse(_cachedSchedule); }
+            } catch(e) {}
+
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
             let lastFLDriver = null;
@@ -2608,6 +2623,13 @@
                         return { ...s, start: startTime, end: endTime, status: 'upcoming' };
                     });
                 }
+
+                // Cache to LocalStorage for instant pre-render on next page load
+                try {
+                    if ($scope.standings.length) localStorage.setItem('f1_cached_standings', JSON.stringify($scope.standings));
+                    if ($scope.constructors.length) localStorage.setItem('f1_cached_constructors', JSON.stringify($scope.constructors));
+                    if ($scope.schedule.length) localStorage.setItem('f1_cached_schedule', JSON.stringify($scope.schedule));
+                } catch(e) {}
 
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];

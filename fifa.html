@@ -31,9 +31,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- 3D Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <!-- Tilt effect library (Vanta Globe removed for FIFA performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 
     <style>
@@ -2458,6 +2456,26 @@
             $scope.weather = null;
             $scope.standingsView = 'drivers';
 
+            // ── LocalStorage instant pre-render ──
+            // Render cached fixtures & standings immediately (before Firestore arrives)
+            try {
+                var _cachedFixtures = localStorage.getItem('fifa_cached_fixtures');
+                if (_cachedFixtures) {
+                    $scope.fixtures = JSON.parse(_cachedFixtures);
+                    const upcoming = $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
+                    $scope.nextMatch = upcoming || null;
+                    console.log('⚽ [cache] Pre-rendered', $scope.fixtures.length, 'fixtures from LocalStorage');
+                }
+            } catch(e) {}
+            try {
+                var _cachedGroups = localStorage.getItem('fifa_cached_groups');
+                if (_cachedGroups) {
+                    $scope.groups = JSON.parse(_cachedGroups);
+                    $scope.autoSelectGroup();
+                    console.log('⚽ [cache] Pre-rendered', $scope.groups.length, 'groups from LocalStorage');
+                }
+            } catch(e) {}
+
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
             let lastFLDriver = null;
@@ -2706,9 +2724,6 @@
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
                 console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, fifa);
                 updateTimers();
-
-                // FIFA fixtures & standings: always refresh on Firestore sync
-                $scope.loadFifaData();
             }
 
             function updateTimers() {
@@ -2828,6 +2843,8 @@
                     $scope.fixtures = (res.data || []).slice().sort(function(a, b) {
                         return getFixtureDisplayTime(a) - getFixtureDisplayTime(b);
                     });
+                    // Cache to LocalStorage for instant next-load
+                    try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                     console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches');
                     // Find the next upcoming match (first 'notstarted' match)
                     const upcoming = $scope.fixtures.find(m => m.status === 'notstarted');
@@ -2842,6 +2859,8 @@
 
                 $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
                     $scope.groups = res.data || [];
+                    // Cache to LocalStorage for instant next-load
+                    try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch(e) {}
                     $scope.autoSelectGroup();
                     console.log('⚽ Standings loaded:', $scope.groups.length, 'groups');
                 }, function(err) {
@@ -2849,10 +2868,11 @@
                 });
             };
 
-            // Load immediately handled by doc onSnapshot update on page init
+            // Load fixtures & standings immediately on boot (don't wait for Firestore)
+            $scope.loadFifaData();
 
-            // Refresh every 5 minutes
-            $interval(function() { $scope.loadFifaData(); }, 5 * 60 * 1000);
+            // Refresh every 3 minutes in background
+            $interval(function() { $scope.loadFifaData(); }, 3 * 60 * 1000);
 
 
 
@@ -2897,70 +2917,7 @@
             $scope.themeOverrideActive = false;
         });
 
-        // Vanta Globe Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
-
-        function initVanta() {
-            if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
-                const initialColor = window.pendingVantaColor || 0x00ff55;
-                window.vantaInstance = VANTA.GLOBE({
-                    el: "#vanta-overlay",
-                    mouseControls: true,
-                    touchControls: false,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    scale: 1.00,
-                    scaleMobile: 1.00,
-                    color: initialColor,
-                    color2: 0x9146ff, // Purple accent color for World Cup theme
-                    size: 1.10,
-                    backgroundColor: 0x050508,
-                    backgroundAlpha: 0.0
-                });
-
-                // Remove lighting to make the 3D globe flat
-                if (window.vantaInstance && window.vantaInstance.scene) {
-                    const scene = window.vantaInstance.scene;
-                    const lights = [];
-                    scene.traverse((obj) => {
-                        if (obj.isLight) {
-                            lights.push(obj);
-                        }
-                        if (obj.isMesh && obj.material && !obj.material.isMeshBasicMaterial) {
-                            const oldColor = obj.material.color;
-                            obj.material = new THREE.MeshBasicMaterial({ color: oldColor });
-                        }
-                    });
-                    lights.forEach(light => {
-                        if (light.parent) {
-                            light.parent.remove(light);
-                        } else {
-                            scene.remove(light);
-                        }
-                    });
-                }
-            }
-        }
-
-        function destroyVanta() {
-            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
-                window.vantaInstance.destroy();
-                window.vantaInstance = null;
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-            initVanta();
-        });
-
-        window.addEventListener("resize", function () {
-            if (isMobileDevice) return;
-            if (window.innerWidth <= 768) {
-                destroyVanta();
-            } else {
-                initVanta();
-            }
-        });
+        // 3D Vanta Globe background removed from FIFA for performance.
 
 
     </script>
