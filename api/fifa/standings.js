@@ -2,6 +2,42 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
+// Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
+async function fetchJson(url, timeoutMs = 25000) {
+  try {
+    const { data } = await axios.get(url, {
+      timeout: timeoutMs,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://streamed.pk/category/football'
+      }
+    });
+    return data;
+  } catch (e) {
+    console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
+    try {
+      const { exec } = require('child_process');
+      return await new Promise((resolve, reject) => {
+        const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
+        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          try {
+            const data = JSON.parse(stdout);
+            resolve(data);
+          } catch (jsonErr) {
+            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+          }
+        });
+      });
+    } catch (curlErr) {
+      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+    }
+  }
+}
+
 let cache = null;
 let lastFetched = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -63,12 +99,12 @@ module.exports = async (req, res) => {
 
     try {
         const [groupsRes, teamsRes] = await Promise.all([
-            axios.get('https://worldcup26.ir/get/groups', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
-            axios.get('https://worldcup26.ir/get/teams',  { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+            fetchJson('https://worldcup26.ir/get/groups', 25000),
+            fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
 
-        const groupsData = groupsRes.data && groupsRes.data.groups;
-        const teamsData  = teamsRes.data  && teamsRes.data.teams;
+        const groupsData = groupsRes && groupsRes.groups;
+        const teamsData  = teamsRes  && teamsRes.teams;
         if (!Array.isArray(groupsData) || !Array.isArray(teamsData)) {
             if (cache) return res.status(200).json(cache);
             return res.json([]);

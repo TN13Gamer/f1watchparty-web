@@ -521,20 +521,16 @@
             const isLocal = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1';
-            const destination = isLocal ? localHtml : prodRoute;
+            let destination = isLocal ? localHtml : prodRoute;
+
+            if (!isF1) {
+                // Set transition flag to bypass launch screen
+                sessionStorage.setItem('fifa_entered', 'true');
+                destination += (destination.includes('?') ? '&' : '?') + 'enter=true';
+            }
 
             // Apply transition styles
             document.body.classList.add(isF1 ? 'transitioning-f1' : 'transitioning-fifa');
-            
-            // Intensify 3D Vanta background parameters for selection transition
-            if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                window.vantaInstance.setOptions({
-                    color: isF1 ? 0xe60000 : 0x00ff55,
-                    points: 25.00,
-                    maxDistance: 28.00,
-                    spacing: 12.00
-                });
-            }
             
             // Scale and fade out container elements
             const container = document.querySelector('.container');
@@ -599,7 +595,7 @@
             }
         });
 
-        // Bind interactive mouseenter / mouseleave triggers to sports cards for dynamic 3D transitions
+        // Bind interactive mouseenter / mouseleave triggers to sports cards for dynamic transitions
         document.addEventListener('DOMContentLoaded', () => {
             const cardF1 = document.getElementById('card-f1');
             const cardFifa = document.getElementById('card-fifa');
@@ -608,13 +604,6 @@
 
             if (cardF1) {
                 cardF1.addEventListener('mouseenter', () => {
-                    if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                        window.vantaInstance.setOptions({
-                            color: 0xe60000,
-                            points: 18.00,
-                            maxDistance: 24.00
-                        });
-                    }
                     if (ambientRed) {
                         ambientRed.style.opacity = '0.35';
                         ambientRed.style.transform = 'scale(1.25)';
@@ -622,19 +611,9 @@
                 });
 
                 cardF1.addEventListener('mouseleave', () => {
-                    // Only reset if we are not currently transitioning to the next page
-                    if (!document.body.classList.contains('transitioning-f1') && !document.body.classList.contains('transitioning-fifa')) {
-                        if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                            window.vantaInstance.setOptions({
-                                color: 0x222222,
-                                points: 12.00,
-                                maxDistance: 20.00
-                            });
-                        }
-                        if (ambientRed) {
-                            ambientRed.style.opacity = '0.1';
-                            ambientRed.style.transform = 'none';
-                        }
+                    if (ambientRed) {
+                        ambientRed.style.opacity = '0.1';
+                        ambientRed.style.transform = 'none';
                     }
                 });
             }
@@ -642,13 +621,6 @@
             if (cardFifa) {
                 cardFifa.addEventListener('mouseenter', () => {
                     document.body.classList.add('hover-fifa');
-                    if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                        window.vantaInstance.setOptions({
-                            color: 0x00ff55,
-                            points: 18.00,
-                            maxDistance: 24.00
-                        });
-                    }
                     if (ambientGreen) {
                         ambientGreen.style.opacity = '0.35';
                         ambientGreen.style.transform = 'scale(1.25)';
@@ -657,19 +629,9 @@
 
                 cardFifa.addEventListener('mouseleave', () => {
                     document.body.classList.remove('hover-fifa');
-                    // Only reset if we are not currently transitioning to the next page
-                    if (!document.body.classList.contains('transitioning-f1') && !document.body.classList.contains('transitioning-fifa')) {
-                        if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                            window.vantaInstance.setOptions({
-                                color: 0x222222,
-                                points: 12.00,
-                                maxDistance: 20.00
-                            });
-                        }
-                        if (ambientGreen) {
-                            ambientGreen.style.opacity = '0.1';
-                            ambientGreen.style.transform = 'none';
-                        }
+                    if (ambientGreen) {
+                        ambientGreen.style.opacity = '0.1';
+                        ambientGreen.style.transform = 'none';
                     }
                 });
             }

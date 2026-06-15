@@ -67,6 +67,42 @@ try {
   console.error('Failed to initialize Firebase Admin:', error);
 }
 
+// Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
+async function fetchJson(url, timeoutMs = 25000) {
+  try {
+    const { data } = await axios.get(url, {
+      timeout: timeoutMs,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://streamed.pk/category/football'
+      }
+    });
+    return data;
+  } catch (e) {
+    console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
+    try {
+      const { exec } = require('child_process');
+      return await new Promise((resolve, reject) => {
+        const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
+        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          try {
+            const data = JSON.parse(stdout);
+            resolve(data);
+          } catch (jsonErr) {
+            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+          }
+        });
+      });
+    } catch (curlErr) {
+      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+    }
+  }
+}
+
 // Load static 2026 schedule
 const schedule2026 = require('./schedule_2026.json');
 
@@ -277,29 +313,66 @@ const STADIUM_MAP_SERVER = {
 };
 
 async function syncFifaMatchDetailsLocal(config, ref) {
+    let games = null;
     try {
-        const response = await axios.get('https://worldcup26.ir/get/games', {
-            timeout: 8000,
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
-        const games = response.data && response.data.games;
-        if (!Array.isArray(games) || games.length === 0) return;
+        const responseData = await fetchJson('https://worldcup26.ir/get/games', 25000);
+        games = responseData && responseData.games;
+    } catch (err) {
+        console.error('[local-sync] FIFA details api fetch failed, trying fallback file:', err.message);
+        try {
+            const fbGamesFile = path.join(__dirname, 'api/fifa/fallback_games.json');
+            if (fs.existsSync(fbGamesFile)) {
+                const fbGamesData = JSON.parse(fs.readFileSync(fbGamesFile, 'utf8'));
+                games = fbGamesData.games;
+                console.log(`[local-sync] Loaded ${games ? games.length : 0} games from fallback file.`);
+            }
+        } catch (fileErr) {
+            console.error('[local-sync] Failed to read fallback file:', fileErr.message);
+        }
+    }
 
+    if (!Array.isArray(games) || games.length === 0) {
+        console.log('[local-sync] No games data available to sync details.');
+        return;
+    }
+
+    try {
         const now = Date.now();
-        function parseGameDate(localDate) {
+        const STADIUM_OFFSETS = {
+            '1': -6,  // Estadio Azteca (Mexico City)
+            '2': -6,  // Estadio Akron (Guadalajara)
+            '3': -6,  // Estadio BBVA (Monterrey)
+            '4': -5,  // AT&T Stadium (Dallas)
+            '5': -5,  // NRG Stadium (Houston)
+            '6': -5,  // GEHA Field at Arrowhead (Kansas City)
+            '7': -4,  // Mercedes-Benz Stadium (Atlanta)
+            '8': -4,  // Hard Rock Stadium (Miami)
+            '9': -4,  // Gillette Stadium (Boston)
+            '10': -4, // Lincoln Financial Field (Philadelphia)
+            '11': -4, // MetLife Stadium (New York/New Jersey)
+            '12': -4, // BMO Field (Toronto)
+            '13': -7, // BC Place (Vancouver)
+            '14': -7, // Lumen Field (Seattle)
+            '15': -7, // Levi's Stadium (San Francisco)
+            '16': -7, // SoFi Stadium (Los Angeles)
+        };
+
+        function parseGameDate(localDate, stadiumId) {
             if (!localDate) return null;
             const [datePart, timePart] = localDate.split(' ');
             const [month, day, year] = datePart.split('/');
             const [hour, minute] = timePart.split(':');
-            return Date.UTC(parseInt(year), parseInt(month)-1, parseInt(day), parseInt(hour)+4, parseInt(minute));
+            const offset = STADIUM_OFFSETS[String(stadiumId)] || -4; // default to EDT (-4)
+            const utcMs = Date.UTC(parseInt(year), parseInt(month)-1, parseInt(day), parseInt(hour) - offset, parseInt(minute));
+            return utcMs;
         }
 
         let chosen = games.find(g => g.time_elapsed === 'live');
         if (!chosen) {
             const upcoming = games
                 .filter(g => g.time_elapsed === 'notstarted')
-                .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date) }))
-                .filter(g => g._kickoffMs && g._kickoffMs > now)
+                .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date, g.stadium_id) }))
+                .filter(g => g._kickoffMs && g._kickoffMs > (now - 2.5 * 60 * 60 * 1000))
                 .sort((a, b) => a._kickoffMs - b._kickoffMs);
             chosen = upcoming[0] || null;
         }
@@ -318,7 +391,11 @@ async function syncFifaMatchDetailsLocal(config, ref) {
 
         const [datePart, timePart] = (chosen.local_date || '').split(' ');
         const [mm, dd, yyyy] = (datePart || '').split('/');
-        const isoTarget = `${yyyy}-${mm}-${dd}T${timePart}:00`;
+
+        // Kickoff datetime for timer
+        const kickoffMs = parseGameDate(chosen.local_date, chosen.stadium_id);
+        const isoTarget = new Date(kickoffMs).toISOString();
+
         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const friendlyDate = `${parseInt(dd, 10)} ${months[parseInt(mm, 10)-1]} ${timePart}`;
 
@@ -351,9 +428,168 @@ async function syncFifaMatchDetailsLocal(config, ref) {
 
         await ref.update({ fifa: updatedFifa });
         console.log(`[local-sync] FIFA: "${matchName}" | ${round} | ${stadium.name} | Kickoff: ${isoTarget} | Live: ${isLive}`);
+        return updatedFifa;
     } catch (err) {
         console.error('[local-sync] FIFA details error:', err.message);
     }
+}
+
+function enrichTokens(tokens) {
+  const enriched = new Set(tokens);
+  if (tokens.includes('united') && tokens.includes('states')) {
+    enriched.add('usa');
+  }
+  if (tokens.includes('usa')) {
+    enriched.add('united');
+    enriched.add('states');
+  }
+  if (tokens.includes('korea')) {
+    enriched.add('south');
+    enriched.add('rep');
+    enriched.add('republic');
+  }
+  if (tokens.includes('czech')) {
+    enriched.add('czechia');
+  }
+  if (tokens.includes('ivory') && tokens.includes('coast')) {
+    enriched.add('cote');
+    enriched.add('d\'ivoire');
+    enriched.add('divoire');
+  }
+  if (tokens.includes('saudi')) {
+    enriched.add('ksa');
+  }
+  return Array.from(enriched);
+}
+
+async function syncFifaStreamsLocal(config, ref) {
+  const fifa = config.fifa || {};
+  console.log('[local-sync-fifa] Starting FIFA stream sync. autoSyncStreams:', fifa.autoSyncStreams);
+  if (fifa.autoSyncStreams === false) {
+    console.log('[local-sync-fifa] Auto-sync disabled (autoSyncStreams is false).');
+    return;
+  }
+
+  const matchName = fifa.raceData?.name;
+  if (!matchName) {
+    console.log('[local-sync-fifa] No match name in FIFA config.');
+    return;
+  }
+
+  // Tokenize match name
+  const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
+  const rawTokens = matchName.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 0 && !commonWords.has(t));
+
+  const tokens = enrichTokens(rawTokens);
+
+  if (tokens.length === 0) {
+    console.log('[local-sync-fifa] No valid search tokens extracted from:', matchName);
+    return;
+  }
+
+  try {
+    console.log(`[local-sync-fifa] Fetching matches to match tokens: ${tokens.join(' ')}`);
+    const matches = await fetchJson('https://streamed.pk/api/matches/all');
+
+    if (!Array.isArray(matches)) {
+      console.log('[local-sync-fifa] Matches response is not an array.');
+      return;
+    }
+
+    const footballMatches = matches.filter(m => m.category === 'football');
+
+    // Find and rank all candidate matches
+    const candidates = [];
+    footballMatches.forEach(m => {
+      if (!m.title) return;
+      const titleLower = m.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+      let matchCount = 0;
+      tokens.forEach(t => {
+        if (titleLower.includes(t)) matchCount++;
+      });
+      if (matchCount > 0) {
+        candidates.push({ match: m, count: matchCount });
+      }
+    });
+
+    if (candidates.length === 0) {
+      console.log('[local-sync-fifa] No matching football matches found on streamed.pk.');
+      return;
+    }
+
+    // Sort candidates: token count desc, sources length desc
+    candidates.sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      const aSources = (a.match.sources || []).length;
+      const bSources = (b.match.sources || []).length;
+      return bSources - aSources;
+    });
+
+    console.log(`[local-sync-fifa] Found ${candidates.length} candidate matches. Trying sequentially...`);
+
+    let selectedMatch = null;
+    let resolvedStreamLinks = [];
+
+    for (const cand of candidates) {
+      const bestMatch = cand.match;
+      console.log(`[local-sync-fifa] Trying candidate: "${bestMatch.title}" (ID: ${bestMatch.id}) with score ${cand.count} and ${bestMatch.sources?.length || 0} sources.`);
+
+      if (bestMatch.sources && bestMatch.sources.length > 0) {
+        const streamLinks = [];
+        const streamPromises = bestMatch.sources.map(async (src) => {
+          try {
+            const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+            const streams = await fetchJson(streamUrl);
+            if (Array.isArray(streams)) {
+              streams.forEach((stream) => {
+                if (stream.embedUrl) {
+                  const name = `${src.source.toUpperCase()} ${stream.language || 'EN'} ${stream.hd ? '(HD)' : ''}`.trim();
+                  streamLinks.push({
+                    name: name,
+                    id: `src_fifa_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                    url: stream.embedUrl
+                  });
+                }
+              });
+            }
+          } catch (err) {
+            console.error(`[local-sync-fifa] Failed to fetch streams for candidate ${bestMatch.id} source ${src.source}:`, err.message);
+          }
+        });
+
+        await Promise.all(streamPromises);
+
+        if (streamLinks.length > 0) {
+          selectedMatch = bestMatch;
+          resolvedStreamLinks = streamLinks;
+          console.log(`[local-sync-fifa] Candidate "${bestMatch.title}" successfully resolved ${streamLinks.length} stream links!`);
+          break; // Stop iteration — we found a working match!
+        } else {
+          console.log(`[local-sync-fifa] Candidate "${bestMatch.title}" resolved 0 working stream links. Trying next candidate.`);
+        }
+      } else {
+        console.log(`[local-sync-fifa] Candidate "${bestMatch.title}" has no sources. Trying next candidate.`);
+      }
+    }
+
+    if (selectedMatch && resolvedStreamLinks.length > 0) {
+      const updatedFifa = {
+        ...fifa,
+        streamLinks: resolvedStreamLinks
+      };
+      await ref.update({ fifa: updatedFifa });
+      console.log(`[local-sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
+    } else {
+      console.log('[local-sync-fifa] None of the candidate matches yielded any active stream URLs.');
+    }
+  } catch (err) {
+    console.error('[local-sync-fifa] Error during auto-sync:', err.message);
+  }
 }
 
 async function syncToFirebase() {
@@ -376,13 +612,16 @@ async function syncToFirebase() {
             const config = configDoc.data();
             await syncStreamsAutomatically(config, liveConfigRef);
 
-            // Auto-sync FIFA match details from worldcup26.ir
-            if (config.fifa && config.fifa.autoSyncDetails !== false) {
-                try {
-                    await syncFifaMatchDetailsLocal(config, liveConfigRef);
-                } catch(fe) {
-                    console.error('[local-sync] FIFA details sync error:', fe.message);
-                }
+            // Auto-sync FIFA match details from worldcup26.ir (Always Enabled)
+            try {
+                const updatedFifa = await syncFifaMatchDetailsLocal(config, liveConfigRef);
+                const currentConfig = {
+                    ...config,
+                    fifa: updatedFifa || config.fifa || {}
+                };
+                await syncFifaStreamsLocal(currentConfig, liveConfigRef);
+            } catch(fe) {
+                console.error('[local-sync] FIFA sync error:', fe.message);
             }
         }
     } catch (e) {
@@ -490,11 +729,11 @@ const COUNTRY_FLAG_MAP_SERVER = {
 async function refreshFifaFixtures() {
     try {
         const [gamesRes, teamsRes] = await Promise.all([
-            axios.get('https://worldcup26.ir/get/games', { timeout: 12000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
-            axios.get('https://worldcup26.ir/get/teams', { timeout: 12000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+            fetchJson('https://worldcup26.ir/get/games', 25000),
+            fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
-        const games = gamesRes.data && gamesRes.data.games;
-        const teams = teamsRes.data && teamsRes.data.teams;
+        const games = gamesRes && gamesRes.games;
+        const teams = teamsRes && teamsRes.teams;
         if (!Array.isArray(games)) return;
 
         // Auto-save to fallback files so data survives server restarts
@@ -572,10 +811,10 @@ app.get('/api/fifa/fixtures', async (req, res) => {
             return res.json(cacheFixtures);
         }
         const [gamesRes, teamsRes] = await Promise.all([
-            axios.get('https://worldcup26.ir/get/games', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
-            axios.get('https://worldcup26.ir/get/teams', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+            fetchJson('https://worldcup26.ir/get/games', 25000),
+            fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
-        const games = gamesRes.data && gamesRes.data.games;
+        const games = gamesRes && gamesRes.games;
         if (!Array.isArray(games)) {
             return res.json([]);
         }
@@ -583,8 +822,8 @@ app.get('/api/fifa/fixtures', async (req, res) => {
         // Build teams map by ID and name for flag lookup
         const teamsById = {};
         const teamsByName = {};
-        if (teamsRes.data && Array.isArray(teamsRes.data.teams)) {
-            teamsRes.data.teams.forEach(t => {
+        if (teamsRes && Array.isArray(teamsRes.teams)) {
+            teamsRes.teams.forEach(t => {
                 if (t && t.id) {
                     const entry = { flag: t.flag || '' };
                     teamsById[String(t.id)] = entry;
@@ -644,7 +883,7 @@ app.get('/api/fifa/fixtures', async (req, res) => {
         // Auto-save fresh data to fallback files
         try {
             fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_games.json'), JSON.stringify({ games }, null, 2));
-            if (Array.isArray(teamsRes.data && teamsRes.data.teams)) fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), JSON.stringify({ teams: teamsRes.data.teams }, null, 2));
+            if (teamsRes && Array.isArray(teamsRes.teams)) fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), JSON.stringify({ teams: teamsRes.teams }, null, 2));
         } catch(we) { /* silent */ }
         res.json(formatted);
     } catch (e) {
@@ -710,11 +949,11 @@ app.get('/api/fifa/standings', async (req, res) => {
             return res.json(cacheStandings);
         }
         const [groupsRes, teamsRes] = await Promise.all([
-            axios.get('https://worldcup26.ir/get/groups', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }),
-            axios.get('https://worldcup26.ir/get/teams', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+            fetchJson('https://worldcup26.ir/get/groups', 25000),
+            fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
-        const groupsData = groupsRes.data && groupsRes.data.groups;
-        const teamsData = teamsRes.data && teamsRes.data.teams;
+        const groupsData = groupsRes && groupsRes.groups;
+        const teamsData = teamsRes && teamsRes.teams;
         if (!Array.isArray(groupsData) || !Array.isArray(teamsData)) {
             return res.json([]);
         }

@@ -8,8 +8,14 @@
 
     <script>
         (function () {
-            document.documentElement.style.setProperty('--f1-red', '#00ff55');
-            document.documentElement.style.setProperty('--glow-color', 'rgba(0, 255, 85, 0.15)');
+            document.documentElement.style.setProperty('--f1-red', '#FF0055');
+            document.documentElement.style.setProperty('--glow-color', 'rgba(255, 0, 85, 0.15)');
+            
+            // Immediately detect if entered from home to prevent launch screen flicker before Angular bootstraps
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('enter') || sessionStorage.getItem('fifa_entered') === 'true') {
+                document.documentElement.classList.add('fifa-already-entered');
+            }
         })();
     </script>
 
@@ -18,7 +24,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -37,18 +43,32 @@
         }
 
         :root {
-            --f1-red: #00ff55;
-            --f1-carbon: #101010;
-            --f1-silver: #d1d1d1;
-            --f1-green: #00d26a;
-            --bg-dark: #050505;
-            --glass-bg: rgba(10, 10, 10, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.05);
+            /* Pages.dev colors */
+            --gold: #D4AF37;
+            --red: #FF0055;
+            --green: #00F260;
+            --blue: #0575E6;
+
+            --fifa-navy: #020A30;
+            --fifa-dark-blue: #050E35;
+            --fifa-card-bg: rgba(20, 20, 20, 0.7);
+
+            /* F1 variable mappings to preserve dashboard logic */
+            --fifa-green: var(--green);
+            --fifa-purple: var(--red);
+            --fifa-teal: var(--blue);
+            --f1-red: var(--red);
+            --f1-carbon: #0f0f15;
+            --f1-silver: #d1d1d8;
+            --f1-green: var(--green);
+            --bg-dark: rgba(5, 5, 5, 0.85);
+            --glass-bg: var(--fifa-card-bg);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --text-white: #ffffff;
-            --text-gray: #999999;
-            --glow-color: rgba(0, 255, 85, 0.15);
-            --border: #24242e;
-            --tech-blue: #00e5ff;
+            --text-gray: #CCCCCC;
+            --glow-color: rgba(255, 0, 85, 0.15);
+            --border: rgba(255, 255, 255, 0.1);
+            --tech-blue: var(--blue);
         }
 
         * {
@@ -60,7 +80,7 @@
             padding: 0;
             background-color: var(--bg-dark);
             color: var(--text-white);
-            font-family: 'Titillium Web', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 16px;
             min-height: 100vh;
             display: flex;
@@ -86,10 +106,40 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9));
+            background: linear-gradient(rgba(5, 5, 5, 0.7), rgba(5, 5, 5, 0.92));
             /* Gradient overlay */
             z-index: -3;
         }
+
+        /* Background animated blobs */
+        .blob {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -2;
+            opacity: 0.15;
+            pointer-events: none;
+            animation: float-blob 20s infinite alternate ease-in-out;
+        }
+        .blob-1 {
+            background: var(--green);
+            top: -10%;
+            left: -10%;
+        }
+        .blob-2 {
+            background: var(--blue);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -10s;
+        }
+        @keyframes float-blob {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
+        }
+
+
 
         #vanta-overlay {
             position: fixed;
@@ -160,10 +210,11 @@
         }
 
         .logo-text.fifa-logo-gradient {
-            background: linear-gradient(135deg, #00ff55 0%, #00e5ff 30%, #ffcc00 70%, #ff3b30 100%);
+            background: linear-gradient(135deg, var(--red) 0%, var(--gold) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 900;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 85, 0.3));
         }
 
         /* 3D Depth Utilities */
@@ -178,17 +229,12 @@
         }
 
         header {
-            background-color: #111;
-            background-image:
-                linear-gradient(90deg, rgba(5, 5, 5, 0.85) 0%, rgba(5, 5, 5, 0.4) 50%, rgba(5, 5, 5, 0.85) 100%),
-                repeating-linear-gradient(45deg, #181818 25%, transparent 25%, transparent 75%, #181818 75%, #181818),
-                repeating-linear-gradient(45deg, #181818 25%, #0a0a0a 25%, #0a0a0a 75%, #181818 75%, #181818);
-            background-position: 0 0, 0 0, 5px 5px;
-            background-size: 100% 100%, 10px 10px, 10px 10px;
-
+            background: rgba(10, 12, 22, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-bottom: 2px solid transparent;
-            border-image: linear-gradient(90deg, #3cac3b, #2a398d, #e61d25, #ff9900, #1d70b8) 1;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border-image: linear-gradient(90deg, var(--red), var(--gold), var(--blue)) 1;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             padding: 15px 30px;
             display: flex;
             align-items: center;
@@ -223,7 +269,7 @@
             margin: 0 30px;
             white-space: nowrap;
             background: var(--glow-color);
-            border: 1px solid var(--f1-red);
+            border: 1px solid var(--fifa-purple);
             border-radius: 20px;
             padding: 6px 15px;
             position: relative;
@@ -765,7 +811,7 @@
             margin: 30px auto;
             padding: 0 30px;
             display: grid;
-            grid-template-columns: 3.5fr 1.2fr;
+            grid-template-columns: minmax(0, 3.5fr) minmax(0, 1.2fr);
             gap: 30px;
             flex: 1;
             width: 100%;
@@ -830,6 +876,10 @@
             margin-bottom: 24px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             transition: all 0.3s ease;
+        }
+
+        .stream-buttons-scroll::-webkit-scrollbar {
+            display: none;
         }
 
         .glass-card {
@@ -903,6 +953,7 @@
             transition: all 0.2s;
             min-width: auto;
             letter-spacing: 0.5px;
+            flex-shrink: 0;
         }
 
         .stream-btn:hover {
@@ -1289,60 +1340,30 @@
             display: none;
         }
 
-        .loader {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.5s;
+        .fifa-already-entered #launch-screen {
+            display: none !important;
         }
 
-        .loader.hide {
+        #launch-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease, visibility 1s;
+        }
+        #launch-screen.fade-out {
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-            border-top-color: var(--f1-red);
-            animation: spin 0.8s ease-in-out infinite;
-            margin-bottom: 20px;
-            box-shadow: 0 0 20px var(--glow-color);
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading-text {
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            color: #555;
-            animation: fadeText 1.5s infinite alternate;
-            text-transform: uppercase;
-        }
-
-        @keyframes fadeText {
-            from {
-                opacity: 0.5;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        /* WatchF1.live Loading Animation */
+        /* Unified Loading Screen */
         .loader {
             position: fixed;
             top: 0;
@@ -1374,41 +1395,80 @@
         }
 
         .loading-logo-svg text {
-            font-family: 'Titillium Web', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-weight: 900;
             font-size: 70px;
             text-transform: uppercase;
             letter-spacing: 8px;
-            stroke: var(--f1-red);
+            stroke: #00ff55; /* FIFA Green */
             stroke-width: 2;
             stroke-dasharray: 1000;
             stroke-dashoffset: 1000;
-            /* Draw outline for 1.5s, then hold. Delay fill by 1.5s so it starts after outline completes */
             animation:
                 drawOutline 1.5s ease-in-out forwards,
-                fillLogo 0.8s ease-in-out 1.5s forwards;
+                fillLogoFifa 0.8s ease-in-out 1.5s forwards;
         }
 
         @keyframes drawOutline {
             0% {
                 stroke-dashoffset: 1000;
             }
-
             100% {
                 stroke-dashoffset: 0;
             }
         }
 
-        @keyframes fillLogo {
+        @keyframes fillLogoFifa {
             0% {
                 fill: transparent;
             }
-
             100% {
-                fill: var(--f1-red);
+                fill: #00ff55;
                 stroke-width: 0;
                 opacity: 1;
             }
+        }
+        .launch-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        .launch-logo {
+            max-width: 300px;
+            width: 80%;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+        }
+        .enter-btn {
+            background: transparent;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-family: 'Outfit', sans-serif;
+        }
+        .enter-btn:hover {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+            transform: scale(1.05);
+        }
+        .user-clock {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gold);
+            background: rgba(212, 175, 55, 0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-left: 10px;
         }
 
         /* Chat Sidebar Drawer (Twitch brand themed) */
@@ -1814,10 +1874,31 @@
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
     <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
-        <video autoplay loop muted playsinline style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.15;" src="fifa.mp4"></video>
+        <video id="bg-video" loop muted playsinline style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;" src="intro.mp4"></video>
     </div>
+    <audio id="intro-audio" src="intro.webm"></audio>
+
+    <!-- Launch Screen -->
+    <div id="launch-screen" ng-class="{'fade-out': hasEntered}">
+        <div class="launch-content">
+            <img class="launch-logo" src="fifa-logo.png" alt="FIFA Logo">
+            <button class="enter-btn" ng-click="enterParty()">Enter Party</button>
+        </div>
+    </div>
+
+    <!-- Loading Animation -->
+    <div class="loader" ng-class="{'hide': dataLoaded}">
+        <div class="loading-logo-container">
+            <svg class="loading-logo-svg" viewBox="0 0 600 100">
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA.live</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
     <div class="video-overlay"></div>
-    <div class="fifa-wavy-bg">
+    <div class="fifa-wavy-bg" style="opacity: 0.35;">
         <div class="fifa-gradient-mask"></div>
         <svg class="fifa-waves-svg" viewBox="0 0 1440 1000" preserveAspectRatio="none">
             <!-- Wavy contour tracks from World Cup 2026 theme -->
@@ -1831,20 +1912,13 @@
     </div>
     <div id="vanta-overlay"></div>
 
-    <!-- Loading Animation -->
-    <div class="loader" ng-class="{'hide': dataLoaded}">
-        <div class="loading-logo-container">
-            <svg class="loading-logo-svg" viewBox="0 0 600 100">
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA 2026</text>
-            </svg>
-        </div>
-    </div>
+
 
     <!-- Main Dashboard View -->
     <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
         <header>
             <div class="header-left">
-                <span class="logo-text fifa-logo-gradient">WatchFIFA <span>2026</span></span>
+                <span class="logo-text fifa-logo-gradient">WatchFIFA<span>.Live</span></span>
                 <div class="sport-toggle-container">
                     <button class="sport-toggle-btn" ng-click="goToF1()">
                         <i class="fa-solid fa-car-side"></i> F1 Party
@@ -1852,13 +1926,6 @@
                     <button class="sport-toggle-btn active">
                         <i class="fa-solid fa-futbol"></i> FIFA Party
                     </button>
-                </div>
-            </div>
-
-            <div class="header-marquee-container" ng-if="nextMatch">
-                <div class="header-marquee-text">
-                    <i class="fa-solid fa-futbol" style="color: var(--f1-red); margin-right: 8px;"></i>
-                    UP NEXT: <span>{{nextMatch.homeTeam}} vs {{nextMatch.awayTeam}}</span> • {{nextMatch.localDate}} • <span>Stadium: {{nextMatch.stadium}}</span>
                 </div>
             </div>
 
@@ -1919,17 +1986,19 @@
                 </div>
                 <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <span class="source-label"
-                        style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
-                    <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
-                        ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
-                    <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
-                    <div class="spacer"></div>
-                    <button class="stream-btn" ng-click="toggleTheater()">
+                        style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px; flex-shrink: 0;">SOURCE:</span>
+                    <div class="stream-buttons-scroll" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-grow: 1; flex-shrink: 1; min-width: 0; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                        <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
+                            ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
+                        <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
+                    </div>
+                    <div class="spacer" style="flex-shrink: 0;"></div>
+                    <button class="stream-btn" ng-click="toggleTheater()" style="flex-shrink: 0;">
                         <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
                             style="margin-right: 5px;"></i>
                         {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
                     </button>
-                    <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()">
+                    <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
                         {{ isChatOpen ? 'Chat' : 'Chat' }}
                     </button>
@@ -2007,9 +2076,9 @@
                             </div>
 
                             <!-- Kickoff Time / Status -->
-                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 45px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[1]}}</div>
-                                <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}}</div>
+                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
+                                <div class="sess-time" style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}}</div>
+                                <div class="sess-day" style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;" ng-if="match.status === 'live'">LIVE</div>
                                 <div class="sess-time" style="font-size: 9px; font-weight: 800; color: #666;" ng-if="match.finished">FT</div>
                             </div>
@@ -2126,7 +2195,7 @@
         <!-- Up Next Marquee Banner removed (FIFA only) -->
 
         <div class="countdown-brand">
-            WatchFIFA 2026
+            WatchFIFA<span>.Live</span>
         </div>
 
         <div class="countdown-gp-info" ng-if="raceData.name">
@@ -2224,6 +2293,41 @@
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            // Check if entered from home page or already entered in this session
+            const urlParamsForEntry = new URLSearchParams($window.location.search);
+            const enteredFromHome = urlParamsForEntry.has('enter') || sessionStorage.getItem('fifa_entered') === 'true';
+
+            $scope.hasEntered = enteredFromHome;
+
+            $scope.enterParty = function() {
+                $scope.hasEntered = true;
+                sessionStorage.setItem('fifa_entered', 'true');
+                
+                // Play audio and video on click to bypass autoplay restrictions
+                const bgVideo = document.getElementById('bg-video');
+                const introAudio = document.getElementById('intro-audio');
+                if (bgVideo) {
+                    bgVideo.play().catch(e => console.log('Video play failed:', e));
+                }
+                if (introAudio) {
+                    introAudio.play().catch(e => console.log('Audio play failed:', e));
+                }
+            };
+
+            // Automatically play video and audio on load if entered from home page
+            $timeout(function() {
+                if ($scope.hasEntered) {
+                    const bgVideo = document.getElementById('bg-video');
+                    const introAudio = document.getElementById('intro-audio');
+                    if (bgVideo) {
+                        bgVideo.play().catch(e => console.log('Video autoplay failed:', e));
+                    }
+                    if (introAudio) {
+                        introAudio.play().catch(e => console.log('Audio autoplay failed:', e));
+                    }
+                }
+            }, 100);
+
             $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
@@ -2451,15 +2555,28 @@
             }
 
 
+            const startTime = Date.now();
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
-                    $scope.$apply(function () {
+                    const elapsed = Date.now() - startTime;
+                    const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
+                    const delay = Math.max(0, minDuration - elapsed);
+
+                    $timeout(function () {
                         processData(data);
                         $scope.dataLoaded = true;
-                    });
+                    }, delay);
                 }
             });
+
+            // Safety timeout: in case Firebase fails/stalls, hide the loader after 4 seconds anyway
+            $timeout(function () {
+                if (!$scope.dataLoaded) {
+                    console.warn("Firebase snapshot took too long; bypassing loader.");
+                    $scope.dataLoaded = true;
+                }
+            }, 4000);
 
             function processData(data) {
                 // Set activeSport bound value
@@ -2783,7 +2900,6 @@
                 initVanta();
             }
         });
-
 
 
     </script>
