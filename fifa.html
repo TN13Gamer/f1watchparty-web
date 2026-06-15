@@ -64,7 +64,7 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-white: #ffffff;
             --text-gray: #CCCCCC;
-            --glow-color: rgba(255, 0, 85, 0.15);
+            --glow-color: rgba(168, 85, 247, 0.12);
             --border: rgba(255, 255, 255, 0.1);
             --tech-blue: var(--blue);
         }
@@ -122,7 +122,7 @@
             animation: float-blob 20s infinite alternate ease-in-out;
         }
         .blob-1 {
-            background: var(--green);
+            background: transparent;
             top: -10%;
             left: -10%;
         }
@@ -2550,27 +2550,23 @@
             
             function applyFifaTheme() {
                 const theme = {
-                    primary: '#00ff55', // FIFA 2026 Green
-                    glow: 'rgba(0, 255, 85, 0.15)',
+                    primary: '#a855f7', // FIFA 2026 Purple accent
+                    glow: 'rgba(168, 85, 247, 0.12)',
                     name: 'FIFA 2026 Theme'
                 };
                 const root = document.documentElement;
                 root.style.setProperty('--f1-red', theme.primary);
                 root.style.setProperty('--glow-color', theme.glow);
                 $scope.activeThemeName = theme.name;
-                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.vantaInstance.setOptions({ color: vantaColor, color2: 0x9146ff });
-                }
             }
 
             $scope.activeThemeName = '';
 
             function applyDynamicTheme(location, themeOverride) {
-                // Always use FIFA 2026 Green theme (no GP overrides)
+                // FIFA 2026 Purple accent theme
                 const theme = {
-                    primary: '#00ff55',      // FIFA Green
-                    glow: 'rgba(0, 255, 85, 0.15)',
+                    primary: '#a855f7',
+                    glow: 'rgba(168, 85, 247, 0.12)',
                     name: 'FIFA 2026 Theme'
                 };
 
@@ -2578,14 +2574,6 @@
                 root.style.setProperty('--f1-red', theme.primary);
                 root.style.setProperty('--glow-color', theme.glow);
                 $scope.activeThemeName = theme.name;
-
-                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.vantaInstance.setOptions({ color: vantaColor, color2: 0x9146ff });
-                } else {
-                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
-                    window.pendingVantaColor = vantaColor;
-                }
             }
 
             function safeDate(val) {
