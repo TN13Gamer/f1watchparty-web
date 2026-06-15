@@ -1,17 +1,51 @@
 // Server-side poll API for FIFA World Cup 2026 match polls
 // Handles reading and writing poll votes using Firebase Admin (bypasses Firestore rules)
+// Works both locally (via server.js, which already initializes Admin) and on Vercel serverless.
+
+const admin = require('firebase-admin');
+const fs = require('fs');
+
+// Self-initialize Firebase Admin if not already done (Vercel serverless context)
+function ensureAdminInit() {
+  if (admin.apps.length) return true; // Already initialized
+
+  try {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      // Vercel / Production: load from environment variable
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      console.log('[poll] Firebase Admin initialized from env var.');
+      return true;
+    }
+
+    // Local development: look for the service account key file
+    const candidates = [
+      './serviceAccountKey.json',
+      './f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const serviceAccount = require(require('path').resolve(p));
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+        console.log('[poll] Firebase Admin initialized from file:', p);
+        return true;
+      }
+    }
+
+    console.error('[poll] No Firebase credentials found.');
+    return false;
+  } catch (e) {
+    console.error('[poll] Firebase Admin init error:', e.message);
+    return false;
+  }
+}
 
 let _db = null;
 function getDb() {
   if (_db) return _db;
-  try {
-    const admin = require('firebase-admin');
-    if (admin.apps.length) {
-      _db = admin.firestore();
-      return _db;
-    }
-  } catch (e) {
-    console.error('[poll] Firebase admin unavailable:', e.message);
+  if (ensureAdminInit()) {
+    _db = admin.firestore();
+    return _db;
   }
   return null;
 }
@@ -62,7 +96,6 @@ module.exports = async (req, res) => {
     }
 
     try {
-      const admin = require('firebase-admin');
       const inc = admin.firestore.FieldValue.increment(1);
       await pollRef.set({ [choice]: inc }, { merge: true });
 

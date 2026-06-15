@@ -2429,9 +2429,10 @@
                         </div>
                     </div>
                     <div class="poll-voted-badge" ng-if="poll.userVote !== null">
-                        ✓ VOTED &nbsp;·&nbsp; 
+                        ✓ VOTED &nbsp;·&nbsp;
                         <span ng-if="!poll.loaded">counting...</span>
-                        <span ng-if="poll.loaded">{{ poll.totalVotes || 1 }} {{ (poll.totalVotes || 1) === 1 ? 'vote' : 'votes' }}</span>
+                        <span ng-if="poll.loaded && poll.totalVotes > 0">{{poll.totalVotes}} {{poll.totalVotes === 1 ? 'vote' : 'votes'}}</span>
+                        <span ng-if="poll.loaded && poll.totalVotes === 0">1 vote</span>
                     </div>
                 </div>
 
@@ -3245,18 +3246,23 @@
                 var away = p.away || 0;
                 var draw = p.draw || 0;
 
-                // Ensure local vote is counted even if server doesn't have it yet (or returned 0)
-                if ($scope.poll.userVote === 'home' && home === 0) home = 1;
-                if ($scope.poll.userVote === 'away' && away === 0) away = 1;
-                if ($scope.poll.userVote === 'draw' && draw === 0) draw = 1;
+                // Store the REAL server total for the badge (never inflated)
+                $scope.poll.totalVotes = (p.total != null) ? p.total : (home + away + draw);
 
-                var total = home + away + draw;
-                $scope.poll.totalVotes = total;
-                if (total === 0) {
+                // For percentage display: ensure the user's local vote appears even if
+                // the server hasn't registered it yet (e.g. race condition / first fetch).
+                // This only affects the % bars, not the vote count shown in the badge.
+                var h = home, a = away, d = draw;
+                if ($scope.poll.userVote === 'home' && h === 0) h = 1;
+                if ($scope.poll.userVote === 'away' && a === 0) a = 1;
+                if ($scope.poll.userVote === 'draw' && d === 0) d = 1;
+
+                var displayTotal = h + a + d;
+                if (displayTotal === 0) {
                     $scope.poll.homePct = $scope.poll.awayPct = $scope.poll.drawPct = 0;
                 } else {
-                    $scope.poll.homePct = Math.round(home / total * 100);
-                    $scope.poll.awayPct = Math.round(away / total * 100);
+                    $scope.poll.homePct = Math.round(h / displayTotal * 100);
+                    $scope.poll.awayPct = Math.round(a / displayTotal * 100);
                     $scope.poll.drawPct = 100 - $scope.poll.homePct - $scope.poll.awayPct;
                 }
             }
