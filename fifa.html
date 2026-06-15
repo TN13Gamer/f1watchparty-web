@@ -1868,6 +1868,47 @@
             width: 0 !important;
             height: 0 !important;
         }
+
+        /* Mobile Performance Optimizations */
+        @media (max-width: 768px) {
+            /* Disable heavy visual elements */
+            .blob {
+                display: none !important;
+            }
+            .fifa-waves-svg {
+                display: none !important;
+            }
+            .video-background-container {
+                display: none !important;
+            }
+
+            /* Remove expensive backdrop-filters and supply flat opaque background backups */
+            header {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(10, 12, 22, 0.98) !important;
+            }
+            .glass-card {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(12, 12, 16, 0.95) !important;
+            }
+            .header-marquee-container {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 0, 85, 0.1) !important;
+            }
+            .countdown-timer-box {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(12, 12, 16, 0.95) !important;
+            }
+            .sport-toggle-container {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+            }
+        }
     </style>
 </head>
 
@@ -2041,7 +2082,7 @@
                 <!-- FIFA Fixtures Card -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
-                    <video class="card-video-bg" autoplay loop muted playsinline src="fifa.mp4"></video>
+                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline src="fifa.mp4"></video>
                     <div class="card-title">
                         <i class="fa-solid fa-calendar-days"></i> Match Fixtures
                     </div>
@@ -2257,6 +2298,11 @@
 
         // Mousemove event listener removed for optimization (prevent layout recalculation overhead)
 
+        // Mobile device detection
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
+
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
             authDomain: "f1-stream-live.firebaseapp.com",
@@ -2275,6 +2321,7 @@
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
+                    if (isMobileDevice) return;
                     $timeout(function () {
                         if (typeof VanillaTilt !== 'undefined' && !element[0].vanillaTilt) {
                             VanillaTilt.init(element[0], {
@@ -2293,6 +2340,7 @@
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            $scope.isMobile = isMobileDevice;
             // Check if entered from home page or already entered in this session
             const urlParamsForEntry = new URLSearchParams($window.location.search);
             const enteredFromHome = urlParamsForEntry.has('enter') || sessionStorage.getItem('fifa_entered') === 'true';
@@ -2306,7 +2354,7 @@
                 // Play audio and video on click to bypass autoplay restrictions
                 const bgVideo = document.getElementById('bg-video');
                 const introAudio = document.getElementById('intro-audio');
-                if (bgVideo) {
+                if (bgVideo && !isMobileDevice) {
                     bgVideo.play().catch(e => console.log('Video play failed:', e));
                 }
                 if (introAudio) {
@@ -2319,7 +2367,7 @@
                 if ($scope.hasEntered) {
                     const bgVideo = document.getElementById('bg-video');
                     const introAudio = document.getElementById('intro-audio');
-                    if (bgVideo) {
+                    if (bgVideo && !isMobileDevice) {
                         bgVideo.play().catch(e => console.log('Video autoplay failed:', e));
                     }
                     if (introAudio) {
@@ -2850,9 +2898,6 @@
         });
 
         // Vanta Globe Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
-        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                             ('ontouchstart' in window) || 
-                             (navigator.maxTouchPoints > 0);
 
         function initVanta() {
             if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
