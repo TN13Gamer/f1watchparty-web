@@ -1076,6 +1076,9 @@ app.get('/api/fifa/standings', async (req, res) => {
     }
 });
 
+// --- API: FIFA Poll (GET counts, POST vote) ---
+app.use('/api/fifa/poll', require('./api/fifa/poll.js'));
+
 // --- API: Sync Standings (Vercel cron handler) ---
 app.all('/api/sync-standings', require('./api/sync-standings.js'));
 

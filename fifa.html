@@ -3221,7 +3221,7 @@
             // UI state object — avoids AngularJS prototype chain issues with ng-if child scopes
             $scope.ui = { showPastMatches: false };
 
-            // ── Poll System ──
+            // ── Poll System (uses server API to bypass Firestore rules) ──
             $scope.poll = {
                 matchId: null,
                 homeTeam: '', awayTeam: '',
@@ -3232,7 +3232,7 @@
                 totalVotes: 0
             };
 
-            var _pollUnsub = null;
+            var _pollInterval = null;
 
             function calcPollPct(p) {
                 var total = (p.home || 0) + (p.away || 0) + (p.draw || 0);
@@ -3246,11 +3246,20 @@
                 }
             }
 
+            function fetchPollCounts(matchId) {
+                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        $scope.$apply(function() { calcPollPct(data); });
+                    })
+                    .catch(function(e) { console.warn('[poll] fetch error:', e); });
+            }
+
             $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
                 if (!matchId || $scope.poll.matchId === matchId) return;
 
-                // Unsubscribe previous listener
-                if (_pollUnsub) { _pollUnsub(); _pollUnsub = null; }
+                // Stop previous poll interval
+                if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
 
                 $scope.poll.matchId   = matchId;
                 $scope.poll.homeTeam  = homeTeam;
@@ -3262,14 +3271,9 @@
                 var voteKey = 'poll_vote_' + matchId;
                 $scope.poll.userVote = localStorage.getItem(voteKey) || null;
 
-                // Listen to live vote counts
-                var pollRef = db.collection('app_data').doc('polls').collection('fifa').doc(matchId);
-                _pollUnsub = pollRef.onSnapshot(function(snap) {
-                    $scope.$apply(function() {
-                        var data = snap.exists ? snap.data() : { home: 0, away: 0, draw: 0 };
-                        calcPollPct(data);
-                    });
-                });
+                // Fetch initial counts, then poll every 15s for live updates
+                fetchPollCounts(matchId);
+                _pollInterval = setInterval(function() { fetchPollCounts(matchId); }, 15000);
             };
 
             $scope.castVote = function(choice) {
@@ -3277,16 +3281,21 @@
                 var matchId  = $scope.poll.matchId;
                 var voteKey  = 'poll_vote_' + matchId;
 
-                // Optimistic update
+                // Optimistic update — show the collapsed view instantly
                 $scope.poll.userVote = choice;
                 localStorage.setItem(voteKey, choice);
 
-                // Increment in Firestore
-                var pollRef = db.collection('app_data').doc('polls').collection('fifa').doc(matchId);
-                var inc = firebase.firestore.FieldValue.increment(1);
-                var update = {};
-                update[choice] = inc;
-                pollRef.set(update, { merge: true }).catch(function(e) {
+                // Send vote to server API (uses Firebase Admin, bypasses Firestore rules)
+                fetch('/api/fifa/poll?matchId=' + encodeURIComponent(matchId), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice: choice })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    $scope.$apply(function() { calcPollPct(data); });
+                })
+                .catch(function(e) {
                     console.error('[poll] vote error:', e);
                 });
             };
