@@ -1840,6 +1840,25 @@
             .chat-sidebar.open {
                 right: 0;
             }
+
+            /* ── Countdown card timer fix: override inline aspect-ratio + padding ── */
+            .countdown-card {
+                aspect-ratio: unset !important;
+                padding: 28px 20px !important;
+                border-radius: 16px !important;
+                min-height: 180px;
+            }
+
+            /* Hide long description on mobile to make room for the timer */
+            .countdown-card > p {
+                display: none !important;
+            }
+
+            /* Shrink race name on mobile */
+            .countdown-card > h2 {
+                font-size: 18px !important;
+                margin-bottom: 8px !important;
+            }
         }
 
         /* Premium Sliding Sport Toggle */
