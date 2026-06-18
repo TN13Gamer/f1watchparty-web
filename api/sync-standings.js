@@ -658,6 +658,122 @@ function enrichTokens(tokens) {
   return Array.from(enriched);
 }
 
+function tokenizeMatchTitle(title) {
+  const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
+  return String(title || '').toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 0 && !commonWords.has(t));
+}
+
+function scoreStreamedMatch(match, tokens) {
+  if (!match || !match.title) return 0;
+  const titleLower = match.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  if (!tokens || tokens.length === 0) return 1;
+  return tokens.reduce((count, token) => count + (titleLower.includes(token) ? 1 : 0), 0);
+}
+
+function pickStreamedFootballMatch(matches, matchName) {
+  const footballMatches = (Array.isArray(matches) ? matches : []).filter(m => m.category === 'football');
+  if (footballMatches.length === 0) return null;
+
+  const tokens = enrichTokens(tokenizeMatchTitle(matchName));
+  const ranked = footballMatches
+    .map(match => ({ match, score: scoreStreamedMatch(match, tokens) }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.match.sources || []).length - (a.match.sources || []).length;
+    });
+
+  return (ranked[0] && ranked[0].match) || footballMatches[0];
+}
+
+async function resolveStreamedLinks(match) {
+  if (!match || !Array.isArray(match.sources) || match.sources.length === 0) return [];
+
+  const streamLinks = [];
+  const streamPromises = match.sources.map(async (src) => {
+    try {
+      if (!src || !src.source || !src.id) return;
+      if (['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport'].includes(src.source.toLowerCase())) {
+        return;
+      }
+
+      const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+      const streams = await fetchJson(streamUrl);
+      if (Array.isArray(streams)) {
+        streams.forEach((stream) => {
+          if (stream.embedUrl) {
+            const name = `${src.source.toUpperCase()} ${stream.language || 'EN'} ${stream.hd ? '(HD)' : ''}`.trim();
+            streamLinks.push({
+              name,
+              id: `src_fifa_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              url: stream.embedUrl
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.error(`[sync-fifa] Failed to fetch streamed.pk source ${src.source}:`, err.message);
+    }
+  });
+
+  await Promise.all(streamPromises);
+  return streamLinks;
+}
+
+async function syncFifaLiveFromStreamed(config, ref, options = {}) {
+  const fifa = config.fifa || {};
+  const currentRaceData = fifa.raceData || {};
+
+  try {
+    const liveMatches = await fetchJson('https://streamed.pk/api/matches/live');
+    const selectedMatch = pickStreamedFootballMatch(liveMatches, currentRaceData.name);
+    if (!selectedMatch) {
+      console.log('[sync-fifa-live] No live football match found on streamed.pk.');
+      return null;
+    }
+
+    const streamLinks = await resolveStreamedLinks(selectedMatch);
+    const teams = selectedMatch.teams || {};
+    const homeName = teams.home?.name || String(selectedMatch.title || '').split(/\s+vs\s+/i)[0] || 'TBD';
+    const awayName = teams.away?.name || String(selectedMatch.title || '').split(/\s+vs\s+/i)[1] || 'TBD';
+    const matchName = selectedMatch.title || `${homeName} vs ${awayName}`;
+    const kickoffDate = selectedMatch.date ? new Date(selectedMatch.date) : null;
+
+    const updatedFifa = {
+      ...fifa,
+      raceData: {
+        ...currentRaceData,
+        name: matchName,
+        round: currentRaceData.round || 'Live Football',
+        circuit: currentRaceData.circuit || 'streamed.pk',
+        location: currentRaceData.location || 'Live',
+        date: kickoffDate && !isNaN(kickoffDate.getTime()) ? formatFixtureIst(kickoffDate.getTime()) : (currentRaceData.date || ''),
+        isLive: true,
+        isFinished: false,
+        matchTime: 'LIVE'
+      },
+      customTimer: {
+        ...(fifa.customTimer || {}),
+        enabled: true,
+        target: kickoffDate && !isNaN(kickoffDate.getTime()) ? kickoffDate.toISOString() : new Date().toISOString(),
+        label: 'LIVE NOW'
+      },
+      streamLinks
+    };
+
+    await ref.update({ fifa: updatedFifa });
+    console.log(`[sync-fifa-live] Updated FIFA live match from streamed.pk: "${matchName}" with ${streamLinks.length} stream links.`);
+    return updatedFifa;
+  } catch (err) {
+    console.error('[sync-fifa-live] streamed.pk live sync failed:', err.message);
+    if (options.throwOnError) throw err;
+    return null;
+  }
+}
+
 async function syncFifaStreams(config, ref, options = {}) {
   const fifa = config.fifa || {};
   const isManual = !!options.manual;
@@ -689,14 +805,7 @@ async function syncFifaStreams(config, ref, options = {}) {
     }
   }
 
-  // Tokenize match name (e.g. "Canada VS Bosnia and Herzegovina" -> ["canada", "bosnia", "herzegovina"])
-  const commonWords = new Set(['vs', 'and', 'the', 'a', 'or', 'fc', 'united', 'city', 'real', 'de', 'la', 'st', 'stadium', 'opening', 'ceremony']);
-  const rawTokens = matchName.toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter(t => t.length > 0 && !commonWords.has(t));
-
-  const tokens = enrichTokens(rawTokens);
+  const tokens = enrichTokens(tokenizeMatchTitle(matchName));
 
   if (tokens.length === 0) {
     console.log('[sync-fifa] No valid search tokens extracted from:', matchName);
@@ -704,12 +813,16 @@ async function syncFifaStreams(config, ref, options = {}) {
   }
 
   try {
-    console.log(`[sync-fifa] Fetching matches to match tokens: ${tokens.join(' ')}`);
-    const matches = await fetchJson('https://streamed.pk/api/matches/all');
+    console.log(`[sync-fifa] Fetching live streamed.pk matches to match tokens: ${tokens.join(' ')}`);
+    let matches = await fetchJson('https://streamed.pk/api/matches/live');
 
     if (!Array.isArray(matches)) {
-      console.log('[sync-fifa] Matches response is not an array.');
-      return;
+      console.log('[sync-fifa] Live matches response is not an array. Falling back to all matches.');
+      matches = await fetchJson('https://streamed.pk/api/matches/all');
+      if (!Array.isArray(matches)) {
+        console.log('[sync-fifa] Matches response is not an array.');
+        return;
+      }
     }
 
     // Filter by category: football
@@ -965,24 +1078,41 @@ module.exports = async (req, res) => {
     let fifaDetailsSynced = false;
     let fifaDetailsError = null;
     let updatedFifaConfig = null;
+    let streamedLiveSynced = false;
     if (runAll || requestedType === 'fifadetails' || (requestedType === 'fifastreams' && req.query.manual === 'true')) {
       const fifa = config.fifa || {};
       const shouldSync = fifa.autoSyncDetails !== false || req.query.manual === 'true';
       if (shouldSync) {
-        console.log('[sync-standings API] Starting FIFA details sync...');
+        console.log('[sync-standings API] Starting FIFA streamed.pk live sync...');
         try {
-          updatedFifaConfig = await syncFifaMatchDetails(config, ref);
+          updatedFifaConfig = await syncFifaLiveFromStreamed(config, ref);
           if (updatedFifaConfig) {
-            console.log('[sync-standings API] FIFA details config updated.');
-            // Refresh config so stream sync uses the newly set match name
+            console.log('[sync-standings API] FIFA live config updated from streamed.pk.');
             config = { ...config, fifa: updatedFifaConfig };
-          } else {
-            console.log('[sync-standings API] FIFA details returned no update.');
+            streamedLiveSynced = true;
+            fifaDetailsSynced = true;
           }
-          fifaDetailsSynced = true;
         } catch (err) {
-          console.error('[sync] FIFA details sync error:', err.message);
+          console.error('[sync] streamed.pk FIFA live sync error:', err.message);
           fifaDetailsError = err.message;
+        }
+
+        if (!updatedFifaConfig) {
+          console.log('[sync-standings API] No streamed.pk live match found. Falling back to FIFA details sync...');
+          try {
+            updatedFifaConfig = await syncFifaMatchDetails(config, ref);
+            if (updatedFifaConfig) {
+              console.log('[sync-standings API] FIFA details config updated.');
+              // Refresh config so stream sync uses the newly set match name
+              config = { ...config, fifa: updatedFifaConfig };
+            } else {
+              console.log('[sync-standings API] FIFA details returned no update.');
+            }
+            fifaDetailsSynced = true;
+          } catch (err) {
+            console.error('[sync] FIFA details sync error:', err.message);
+            fifaDetailsError = err.message;
+          }
         }
       } else {
         console.log('[sync-standings API] FIFA details auto-sync is disabled. Skipping.');
@@ -995,7 +1125,11 @@ module.exports = async (req, res) => {
     if (runAll || requestedType === 'fifastreams') {
       console.log('[sync-standings API] Starting FIFA streams sync...');
       try {
-        await syncFifaStreams(config, ref, { manual: req.query.manual === 'true' });
+        if (streamedLiveSynced && config.fifa && Array.isArray(config.fifa.streamLinks)) {
+          console.log('[sync-standings API] FIFA streams already updated by streamed.pk live sync.');
+        } else {
+          await syncFifaStreams(config, ref, { manual: req.query.manual === 'true' });
+        }
         console.log('[sync-standings API] FIFA streams sync complete.');
         fifaStreamsSynced = true;
       } catch (err) {
@@ -1013,7 +1147,7 @@ module.exports = async (req, res) => {
       sync: {
         standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
         f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
-        fifaDetails: { synced: fifaDetailsSynced, error: fifaDetailsError },
+        fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.pk' : 'worldcup26.ir', error: fifaDetailsError },
         fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
       },
       data: {
@@ -1026,7 +1160,7 @@ module.exports = async (req, res) => {
       },
       standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
       f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
-      fifaDetails: { synced: fifaDetailsSynced, error: fifaDetailsError },
+      fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.pk' : 'worldcup26.ir', error: fifaDetailsError },
       fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
     });
   } catch(err) {
