@@ -3388,6 +3388,19 @@
                     if (distToMatch < (30 * 60 * 1000) && distToMatch > -(2 * 60 * 60 * 1000)) {
                         $scope.matchIsTimelyLive = true;
                     }
+
+                    if ($scope.raceData && $scope.raceData.isLive && !$scope.raceData.isFinished) {
+                        var elapsedMins = Math.max(0, Math.floor((now - _liveRefDate.getTime()) / 60000));
+                        if (elapsedMins < 45) {
+                            $scope.raceData.matchTime = elapsedMins + "'";
+                        } else if (elapsedMins < 60) {
+                            $scope.raceData.matchTime = "HT";
+                        } else if (elapsedMins < 105) {
+                            $scope.raceData.matchTime = (elapsedMins - 15) + "'";
+                        } else {
+                            $scope.raceData.matchTime = "90+'";
+                        }
+                    }
                 }
 
                 // ── STEP 2: Compute custom timer countdown (uses matchIsTimelyLive)

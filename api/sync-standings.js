@@ -455,7 +455,7 @@ async function syncFifaMatchDetails(config, ref) {
   const fifa = config.fifa || {};
   let games = null;
   try {
-    const responseData = await fetchJson('https://worldcup26.ir/get/games', 25000);
+    const responseData = await fetchJson('https://worldcup26.ir/get/games', 12000);
     games = responseData && responseData.games;
   } catch (err) {
     console.error('[sync-fifa-details] FIFA details API fetch failed, trying local fallback file:', err.message);
@@ -591,6 +591,11 @@ async function syncFifaMatchDetails(config, ref) {
       matchTime = 'FT';
     }
 
+    if (isLive) {
+      const googleMatchTime = await fetchGoogleFifaMatchTime(matchName);
+      if (googleMatchTime) matchTime = googleMatchTime;
+    }
+
     // Build updated fifa object (preserve existing keys, only update match-related fields)
     const currentFifa = config.fifa || {};
     const currentRaceData = currentFifa.raceData || {};
@@ -686,7 +691,35 @@ function pickStreamedFootballMatch(matches, matchName) {
       return (b.match.sources || []).length - (a.match.sources || []).length;
     });
 
-  return (ranked[0] && ranked[0].match) || footballMatches[0];
+  if (ranked[0]) return ranked[0].match;
+  return tokens.length === 0 ? footballMatches[0] : null;
+}
+
+async function fetchStreamedFootballMatches(matchName, preferLiveOnly = false) {
+  const endpoints = preferLiveOnly
+    ? ['https://streamed.pk/api/matches/live']
+    : [
+        'https://streamed.pk/api/matches/live',
+        'https://streamed.pk/api/matches/all-today',
+        'https://streamed.pk/api/matches/all'
+      ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const matches = await fetchJson(endpoint, 8000);
+      if (!Array.isArray(matches)) continue;
+
+      const selected = pickStreamedFootballMatch(matches, matchName);
+      if (selected) {
+        console.log(`[sync-fifa] Matched streamed.pk football event from ${endpoint}: "${selected.title}"`);
+        return { matches, selected, endpoint };
+      }
+    } catch (err) {
+      console.error(`[sync-fifa] Failed to fetch ${endpoint}:`, err.message);
+    }
+  }
+
+  return { matches: [], selected: null, endpoint: null };
 }
 
 async function resolveStreamedLinks(match) {
@@ -701,7 +734,7 @@ async function resolveStreamedLinks(match) {
       }
 
       const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
-      const streams = await fetchJson(streamUrl);
+      const streams = await fetchJson(streamUrl, 8000);
       if (Array.isArray(streams)) {
         streams.forEach((stream) => {
           if (stream.embedUrl) {
@@ -723,13 +756,65 @@ async function resolveStreamedLinks(match) {
   return streamLinks;
 }
 
+function parseGoogleMatchTimeFromHtml(html, matchName) {
+  const $ = cheerio.load(html || '');
+  const text = $('body').text().replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+
+  const teamTokens = tokenizeMatchTitle(matchName).filter(t => t.length > 2);
+  const googleText = text.toLowerCase();
+  const matchingTeams = teamTokens.filter(token => googleText.includes(token)).length;
+  const hasTeams = teamTokens.length === 0 || matchingTeams >= Math.min(2, teamTokens.length);
+  if (!hasTeams) return '';
+
+  const patterns = [
+    /\b(?:HT|FT|Full-time|Half-time)\b/i,
+    /\b(?:\d{1,2}|90)(?:\+\d{1,2})?['’]/,
+    /\b(?:\d{1,2}|90)(?:\+\d{1,2})?\s*min\b/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[0]) {
+      const value = match[0].replace(/Full-time/i, 'FT').replace(/Half-time/i, 'HT').replace(/\s*min/i, "'");
+      return value.replace('’', "'");
+    }
+  }
+
+  return '';
+}
+
+async function fetchGoogleFifaMatchTime(matchName) {
+  try {
+    const query = matchName ? `fifa ${matchName}` : 'fifa live';
+    const { data } = await axios.get('https://www.google.com/search', {
+      timeout: 10000,
+      params: { q: query, hl: 'en', gl: 'IN' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-IN,en;q=0.9'
+      }
+    });
+
+    const matchTime = parseGoogleMatchTimeFromHtml(data, matchName);
+    if (matchTime) {
+      console.log(`[sync-fifa-google] Parsed match time from Google for "${matchName}": ${matchTime}`);
+    } else {
+      console.log(`[sync-fifa-google] No match time found in Google result for "${matchName}".`);
+    }
+    return matchTime;
+  } catch (err) {
+    console.error('[sync-fifa-google] Google match time fetch failed:', err.message);
+    return '';
+  }
+}
+
 async function syncFifaLiveFromStreamed(config, ref, options = {}) {
   const fifa = config.fifa || {};
   const currentRaceData = fifa.raceData || {};
 
   try {
-    const liveMatches = await fetchJson('https://streamed.pk/api/matches/live');
-    const selectedMatch = pickStreamedFootballMatch(liveMatches, currentRaceData.name);
+    const { selected: selectedMatch } = await fetchStreamedFootballMatches(currentRaceData.name, true);
     if (!selectedMatch) {
       console.log('[sync-fifa-live] No live football match found on streamed.pk.');
       return null;
@@ -741,6 +826,7 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
     const awayName = teams.away?.name || String(selectedMatch.title || '').split(/\s+vs\s+/i)[1] || 'TBD';
     const matchName = selectedMatch.title || `${homeName} vs ${awayName}`;
     const kickoffDate = selectedMatch.date ? new Date(selectedMatch.date) : null;
+    const googleMatchTime = await fetchGoogleFifaMatchTime(matchName);
 
     const updatedFifa = {
       ...fifa,
@@ -753,7 +839,7 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
         date: kickoffDate && !isNaN(kickoffDate.getTime()) ? formatFixtureIst(kickoffDate.getTime()) : (currentRaceData.date || ''),
         isLive: true,
         isFinished: false,
-        matchTime: 'LIVE'
+        matchTime: googleMatchTime || currentRaceData.matchTime || 'LIVE'
       },
       customTimer: {
         ...(fifa.customTimer || {}),
@@ -814,11 +900,11 @@ async function syncFifaStreams(config, ref, options = {}) {
 
   try {
     console.log(`[sync-fifa] Fetching live streamed.pk matches to match tokens: ${tokens.join(' ')}`);
-    let matches = await fetchJson('https://streamed.pk/api/matches/live');
+    let matches = await fetchJson('https://streamed.pk/api/matches/live', 8000);
 
     if (!Array.isArray(matches)) {
       console.log('[sync-fifa] Live matches response is not an array. Falling back to all matches.');
-      matches = await fetchJson('https://streamed.pk/api/matches/all');
+      matches = await fetchJson('https://streamed.pk/api/matches/all', 8000);
       if (!Array.isArray(matches)) {
         console.log('[sync-fifa] Matches response is not an array.');
         return;
@@ -829,7 +915,7 @@ async function syncFifaStreams(config, ref, options = {}) {
     const footballMatches = matches.filter(m => m.category === 'football');
 
     // Find and rank all candidate matches
-    const candidates = [];
+    let candidates = [];
     footballMatches.forEach(m => {
       if (!m.title) return;
       const titleLower = m.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
@@ -843,10 +929,33 @@ async function syncFifaStreams(config, ref, options = {}) {
     });
 
     if (candidates.length === 0) {
-      console.log('[sync-fifa] No matching football matches found on streamed.pk. Clearing stale stream links.');
-      // Clear stale stream links so viewer doesn't see wrong match streams
-      const updatedFifa = { ...fifa, streamLinks: [] };
-      await ref.update({ fifa: updatedFifa });
+      const fallbackEndpoints = [
+        'https://streamed.pk/api/matches/all-today',
+        'https://streamed.pk/api/matches/all'
+      ];
+
+      for (const endpoint of fallbackEndpoints) {
+        try {
+          const fallbackMatches = await fetchJson(endpoint, 8000);
+          if (!Array.isArray(fallbackMatches)) continue;
+
+          candidates = fallbackMatches
+            .filter(m => m.category === 'football' && m.title)
+            .map(match => ({ match, count: scoreStreamedMatch(match, tokens) }))
+            .filter(item => item.count > 0);
+
+          if (candidates.length > 0) {
+            console.log(`[sync-fifa] Found ${candidates.length} matching candidates from ${endpoint}.`);
+            break;
+          }
+        } catch (err) {
+          console.error(`[sync-fifa] Failed fallback endpoint ${endpoint}:`, err.message);
+        }
+      }
+    }
+
+    if (candidates.length === 0) {
+      console.log('[sync-fifa] No matching football matches found on streamed.pk. Preserving existing stream links.');
       return;
     }
 
@@ -879,7 +988,7 @@ async function syncFifaStreams(config, ref, options = {}) {
               return;
             }
             const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
-            const streams = await fetchJson(streamUrl);
+            const streams = await fetchJson(streamUrl, 8000);
             if (Array.isArray(streams)) {
               streams.forEach((stream) => {
                 if (stream.embedUrl) {
@@ -912,6 +1021,43 @@ async function syncFifaStreams(config, ref, options = {}) {
       }
     }
 
+    if (!selectedMatch || resolvedStreamLinks.length === 0) {
+      const fallbackEndpoints = [
+        'https://streamed.pk/api/matches/all-today',
+        'https://streamed.pk/api/matches/all'
+      ];
+
+      for (const endpoint of fallbackEndpoints) {
+        try {
+          const fallbackMatches = await fetchJson(endpoint, 8000);
+          if (!Array.isArray(fallbackMatches)) continue;
+
+          const fallbackCandidates = fallbackMatches
+            .filter(m => m.category === 'football' && m.title)
+            .map(match => ({ match, count: scoreStreamedMatch(match, tokens) }))
+            .filter(item => item.count > 0)
+            .sort((a, b) => {
+              if (b.count !== a.count) return b.count - a.count;
+              return (b.match.sources || []).length - (a.match.sources || []).length;
+            });
+
+          for (const candidate of fallbackCandidates) {
+            const links = await resolveStreamedLinks(candidate.match);
+            if (links.length > 0) {
+              selectedMatch = candidate.match;
+              resolvedStreamLinks = links;
+              console.log(`[sync-fifa] Resolved ${links.length} links from fallback ${endpoint} using "${candidate.match.title}".`);
+              break;
+            }
+          }
+
+          if (selectedMatch && resolvedStreamLinks.length > 0) break;
+        } catch (err) {
+          console.error(`[sync-fifa] Failed stream fallback ${endpoint}:`, err.message);
+        }
+      }
+    }
+
     if (selectedMatch && resolvedStreamLinks.length > 0) {
       // Update fifa.streamLinks field in Firestore
       const updatedFifa = {
@@ -922,9 +1068,7 @@ async function syncFifaStreams(config, ref, options = {}) {
       console.log(`[sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
     } else {
       // No streams found — clear any old stale links
-      console.log('[sync-fifa] None of the candidate matches yielded any active stream URLs. Clearing stale links.');
-      const updatedFifa = { ...fifa, streamLinks: [] };
-      await ref.update({ fifa: updatedFifa });
+      console.log('[sync-fifa] None of the candidate matches yielded active stream URLs. Preserving existing links.');
     }
   } catch (err) {
     console.error('[sync-fifa] Error during auto-sync:', err.message);
@@ -1125,7 +1269,7 @@ module.exports = async (req, res) => {
     if (runAll || requestedType === 'fifastreams') {
       console.log('[sync-standings API] Starting FIFA streams sync...');
       try {
-        if (streamedLiveSynced && config.fifa && Array.isArray(config.fifa.streamLinks)) {
+        if (streamedLiveSynced && config.fifa && Array.isArray(config.fifa.streamLinks) && config.fifa.streamLinks.length > 0) {
           console.log('[sync-standings API] FIFA streams already updated by streamed.pk live sync.');
         } else {
           await syncFifaStreams(config, ref, { manual: req.query.manual === 'true' });
