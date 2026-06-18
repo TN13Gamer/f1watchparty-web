@@ -1,6 +1,6 @@
 /**
  * /api/sync-standings — Vercel Serverless Function
- * Called by cron-job.org every 60 seconds.
+ * Called automatically by Vercel Cron and manually from the admin panel.
  * Tries f1.com API first, falls back to Jolpica (official FIA data).
  */
 
@@ -422,6 +422,29 @@ const STADIUM_MAP = {
   '16': { name: 'SoFi Stadium', city: 'Los Angeles', country: 'United States' },
 };
 
+function getFifaGameStatus(game) {
+  const raw = String(game && game.time_elapsed || '').trim().toLowerCase();
+  const isFinished = String(game && game.finished || '').toUpperCase() === 'TRUE' ||
+    raw === 'finished' ||
+    raw === 'ft';
+  const isNotStarted = raw === 'notstarted' ||
+    raw === 'not started' ||
+    raw === 'ns' ||
+    raw === '';
+  const isLive = !isFinished && !isNotStarted && (
+    raw === 'live' ||
+    raw === 'ht' ||
+    raw.includes("'") ||
+    /^\d+$/.test(raw)
+  );
+
+  return {
+    status: isLive ? 'live' : (isFinished ? 'finished' : 'notstarted'),
+    isLive,
+    isFinished
+  };
+}
+
 /**
  * Fetch current/next FIFA match from worldcup26.ir and update Firestore details.
  * Updates: raceData.name, raceData.round, raceData.circuit, raceData.location,
@@ -492,7 +515,7 @@ async function syncFifaMatchDetails(config, ref) {
     // 1) Find live match first — but only if kickoff was within 3.25 hours (prevents stale "live" labels)
     const THREE_QUARTER_HOURS_MS = 3.25 * 60 * 60 * 1000;
     let chosen = null;
-    const liveGame = games.find(g => g.time_elapsed === 'live');
+    const liveGame = games.find(g => getFifaGameStatus(g).isLive);
     if (liveGame) {
       const liveKickoffMs = parseGameDate(liveGame.local_date, liveGame.stadium_id);
       if (liveKickoffMs && (now - liveKickoffMs) < THREE_QUARTER_HOURS_MS) {
@@ -505,7 +528,7 @@ async function syncFifaMatchDetails(config, ref) {
     // 2) If none live (or stale), pick next upcoming (closest future kickoff)
     if (!chosen) {
       const upcoming = games
-        .filter(g => g.time_elapsed === 'notstarted')
+        .filter(g => getFifaGameStatus(g).status === 'notstarted')
         .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date, g.stadium_id) }))
         .filter(g => g._kickoffMs && g._kickoffMs > (now - 2.5 * 60 * 60 * 1000))
         .sort((a, b) => a._kickoffMs - b._kickoffMs);
@@ -539,15 +562,21 @@ async function syncFifaMatchDetails(config, ref) {
     // Friendly date string formatted in IST for display (e.g. "13 Jun 23:30")
     const friendlyDate = formatFixtureIst(kickoffMs);
 
-    const isLive = chosen.time_elapsed === 'live';
-    const isFinished = chosen.finished === 'TRUE';
+    const chosenStatus = getFifaGameStatus(chosen);
+    const isLive = chosenStatus.isLive;
+    const isFinished = chosenStatus.isFinished;
     const homeScore = chosen.home_score || '0';
     const awayScore = chosen.away_score || '0';
 
     let matchTime = '';
     if (isLive && kickoffMs) {
-      const elapsedMins = Math.floor((Date.now() - kickoffMs) / 60000);
-      if (elapsedMins < 0) {
+      const rawElapsed = String(chosen.time_elapsed || '').trim();
+      const elapsedMins = /^\d+$/.test(rawElapsed)
+        ? parseInt(rawElapsed, 10)
+        : Math.floor((Date.now() - kickoffMs) / 60000);
+      if (rawElapsed.toLowerCase() === 'ht') {
+        matchTime = 'HT';
+      } else if (elapsedMins < 0) {
         matchTime = '0\'';
       } else if (elapsedMins < 45) {
         matchTime = `${elapsedMins}'`;
@@ -797,6 +826,13 @@ module.exports = async (req, res) => {
 
   try {
     console.log('[sync-standings API] Accessing Firestore...');
+    if (!admin.apps.length) {
+      return res.status(500).json({
+        ok: false,
+        error: 'Firebase Admin is not initialized. Set FIREBASE_SERVICE_ACCOUNT in production or add a local service account file.'
+      });
+    }
+
     const db = admin.firestore();
     const ref = db.collection('app_data').doc('live_config');
     const doc = await ref.get();
@@ -965,9 +1001,26 @@ module.exports = async (req, res) => {
       }
     }
 
+    const finalDoc = await ref.get();
+    const finalConfig = finalDoc.exists ? finalDoc.data() : config;
+
     console.log('[sync-standings API] Sending response...');
     res.json({
       ok: true,
+      sync: {
+        standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
+        f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
+        fifaDetails: { synced: fifaDetailsSynced, error: fifaDetailsError },
+        fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
+      },
+      data: {
+        standings: finalConfig.standings || [],
+        constructors: finalConfig.constructors || [],
+        lastStandingsSync: finalConfig.lastStandingsSync || syncedAt,
+        standingsSource: finalConfig.standingsSource || source,
+        streamLinks: finalConfig.streamLinks || [],
+        fifa: finalConfig.fifa || {}
+      },
       standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
       f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
       fifaDetails: { synced: fifaDetailsSynced, error: fifaDetailsError },

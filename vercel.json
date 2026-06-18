@@ -1,6 +1,17 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "crons": [
+    {
+      "path": "/api/sync-standings",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
     {
       "source": "/admin",
       "destination": "/admin.html"

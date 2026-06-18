@@ -2533,7 +2533,7 @@
                         <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
                         <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
                         <div class="meta-item"><strong>Kickoff</strong>{{raceData.date}}</div>
-                        <div class="meta-item" ng-if="raceData.isLive && streamLinks.length > 0">
+                        <div class="meta-item" ng-if="raceData.isLive">
                             <strong>Score</strong>
                             <span style="font-weight: 900; font-size: 20px; color: #00ff55; letter-spacing: 2px;">
                                 {{raceData.homeScore}} – {{raceData.awayScore}}
@@ -3490,7 +3490,7 @@
 
 
             $scope.loadFifaData = function () {
-                $http.get(apiUrl('/api/fifa/fixtures')).then(function (res) {
+                $http.get(apiUrl('/api/fifa/fixtures?ts=' + Date.now())).then(function (res) {
                     var raw = res.data || [];
 
                     // Sort: LIVE first, then upcoming (earliest first), then finished (latest first)
@@ -3502,23 +3502,31 @@
 
                     $scope.fixtures = live.concat(upcoming).concat(finished);
 
-                    // ── Auto-sync live score from fixtures API into raceData ──
-                    // Only do this if autoSyncDetails is true! Otherwise, respect the admin's manual scores.
+                    // Keep the hero match live from the fixtures API while auto-sync is enabled.
                     if ($scope.autoSyncDetails) {
+                        var matchedFixture = null;
                         if ($scope.raceData && $scope.raceData.name) {
                             var rName = $scope.raceData.name.toLowerCase();
-                            var matchedFixture = raw.find(function (m) {
-                                // Match by "Home vs Away" name pattern
+                            matchedFixture = raw.find(function (m) {
                                 var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
                                 return fName === rName;
                             });
-                            if (matchedFixture) {
-                                $scope.raceData.homeScore = matchedFixture.homeScore || '0';
-                                $scope.raceData.awayScore = matchedFixture.awayScore || '0';
-                                // Also sync live/finished status from the API
-                                if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
-                                if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
-                            }
+                        }
+
+                        matchedFixture = matchedFixture || live[0] || upcoming[0] || null;
+
+                        if (matchedFixture) {
+                            $scope.raceData = angular.extend({}, $scope.raceData, {
+                                name: (matchedFixture.homeTeam || 'TBD') + ' vs ' + (matchedFixture.awayTeam || 'TBD'),
+                                round: matchedFixture.round || $scope.raceData.round,
+                                circuit: matchedFixture.stadium || $scope.raceData.circuit,
+                                date: matchedFixture.localDate || $scope.raceData.date,
+                                homeScore: matchedFixture.homeScore || '0',
+                                awayScore: matchedFixture.awayScore || '0',
+                                isLive: matchedFixture.status === 'live',
+                                isFinished: !!matchedFixture.finished,
+                                matchTime: matchedFixture.matchTime || ''
+                            });
                         }
                     }
 
@@ -3554,7 +3562,7 @@
                     console.error('Failed to load FIFA fixtures:', err);
                 });
 
-                $http.get(apiUrl('/api/fifa/standings')).then(function (res) {
+                $http.get(apiUrl('/api/fifa/standings?ts=' + Date.now())).then(function (res) {
                     $scope.groups = res.data || [];
                     // Cache to LocalStorage for instant next-load
                     try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch (e) { }
@@ -3568,7 +3576,7 @@
             // Load fixtures & standings immediately on boot (don't wait for Firestore)
             $scope.loadFifaData();
 
-            // Smart refresh: 20s when a match is live, 2 min otherwise
+            // Smart refresh: 15s when a match is live, 60s otherwise
             var _fixtureRefreshInterval = null;
             var _lastRefreshIntervalLive = null;
             function scheduleFixtureRefresh() {
@@ -3582,12 +3590,12 @@
 
                 if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
                 _lastRefreshIntervalLive = isLive;
-                var delay = isLive ? 20 * 1000 : 2 * 60 * 1000;
+                var delay = isLive ? 15 * 1000 : 60 * 1000;
 
                 console.log('⚽ Scheduling next fixture refresh in', delay / 1000, 'seconds (isLive:', isLive, ')');
                 _fixtureRefreshInterval = $interval(function () {
                     $scope.loadFifaData();
-                }, delay, 1);
+                }, delay);
             }
 
             // Watch for changes in live states to immediately adjust the polling speed

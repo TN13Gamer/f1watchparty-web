@@ -231,6 +231,31 @@ function formatFixtureIst(kickoffMs) {
     return `${day} ${month} ${hour}:${minute}`;
 }
 
+function getGameStatus(game) {
+    const raw = String(game && game.time_elapsed || '').trim().toLowerCase();
+    const isFinished = String(game && game.finished || '').toUpperCase() === 'TRUE' ||
+        raw === 'finished' ||
+        raw === 'ft';
+
+    const isNotStarted = raw === 'notstarted' ||
+        raw === 'not started' ||
+        raw === 'ns' ||
+        raw === '';
+
+    const isLive = !isFinished && !isNotStarted && (
+        raw === 'live' ||
+        raw === 'ht' ||
+        raw.includes("'") ||
+        /^\d+$/.test(raw)
+    );
+
+    return {
+        status: isLive ? 'live' : (isFinished ? 'finished' : 'notstarted'),
+        isLive,
+        isFinished
+    };
+}
+
 function formatData(games, teamsData) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const roundMap = {
@@ -284,12 +309,17 @@ function formatData(games, teamsData) {
         const homeInfo = lookupTeam(g.home_team_id, g.home_team_name_en || g.home_team_label);
         const awayInfo = lookupTeam(g.away_team_id, g.away_team_name_en || g.away_team_label);
 
-        const isFinished = g.finished === 'TRUE';
-        const isLive = g.time_elapsed === 'live';
+        const gameStatus = getGameStatus(g);
+        const isFinished = gameStatus.isFinished;
+        const isLive = gameStatus.isLive;
         let matchTime = '';
         if (isLive && kickoffTs && kickoffTs !== Number.MAX_SAFE_INTEGER) {
-            const elapsedMins = Math.floor((now - kickoffTs) / 60000);
-            if (elapsedMins < 0) matchTime = '0\'';
+            const rawElapsed = String(g.time_elapsed || '').trim();
+            const elapsedMins = /^\d+$/.test(rawElapsed)
+                ? parseInt(rawElapsed, 10)
+                : Math.floor((now - kickoffTs) / 60000);
+            if (String(g.time_elapsed || '').trim().toLowerCase() === 'ht') matchTime = 'HT';
+            else if (elapsedMins < 0) matchTime = '0\'';
             else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
             else if (elapsedMins < 60) matchTime = 'HT';
             else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
@@ -312,7 +342,7 @@ function formatData(games, teamsData) {
             timezone: 'IST',
             kickoffTs,
             sortTs: kickoffTs,
-            status: g.time_elapsed,
+            status: gameStatus.status,
             finished: isFinished,
             round,
             stadium: stadium.name,
@@ -325,7 +355,9 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Cache-Control', 'no-store'); // prevent CDN/browser caching
+    res.setHeader('Cache-Control', 'no-store, no-cache, max-age=0, s-maxage=0, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const now = Date.now();

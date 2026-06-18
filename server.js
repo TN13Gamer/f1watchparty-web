@@ -434,7 +434,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
         // 1) Find live match first — but only if kickoff was within 3.25 hours (prevents stale "live" labels)
         const THREE_QUARTER_HOURS_MS = 3.25 * 60 * 60 * 1000;
         let chosen = null;
-        const liveGame = games.find(g => g.time_elapsed === 'live');
+        const liveGame = games.find(g => getServerFifaGameStatus(g).isLive);
         if (liveGame) {
             const liveKickoffMs = parseGameDate(liveGame.local_date, liveGame.stadium_id);
             if (liveKickoffMs && (now - liveKickoffMs) < THREE_QUARTER_HOURS_MS) {
@@ -445,7 +445,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
         }
         if (!chosen) {
             const upcoming = games
-                .filter(g => g.time_elapsed === 'notstarted')
+                .filter(g => getServerFifaGameStatus(g).status === 'notstarted')
                 .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date, g.stadium_id) }))
                 .filter(g => g._kickoffMs && g._kickoffMs > (now - 2.5 * 60 * 60 * 1000))
                 .sort((a, b) => a._kickoffMs - b._kickoffMs);
@@ -473,13 +473,19 @@ async function syncFifaMatchDetailsLocal(config, ref) {
 
         const friendlyDate = formatFifaFixtureIst(kickoffMs);
 
-        const isLive = chosen.time_elapsed === 'live';
-        const isFinished = chosen.finished === 'TRUE';
+        const chosenStatus = getServerFifaGameStatus(chosen);
+        const isLive = chosenStatus.isLive;
+        const isFinished = chosenStatus.isFinished;
         
         let matchTime = '';
         if (isLive && kickoffMs) {
-            const elapsedMins = Math.floor((Date.now() - kickoffMs) / 60000);
-            if (elapsedMins < 0) {
+            const rawElapsed = String(chosen.time_elapsed || '').trim();
+            const elapsedMins = /^\d+$/.test(rawElapsed)
+                ? parseInt(rawElapsed, 10)
+                : Math.floor((Date.now() - kickoffMs) / 60000);
+            if (rawElapsed.toLowerCase() === 'ht') {
+                matchTime = 'HT';
+            } else if (elapsedMins < 0) {
                 matchTime = '0\'';
             } else if (elapsedMins < 45) {
                 matchTime = `${elapsedMins}'`;
@@ -893,6 +899,29 @@ function formatFifaFixtureIst(kickoffMs) {
     return `${day} ${month} ${hour}:${minute}`;
 }
 
+function getServerFifaGameStatus(game) {
+    const raw = String(game && game.time_elapsed || '').trim().toLowerCase();
+    const isFinished = String(game && game.finished || '').toUpperCase() === 'TRUE' ||
+        raw === 'finished' ||
+        raw === 'ft';
+    const isNotStarted = raw === 'notstarted' ||
+        raw === 'not started' ||
+        raw === 'ns' ||
+        raw === '';
+    const isLive = !isFinished && !isNotStarted && (
+        raw === 'live' ||
+        raw === 'ht' ||
+        raw.includes("'") ||
+        /^\d+$/.test(raw)
+    );
+
+    return {
+        status: isLive ? 'live' : (isFinished ? 'finished' : 'notstarted'),
+        isLive,
+        isFinished
+    };
+}
+
 // Proactive background refresh of fixtures (every 2 minutes)
 async function refreshFifaFixtures() {
     try {
@@ -908,8 +937,8 @@ async function refreshFifaFixtures() {
         try {
             fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_games.json'), JSON.stringify({ games }, null, 2));
             if (Array.isArray(teams)) fs.writeFileSync(path.join(__dirname, 'api/fifa/fallback_teams.json'), JSON.stringify({ teams }, null, 2));
-            const finished = games.filter(g => g.finished === 'TRUE').length;
-            const live = games.filter(g => g.time_elapsed === 'live').length;
+            const finished = games.filter(g => getServerFifaGameStatus(g).isFinished).length;
+            const live = games.filter(g => getServerFifaGameStatus(g).isLive).length;
             console.log(`[fifa-refresh] Updated fallback data: ${games.length} games, ${finished} finished, ${live} live`);
         } catch(writeErr) {
             console.error('[fifa-refresh] Failed to save fallback:', writeErr.message);
@@ -943,12 +972,17 @@ async function refreshFifaFixtures() {
             const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
             const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
 
-            const isFinished = g.finished === 'TRUE';
-            const isLive = g.time_elapsed === 'live';
+            const gameStatus = getServerFifaGameStatus(g);
+            const isFinished = gameStatus.isFinished;
+            const isLive = gameStatus.isLive;
             let matchTime = '';
             if (isLive && kickoffTs) {
-                const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
-                if (elapsedMins < 0) matchTime = '0\'';
+                const rawElapsed = String(g.time_elapsed || '').trim();
+                const elapsedMins = /^\d+$/.test(rawElapsed)
+                    ? parseInt(rawElapsed, 10)
+                    : Math.floor((Date.now() - kickoffTs) / 60000);
+                if (rawElapsed.toLowerCase() === 'ht') matchTime = 'HT';
+                else if (elapsedMins < 0) matchTime = '0\'';
                 else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
                 else if (elapsedMins < 60) matchTime = 'HT';
                 else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
@@ -962,7 +996,7 @@ async function refreshFifaFixtures() {
                 homeFlag: getFlag(g.home_team_id, homeName),
                 awayFlag: getFlag(g.away_team_id, awayName),
                 homeScore: g.home_score || '0', awayScore: g.away_score || '0',
-                localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: g.time_elapsed,
+                localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: gameStatus.status,
                 finished: isFinished, round, stadium: stadium.name,
                 matchTime: matchTime
             };
@@ -1019,7 +1053,8 @@ app.get('/api/fifa/fixtures', async (req, res) => {
 
         const formatted = sortFifaFixturesByKickoff(games).map(g => {
             const stadium = STADIUM_MAP_SERVER[g.stadium_id] || { name: 'Stadium', city: '', country: '' };
-            const isFinished = g.finished === 'TRUE';
+            const gameStatus = getServerFifaGameStatus(g);
+            const isFinished = gameStatus.isFinished;
             const roundMap = { group: `Group ${g.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
             const round = roundMap[g.type] || g.group || 'World Cup 2026';
             
@@ -1029,11 +1064,15 @@ app.get('/api/fifa/fixtures', async (req, res) => {
             const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
             const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
 
-            const isLive = g.time_elapsed === 'live';
+            const isLive = gameStatus.isLive;
             let matchTime = '';
             if (isLive && kickoffTs) {
-                const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
-                if (elapsedMins < 0) matchTime = '0\'';
+                const rawElapsed = String(g.time_elapsed || '').trim();
+                const elapsedMins = /^\d+$/.test(rawElapsed)
+                    ? parseInt(rawElapsed, 10)
+                    : Math.floor((Date.now() - kickoffTs) / 60000);
+                if (rawElapsed.toLowerCase() === 'ht') matchTime = 'HT';
+                else if (elapsedMins < 0) matchTime = '0\'';
                 else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
                 else if (elapsedMins < 60) matchTime = 'HT';
                 else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
@@ -1054,7 +1093,7 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                 timezone: 'IST',
                 kickoffTs,
                 sortTs: kickoffTs,
-                status: g.time_elapsed,
+                status: gameStatus.status,
                 finished: isFinished,
                 round: round,
                 stadium: stadium.name,
@@ -1102,12 +1141,17 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                 const homeName = g.home_team_name_en || g.home_team_label || 'TBD';
                 const awayName = g.away_team_name_en || g.away_team_label || 'TBD';
                 
-                const isFinished = g.finished === 'TRUE';
-                const isLive = g.time_elapsed === 'live';
+                const gameStatus = getServerFifaGameStatus(g);
+                const isFinished = gameStatus.isFinished;
+                const isLive = gameStatus.isLive;
                 let matchTime = '';
                 if (isLive && kickoffTs) {
-                    const elapsedMins = Math.floor((Date.now() - kickoffTs) / 60000);
-                    if (elapsedMins < 0) matchTime = '0\'';
+                    const rawElapsed = String(g.time_elapsed || '').trim();
+                    const elapsedMins = /^\d+$/.test(rawElapsed)
+                        ? parseInt(rawElapsed, 10)
+                        : Math.floor((Date.now() - kickoffTs) / 60000);
+                    if (rawElapsed.toLowerCase() === 'ht') matchTime = 'HT';
+                    else if (elapsedMins < 0) matchTime = '0\'';
                     else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
                     else if (elapsedMins < 60) matchTime = 'HT';
                     else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
@@ -1121,7 +1165,7 @@ app.get('/api/fifa/fixtures', async (req, res) => {
                     homeFlag: getFlagFb(g.home_team_id, homeName),
                     awayFlag: getFlagFb(g.away_team_id, awayName),
                     homeScore: g.home_score || '0', awayScore: g.away_score || '0',
-                    localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: g.time_elapsed,
+                    localDate: friendlyDate, timezone: 'IST', kickoffTs, sortTs: kickoffTs, status: gameStatus.status,
                     finished: isFinished, round, stadium: stadium.name,
                     matchTime: matchTime
                 };
