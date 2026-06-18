@@ -2219,7 +2219,11 @@
 
                         return $http.get(targetUrl);
                     })
-                    .then(() => {
+                    .then((res) => {
+                        const responseLinks = res.data && res.data.data && res.data.data.fifa && res.data.data.fifa.streamLinks;
+                        if (responseLinks) {
+                            $scope.config.fifa.streamLinks = responseLinks;
+                        }
                         // Step 3: Fetch updated document from Firestore
                         return db.collection("app_data").doc("live_config").get();
                     })
@@ -2230,7 +2234,11 @@
                                 if (data.fifa && data.fifa.streamLinks) {
                                     $scope.config.fifa.streamLinks = data.fifa.streamLinks;
                                 }
-                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
+                                if ($scope.config.fifa.streamLinks && $scope.config.fifa.streamLinks.length > 0) {
+                                    $scope.showToast("FIFA streams fetched and updated successfully!", "success");
+                                } else {
+                                    $scope.showToast("No active stream links found yet for this match.", "info");
+                                }
                                 $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
                             }
                             $scope.fetchingFifaStreams = false;

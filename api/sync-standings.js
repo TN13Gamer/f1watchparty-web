@@ -658,10 +658,11 @@ function enrichTokens(tokens) {
   return Array.from(enriched);
 }
 
-async function syncFifaStreams(config, ref) {
+async function syncFifaStreams(config, ref, options = {}) {
   const fifa = config.fifa || {};
+  const isManual = !!options.manual;
   console.log('[sync-fifa] Starting FIFA stream sync. config.fifa exists:', !!config.fifa, 'autoSyncStreams:', fifa.autoSyncStreams);
-  if (fifa.autoSyncStreams === false) {
+  if (fifa.autoSyncStreams === false && !isManual) {
     console.log('[sync-fifa] Auto-sync disabled (autoSyncStreams is false).');
     return;
   }
@@ -678,11 +679,13 @@ async function syncFifaStreams(config, ref) {
     const kickoffMs = new Date(customTimerTarget).getTime();
     const now_s = Date.now();
     const isLive = fifa.raceData?.isLive;
-    if (!isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+    if (!isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
       console.log('[sync-fifa] Next match is >10 minutes away and not live. Clearing stale stream links.');
       const updatedFifa = { ...fifa, streamLinks: [] };
       await ref.update({ fifa: updatedFifa });
       return;
+    } else if (isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+      console.log('[sync-fifa] Manual stream sync requested before the 10-minute live window; searching streams anyway.');
     }
   }
 
@@ -962,7 +965,7 @@ module.exports = async (req, res) => {
     let fifaDetailsSynced = false;
     let fifaDetailsError = null;
     let updatedFifaConfig = null;
-    if (runAll || requestedType === 'fifadetails') {
+    if (runAll || requestedType === 'fifadetails' || (requestedType === 'fifastreams' && req.query.manual === 'true')) {
       const fifa = config.fifa || {};
       const shouldSync = fifa.autoSyncDetails !== false || req.query.manual === 'true';
       if (shouldSync) {
@@ -992,7 +995,7 @@ module.exports = async (req, res) => {
     if (runAll || requestedType === 'fifastreams') {
       console.log('[sync-standings API] Starting FIFA streams sync...');
       try {
-        await syncFifaStreams(config, ref);
+        await syncFifaStreams(config, ref, { manual: req.query.manual === 'true' });
         console.log('[sync-standings API] FIFA streams sync complete.');
         fifaStreamsSynced = true;
       } catch (err) {

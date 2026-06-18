@@ -562,10 +562,11 @@ function enrichTokens(tokens) {
   return Array.from(enriched);
 }
 
-async function syncFifaStreamsLocal(config, ref) {
+async function syncFifaStreamsLocal(config, ref, options = {}) {
   const fifa = config.fifa || {};
+  const isManual = !!options.manual;
   console.log('[local-sync-fifa] Starting FIFA stream sync. autoSyncStreams:', fifa.autoSyncStreams);
-  if (fifa.autoSyncStreams === false) {
+  if (fifa.autoSyncStreams === false && !isManual) {
     console.log('[local-sync-fifa] Auto-sync disabled (autoSyncStreams is false).');
     return;
   }
@@ -582,11 +583,13 @@ async function syncFifaStreamsLocal(config, ref) {
     const kickoffMs = new Date(customTimerTarget).getTime();
     const now_s = Date.now();
     const isLive = fifa.raceData?.isLive;
-    if (!isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+    if (!isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
       console.log('[local-sync-fifa] Match is >10 min away and not live. Clearing stale stream links.');
       const updatedFifa = { ...fifa, streamLinks: [] };
       await ref.update({ fifa: updatedFifa });
       return;
+    } else if (isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
+      console.log('[local-sync-fifa] Manual stream sync requested before live window; searching streams anyway.');
     }
   }
 
