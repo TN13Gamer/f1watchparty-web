@@ -1,6 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.png", "use": "@vercel/static" },
+    { "src": "*.mp4", "use": "@vercel/static" },
+    { "src": "*.webm", "use": "@vercel/static" },
+    { "src": "*.json", "use": "@vercel/static" },
+    { "src": "f1watchparty-web-main/f1watchparty-web-main/*.html", "use": "@vercel/static" },
+    { "src": "f1watchparty-web-main/f1watchparty-web-main/*.png", "use": "@vercel/static" },
+    { "src": "f1watchparty-web-main/f1watchparty-web-main/*.mp4", "use": "@vercel/static" }
+  ],
   "crons": [
     {
       "path": "/api/sync-fifa",
