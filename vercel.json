@@ -1,18 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "functions": {
-    "api/sync-fifa.js": {
-      "maxDuration": 60
-    },
-    "api/sync-standings.js": {
-      "maxDuration": 60
-    }
-  },
   "crons": [
     {
       "path": "/api/sync-fifa",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "rewrites": [
