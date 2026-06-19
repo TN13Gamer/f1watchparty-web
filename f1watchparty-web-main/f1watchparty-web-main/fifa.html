@@ -1772,6 +1772,26 @@
             .chat-sidebar.open {
                 right: 0;
             }
+
+            /* ── Sport toggle: icon-only on mobile ── */
+            .sport-toggle-container {
+                margin-left: 6px;
+                padding: 2px;
+                border-radius: 15px;
+            }
+
+            .sport-toggle-btn {
+                padding: 4px 6px;
+                gap: 0;
+                min-width: 26px;
+                min-height: 26px;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            .sport-toggle-btn .toggle-label {
+                display: none;
+            }
         }
 
         /* Floating Back Button on Landing Page */
@@ -1809,8 +1829,8 @@
             display: flex;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 4px;
-            border-radius: 30px;
+            padding: 3px;
+            border-radius: 20px;
             position: relative;
             margin-left: 20px;
             backdrop-filter: blur(5px);
@@ -1821,12 +1841,12 @@
             background: transparent;
             border: none;
             color: var(--text-gray);
-            padding: 6px 18px;
-            font-size: 11px;
+            padding: 4px 12px;
+            font-size: 9.5px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-radius: 20px;
+            border-radius: 15px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -2153,10 +2173,10 @@
                 <span class="logo-text fifa-logo-gradient">WatchFIFA<span>.Live</span></span>
                 <div class="sport-toggle-container">
                     <button class="sport-toggle-btn" ng-click="goToF1()">
-                        <i class="fa-solid fa-car-side"></i> F1 Party
+                        <i class="fa-solid fa-car-side"></i><span class="toggle-label"> F1 Party</span>
                     </button>
                     <button class="sport-toggle-btn active">
-                        <i class="fa-solid fa-futbol"></i> FIFA Party
+                        <i class="fa-solid fa-futbol"></i><span class="toggle-label"> FIFA Party</span>
                     </button>
                 </div>
             </div>
@@ -2526,10 +2546,10 @@
         <!-- Sport Switch Toggle -->
         <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
             <button class="sport-toggle-btn" ng-click="goToF1()">
-                <i class="fa-solid fa-car-side"></i> F1 Party
+                <i class="fa-solid fa-car-side"></i><span class="toggle-label"> F1 Party</span>
             </button>
             <button class="sport-toggle-btn active">
-                <i class="fa-solid fa-futbol"></i> FIFA Party
+                <i class="fa-solid fa-futbol"></i><span class="toggle-label"> FIFA Party</span>
             </button>
         </div>
         <!-- Up Next Marquee Banner removed (FIFA only) -->
