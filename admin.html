@@ -1128,6 +1128,55 @@
                     </div>
                 </div>
 
+                <!-- FIFA Custom Countdown Timer Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the match schedule countdown with a custom target kickoff time.</p>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;">
+                            <input type="checkbox" ng-model="config.fifa.customTimer.enabled" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <span>Enable Custom Timer</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;" ng-if="config.fifa.customTimer.enabled">
+                            <input type="checkbox" ng-model="config.fifa.customTimer.isManual" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <span>Manual Kickoff Override (Prevents auto-sync overwrites)</span>
+                        </label>
+                    </div>
+
+                    <div class="grid-row" ng-if="config.fifa.customTimer.enabled">
+                        <div class="input-group">
+                            <label>Timer Label / Title</label>
+                            <input type="text" ng-model="config.fifa.customTimer.label" placeholder="e.g. MATCH KICKS OFF" ng-change="saveLiveConfig(true)" style="border-left-color: #00ff55;">
+                        </div>
+                        <div class="input-group">
+                            <label>Target Date-Time (Format: YYYY-MM-DDTHH:MM:SSZ)</label>
+                            <input type="text" ng-model="config.fifa.customTimer.target" placeholder="e.g. 2026-06-19T01:00:00Z" ng-change="saveLiveConfig(true)" style="border-left-color: #00ff55;">
+                        </div>
+                    </div>
+
+                    <!-- Sync from Google Match URL Widget -->
+                    <div ng-if="config.fifa.customTimer.enabled" style="margin-top: 15px; background: rgba(0, 255, 85, 0.03); border: 1px dashed rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-link" style="margin-right: 5px;"></i> Sync Kickoff from Google Match URL
+                        </h4>
+                        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                            Paste a Google match search URL to automatically extract the precise UTC kickoff time and enable manual override.
+                        </p>
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <input type="text" ng-model="fifaGoogleUrl" placeholder="Paste Google search match URL here" style="margin-bottom: 0; border-left-color: #00ff55;">
+                            </div>
+                            <button type="button" class="action-btn" ng-click="syncFifaTimeFromGoogleUrl()" style="height: 44px; padding: 0 20px; background-color: #00ff55; color: #000; border-color: #00ff88; font-size: 12px; font-weight: 700;">
+                                <i class="fa-solid fa-arrows-spin"></i> Sync Time
+                            </button>
+                            <button type="button" class="dashed-btn" ng-click="resetFifaTimerToAuto()" style="height: 44px; padding: 0 15px; font-size: 12px;" title="Reset to auto-sync from worldcup26.ir">
+                                <i class="fa-solid fa-rotate-left"></i> Reset to Auto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- FIFA Widget Visibility Panel -->
                 <div class="admin-section animate-in" style="margin-bottom: 25px;">
                     <h3><span><i class="fa-solid fa-toggle-on" style="color: #00ff55; margin-right: 10px;"></i> FIFA Widget Visibility Controls</span></h3>
@@ -1483,6 +1532,17 @@
         var app = angular.module('adminApp', []);
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
+            function apiUrl(path) {
+                if (window.location.protocol === 'file:') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true') {
+                        return 'http://localhost:3000' + path;
+                    }
+                    return 'https://f1watchparty-web.vercel.app' + path;
+                }
+                return path;
+            }
+
             $scope.currentView = 'live'; 
             $scope.adminSportView = 'f1';
             $scope.setAdminSportView = function(view) {
@@ -1545,6 +1605,7 @@
 
             // --- DATA LOADING ---
             let unsubscribeConfig = null;
+            let lastSaveTimestamp = 0; // ms timestamp of the last admin save
             $scope.loadAllData = function() {
                 if (unsubscribeConfig) unsubscribeConfig();
                 unsubscribeConfig = db.collection("app_data").doc("live_config").onSnapshot(doc => {
@@ -1580,9 +1641,10 @@
                                 if (data.autoSyncStandings !== undefined) $scope.config.autoSyncStandings = data.autoSyncStandings;
                             }
 
-                            // 3. Merge FIFA Settings if not editing them
+                            // 3. Merge FIFA Settings if not editing them (also suppress for 5s after a save to avoid cron race)
+                            const recentlySaved = (Date.now() - lastSaveTimestamp) < 5000;
                             const editingFifaLive = ($scope.currentView === 'live' && $scope.adminSportView === 'fifa');
-                            if (!editingFifaLive) {
+                            if (!editingFifaLive && !recentlySaved) {
                                 if (data.fifa !== undefined) $scope.config.fifa = data.fifa;
                             }
 
@@ -1785,11 +1847,7 @@
             $scope.clearChat = function() {
                 $scope.showConfirm("Are you sure you want to clear ALL chat messages? This cannot be undone.", function() {
                     $scope.clearingChat = true;
-                    let primaryUrl = '/api/chat/clear';
-                    let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/chat/clear';
-                    let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
-
-                    $http.post(targetUrl)
+                    $http.post(apiUrl('/api/chat/clear'))
                         .then(res => {
                             $scope.clearingChat = false;
                             $scope.showToast("Chat messages cleared successfully!", "success");
@@ -1861,11 +1919,7 @@
                 if ($scope.fetchingStandings) return;
                 $scope.fetchingStandings = true;
 
-                var primaryUrl = '/api/sync-standings?manual=true&type=standings';
-                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=standings';
-                var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
-
-                $http.get(targetUrl).then(function(res) {
+                $http.get(apiUrl('/api/sync-standings?manual=true&type=standings')).then(function(res) {
                     db.collection('app_data').doc('live_config').get().then(function(doc) {
                         $timeout(function() {
                             if (doc.exists) {
@@ -2001,6 +2055,61 @@
                 }
             };
 
+            $scope.fifaGoogleUrl = "";
+            $scope.syncFifaTimeFromGoogleUrl = function() {
+                if (!$scope.fifaGoogleUrl) {
+                    $scope.showToast("Please paste a Google match search URL first.", "error");
+                    return;
+                }
+                const url = $scope.fifaGoogleUrl.trim();
+                // Match ISO string in URL (e.g. 2026-06-19T01:00:00Z)
+                const isoMatch = url.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)/i);
+                if (isoMatch) {
+                    const parsedTime = isoMatch[1];
+                    $scope.config.fifa.customTimer.target = parsedTime;
+                    $scope.config.fifa.customTimer.enabled = true;
+                    $scope.config.fifa.customTimer.isManual = true;
+                    if (!$scope.config.fifa.customTimer.label) {
+                        $scope.config.fifa.customTimer.label = "MATCH KICKS OFF";
+                    }
+                    $scope.saveLiveConfig(true);
+                    $scope.showToast("Timer target synced to " + parsedTime, "success");
+                    $scope.addLog("Synced FIFA custom timer target from Google match URL: " + parsedTime);
+                    $scope.fifaGoogleUrl = ""; // clear after success
+                } else {
+                    // Try pattern matching without 'Z'
+                    const isoNoZMatch = url.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/i);
+                    if (isoNoZMatch) {
+                        const parsedTime = isoNoZMatch[1] + "Z";
+                        $scope.config.fifa.customTimer.target = parsedTime;
+                        $scope.config.fifa.customTimer.enabled = true;
+                        $scope.config.fifa.customTimer.isManual = true;
+                        if (!$scope.config.fifa.customTimer.label) {
+                            $scope.config.fifa.customTimer.label = "MATCH KICKS OFF";
+                        }
+                        $scope.saveLiveConfig(true);
+                        $scope.showToast("Timer target synced to " + parsedTime, "success");
+                        $scope.addLog("Synced FIFA custom timer target from Google match URL (UTC): " + parsedTime);
+                        $scope.fifaGoogleUrl = ""; // clear after success
+                    } else {
+                        $scope.showToast("Could not find a valid date-time in the pasted URL. Ensure it contains a timestamp (e.g. 2026-06-19T01:00:00Z).", "error");
+                    }
+                }
+            };
+
+            $scope.resetFifaTimerToAuto = function() {
+                $scope.showConfirm("This will clear the manual timer override and restore automatic sync. Continue?", function() {
+                    $timeout(() => {
+                        if ($scope.config.fifa && $scope.config.fifa.customTimer) {
+                            $scope.config.fifa.customTimer.isManual = false;
+                            $scope.config.fifa.customTimer.enabled = true;
+                        }
+                        $scope.saveLiveConfig(true);
+                        $scope.autoFetchFifaDetails(); // Sync from API immediately
+                    });
+                }, "Reset FIFA Timer");
+            };
+
             // --- SAVE FUNCTIONS ---
             $scope.saveLiveConfig = function(silent = false) {
                 if (!silent) {
@@ -2009,12 +2118,16 @@
                     $scope.statusType = "loading";
                 }
 
+                // Record save time to suppress onSnapshot overwrites for 5s (prevents cron race condition)
+                lastSaveTimestamp = Date.now();
+
                 let dataToSave = angular.copy($scope.config);
                 if(dataToSave.schedule) {
                     dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
                 }
                 
-                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
+                // Use merge:true so unrelated fields (e.g. written by cron) are not nuked
+                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)), { merge: true })
                     .then(() => {
                         $timeout(() => { 
                             if (!silent) {
@@ -2210,20 +2323,12 @@
                     dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
                 }
                 
-                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)))
+                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)), { merge: true })
                     .then(() => {
                         // Step 2: Trigger backend standings and FIFA stream sync
-                        var primaryUrl = '/api/sync-standings?manual=true&type=fifastreams';
-                        var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=fifastreams';
-                        var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
-
-                        return $http.get(targetUrl);
+                        return $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'));
                     })
-                    .then((res) => {
-                        const responseLinks = res.data && res.data.data && res.data.data.fifa && res.data.data.fifa.streamLinks;
-                        if (responseLinks) {
-                            $scope.config.fifa.streamLinks = responseLinks;
-                        }
+                    .then(() => {
                         // Step 3: Fetch updated document from Firestore
                         return db.collection("app_data").doc("live_config").get();
                     })
@@ -2234,11 +2339,7 @@
                                 if (data.fifa && data.fifa.streamLinks) {
                                     $scope.config.fifa.streamLinks = data.fifa.streamLinks;
                                 }
-                                if ($scope.config.fifa.streamLinks && $scope.config.fifa.streamLinks.length > 0) {
-                                    $scope.showToast("FIFA streams fetched and updated successfully!", "success");
-                                } else {
-                                    $scope.showToast("No active stream links found yet for this match.", "info");
-                                }
+                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
                                 $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
                             }
                             $scope.fetchingFifaStreams = false;
@@ -2260,11 +2361,7 @@
                 $scope.fetchingFifaDetails = true;
                 $scope.showToast("Detecting next match from worldcup26.ir...", "info");
 
-                var primaryUrl = '/api/sync-standings?manual=true&type=fifadetails';
-                var fallbackUrl = 'https://f1watchparty-web.vercel.app/api/sync-standings?manual=true&type=fifadetails';
-                var targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
-
-                $http.get(targetUrl)
+                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifadetails'))
                     .then(() => db.collection("app_data").doc("live_config").get())
                     .then((doc) => {
                         $timeout(() => {
@@ -2382,9 +2479,7 @@
 
                 let primaryUrl = '/api/fetch-streams';
                 let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/fetch-streams';
-                
-                // If running on file:// protocol, go straight to production API
-                let targetUrl = (window.location.protocol === 'file:') ? fallbackUrl : primaryUrl;
+                let targetUrl = apiUrl(primaryUrl);
 
                 function parseAndMatchStreams(res) {
                     let data = res.data;

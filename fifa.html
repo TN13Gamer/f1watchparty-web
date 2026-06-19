@@ -3,18 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#050505">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>watchfifa.live | FIFA Watch Party</title>
 
     <script>
         (function () {
             document.documentElement.style.setProperty('--f1-red', '#FF0055');
             document.documentElement.style.setProperty('--glow-color', 'rgba(255, 0, 85, 0.15)');
-
+            
             // Immediately detect if entered from home to prevent launch screen flicker before Angular bootstraps
             const params = new URLSearchParams(window.location.search);
             if (params.has('enter') || sessionStorage.getItem('fifa_entered') === 'true') {
@@ -23,12 +19,13 @@
         })();
     </script>
 
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -36,9 +33,6 @@
 
     <!-- Tilt effect library (Vanta Globe removed for FIFA performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-
-    <!-- Lottie player for FIA loader animation -->
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.3/dist/lottie-player.js"></script>
 
     <style>
         [ng-cloak],
@@ -127,28 +121,20 @@
             pointer-events: none;
             animation: float-blob 20s infinite alternate ease-in-out;
         }
-
         .blob-1 {
             background: transparent;
             top: -10%;
             left: -10%;
         }
-
         .blob-2 {
             background: var(--blue);
             bottom: -10%;
             right: -10%;
             animation-delay: -10s;
         }
-
         @keyframes float-blob {
-            0% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            100% {
-                transform: translate(5%, 10%) scale(1.1);
-            }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
         }
 
 
@@ -209,43 +195,16 @@
             animation: wave-float-fifa 25s infinite alternate ease-in-out;
         }
 
-        .fifa-waves-svg path:nth-child(1) {
-            animation-duration: 22s;
-            animation-delay: 0s;
-        }
-
-        .fifa-waves-svg path:nth-child(2) {
-            animation-duration: 28s;
-            animation-delay: -4s;
-        }
-
-        .fifa-waves-svg path:nth-child(3) {
-            animation-duration: 32s;
-            animation-delay: -8s;
-        }
-
-        .fifa-waves-svg path:nth-child(4) {
-            animation-duration: 36s;
-            animation-delay: -12s;
-        }
-
-        .fifa-waves-svg path:nth-child(5) {
-            animation-duration: 42s;
-            animation-delay: -16s;
-        }
+        .fifa-waves-svg path:nth-child(1) { animation-duration: 22s; animation-delay: 0s; }
+        .fifa-waves-svg path:nth-child(2) { animation-duration: 28s; animation-delay: -4s; }
+        .fifa-waves-svg path:nth-child(3) { animation-duration: 32s; animation-delay: -8s; }
+        .fifa-waves-svg path:nth-child(4) { animation-duration: 36s; animation-delay: -12s; }
+        .fifa-waves-svg path:nth-child(5) { animation-duration: 42s; animation-delay: -16s; }
 
         @keyframes wave-float-fifa {
-            0% {
-                transform: translate(0, 0) rotate(0deg) scale(1);
-            }
-
-            50% {
-                transform: translate(2%, 3%) rotate(3deg) scale(1.06);
-            }
-
-            100% {
-                transform: translate(-2%, -2%) rotate(-3deg) scale(0.97);
-            }
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            50% { transform: translate(2%, 3%) rotate(3deg) scale(1.06); }
+            100% { transform: translate(-2%, -2%) rotate(-3deg) scale(0.97); }
         }
 
         .logo-text.fifa-logo-gradient {
@@ -668,8 +627,7 @@
             align-items: center;
             text-align: center;
             min-height: calc(100vh - 120px);
-            padding: 80px 20px 40px 20px;
-            /* adjusted top padding to accommodate marquee */
+            padding: 80px 20px 40px 20px; /* adjusted top padding to accommodate marquee */
             box-sizing: border-box;
             z-index: 10;
             position: relative;
@@ -710,7 +668,6 @@
             0% {
                 transform: translateX(0);
             }
-
             100% {
                 transform: translateX(-100%);
             }
@@ -741,7 +698,7 @@
             text-transform: uppercase;
             color: var(--text-gray);
             margin-bottom: 40px;
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
             backdrop-filter: blur(5px);
         }
 
@@ -766,10 +723,7 @@
         .countdown-timer-box::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
             background: linear-gradient(135deg, var(--f1-red), transparent, var(--f1-red));
             border-radius: 26px;
             z-index: -1;
@@ -829,26 +783,11 @@
         }
 
         @media (max-width: 768px) {
-            .countdown-page-container {
-                min-height: calc(100vh - 80px);
-            }
-
-            .countdown-brand {
-                font-size: 36px;
-            }
-
-            .countdown-gp-info {
-                font-size: 11px;
-                padding: 10px 20px;
-            }
-
-            .countdown-timer-box {
-                padding: 30px 20px;
-            }
-
-            .countdown-digits {
-                font-size: 38px;
-            }
+            .countdown-page-container { min-height: calc(100vh - 80px); }
+            .countdown-brand { font-size: 36px; }
+            .countdown-gp-info { font-size: 11px; padding: 10px 20px; }
+            .countdown-timer-box { padding: 30px 20px; }
+            .countdown-digits { font-size: 38px; }
         }
 
         @keyframes pulse {
@@ -877,29 +816,9 @@
             transition: all 0.3s ease;
         }
 
-        /* ── Tablet: 1100px ── */
         @media (max-width: 1100px) {
             .container {
                 grid-template-columns: 1fr;
-                padding: 0 20px;
-                gap: 20px;
-            }
-
-            .sport-toggle-btn {
-                padding: 6px 14px;
-                font-size: 10px;
-            }
-
-            /* On tablet, sidebar cards go side-by-side in a 2-col grid */
-            .sidebar {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            }
-
-            /* Standings card spans full width on tablet */
-            .sidebar > .glass-card:last-child {
-                grid-column: 1 / -1;
             }
         }
 
@@ -1438,25 +1357,25 @@
             align-items: center;
             transition: opacity 1s ease, visibility 1s;
         }
-
         #launch-screen.fade-out {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
         }
 
-        /* ── Loading Screen ── */
+        /* Unified Loading Screen */
         .loader {
             position: fixed;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            height: 100dvh; /* dynamic viewport for mobile browsers */
-            background: #000;
-            overflow: hidden;
+            background: #050505;
             z-index: 9999;
-            display: block;  /* block so child height:100% resolves correctly */
-            transition: opacity 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
         }
 
         .loader.hide {
@@ -1465,31 +1384,62 @@
             visibility: hidden;
         }
 
-        /* Lottie player: 4:3 ratio centred — black bars blend with black loader bg */
-        .loader lottie-player {
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            /* min() picks whichever is SMALLER — keeps 4:3 ratio, no stretching */
-            width:  min(100vw, 133.33dvh);  /* 133.33dvh = 100dvh × (800÷600) */
-            height: min(100dvh, 75vw);      /* 75vw     = 100vw  × (600÷800) */
+        .loading-logo-container {
+            text-align: center;
         }
 
+        .loading-logo-svg {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            overflow: visible;
+        }
+
+        .loading-logo-svg text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 70px;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            stroke: #00ff55; /* FIFA Green */
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation:
+                drawOutline 1.5s ease-in-out forwards,
+                fillLogoFifa 0.8s ease-in-out 1.5s forwards;
+        }
+
+        @keyframes drawOutline {
+            0% {
+                stroke-dashoffset: 1000;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes fillLogoFifa {
+            0% {
+                fill: transparent;
+            }
+            100% {
+                fill: #00ff55;
+                stroke-width: 0;
+                opacity: 1;
+            }
+        }
         .launch-content {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 2rem;
         }
-
         .launch-logo {
             max-width: 300px;
             width: 80%;
             filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
         }
-
         .enter-btn {
             background: transparent;
             border: 2px solid var(--gold);
@@ -1504,14 +1454,12 @@
             text-transform: uppercase;
             font-family: 'Outfit', sans-serif;
         }
-
         .enter-btn:hover {
             background: var(--gold);
             color: #000;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
             transform: scale(1.05);
         }
-
         .user-clock {
             font-family: 'Outfit', sans-serif;
             font-size: 0.9rem;
@@ -1605,20 +1553,13 @@
             padding: 10px 15px;
             font-size: 12px;
             position: relative;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .pinned-header {
@@ -1666,114 +1607,40 @@
 
 
 
-        /* ══════════════════════════════════════════
-           MOBILE: ≤ 768px
-        ══════════════════════════════════════════ */
         @media (max-width: 768px) {
-
-            /* ── Header ── */
             header {
-                padding: 10px 14px;
+                padding: 10px 15px;
                 height: auto;
                 flex-wrap: wrap;
                 justify-content: space-between;
-                gap: 8px;
-                min-height: 56px;
+                gap: 10px;
+                background-size: 100% 100%, 6px 6px, 6px 6px;
             }
 
             .header-left {
-                gap: 8px;
-                flex: 1;
+                gap: 10px;
             }
 
             .logo-text {
-                font-size: 18px;
+                font-size: 20px;
                 letter-spacing: 1px;
-                white-space: nowrap;
             }
 
-            /* Sport toggle: icon-only on mobile to save space */
-            .sport-toggle-container {
-                margin-left: 6px;
-                padding: 3px;
-                flex-shrink: 0;
-            }
-
-            .sport-toggle-btn {
-                padding: 7px 10px;
-                font-size: 13px;
-                gap: 0;
-                min-width: 34px;
-                justify-content: center;
-            }
-
-            /* Hide text, keep only icon */
-            .sport-toggle-btn .toggle-label {
-                display: none;
-            }
-
-            /* Header marquee goes full-width below */
             .header-marquee-container {
                 width: 100%;
                 margin: 0;
                 order: 3;
                 flex: none;
-                border-radius: 10px;
-                padding: 5px 12px;
+                border-radius: 12px;
             }
 
-            .header-marquee-text {
-                font-size: 12px;
-            }
-
-            /* ── Status pills ── */
-            .status-area {
-                gap: 5px;
-                flex-wrap: nowrap;
-                justify-content: flex-end;
-                flex-shrink: 0;
-            }
-
-            .status-pill {
-                font-size: 10px;
-                padding: 4px 10px;
-                flex-shrink: 0;
-                letter-spacing: 0.5px;
-            }
-
-            .timer-pill {
-                font-size: 10px;
-                padding: 4px 10px;
-                flex-shrink: 0;
-            }
-
-            .weather-pill {
-                padding: 4px 8px;
-                gap: 5px;
-                flex-shrink: 0;
-            }
-
-            .weather-pill .w-label {
-                display: none;
-            }
-
-            /* ── Layout ── */
             .container {
-                margin: 12px auto;
+                margin: 15px auto;
                 padding: 0 12px;
-                gap: 14px;
+                gap: 16px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
-                /* Override the tablet grid back to single column */
-                grid-template-columns: 1fr !important;
-            }
-
-            /* Override tablet 2-col sidebar to single col on phone */
-            .sidebar {
-                display: flex !important;
-                flex-direction: column;
-                gap: 14px;
             }
 
             .main-column,
@@ -1782,15 +1649,15 @@
                 min-width: 0;
             }
 
-            /* ── Video ── */
             .video-wrapper {
-                border-radius: 14px 14px 0 0;
+                border-radius: 16px 16px 0 0;
+                /* Reset 3D tilt transforms on mobile */
                 transform: none !important;
             }
 
             .video-toolbar {
-                border-radius: 0 0 14px 14px;
-                padding: 10px 12px;
+                border-radius: 0 0 16px 16px;
+                padding: 10px 15px;
                 display: flex;
                 align-items: center;
                 gap: 8px;
@@ -1799,141 +1666,101 @@
                 flex-wrap: nowrap !important;
                 justify-content: flex-start !important;
                 -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
                 -ms-overflow-style: none;
-                margin-bottom: 14px;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
             }
 
-            .video-toolbar::-webkit-scrollbar { display: none; }
+            .video-toolbar::-webkit-scrollbar {
+                display: none;
+                /* Hide scrollbar for Chrome, Safari and Opera */
+            }
 
-            /* ── Cards ── */
             .glass-card {
                 border-radius: 16px;
-                padding: 16px;
+                padding: 20px;
+                /* Reset 3D tilt transforms on mobile */
                 transform: none !important;
             }
 
+            .spacer {
+                display: none;
+            }
+
+            .stream-btn {
+                flex: 0 0 auto !important;
+                text-align: center;
+                font-size: 12px;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+
+            /* Theater/Chat buttons: icon-only on mobile to save toolbar space */
+            .control-btn {
+                padding: 8px 10px !important;
+                min-width: 34px;
+            }
+            .control-btn .btn-label {
+                display: none;
+            }
+            .control-btn i {
+                margin-right: 0 !important;
+            }
+
+            /* Hide SOURCE: label on very narrow screens */
+            @media (max-width: 480px) {
+                .source-label { display: none !important; }
+            }
+
+            /* Fix carbon-schedule-card clip-path for mobile 16px border-radius */
             .carbon-schedule-card .card-video-bg {
                 clip-path: inset(0 round 16px);
             }
 
-            /* ── Buttons / Touch targets ── */
-            .spacer { display: none; }
-
-            .stream-btn {
-                flex: 0 0 auto !important;
-                font-size: 12px;
-                padding: 9px 14px;
-                border-radius: 10px;
-                min-height: 38px;
-            }
-
-            .control-btn {
-                padding: 9px 11px !important;
-                min-width: 38px;
-                min-height: 38px;
-            }
-
-            .control-btn .btn-label { display: none; }
-            .control-btn i { margin-right: 0 !important; }
-
-            .past-sessions-toggle {
-                padding: 11px 14px;
-                font-size: 11px;
-                min-height: 42px;
-            }
-
-            /* ── Event / Match Info ── */
-            .event-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .event-title { font-size: 20px; }
-
-            .meta-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                font-size: 13px;
-            }
-
-            .schedule-row { padding: 8px 10px; }
-            .sess-name { font-size: 14px; }
-            .sess-time { font-size: 14px; }
-
             .tab-btn {
                 padding: 12px 10px;
                 font-size: 13px;
-                min-height: 44px;
             }
 
             .view-more-btn {
                 padding: 14px;
                 font-size: 14px;
-                min-height: 44px;
             }
 
-            /* ── Poll card: horizontal result strip ── */
-            .poll-team-btn {
-                padding: 13px 14px;
-                min-height: 48px;
+            .event-header {
+                flex-direction: column;
+                gap: 10px;
             }
 
-            .poll-team-name { font-size: 13px; }
-            .poll-pct { font-size: 14px; }
-
-            .poll-collapsed {
-                padding: 12px 8px;
-                gap: 12px;
+            .event-title {
+                font-size: 22px;
             }
 
-            .poll-col-pct { font-size: 22px; }
-
-            .poll-col-flag {
-                width: 40px;
-                height: 28px;
+            .meta-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
 
-            /* ── Countdown page ── */
-            .countdown-page-container {
-                padding: 70px 16px 30px;
+            .schedule-row {
+                padding: 8px 12px;
             }
 
-            .countdown-brand {
-                font-size: 32px;
-                letter-spacing: 2px;
+            .sess-name {
+                font-size: 14px;
             }
 
-            .countdown-gp-info {
-                font-size: 11px;
-                padding: 10px 18px;
-                margin-bottom: 28px;
+            .sess-time {
+                font-size: 14px;
             }
 
-            .countdown-timer-box {
-                padding: 28px 20px;
+            body.theater-active header {
+                display: none;
             }
 
-            .countdown-digits { font-size: 36px; }
-
-            .back-to-home-btn {
-                top: 14px;
-                left: 14px;
-                padding: 7px 14px;
-                font-size: 12px;
+            body.theater-active .container {
+                height: 100vh;
             }
-
-            /* ── Chat ── */
-            .chat-sidebar {
-                width: 100%;
-                right: -100%;
-            }
-
-            .chat-sidebar.open { right: 0; }
-
-            /* ── Theater mode ── */
-            body.theater-active header { display: none; }
-            body.theater-active .container { height: 100vh; }
 
             body.theater-active .video-toolbar {
                 overflow-x: scroll;
@@ -1941,50 +1768,43 @@
                 justify-content: flex-start;
                 border-radius: 0;
             }
-        }
 
-        /* Small phone: toggle still shows text, just slightly tighter */
-        @media (max-width: 480px) {
-
-            .source-label { display: none !important; }
-
-            header {
-                padding: 8px 12px;
+            .status-area {
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
             }
 
-            .logo-text { font-size: 16px; }
-
-            .sport-toggle-btn {
-                padding: 5px 9px;
-                font-size: 9px;
-                gap: 3px;
+            .weather-pill .w-label {
+                display: none;
             }
 
-            .container {
-                padding: 0 10px;
-                gap: 12px;
-                margin: 10px auto;
+            .weather-pill {
+                padding: 4px 10px;
+                gap: 6px;
+                flex-shrink: 0;
             }
 
-            .glass-card { padding: 14px; }
-            .event-title { font-size: 17px; }
-
-            .meta-grid {
-                grid-template-columns: 1fr;
-                gap: 8px;
+            .timer-pill {
+                font-size: 11px;
+                padding: 4px 10px;
+                flex-shrink: 0;
             }
 
-            .countdown-brand { font-size: 26px; }
-            .countdown-digits { font-size: 30px; }
-            .poll-col-pct { font-size: 26px; }
-
-            .poll-col-flag {
-                width: 44px;
-                height: 30px;
+            .status-pill {
+                font-size: 11px;
+                padding: 4px 12px;
+                flex-shrink: 0;
             }
 
-            .sess-time-box { min-width: 44px !important; }
-            .card-title { font-size: 12px; }
+            .chat-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+
+            .chat-sidebar.open {
+                right: 0;
+            }
         }
 
         /* Floating Back Button on Landing Page */
@@ -2049,8 +1869,7 @@
         }
 
         .sport-toggle-btn.active {
-            background: #00ff55;
-            /* FIFA Green theme primary */
+            background: #00ff55; /* FIFA Green theme primary */
             color: #000;
             box-shadow: 0 0 12px rgba(0, 255, 85, 0.3);
         }
@@ -2062,10 +1881,8 @@
         .fixtures-scroll-container {
             max-height: 400px;
             overflow-y: auto;
-            scrollbar-width: none;
-            /* Firefox */
-            -ms-overflow-style: none;
-            /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
             padding-right: 5px;
         }
 
@@ -2079,7 +1896,7 @@
         .past-sessions-toggle {
             width: 100%;
             background: transparent;
-            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255,255,255,0.1);
             border-radius: 10px;
             color: var(--text-gray);
             font-size: 10px;
@@ -2096,36 +1913,30 @@
             font-family: 'Outfit', sans-serif;
             margin-top: 10px;
         }
-
         .past-sessions-toggle:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.05);
             color: #fff;
-            border-color: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255,255,255,0.25);
         }
-
         .past-matches-list {
             margin-top: 10px;
             padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255,255,255,0.06);
             max-height: 500px;
             overflow-y: auto;
             scrollbar-width: none;
         }
-
-        .past-matches-list::-webkit-scrollbar {
-            display: none;
-        }
+        .past-matches-list::-webkit-scrollbar { display: none; }
 
         /* ── Poll Card ── */
         .poll-card {
-            background: linear-gradient(135deg, rgba(255, 0, 85, 0.06) 0%, rgba(10, 10, 14, 0.95) 100%);
-            border: 1px solid rgba(255, 0, 85, 0.15);
+            background: linear-gradient(135deg, rgba(255,0,85,0.06) 0%, rgba(10,10,14,0.95) 100%);
+            border: 1px solid rgba(255,0,85,0.15);
         }
-
         .poll-team-btn {
             width: 100%;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1.5px solid rgba(255, 255, 255, 0.07);
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.07);
             border-radius: 12px;
             padding: 11px 14px;
             display: flex;
@@ -2139,59 +1950,45 @@
             position: relative;
             overflow: hidden;
         }
-
         .poll-team-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.2);
             transform: translateY(-1px);
         }
-
         .poll-team-btn.voted-this {
             border-color: var(--f1-red);
-            background: rgba(255, 0, 85, 0.1);
+            background: rgba(255,0,85,0.1);
         }
-
         .poll-team-btn.voted-this .poll-bar-fill {
             background: var(--f1-red);
         }
-
         .poll-team-btn.voted-other {
             opacity: 0.6;
         }
-
         .poll-team-btn.voted-other .poll-bar-fill {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
         }
-
-        .poll-team-btn:disabled {
-            cursor: default;
-        }
-
+        .poll-team-btn:disabled { cursor: default; }
         .poll-bar-track {
             position: absolute;
-            bottom: 0;
-            left: 0;
+            bottom: 0; left: 0;
             width: 100%;
             height: 3px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.05);
         }
-
         .poll-bar-fill {
             height: 100%;
             background: var(--f1-red);
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
             border-radius: 0 2px 0 0;
         }
-
         .poll-flag {
-            width: 28px;
-            height: 20px;
+            width: 28px; height: 20px;
             object-fit: cover;
             border-radius: 3px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
             flex-shrink: 0;
         }
-
         .poll-team-name {
             flex: 1;
             font-size: 12px;
@@ -2202,7 +1999,6 @@
             text-overflow: ellipsis;
             letter-spacing: 0.3px;
         }
-
         .poll-pct {
             font-size: 13px;
             font-weight: 900;
@@ -2212,7 +2008,6 @@
             min-width: 36px;
             text-align: right;
         }
-
         .poll-votes-total {
             text-align: center;
             font-size: 10px;
@@ -2221,7 +2016,6 @@
             letter-spacing: 1px;
             margin-top: 6px;
         }
-
         .poll-divider {
             text-align: center;
             font-size: 9px;
@@ -2239,41 +2033,35 @@
             gap: 20px;
             padding: 15px 10px;
         }
-
         .poll-col-team {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
         .poll-col-flag {
             width: 36px;
             height: 24px;
             object-fit: cover;
             border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
         .poll-col-pct {
             font-size: 20px;
             font-weight: 900;
             color: #fff;
             letter-spacing: -0.5px;
         }
-
         .poll-col-pct.winner {
             color: var(--f1-red);
             text-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
         }
-
         .poll-col-vs {
             font-size: 11px;
             font-weight: 800;
             color: #444;
             letter-spacing: 1.5px;
         }
-
         .poll-voted-badge {
             font-size: 9px;
             font-weight: 800;
@@ -2283,58 +2071,44 @@
             margin-top: 2px;
         }
 
-        /* ══════════════════════════════════════════
-           PERFORMANCE: strip heavy effects on mobile
-        ══════════════════════════════════════════ */
+        /* Mobile Performance Optimizations */
         @media (max-width: 768px) {
-
-            /* Kill GPU-heavy layers */
-            .blob,
-            .fifa-waves-svg,
+            /* Disable heavy visual elements */
+            .blob {
+                display: none !important;
+            }
+            .fifa-waves-svg {
+                display: none !important;
+            }
             .video-background-container {
                 display: none !important;
             }
 
-            /* Replace backdrop-filter with solid fallbacks */
+            /* Remove expensive backdrop-filters and supply flat opaque background backups */
             header {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
-                background: rgba(8, 10, 20, 0.99) !important;
+                background: rgba(10, 12, 22, 0.98) !important;
             }
-
             .glass-card {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
-                background: rgba(12, 12, 18, 0.97) !important;
+                background: rgba(12, 12, 16, 0.95) !important;
             }
-
             .header-marquee-container {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
                 background: rgba(255, 0, 85, 0.1) !important;
             }
-
             .countdown-timer-box {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
-                background: rgba(12, 12, 18, 0.97) !important;
+                background: rgba(12, 12, 16, 0.95) !important;
             }
-
             .sport-toggle-container {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
-                background: rgba(255, 255, 255, 0.06) !important;
-            }
-
-            /* Disable 3D card transforms (tilt) */
-            .glass-card > *,
-            .video-responsive {
-                transform: none !important;
-            }
-
-            /* Reduce animation complexity */
-            .fifa-waves-svg path {
-                animation: none !important;
+                background: rgba(255, 255, 255, 0.05) !important;
             }
         }
     </style>
@@ -2342,11 +2116,8 @@
 
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
-    <div class="video-background-container"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
-        <video id="bg-video" loop muted playsinline preload="none"
-            style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;"
-            src="intro.mp4"></video>
+    <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
+        <video id="bg-video" loop muted playsinline style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;" src="intro.mp4"></video>
     </div>
     <audio id="intro-audio" src="intro.webm"></audio>
 
@@ -2358,12 +2129,13 @@
         </div>
     </div>
 
-    <!-- Loading Animation (Lottie FIA animation) -->
+    <!-- Loading Animation -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
         <div class="loading-logo-container">
-            <div class="loader-text">WatchFIFA<span class="loader-dot-live">.live</span></div>
+            <svg class="loading-logo-svg" viewBox="0 0 600 100">
+                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA.live</text>
+            </svg>
         </div>
-        <div class="loader-shimmer"><div class="loader-shimmer-fill"></div></div>
     </div>
 
     <div class="blob blob-1"></div>
@@ -2373,35 +2145,17 @@
         <div class="fifa-gradient-mask"></div>
         <svg class="fifa-waves-svg" viewBox="0 0 1440 1000" preserveAspectRatio="none">
             <!-- Wavy contour tracks from World Cup 2026 theme -->
-            <path d="M-100,300 C300,100 600,500 1000,200 C1200,80 1400,150 1600,100 L1600,1200 L-100,1200 Z"
-                fill="#2a398d" opacity="0.85" />
-            <path d="M-100,450 C400,200 700,600 1100,350 C1300,220 1450,280 1600,200 L1600,1200 L-100,1200 Z"
-                fill="#1d70b8" opacity="0.75" />
-            <path d="M-100,580 C350,400 800,750 1200,500 C1350,380 1500,420 1600,350 L1600,1200 L-100,1200 Z"
-                fill="#3cac3b" opacity="0.7" />
-            <path d="M-100,700 C450,550 900,850 1300,680 C1420,580 1520,600 1600,520 L1600,1200 L-100,1200 Z"
-                fill="#00ff55" opacity="0.6" />
-            <path d="M-100,820 C500,700 1000,980 1400,800 L1600,700 L1600,1200 L-100,1200 Z" fill="#ff9900"
-                opacity="0.55" />
-            <path d="M-100,920 C600,850 1100,1080 1500,900 L1600,820 L1600,1200 L-100,1200 Z" fill="#e61d25"
-                opacity="0.5" />
+            <path d="M-100,300 C300,100 600,500 1000,200 C1200,80 1400,150 1600,100 L1600,1200 L-100,1200 Z" fill="#2a398d" opacity="0.85"/>
+            <path d="M-100,450 C400,200 700,600 1100,350 C1300,220 1450,280 1600,200 L1600,1200 L-100,1200 Z" fill="#1d70b8" opacity="0.75"/>
+            <path d="M-100,580 C350,400 800,750 1200,500 C1350,380 1500,420 1600,350 L1600,1200 L-100,1200 Z" fill="#3cac3b" opacity="0.7"/>
+            <path d="M-100,700 C450,550 900,850 1300,680 C1420,580 1520,600 1600,520 L1600,1200 L-100,1200 Z" fill="#00ff55" opacity="0.6"/>
+            <path d="M-100,820 C500,700 1000,980 1400,800 L1600,700 L1600,1200 L-100,1200 Z" fill="#ff9900" opacity="0.55"/>
+            <path d="M-100,920 C600,850 1100,1080 1500,900 L1600,820 L1600,1200 L-100,1200 Z" fill="#e61d25" opacity="0.5"/>
         </svg>
     </div>
     <div id="vanta-overlay"></div>
 
 
-
-    <!-- Loading Animation (Lottie FIA animation) -->
-    <div class="loader" ng-class="{'hide': dataLoaded}">
-        <lottie-player
-            id="fia-loader"
-            src="FIA.json"
-            background="transparent"
-            speed="1"
-            loop
-            autoplay>
-        </lottie-player>
-    </div>
 
     <!-- Main Dashboard View -->
     <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
@@ -2410,43 +2164,32 @@
                 <span class="logo-text fifa-logo-gradient">WatchFIFA<span>.Live</span></span>
                 <div class="sport-toggle-container">
                     <button class="sport-toggle-btn" ng-click="goToF1()">
-                        <i class="fa-solid fa-car-side"></i>
-                        <span class="toggle-label"> F1 Party</span>
+                        <i class="fa-solid fa-car-side"></i> F1 Party
                     </button>
                     <button class="sport-toggle-btn active">
-                        <i class="fa-solid fa-futbol"></i>
-                        <span class="toggle-label"> FIFA Party</span>
+                        <i class="fa-solid fa-futbol"></i> FIFA Party
                     </button>
                 </div>
             </div>
 
             <div class="status-area">
                 <!-- LIVE: kickoff passed, streams available -->
-                <div class="status-pill live"
-                    ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown !== 'STARTING SOON'">
-                    <i class="fa-solid fa-circle"
-                        style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown !== 'STARTING SOON'">
+                    <i class="fa-solid fa-circle" style="color: #00ff55; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i> 
                     LIVE
                 </div>
                 <!-- STARTING SOON: pre-match streams available -->
-                <div class="status-pill live"
-                    ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown === 'STARTING SOON'"
-                    style="background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #a855f7;">
-                    <i class="fa-solid fa-circle"
-                        style="color: #a855f7; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                <div class="status-pill live" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && customTimerCountdown === 'STARTING SOON'" style="background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #a855f7;">
+                    <i class="fa-solid fa-circle" style="color: #a855f7; font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
                     STARTING SOON
                 </div>
-                <div class="status-pill countdown"
-                    ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
-                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' :
-                    ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && showCustomTimer">
+                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'LIVE NOW' : ((customTimer.label || 'STREAM') + ' IN ' + customTimerCountdown)}}
                 </div>
-                <div class="status-pill countdown"
-                    ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && matchFuture">
+                <div class="status-pill countdown" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && matchFuture">
                     <i class="fa-regular fa-clock"></i> MATCH IN {{matchCountdownStr}}
                 </div>
-                <div class="status-pill offline"
-                    ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && !matchFuture">
+                <div class="status-pill offline" ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0) && !showCustomTimer && !matchFuture">
                     <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
                 </div>
             </div>
@@ -2468,10 +2211,9 @@
             <div class="main-column">
                 <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
                 <div class="video-wrapper">
-                    <div class="video-responsive"
-                        ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
-                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen; autoplay"
-                            allowfullscreen scrolling="no" loading="eager" importance="high"></iframe>
+                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
+                            scrolling="no"></iframe>
                     </div>
                     <!-- Dark placeholder when no live stream -->
                     <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0)" style="
@@ -2494,29 +2236,23 @@
                 <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px; flex-shrink: 0;">SOURCE:</span>
-                    <div class="stream-buttons-scroll"
-                        style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-grow: 1; flex-shrink: 1; min-width: 0; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+                    <div class="stream-buttons-scroll" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-grow: 1; flex-shrink: 1; min-width: 0; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
                         <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
                             ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
-                        <span ng-if="streamLinks.length === 0"
-                            style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No
-                            streams available</span>
+                        <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
                     </div>
                     <div class="spacer" style="flex-shrink: 0;"></div>
-                    <button class="stream-btn control-btn" ng-click="toggleTheater()" style="flex-shrink: 0;"
-                        title="Theater Mode">
-                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
-                            style="margin-right: 5px;"></i>
+                    <button class="stream-btn control-btn" ng-click="toggleTheater()" style="flex-shrink: 0;" title="Theater Mode">
+                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'" style="margin-right: 5px;"></i>
                         <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
                     </button>
-                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}"
-                        ng-click="toggleChat()" style="flex-shrink: 0;" title="Chat">
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" style="flex-shrink: 0;" title="Chat">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
                         <span class="btn-label">Chat</span>
                     </button>
                 </div>
-                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false"
-                    data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="event-header">
                         <div>
                             <span class="event-round">ROUND {{raceData.round}}</span>
@@ -2533,48 +2269,127 @@
                         <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
                         <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
                         <div class="meta-item"><strong>Kickoff</strong>{{raceData.date}}</div>
-                        <div class="meta-item" ng-if="raceData.isLive">
+                        <div class="meta-item" ng-if="raceData.isLive && streamLinks.length > 0">
                             <strong>Score</strong>
                             <span style="font-weight: 900; font-size: 20px; color: #00ff55; letter-spacing: 2px;">
                                 {{raceData.homeScore}} – {{raceData.awayScore}}
                             </span>
-                            <span
-                                style="margin-left: 6px; background: #00ff55; color: #000; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">LIVE</span>
-                            <span ng-if="raceData.matchTime"
-                                style="margin-left: 5px; background: rgba(0,255,85,0.15); color: #00ff55; font-size: 11px; font-weight: 900; border-radius: 3px; padding: 2px 6px; vertical-align: middle; border: 1px solid rgba(0,255,85,0.3);">{{raceData.matchTime}}</span>
+                            <span style="margin-left: 6px; background: #00ff55; color: #000; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">LIVE</span>
+                            <span ng-if="raceData.matchTime" style="margin-left: 5px; background: rgba(0,255,85,0.15); color: #00ff55; font-size: 11px; font-weight: 900; border-radius: 3px; padding: 2px 6px; vertical-align: middle; border: 1px solid rgba(0,255,85,0.3);">{{raceData.matchTime}}</span>
                         </div>
                         <div class="meta-item" ng-if="raceData.isFinished && !raceData.isLive">
                             <strong>Final Score</strong>
-                            <span style="font-weight: 900; font-size: 18px; color: #fff;">{{raceData.homeScore}} –
-                                {{raceData.awayScore}}</span>
-                            <span
-                                style="margin-left: 6px; background: #555; color: #ccc; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">FT</span>
+                            <span style="font-weight: 900; font-size: 18px; color: #fff;">{{raceData.homeScore}} – {{raceData.awayScore}}</span>
+                            <span style="margin-left: 6px; background: #555; color: #ccc; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">FT</span>
                         </div>
                     </div>
                 </div>
             </div>
-
+            
             <div class="sidebar">
-                <!-- ⚽ Match Poll Card — positioned first (above fixtures) -->
-                <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt
-                    data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
-                    <div class="card-title"
-                        style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+                <!-- FIFA Fixtures Card -->
+                <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
+                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline src="fifa.mp4"></video>
+                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
+                        <!-- Fast refresh indicator when live -->
+                        <span ng-if="hasLiveMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
+                            LIVE · FAST REFRESH
+                        </span>
+                    </div>
+
+                    <!-- Live & Upcoming Matches -->
+                    <div class="fixtures-scroll-container">
+                        <div ng-if="liveAndUpcomingFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
+                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming matches
+                        </div>
+                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
+                            <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                <!-- Home Team Flag -->
+                                <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
+                                    <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.homeTeam}}">
+                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                    </div>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.homeTeam}}">
+                                </div>
+                                <!-- Score or VS -->
+                                <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
+                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
+                                        <span style="color:#00ff55;">{{match.homeScore}}</span>
+                                        <span style="color: #555; margin: 0 1px;">-</span>
+                                        <span style="color:#00ff55;">{{match.awayScore}}</span>
+                                    </span>
+                                    <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
+                                </div>
+                                <!-- Away Team Flag -->
+                                <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.awayTeam}}">
+                                    <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.awayTeam}}">
+                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Kickoff Time / Live status -->
+                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
+                                <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
+                                <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
+                                <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                                    <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
+                                    <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
+                            No fixtures available.
+                        </div>
+                    </div>
+
+                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
+                    <button class="past-sessions-toggle" ng-show="pastFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
+                        <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastFixtures().length + ')' }}
+                    </button>
+
+                    <!-- Past matches list: shown/hidden with ng-show -->
+                    <div class="past-matches-list" ng-show="ui.showPastMatches">
+                        <div class="schedule-row ended" ng-repeat="match in pastFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                            <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                <!-- Home -->
+                                <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                </div>
+                                <!-- Score -->
+                                <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
+                                    {{match.homeScore}} – {{match.awayScore}}
+                                </div>
+                                <!-- Away -->
+                                <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
+                                </div>
+                            </div>
+                            <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ⚽ Match Poll Card -->
+                <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
+                    <div class="card-title" style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
                         <span><i class="fa-solid fa-chart-simple"></i> Who Will Win?</span>
-                        <span
-                            style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red); opacity:0.8;">LIVE
-                            POLL</span>
+                        <span style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red); opacity:0.8;">LIVE POLL</span>
                     </div>
 
                     <!-- ── BEFORE VOTING: full buttons ── -->
                     <div ng-if="poll.userVote === null">
-                        <div
-                            style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                            {{raceData.name}} · {{raceData.round}}</div>
+                        <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}} · {{raceData.round}}</div>
 
                         <button class="poll-team-btn" ng-click="castVote('home')">
-                            <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt=""
-                                onerror="this.style.display='none'">
+                            <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
                             <span class="poll-team-name">{{poll.homeTeam}}</span>
                             <span class="poll-pct">Vote</span>
                         </button>
@@ -2582,8 +2397,7 @@
                         <div class="poll-divider">VS</div>
 
                         <button class="poll-team-btn" ng-click="castVote('away')">
-                            <img class="poll-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt=""
-                                onerror="this.style.display='none'">
+                            <img class="poll-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
                             <span class="poll-team-name">{{poll.awayTeam}}</span>
                             <span class="poll-pct">Vote</span>
                         </button>
@@ -2604,173 +2418,31 @@
                     <div ng-if="poll.userVote !== null" class="poll-collapsed">
                         <!-- Home team -->
                         <div class="poll-col-team">
-                            <img class="poll-col-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt=""
-                                onerror="this.style.display='none'">
-                            <span class="poll-col-pct"
-                                ng-class="{'winner': poll.homePct > poll.awayPct && poll.homePct > poll.drawPct}">{{poll.homePct}}%</span>
+                            <img class="poll-col-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                            <span class="poll-col-pct" ng-class="{'winner': poll.homePct > poll.awayPct && poll.homePct > poll.drawPct}">{{poll.homePct}}%</span>
                         </div>
                         <!-- Separator / Draw -->
-                        <div class="poll-col-vs"
-                            style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div class="poll-col-vs" style="display:flex; flex-direction:column; align-items:center; gap:2px;">
                             <span>VS</span>
-                            <span style="font-size:8px; font-weight:700; color:#555;" ng-if="poll.drawPct > 0">Draw:
-                                {{poll.drawPct}}%</span>
+                            <span style="font-size:8px; font-weight:700; color:#555;" ng-if="poll.drawPct > 0">Draw: {{poll.drawPct}}%</span>
                         </div>
                         <!-- Away team -->
                         <div class="poll-col-team">
-                            <span class="poll-col-pct"
-                                ng-class="{'winner': poll.awayPct > poll.homePct && poll.awayPct > poll.drawPct}">{{poll.awayPct}}%</span>
-                            <img class="poll-col-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt=""
-                                onerror="this.style.display='none'">
+                            <span class="poll-col-pct" ng-class="{'winner': poll.awayPct > poll.homePct && poll.awayPct > poll.drawPct}">{{poll.awayPct}}%</span>
+                            <img class="poll-col-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
                         </div>
                     </div>
                     <div class="poll-voted-badge" ng-if="poll.userVote !== null">
                         ✓ VOTED &nbsp;·&nbsp;
                         <span ng-if="!poll.loaded">counting...</span>
-                        <span ng-if="poll.loaded && poll.totalVotes > 0">{{poll.totalVotes}} {{poll.totalVotes === 1 ?
-                            'vote' : 'votes'}}</span>
+                        <span ng-if="poll.loaded && poll.totalVotes > 0">{{poll.totalVotes}} {{poll.totalVotes === 1 ? 'vote' : 'votes'}}</span>
                         <span ng-if="poll.loaded && poll.totalVotes === 0">1 vote</span>
                     </div>
                 </div>
 
-                <!-- FIFA Fixtures Card -->
-                <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-perspective="1000">
-                    <video class="card-video-bg" autoplay loop muted playsinline src="fifa.mp4"></video>
-                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
-                        <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
-                        <!-- Fast refresh indicator when live -->
-                        <span ng-if="hasLiveMatches()"
-                            style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
-                            <span
-                                style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
-                            LIVE ·
-                        </span>
-                    </div>
-
-                    <!-- Live & Upcoming Matches -->
-                    <div class="fixtures-scroll-container">
-                        <div ng-if="liveAndUpcomingFixtures().length === 0 && fixtures.length > 0"
-                            style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
-                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming
-                            matches
-                        </div>
-                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingFixtures()"
-                            ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}"
-                            style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
-                            <div class="match-scoreboard"
-                                style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                <!-- Home Team Flag -->
-                                <div
-                                    style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
-                                    <div ng-if="!match.homeFlag"
-                                        style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;"
-                                        title="{{match.homeTeam}}">
-                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                    </div>
-                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt=""
-                                        style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);"
-                                        onerror="this.style.display='none'" title="{{match.homeTeam}}">
-                                </div>
-                                <!-- Score or VS -->
-                                <div
-                                    style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
-                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;"
-                                        ng-if="match.status === 'live'">
-                                        <span style="color:#00ff55;">{{match.homeScore}}</span>
-                                        <span style="color: #555; margin: 0 1px;">-</span>
-                                        <span style="color:#00ff55;">{{match.awayScore}}</span>
-                                    </span>
-                                    <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);"
-                                        ng-if="match.status === 'notstarted'">VS</span>
-                                </div>
-                                <!-- Away Team Flag -->
-                                <div
-                                    style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
-                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt=""
-                                        style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);"
-                                        onerror="this.style.display='none'" title="{{match.awayTeam}}">
-                                    <div ng-if="!match.awayFlag"
-                                        style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;"
-                                        title="{{match.awayTeam}}">
-                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Kickoff Time / Live status -->
-                            <div class="sess-time-box"
-                                style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div style="font-size: 11px; font-weight: 700; color: #fff;"
-                                    ng-if="match.status === 'notstarted'">{{formatMatchTime(match.localDate.split(' ')[2] || '')}} {{match.timezone || ''}}</div>
-                                <div style="font-size: 9px; color: var(--text-gray);"
-                                    ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}}
-                                    {{match.localDate.split(' ')[1]}}</div>
-                                <div ng-if="match.status === 'live'"
-                                    style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-                                    <div
-                                        style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">
-                                        LIVE</div>
-                                    <div ng-if="match.matchTime"
-                                        style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">
-                                        {{match.matchTime}}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div ng-if="fixtures.length === 0"
-                            style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
-                            No fixtures available.
-                        </div>
-                    </div>
-
-                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
-                    <button class="past-sessions-toggle" ng-show="pastFixtures().length > 0"
-                        ng-click="ui.showPastMatches = !ui.showPastMatches">
-                        <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastFixtures().length +
-                        ')' }}
-                    </button>
-
-                    <!-- Past matches list: shown/hidden with ng-show -->
-                    <div class="past-matches-list" ng-show="ui.showPastMatches">
-                        <div class="schedule-row ended" ng-repeat="match in pastFixtures()"
-                            style="opacity:0.6; margin-bottom:6px;">
-                            <div class="match-scoreboard"
-                                style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                                <!-- Home -->
-                                <div
-                                    style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
-                                    <span
-                                        style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
-                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt=""
-                                        style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;"
-                                        onerror="this.style.display='none'">
-                                </div>
-                                <!-- Score -->
-                                <div
-                                    style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
-                                    {{match.homeScore}} – {{match.awayScore}}
-                                </div>
-                                <!-- Away -->
-                                <div
-                                    style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
-                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt=""
-                                        style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;"
-                                        onerror="this.style.display='none'">
-                                    <span
-                                        style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
-                                </div>
-                            </div>
-                            <div
-                                style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">
-                                FT</div>
-                        </div>
-                    </div>
-
-                </div>
-
                 <!-- FIFA Standings Card -->
-                <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false"
-                    data-tilt-max="4" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="glass-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 15px;">
                         <div class="card-title" style="margin-bottom:0;">
                             <i class="fa-solid fa-trophy"></i> Standings
@@ -2792,8 +2464,7 @@
                     <div>
                         <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
                             <thead>
-                                <tr
-                                    style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">
                                     <th style="padding: 6px 2px; text-align: center; width: 25px;">POS</th>
                                     <th style="padding: 6px 2px;">TEAM</th>
                                     <th style="padding: 6px 2px; text-align: center; width: 25px;">P</th>
@@ -2802,31 +2473,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="t in selectedGroup.teams"
-                                    style="border-bottom: 1px solid rgba(255,255,255,0.03); height: 36px;">
-                                    <td style="padding: 6px 2px; text-align: center; font-weight: 800; color: var(--text-gray);"
-                                        ng-class="{'p1': $index === 0, 'p2': $index === 1, 'p3': $index === 2}">
+                                <tr ng-repeat="t in selectedGroup.teams" style="border-bottom: 1px solid rgba(255,255,255,0.03); height: 36px;">
+                                    <td style="padding: 6px 2px; text-align: center; font-weight: 800; color: var(--text-gray);" ng-class="{'p1': $index === 0, 'p2': $index === 1, 'p3': $index === 2}">
                                         {{$index + 1}}
                                     </td>
-                                    <td
-                                        style="padding: 6px 2px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; height: 36px;">
-                                        <img ng-src="{{t.flag}}" alt=""
-                                            style="width: 16px; height: 11px; object-fit: cover; border-radius: 1px;"
-                                            onerror="this.style.display='none'">
-                                        <span
-                                            style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;"
-                                            title="{{t.name}}">{{t.name}}</span>
+                                    <td style="padding: 6px 2px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; height: 36px;">
+                                        <img ng-src="{{t.flag}}" alt="" style="width: 16px; height: 11px; object-fit: cover; border-radius: 1px;" onerror="this.style.display='none'">
+                                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;" title="{{t.name}}">{{t.name}}</span>
                                     </td>
                                     <td style="padding: 6px 2px; text-align: center; font-weight: 600;">{{t.mp}}</td>
-                                    <td style="padding: 6px 2px; text-align: center; color: var(--text-gray);">{{t.gd >
-                                        0 ? '+' : ''}}{{t.gd}}</td>
-                                    <td style="padding: 6px 2px; text-align: center; font-weight: 900; color: #00ff55;">
-                                        {{t.pts}}</td>
+                                    <td style="padding: 6px 2px; text-align: center; color: var(--text-gray);">{{t.gd > 0 ? '+' : ''}}{{t.gd}}</td>
+                                    <td style="padding: 6px 2px; text-align: center; font-weight: 900; color: #00ff55;">{{t.pts}}</td>
                                 </tr>
                             </tbody>
                         </table>
-                        <div ng-if="groups.length === 0"
-                            style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
+                        <div ng-if="groups.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
                             No standings available.
                         </div>
                     </div>
@@ -2840,27 +2501,27 @@
                 <span>Chat</span>
                 <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
+            
             <!-- Pinned Message Area -->
             <div class="chat-pinned-message" ng-if="pinnedMessage">
                 <div class="pinned-header">
                     <i class="fa-solid fa-thumbtack"></i> PINNED MESSAGE
                 </div>
                 <div class="pinned-body">
-                    <span class="chat-author"
-                        style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
+                    <span class="chat-author" style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
                     <span class="chat-text">{{pinnedMessage.text}}</span>
                 </div>
             </div>
 
             <!-- Twitch Chat Iframe -->
-            <iframe class="chat-twitch-iframe" ng-src="{{twitchChatUrl}}" allowfullscreen>
+            <iframe class="chat-twitch-iframe"
+                ng-src="{{twitchChatUrl}}"
+                allowfullscreen>
             </iframe>
         </div>
 
         <footer>
-            <p>This website does not create, host, or share any video content. All video streams are from external
-                websites
+            <p>This website does not create, host, or share any video content. All video streams are from external websites
                 that are freely available online.</p>
             <p style="opacity: 0.5;font-size: 13px;">· Engineered with Gemini · Backed by Firebase ·</p>
         </footer>
@@ -2874,8 +2535,7 @@
         </a>
 
         <!-- Sport Switch Toggle -->
-        <div class="sport-toggle-container"
-            style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
+        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
             <button class="sport-toggle-btn" ng-click="goToF1()">
                 <i class="fa-solid fa-car-side"></i> F1 Party
             </button>
@@ -2897,20 +2557,20 @@
         <div class="countdown-timer-box">
             <!-- 0. Custom Countdown Timer (if enabled & active) -->
             <div ng-if="showCustomTimer">
-                <div class="countdown-session-title">
-                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' :
-                    (customTimer.label || 'STREAM STARTS')}}
+                <div class="countdown-session-title" ng-style="{'color': customTimerCountdown === 'STARTING SOON' ? '#a855f7' : (customTimerCountdown === 'LIVE NOW' ? 'var(--f1-green)' : 'var(--f1-red)')}">
+                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px;" ng-if="customTimerCountdown === 'STARTING SOON' || customTimerCountdown === 'LIVE NOW'"></i>
+                    <i class="fa-regular fa-clock" ng-if="customTimerCountdown !== 'STARTING SOON' && customTimerCountdown !== 'LIVE NOW'"></i>
+                    {{customTimerCountdown === 'LIVE NOW' ? 'MATCH LIVE' : (customTimerCountdown === 'STARTING SOON' ? 'STARTING SOON' : (customTimer.label || 'STREAM STARTS'))}}
                 </div>
-                <div class="countdown-digits">
-                    {{customTimerCountdown || '00:00:00'}}
+                <div class="countdown-digits" ng-style="{'color': customTimerCountdown === 'STARTING SOON' ? '#a855f7' : (customTimerCountdown === 'LIVE NOW' ? 'var(--f1-green)' : '#fff'), 'font-size': (customTimerCountdown === 'STARTING SOON' || customTimerCountdown === 'LIVE NOW') ? '30px' : '56px'}">
+                    {{customTimerCountdown === 'STARTING SOON' ? 'Stream going live shortly ⚽' : (customTimerCountdown || '00:00:00')}}
                 </div>
             </div>
 
             <!-- 1. Live Session -->
             <div ng-if="!showCustomTimer && activeSession">
                 <div class="countdown-session-title" style="color: var(--f1-green);">
-                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track
-                    Live Now
+                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
                 </div>
                 <div class="countdown-digits" style="color: var(--f1-green);">
                     {{activeSession.name}}
@@ -2926,6 +2586,8 @@
                     {{matchCountdownStr || '00:00:00'}}
                 </div>
             </div>
+
+
 
             <!-- 3. Offline State -->
             <div class="countdown-offline" ng-if="!showCustomTimer && !activeSession && !matchFuture">
@@ -2951,9 +2613,9 @@
         // Mousemove event listener removed for optimization (prevent layout recalculation overhead)
 
         // Mobile device detection
-        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-            ('ontouchstart' in window) ||
-            (navigator.maxTouchPoints > 0);
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
 
         const firebaseConfig = {
             apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
@@ -2999,10 +2661,10 @@
 
             $scope.hasEntered = enteredFromHome;
 
-            $scope.enterParty = function () {
+            $scope.enterParty = function() {
                 $scope.hasEntered = true;
                 sessionStorage.setItem('fifa_entered', 'true');
-
+                
                 // Play audio and video on click to bypass autoplay restrictions
                 const bgVideo = document.getElementById('bg-video');
                 const introAudio = document.getElementById('intro-audio');
@@ -3015,7 +2677,7 @@
             };
 
             // Automatically play video and audio on load if entered from home page
-            $timeout(function () {
+            $timeout(function() {
                 if ($scope.hasEntered) {
                     const bgVideo = document.getElementById('bg-video');
                     const introAudio = document.getElementById('intro-audio');
@@ -3060,12 +2722,12 @@
                 chatInput: ''
             };
 
-            $scope.startEditNickname = function () {
+            $scope.startEditNickname = function() {
                 $scope.chatState.tempNickname = $scope.chatState.username;
                 $scope.chatState.editingNickname = true;
             };
 
-            $scope.saveNickname = function () {
+            $scope.saveNickname = function() {
                 const nick = $scope.chatState.tempNickname ? $scope.chatState.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
                 if (nick && nick.length >= 2) {
                     $scope.chatState.username = nick;
@@ -3076,7 +2738,7 @@
                 }
             };
 
-            $scope.cancelEditNickname = function () {
+            $scope.cancelEditNickname = function() {
                 $scope.chatState.editingNickname = false;
             };
 
@@ -3116,11 +2778,11 @@
                 var _cachedFixtures = localStorage.getItem('fifa_cached_fixtures');
                 if (_cachedFixtures) {
                     $scope.fixtures = JSON.parse(_cachedFixtures);
-                    const upcoming = $scope.fixtures.find(function (m) { return m.status === 'notstarted'; });
+                    const upcoming = $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
                     $scope.nextMatch = upcoming || null;
                     console.log('⚽ [cache] Pre-rendered', $scope.fixtures.length, 'fixtures from LocalStorage');
                 }
-            } catch (e) { }
+            } catch(e) {}
             try {
                 var _cachedGroups = localStorage.getItem('fifa_cached_groups');
                 if (_cachedGroups) {
@@ -3128,7 +2790,7 @@
                     $scope.autoSelectGroup();
                     console.log('⚽ [cache] Pre-rendered', $scope.groups.length, 'groups from LocalStorage');
                 }
-            } catch (e) { }
+            } catch(e) {}
 
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
@@ -3201,7 +2863,7 @@
 
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
-
+            
             function applyFifaTheme() {
                 const theme = {
                     primary: '#a855f7', // FIFA 2026 Purple accent
@@ -3233,22 +2895,44 @@
             function safeDate(val) {
                 if (!val) return null;
                 if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
+                // Numeric UTC ms (e.g. kickoffTs stored directly)
+                if (typeof val === 'number' && isFinite(val)) return new Date(val);
                 // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
                 if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
                     var parts = val.trim().split(/[\s\-:]/);
-                    return new Date(+parts[0], +parts[1] - 1, +parts[2], +parts[3], +parts[4]);
+                    return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
+                }
+                // ISO 8601 with Z or offset — parse as UTC (reliable across all browsers)
+                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
+                    return new Date(val);
                 }
                 return new Date(val);
             }
 
-            function parseFifaDate(dateStr) {
+            // parseFifaDate: resolves a kickoff time accurately in UTC
+            // Priority: kickoffTs (UTC ms from server) > ISO string > human-readable display string
+            function parseFifaDate(dateStr, kickoffTs) {
+                // Best source: numeric UTC ms written by the server sync
+                if (typeof kickoffTs === 'number' && isFinite(kickoffTs) && kickoffTs > 0) {
+                    return new Date(kickoffTs);
+                }
                 if (!dateStr) return null;
-                let cleanStr = dateStr.trim();
-                const currentYear = new Date().getFullYear();
+                // ISO 8601 — parse as UTC directly (e.g. customTimer.target)
+                if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr.trim())) {
+                    var d = new Date(dateStr.trim());
+                    return isNaN(d.getTime()) ? null : d;
+                }
+                // Human-readable fallback (e.g. "13 Jun 00:30" formatted in IST by the server)
+                // The server adds IST offset when formatting, so the browser's local parsing
+                // of this string will naturally produce the wrong UTC time on non-IST machines.
+                // We just let the browser parse it — the primary source should always be
+                // customTimer.target (ISO UTC) or kickoffTs, not this display string.
+                var cleanStr = dateStr.trim();
+                var currentYear = new Date().getFullYear();
                 if (!cleanStr.includes(currentYear.toString())) {
-                    const parts = cleanStr.split(/\s+/);
+                    var parts = cleanStr.split(/\s+/);
                     if (parts.length >= 3) {
-                        if (parts[2].includes(':')) {
+                        if (parts[2] && parts[2].includes(':')) {
                             parts.splice(2, 0, currentYear.toString());
                             cleanStr = parts.join(' ');
                         } else {
@@ -3258,8 +2942,8 @@
                         cleanStr = cleanStr + ' ' + currentYear;
                     }
                 }
-                const d = new Date(cleanStr);
-                return isNaN(d.getTime()) ? null : d;
+                var raw = new Date(cleanStr);
+                return isNaN(raw.getTime()) ? null : raw;
             }
 
             function getFixtureDisplayTime(match) {
@@ -3271,7 +2955,11 @@
 
             function apiUrl(path) {
                 if (window.location.protocol === 'file:') {
-                    return 'http://localhost:3000' + path;
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true') {
+                        return 'http://localhost:3000' + path;
+                    }
+                    return 'https://f1watchparty-web.vercel.app' + path;
                 }
                 return path;
             }
@@ -3330,7 +3018,7 @@
                 };
                 if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
                 if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
-
+                
                 // Build the Twitch chat embed URL (parent must match the page hostname)
                 var parent = $window.location.hostname || 'localhost';
                 var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
@@ -3380,26 +3068,13 @@
                     _liveRefDate = safeDate($scope.customTimer.target);
                 }
                 if ((!_liveRefDate || isNaN(_liveRefDate.getTime())) && $scope.raceData && $scope.raceData.date) {
-                    _liveRefDate = parseFifaDate($scope.raceData.date);
+                    _liveRefDate = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
                 }
                 if (_liveRefDate && !isNaN(_liveRefDate.getTime())) {
                     var distToMatch = _liveRefDate.getTime() - now;
                     // Live window: 30 min BEFORE kickoff → 2 hours AFTER kickoff
                     if (distToMatch < (30 * 60 * 1000) && distToMatch > -(2 * 60 * 60 * 1000)) {
                         $scope.matchIsTimelyLive = true;
-                    }
-
-                    if ($scope.raceData && $scope.raceData.isLive && !$scope.raceData.isFinished) {
-                        var elapsedMins = Math.max(0, Math.floor((now - _liveRefDate.getTime()) / 60000));
-                        if (elapsedMins < 45) {
-                            $scope.raceData.matchTime = elapsedMins + "'";
-                        } else if (elapsedMins < 60) {
-                            $scope.raceData.matchTime = "HT";
-                        } else if (elapsedMins < 105) {
-                            $scope.raceData.matchTime = (elapsedMins - 15) + "'";
-                        } else {
-                            $scope.raceData.matchTime = "90+'";
-                        }
                     }
                 }
 
@@ -3442,27 +3117,68 @@
                         $scope.showCustomTimer = false;
                     }
                 } else {
-                    $scope.customTimerCountdown = "";
-                    $scope.customTimerActive = false;
-                    $scope.showCustomTimer = false;
+                    // No custom timer — but still apply the 10-minute pre-match STARTING SOON
+                    // window using raceData.date so the live player unlocks before kickoff
+                    var _noTimerDate = null;
+                    if ($scope.raceData && $scope.raceData.date) {
+                        _noTimerDate = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
+                    } else if ($scope.raceData && $scope.raceData.kickoffTs) {
+                        _noTimerDate = new Date($scope.raceData.kickoffTs);
+                    }
+                    if (_noTimerDate && !isNaN(_noTimerDate.getTime())) {
+                        var _noTimerDist = _noTimerDate.getTime() - now;
+                        var tenMinMs = 10 * 60 * 1000;
+                        if (_noTimerDist > 0 && _noTimerDist <= tenMinMs && $scope.streamLinks && $scope.streamLinks.length > 0) {
+                            // Within 10-minute pre-match window with streams ready — show STARTING SOON
+                            $scope.customTimerCountdown = "STARTING SOON";
+                            $scope.customTimerActive = false;
+                            $scope.showCustomTimer = true;
+                        } else if (_noTimerDist <= 0 && $scope.matchIsTimelyLive) {
+                            // Kickoff passed but still in live window
+                            $scope.customTimerCountdown = "LIVE NOW";
+                            $scope.customTimerActive = false;
+                            $scope.showCustomTimer = true;
+                        } else {
+                            $scope.customTimerCountdown = "";
+                            $scope.customTimerActive = false;
+                            $scope.showCustomTimer = false;
+                        }
+                    } else {
+                        $scope.customTimerCountdown = "";
+                        $scope.customTimerActive = false;
+                        $scope.showCustomTimer = false;
+                    }
                 }
 
-                // ── STEP 3: Match countdown display (using raceData.date for display)
-                if ($scope.raceData && $scope.raceData.date) {
-                    var matchDate = parseFifaDate($scope.raceData.date);
-                    if (matchDate && !isNaN(matchDate.getTime())) {
-                        var distCd = matchDate.getTime() - now;
-                        if (distCd > 0) {
-                            var d = Math.floor(distCd / (1000 * 60 * 60 * 24));
-                            var h = Math.floor((distCd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            var m = Math.floor((distCd % (1000 * 60 * 60)) / (1000 * 60));
-                            var s = Math.floor((distCd % (1000 * 60)) / 1000);
-                            $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
-                            $scope.matchFuture = true;
-                        } else {
-                            $scope.matchCountdownStr = "";
-                            $scope.matchFuture = false;
-                        }
+                // ── STEP 3: Match countdown display
+                // Priority: customTimer.target (ISO UTC, most accurate) > kickoffTs (UTC ms) > raceData.date (display string)
+                var _step3Date = null;
+                if ($scope.customTimer && $scope.customTimer.target) {
+                    // customTimer.target is always an ISO UTC string — most reliable source
+                    _step3Date = safeDate($scope.customTimer.target);
+                }
+                if ((!_step3Date || isNaN(_step3Date.getTime())) && $scope.raceData && $scope.raceData.kickoffTs) {
+                    _step3Date = new Date($scope.raceData.kickoffTs);
+                }
+                if ((!_step3Date || isNaN(_step3Date.getTime())) && $scope.raceData && $scope.raceData.date) {
+                    _step3Date = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
+                }
+
+                if (_step3Date && !isNaN(_step3Date.getTime())) {
+                    var distCd = _step3Date.getTime() - now;
+                    // Within the 10-minute pre-match window, don't show countdown — handled above as STARTING SOON
+                    var tenMinBeforeKickoff = 10 * 60 * 1000;
+                    if (distCd > tenMinBeforeKickoff) {
+                        var d = Math.floor(distCd / (1000 * 60 * 60 * 24));
+                        var h = Math.floor((distCd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var m = Math.floor((distCd % (1000 * 60 * 60)) / (1000 * 60));
+                        var s = Math.floor((distCd % (1000 * 60)) / 1000);
+                        $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                        $scope.matchFuture = true;
+                    } else if (distCd > 0) {
+                        // 0-10 min before kickoff: treat as "about to start", not a future match
+                        $scope.matchCountdownStr = "";
+                        $scope.matchFuture = false;
                     } else {
                         $scope.matchCountdownStr = "";
                         $scope.matchFuture = false;
@@ -3471,6 +3187,7 @@
                     $scope.matchCountdownStr = "";
                     $scope.matchFuture = false;
                 }
+
 
                 // ── STEP 4: Schedule session status
                 if (!$scope.schedule) return;
@@ -3502,50 +3219,42 @@
             $interval(updateTimers, 1000);
 
 
-            $scope.loadFifaData = function () {
-                $http.get(apiUrl('/api/fifa/fixtures?ts=' + Date.now())).then(function (res) {
+            $scope.loadFifaData = function() {
+                $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
                     var raw = res.data || [];
 
                     // Sort: LIVE first, then upcoming (earliest first), then finished (latest first)
-                    var live = raw.filter(function (m) { return m.status === 'live'; });
-                    var upcoming = raw.filter(function (m) { return m.status === 'notstarted'; })
-                        .sort(function (a, b) { return getFixtureDisplayTime(a) - getFixtureDisplayTime(b); });
-                    var finished = raw.filter(function (m) { return m.status !== 'live' && m.status !== 'notstarted'; })
-                        .sort(function (a, b) { return getFixtureDisplayTime(b) - getFixtureDisplayTime(a); });
+                    var live    = raw.filter(function(m) { return m.status === 'live'; });
+                    var upcoming = raw.filter(function(m) { return m.status === 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(a) - getFixtureDisplayTime(b); });
+                    var finished = raw.filter(function(m) { return m.status !== 'live' && m.status !== 'notstarted'; })
+                                     .sort(function(a, b) { return getFixtureDisplayTime(b) - getFixtureDisplayTime(a); });
 
                     $scope.fixtures = live.concat(upcoming).concat(finished);
 
-                    // Keep the hero match live from the fixtures API while auto-sync is enabled.
+                    // ── Auto-sync live score from fixtures API into raceData ──
+                    // Only do this if autoSyncDetails is true! Otherwise, respect the admin's manual scores.
                     if ($scope.autoSyncDetails) {
-                        var matchedFixture = null;
                         if ($scope.raceData && $scope.raceData.name) {
                             var rName = $scope.raceData.name.toLowerCase();
-                            matchedFixture = raw.find(function (m) {
+                            var matchedFixture = raw.find(function(m) {
+                                // Match by "Home vs Away" name pattern
                                 var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
                                 return fName === rName;
                             });
-                        }
-
-                        matchedFixture = matchedFixture || live[0] || upcoming[0] || null;
-
-                        if (matchedFixture) {
-                            $scope.raceData = angular.extend({}, $scope.raceData, {
-                                name: (matchedFixture.homeTeam || 'TBD') + ' vs ' + (matchedFixture.awayTeam || 'TBD'),
-                                round: matchedFixture.round || $scope.raceData.round,
-                                circuit: matchedFixture.stadium || $scope.raceData.circuit,
-                                date: matchedFixture.localDate || $scope.raceData.date,
-                                homeScore: matchedFixture.homeScore || '0',
-                                awayScore: matchedFixture.awayScore || '0',
-                                isLive: matchedFixture.status === 'live',
-                                isFinished: !!matchedFixture.finished,
-                                matchTime: matchedFixture.matchTime || ''
-                            });
+                            if (matchedFixture) {
+                                $scope.raceData.homeScore = matchedFixture.homeScore || '0';
+                                $scope.raceData.awayScore = matchedFixture.awayScore || '0';
+                                // Also sync live/finished status from the API
+                                if (matchedFixture.status === 'live') $scope.raceData.isLive = true;
+                                if (matchedFixture.finished) { $scope.raceData.isFinished = true; $scope.raceData.isLive = false; }
+                            }
                         }
                     }
 
                     // Update poll flags if we have a match
                     if ($scope.poll.matchId && $scope.raceData && $scope.raceData.name) {
-                        var matchedFixture = $scope.fixtures.find(function (m) {
+                        var matchedFixture = $scope.fixtures.find(function(m) {
                             var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
                             return fName === $scope.raceData.name.toLowerCase();
                         });
@@ -3556,7 +3265,7 @@
                     }
 
                     // Cache to LocalStorage for instant next-load
-                    try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch (e) { }
+                    try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                     console.log('⚽ Fixtures loaded:', $scope.fixtures.length, 'matches (live:', live.length, 'upcoming:', upcoming.length, 'finished:', finished.length + ')');
 
                     // Find the next upcoming match (first 'notstarted' match)
@@ -3564,24 +3273,24 @@
                     $scope.nextMatch = nextUp;
 
                     // Auto-scroll fixtures list to the first live/upcoming match
-                    $timeout(function () {
+                    $timeout(function() {
                         var container = document.querySelector('.fixtures-scroll-container');
                         if (container) {
                             container.scrollTop = 0; // Live/upcoming is now at the top
                         }
                     }, 100);
 
-                }, function (err) {
+                }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
                 });
 
-                $http.get(apiUrl('/api/fifa/standings?ts=' + Date.now())).then(function (res) {
+                $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
                     $scope.groups = res.data || [];
                     // Cache to LocalStorage for instant next-load
-                    try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch (e) { }
+                    try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch(e) {}
                     $scope.autoSelectGroup();
                     console.log('⚽ Standings loaded:', $scope.groups.length, 'groups');
-                }, function (err) {
+                }, function(err) {
                     console.error('Failed to load FIFA standings:', err);
                 });
             };
@@ -3589,13 +3298,13 @@
             // Load fixtures & standings immediately on boot (don't wait for Firestore)
             $scope.loadFifaData();
 
-            // Smart refresh: 15s when a match is live, 60s otherwise
+            // Smart refresh: 20s when a match is live, 2 min otherwise
             var _fixtureRefreshInterval = null;
             var _lastRefreshIntervalLive = null;
             function scheduleFixtureRefresh() {
                 var isLive = ($scope.raceData && $scope.raceData.isLive) ||
-                    ($scope.fixtures && $scope.fixtures.some(function (m) { return m.status === 'live'; }));
-
+                             ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+                
                 // If the live state hasn't changed, and we already have a timer running, do nothing
                 if (_fixtureRefreshInterval && _lastRefreshIntervalLive === isLive) {
                     return;
@@ -3603,42 +3312,42 @@
 
                 if (_fixtureRefreshInterval) { $interval.cancel(_fixtureRefreshInterval); }
                 _lastRefreshIntervalLive = isLive;
-                var delay = isLive ? 15 * 1000 : 60 * 1000;
-
+                var delay = isLive ? 20 * 1000 : 2 * 60 * 1000;
+                
                 console.log('⚽ Scheduling next fixture refresh in', delay / 1000, 'seconds (isLive:', isLive, ')');
-                _fixtureRefreshInterval = $interval(function () {
+                _fixtureRefreshInterval = $interval(function() {
                     $scope.loadFifaData();
-                }, delay);
+                }, delay, 1);
             }
 
             // Watch for changes in live states to immediately adjust the polling speed
-            $scope.$watch(function () {
+            $scope.$watch(function() {
                 return ($scope.raceData && $scope.raceData.isLive) ||
-                    ($scope.fixtures && $scope.fixtures.some(function (m) { return m.status === 'live'; }));
-            }, function () {
+                       ($scope.fixtures && $scope.fixtures.some(function(m) { return m.status === 'live'; }));
+            }, function() {
                 scheduleFixtureRefresh();
             });
 
             // Helper: live + upcoming fixtures
-            $scope.liveAndUpcomingFixtures = function () {
+            $scope.liveAndUpcomingFixtures = function() {
                 if (!$scope.fixtures) return [];
-                return $scope.fixtures.filter(function (m) {
+                return $scope.fixtures.filter(function(m) {
                     return m.status === 'live' || m.status === 'notstarted';
                 });
             };
 
             // Helper: past (finished) fixtures
-            $scope.pastFixtures = function () {
+            $scope.pastFixtures = function() {
                 if (!$scope.fixtures) return [];
-                return $scope.fixtures.filter(function (m) {
+                return $scope.fixtures.filter(function(m) {
                     return m.finished || (m.status !== 'live' && m.status !== 'notstarted');
                 });
             };
 
             // Helper: any live match right now?
-            $scope.hasLiveMatches = function () {
+            $scope.hasLiveMatches = function() {
                 if (!$scope.fixtures) return false;
-                return $scope.fixtures.some(function (m) { return m.status === 'live'; });
+                return $scope.fixtures.some(function(m) { return m.status === 'live'; });
             };
 
             // UI state object — avoids AngularJS prototype chain issues with ng-if child scopes
@@ -3686,9 +3395,9 @@
 
             function fetchPollCounts(matchId) {
                 fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)))
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        $scope.$apply(function () {
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        $scope.$apply(function() {
                             $scope.poll.home = data.home || 0;
                             $scope.poll.away = data.away || 0;
                             $scope.poll.draw = data.draw || 0;
@@ -3704,82 +3413,53 @@
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ choice: $scope.poll.userVote })
                                 })
-                                    .then(function (r) { return r.json(); })
-                                    .then(function (newData) {
-                                        $scope.$apply(function () {
-                                            $scope.poll.home = newData.home || 0;
-                                            $scope.poll.away = newData.away || 0;
-                                            $scope.poll.draw = newData.draw || 0;
-                                            calcPollPct(newData);
-                                        });
-                                    })
-                                    .catch(function (e) { console.warn('[poll] auto-vote error:', e); });
+                                .then(function(r) { return r.json(); })
+                                .then(function(newData) {
+                                    $scope.$apply(function() {
+                                        $scope.poll.home = newData.home || 0;
+                                        $scope.poll.away = newData.away || 0;
+                                        $scope.poll.draw = newData.draw || 0;
+                                        calcPollPct(newData);
+                                    });
+                                })
+                                .catch(function(e) { console.warn('[poll] auto-vote error:', e); });
                             }
                         });
                     })
-                    .catch(function (e) {
+                    .catch(function(e) {
                         console.warn('[poll] fetch error:', e);
-                        $scope.$apply(function () {
+                        $scope.$apply(function() {
                             $scope.poll.loaded = true;
                         });
                     });
             }
 
-            $scope.initPoll = function (matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
-                // If matchId is different → full reset (new match, new poll)
-                var isNewMatch = matchId && $scope.poll.matchId !== matchId;
-                if (!matchId) return;
-                if (!isNewMatch) return; // same match, no reset needed
+            $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
+                if (!matchId || $scope.poll.matchId === matchId) return;
 
                 // Stop previous poll interval
                 if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
 
-                // ── Full reset for new match ──
-                $scope.poll.matchId = matchId;
-                $scope.poll.homeTeam = homeTeam;
-                $scope.poll.awayTeam = awayTeam;
-                $scope.poll.homeFlag = homeFlag;
-                $scope.poll.awayFlag = awayFlag;
-                $scope.poll.home = 0;
-                $scope.poll.away = 0;
-                $scope.poll.draw = 0;
-                $scope.poll.homePct = 0;
-                $scope.poll.awayPct = 0;
-                $scope.poll.drawPct = 0;
-                $scope.poll.totalVotes = 0;
-                $scope.poll.loaded = false;
+                $scope.poll.matchId   = matchId;
+                $scope.poll.homeTeam  = homeTeam;
+                $scope.poll.awayTeam  = awayTeam;
+                $scope.poll.homeFlag  = homeFlag;
+                $scope.poll.awayFlag  = awayFlag;
+                $scope.poll.loaded    = false;
 
-                // Restore user's previous vote for THIS match from localStorage (per-match key)
+                // Restore user's previous vote for this match from localStorage
                 var voteKey = 'poll_vote_' + matchId;
                 $scope.poll.userVote = localStorage.getItem(voteKey) || null;
 
-                // Fetch initial counts immediately
+                // Fetch initial counts, then poll every 15s for live updates
                 fetchPollCounts(matchId);
-
-                // Smart polling: 8s when a match is live, 30s otherwise
-                function startPollTimer() {
-                    var isMatchLive = $scope.raceData && $scope.raceData.isLive;
-                    var interval = isMatchLive ? 8000 : 30000;
-                    _pollInterval = setInterval(function () {
-                        fetchPollCounts(matchId);
-                    }, interval);
-                }
-                startPollTimer();
-
-                // Refresh poll counts immediately when the tab regains focus
-                var _onFocus = function() { fetchPollCounts(matchId); };
-                window.addEventListener('focus', _onFocus);
-                // Cleanup on scope destroy
-                $scope.$on('$destroy', function() {
-                    window.removeEventListener('focus', _onFocus);
-                    if (_pollInterval) { clearInterval(_pollInterval); }
-                });
+                _pollInterval = setInterval(function() { fetchPollCounts(matchId); }, 15000);
             };
 
-            $scope.castVote = function (choice) {
+            $scope.castVote = function(choice) {
                 if (!$scope.poll.matchId || $scope.poll.userVote !== null) return;
-                var matchId = $scope.poll.matchId;
-                var voteKey = 'poll_vote_' + matchId;
+                var matchId  = $scope.poll.matchId;
+                var voteKey  = 'poll_vote_' + matchId;
 
                 // Optimistic update — show the collapsed view instantly
                 $scope.poll.userVote = choice;
@@ -3801,54 +3481,46 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ choice: choice })
                 })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        $scope.$apply(function () {
-                            $scope.poll.home = data.home || 0;
-                            $scope.poll.away = data.away || 0;
-                            $scope.poll.draw = data.draw || 0;
-                            calcPollPct(data);
-                        });
-                    })
-                    .catch(function (e) {
-                        console.error('[poll] vote error:', e);
-                        $scope.$apply(function () {
-                            $scope.poll.loaded = true;
-                        });
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    $scope.$apply(function() {
+                        $scope.poll.home = data.home || 0;
+                        $scope.poll.away = data.away || 0;
+                        $scope.poll.draw = data.draw || 0;
+                        calcPollPct(data);
                     });
+                })
+                .catch(function(e) {
+                    console.error('[poll] vote error:', e);
+                    $scope.$apply(function() {
+                        $scope.poll.loaded = true;
+                    });
+                });
             };
 
             // Watch raceData changes → init poll for current match
-            // If the match name changes (new fixture), the poll FULLY resets.
-            $scope.$watch('raceData.name', function (newName, oldName) {
-                if (!newName) return;
-
-                // If match changed, force-clear the poll state so initPoll knows to reset
-                if (oldName && newName !== oldName) {
-                    $scope.poll.matchId = null; // force full reset in initPoll
-                    if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; }
-                }
-
+            $scope.$watch('raceData', function(newVal) {
+                if (!newVal || !newVal.name) return;
                 // Build a stable match ID from name (slug)
-                var id = newName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').substring(0, 40);
+                var id = (newVal.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g,'_').substring(0, 40);
                 // Find the current match from fixtures to get flags
                 var match = null;
                 if ($scope.fixtures && $scope.fixtures.length) {
-                    match = $scope.fixtures.find(function (m) { return m.status === 'live'; })
-                        || $scope.fixtures.find(function (m) { return m.status === 'notstarted'; });
+                    match = $scope.fixtures.find(function(m) { return m.status === 'live'; })
+                         || $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
                 }
                 var homeFlag = match ? match.homeFlag : '';
                 var awayFlag = match ? match.awayFlag : '';
-                var home = newName.split(' vs ')[0] || '';
-                var away = newName.split(' vs ')[1] || '';
+                var home = (newVal.name || '').split(' vs ')[0] || '';
+                var away = (newVal.name || '').split(' vs ')[1] || '';
                 if (home && away) {
                     $scope.initPoll(id, home.trim(), away.trim(), homeFlag, awayFlag);
                 }
-            });
+            }, true);
 
 
 
-            $scope.autoSelectGroup = function () {
+            $scope.autoSelectGroup = function() {
                 if ($scope.groups && $scope.groups.length > 0) {
                     if ($scope.raceData && $scope.raceData.round) {
                         const roundStr = $scope.raceData.round.toLowerCase();
@@ -3873,12 +3545,6 @@
                 var a = h >= 12 ? 'PM' : 'AM';
                 h = h % 12; h = h ? h : 12;
                 return h + ':' + m + ' ' + a;
-            };
-
-            // Format fixture kickoff time (HH:MM or H:MM string) → 12h AM/PM
-            $scope.formatMatchTime = function (t) {
-                if (!t || !t.includes(':')) return t || '';
-                return $scope.formatTime12(t);
             };
 
             $scope.getWeatherIcon = function (c) {

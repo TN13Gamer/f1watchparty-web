@@ -6,7 +6,7 @@ const path = require('path');
 async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
   let browser;
   try {
-    const puppeteer = require('puppeteer');
+    const puppeteer = eval("require('puppeteer')");
     browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -118,8 +118,8 @@ const CACHE_TTL = 30 * 1000; // 30 seconds – short TTL so live scores update q
 let fallbackGames = [];
 let fallbackTeams = [];
 try {
-    const gamesJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fallback_games.json'), 'utf8'));
-    const teamsJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fallback_teams.json'), 'utf8'));
+    const gamesJson = require('./fallback_games.json');
+    const teamsJson = require('./fallback_teams.json');
     fallbackGames = gamesJson.games || [];
     fallbackTeams = teamsJson.teams || [];
 } catch (e) {

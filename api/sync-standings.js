@@ -12,7 +12,7 @@ const cheerio = require('cheerio');
 async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
   let browser;
   try {
-    const puppeteer = require('puppeteer');
+    const puppeteer = eval("require('puppeteer')");
     browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -460,14 +460,9 @@ async function syncFifaMatchDetails(config, ref) {
   } catch (err) {
     console.error('[sync-fifa-details] FIFA details API fetch failed, trying local fallback file:', err.message);
     try {
-      const fs = require('fs');
-      const path = require('path');
-      const fbGamesFile = path.resolve(__dirname, './fifa/fallback_games.json');
-      if (fs.existsSync(fbGamesFile)) {
-        const fbGamesData = JSON.parse(fs.readFileSync(fbGamesFile, 'utf8'));
-        games = fbGamesData.games;
-        console.log(`[sync-fifa-details] Loaded ${games ? games.length : 0} games from fallback file.`);
-      }
+      const fbGamesData = require('./fifa/fallback_games.json');
+      games = fbGamesData.games;
+      console.log(`[sync-fifa-details] Loaded ${games ? games.length : 0} games from fallback file.`);
     } catch (fileErr) {
       console.error('[sync-fifa-details] Failed to read fallback file:', fileErr.message);
     }
@@ -555,8 +550,10 @@ async function syncFifaMatchDetails(config, ref) {
     const stadium = STADIUM_MAP[chosen.stadium_id] || { name: 'Stadium', city: '', country: '' };
     const location = `${stadium.city}, ${stadium.country}`;
 
-    // Kickoff datetime for timer
-    const kickoffMs = parseGameDate(chosen.local_date, chosen.stadium_id);
+    // Kickoff datetime for timer - prefer manual custom target if set
+    const kickoffMs = (fifa.customTimer && fifa.customTimer.isManual && fifa.customTimer.target)
+      ? new Date(fifa.customTimer.target).getTime()
+      : parseGameDate(chosen.local_date, chosen.stadium_id);
     const isoTarget = new Date(kickoffMs).toISOString();
 
     // Friendly date string formatted in IST for display (e.g. "13 Jun 23:30")
@@ -615,12 +612,14 @@ async function syncFifaMatchDetails(config, ref) {
         matchTime: matchTime,
       },
       // Auto-update customTimer target to kickoff time (enable it too)
-      customTimer: {
-        ...(currentFifa.customTimer || {}),
-        enabled: true,
-        target: isoTarget,
-        label: isLive ? 'LIVE NOW' : 'MATCH KICKS OFF',
-      }
+      customTimer: (currentFifa.customTimer && currentFifa.customTimer.isManual)
+        ? currentFifa.customTimer
+        : {
+            ...(currentFifa.customTimer || {}),
+            enabled: true,
+            target: isoTarget,
+            label: isLive ? 'LIVE NOW' : 'MATCH KICKS OFF',
+          }
     };
 
     await ref.update({ fifa: updatedFifa });
@@ -841,12 +840,14 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
         isFinished: false,
         matchTime: googleMatchTime || currentRaceData.matchTime || 'LIVE'
       },
-      customTimer: {
-        ...(fifa.customTimer || {}),
-        enabled: true,
-        target: kickoffDate && !isNaN(kickoffDate.getTime()) ? kickoffDate.toISOString() : new Date().toISOString(),
-        label: 'LIVE NOW'
-      },
+      customTimer: (fifa.customTimer && fifa.customTimer.isManual)
+        ? fifa.customTimer
+        : {
+            ...(fifa.customTimer || {}),
+            enabled: true,
+            target: kickoffDate && !isNaN(kickoffDate.getTime()) ? kickoffDate.toISOString() : new Date().toISOString(),
+            label: 'LIVE NOW'
+          },
       streamLinks
     };
 
