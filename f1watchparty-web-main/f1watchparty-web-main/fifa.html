@@ -33,6 +33,8 @@
 
     <!-- Tilt effect library (Vanta Globe removed for FIFA performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    <!-- Lottie Light Player for FIFA Loader (Optimized for PC/Mobile) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
 
     <style>
         [ng-cloak],
@@ -1370,7 +1372,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #050505;
+            background: #000000;
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -1384,50 +1386,15 @@
             visibility: hidden;
         }
 
-        .loading-logo-container {
-            text-align: center;
-        }
-
-        .loading-logo-svg {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            overflow: visible;
-        }
-
-        .loading-logo-svg text {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 900;
-            font-size: 70px;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            stroke: #00ff55; /* FIFA Green */
-            stroke-width: 2;
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            animation:
-                drawOutline 1.5s ease-in-out forwards,
-                fillLogoFifa 0.8s ease-in-out 1.5s forwards;
-        }
-
-        @keyframes drawOutline {
-            0% {
-                stroke-dashoffset: 1000;
-            }
-            100% {
-                stroke-dashoffset: 0;
-            }
-        }
-
-        @keyframes fillLogoFifa {
-            0% {
-                fill: transparent;
-            }
-            100% {
-                fill: #00ff55;
-                stroke-width: 0;
-                opacity: 1;
-            }
+        #lottie-loader {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(100vw, 133.33dvh);
+            height: min(100dvh, 75vw);
+            will-change: transform;
         }
         .launch-content {
             display: flex;
@@ -2131,12 +2098,34 @@
 
     <!-- Loading Animation -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
-        <div class="loading-logo-container">
-            <svg class="loading-logo-svg" viewBox="0 0 600 100">
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA.live</text>
-            </svg>
-        </div>
+        <div id="lottie-loader"></div>
     </div>
+    <script>
+        (function () {
+            var loaderAnim = lottie.loadAnimation({
+                container: document.getElementById('lottie-loader'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'fifa-loader.json?v=' + Date.now(),
+                rendererSettings: {
+                    progressiveLoad: true,
+                    hideOnInvisible: true
+                }
+            });
+
+            // Cleanup when loader transitions out
+            var loaderEl = document.querySelector('.loader');
+            if (loaderEl) {
+                loaderEl.addEventListener('transitionend', function (e) {
+                    if (loaderEl.classList.contains('hide') && e.propertyName === 'opacity') {
+                        loaderAnim.destroy();
+                        loaderEl.style.display = 'none';
+                    }
+                });
+            }
+        })();
+    </script>
 
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>

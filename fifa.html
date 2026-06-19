@@ -33,6 +33,8 @@
 
     <!-- Tilt effect library (Vanta Globe removed for FIFA performance) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    <!-- Lottie Light Player for FIFA Loader (Optimized for PC/Mobile) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
 
     <style>
         [ng-cloak],
@@ -1370,7 +1372,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #050505;
+            background: #000000;
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -1384,50 +1386,15 @@
             visibility: hidden;
         }
 
-        .loading-logo-container {
-            text-align: center;
-        }
-
-        .loading-logo-svg {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            overflow: visible;
-        }
-
-        .loading-logo-svg text {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 900;
-            font-size: 70px;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            stroke: #00ff55; /* FIFA Green */
-            stroke-width: 2;
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            animation:
-                drawOutline 1.5s ease-in-out forwards,
-                fillLogoFifa 0.8s ease-in-out 1.5s forwards;
-        }
-
-        @keyframes drawOutline {
-            0% {
-                stroke-dashoffset: 1000;
-            }
-            100% {
-                stroke-dashoffset: 0;
-            }
-        }
-
-        @keyframes fillLogoFifa {
-            0% {
-                fill: transparent;
-            }
-            100% {
-                fill: #00ff55;
-                stroke-width: 0;
-                opacity: 1;
-            }
+        #lottie-loader {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(100vw, 133.33dvh);
+            height: min(100dvh, 75vw);
+            will-change: transform;
         }
         .launch-content {
             display: flex;
@@ -2131,12 +2098,34 @@
 
     <!-- Loading Animation -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
-        <div class="loading-logo-container">
-            <svg class="loading-logo-svg" viewBox="0 0 600 100">
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchFIFA.live</text>
-            </svg>
-        </div>
+        <div id="lottie-loader"></div>
     </div>
+    <script>
+        (function () {
+            var loaderAnim = lottie.loadAnimation({
+                container: document.getElementById('lottie-loader'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'fifa-loader.json?v=' + Date.now(),
+                rendererSettings: {
+                    progressiveLoad: true,
+                    hideOnInvisible: true
+                }
+            });
+
+            // Cleanup when loader transitions out
+            var loaderEl = document.querySelector('.loader');
+            if (loaderEl) {
+                loaderEl.addEventListener('transitionend', function (e) {
+                    if (loaderEl.classList.contains('hide') && e.propertyName === 'opacity') {
+                        loaderAnim.destroy();
+                        loaderEl.style.display = 'none';
+                    }
+                });
+            }
+        })();
+    </script>
 
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
@@ -2557,13 +2546,11 @@
         <div class="countdown-timer-box">
             <!-- 0. Custom Countdown Timer (if enabled & active) -->
             <div ng-if="showCustomTimer">
-                <div class="countdown-session-title" ng-style="{'color': customTimerCountdown === 'STARTING SOON' ? '#a855f7' : (customTimerCountdown === 'LIVE NOW' ? 'var(--f1-green)' : 'var(--f1-red)')}">
-                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px;" ng-if="customTimerCountdown === 'STARTING SOON' || customTimerCountdown === 'LIVE NOW'"></i>
-                    <i class="fa-regular fa-clock" ng-if="customTimerCountdown !== 'STARTING SOON' && customTimerCountdown !== 'LIVE NOW'"></i>
-                    {{customTimerCountdown === 'LIVE NOW' ? 'MATCH LIVE' : (customTimerCountdown === 'STARTING SOON' ? 'STARTING SOON' : (customTimer.label || 'STREAM STARTS'))}}
+                <div class="countdown-session-title">
+                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' : (customTimer.label || 'STREAM STARTS')}}
                 </div>
-                <div class="countdown-digits" ng-style="{'color': customTimerCountdown === 'STARTING SOON' ? '#a855f7' : (customTimerCountdown === 'LIVE NOW' ? 'var(--f1-green)' : '#fff'), 'font-size': (customTimerCountdown === 'STARTING SOON' || customTimerCountdown === 'LIVE NOW') ? '30px' : '56px'}">
-                    {{customTimerCountdown === 'STARTING SOON' ? 'Stream going live shortly ⚽' : (customTimerCountdown || '00:00:00')}}
+                <div class="countdown-digits">
+                    {{customTimerCountdown || '00:00:00'}}
                 </div>
             </div>
 
@@ -2586,8 +2573,6 @@
                     {{matchCountdownStr || '00:00:00'}}
                 </div>
             </div>
-
-
 
             <!-- 3. Offline State -->
             <div class="countdown-offline" ng-if="!showCustomTimer && !activeSession && !matchFuture">
@@ -2895,44 +2880,22 @@
             function safeDate(val) {
                 if (!val) return null;
                 if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
-                // Numeric UTC ms (e.g. kickoffTs stored directly)
-                if (typeof val === 'number' && isFinite(val)) return new Date(val);
                 // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
                 if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
                     var parts = val.trim().split(/[\s\-:]/);
                     return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
                 }
-                // ISO 8601 with Z or offset — parse as UTC (reliable across all browsers)
-                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
-                    return new Date(val);
-                }
                 return new Date(val);
             }
 
-            // parseFifaDate: resolves a kickoff time accurately in UTC
-            // Priority: kickoffTs (UTC ms from server) > ISO string > human-readable display string
-            function parseFifaDate(dateStr, kickoffTs) {
-                // Best source: numeric UTC ms written by the server sync
-                if (typeof kickoffTs === 'number' && isFinite(kickoffTs) && kickoffTs > 0) {
-                    return new Date(kickoffTs);
-                }
+            function parseFifaDate(dateStr) {
                 if (!dateStr) return null;
-                // ISO 8601 — parse as UTC directly (e.g. customTimer.target)
-                if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr.trim())) {
-                    var d = new Date(dateStr.trim());
-                    return isNaN(d.getTime()) ? null : d;
-                }
-                // Human-readable fallback (e.g. "13 Jun 00:30" formatted in IST by the server)
-                // The server adds IST offset when formatting, so the browser's local parsing
-                // of this string will naturally produce the wrong UTC time on non-IST machines.
-                // We just let the browser parse it — the primary source should always be
-                // customTimer.target (ISO UTC) or kickoffTs, not this display string.
-                var cleanStr = dateStr.trim();
-                var currentYear = new Date().getFullYear();
+                let cleanStr = dateStr.trim();
+                const currentYear = new Date().getFullYear();
                 if (!cleanStr.includes(currentYear.toString())) {
-                    var parts = cleanStr.split(/\s+/);
+                    const parts = cleanStr.split(/\s+/);
                     if (parts.length >= 3) {
-                        if (parts[2] && parts[2].includes(':')) {
+                        if (parts[2].includes(':')) {
                             parts.splice(2, 0, currentYear.toString());
                             cleanStr = parts.join(' ');
                         } else {
@@ -2942,8 +2905,8 @@
                         cleanStr = cleanStr + ' ' + currentYear;
                     }
                 }
-                var raw = new Date(cleanStr);
-                return isNaN(raw.getTime()) ? null : raw;
+                const d = new Date(cleanStr);
+                return isNaN(d.getTime()) ? null : d;
             }
 
             function getFixtureDisplayTime(match) {
@@ -2955,11 +2918,7 @@
 
             function apiUrl(path) {
                 if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('local') === 'true') {
-                        return 'http://localhost:3000' + path;
-                    }
-                    return 'https://f1watchparty-web.vercel.app' + path;
+                    return 'http://localhost:3000' + path;
                 }
                 return path;
             }
@@ -3068,7 +3027,7 @@
                     _liveRefDate = safeDate($scope.customTimer.target);
                 }
                 if ((!_liveRefDate || isNaN(_liveRefDate.getTime())) && $scope.raceData && $scope.raceData.date) {
-                    _liveRefDate = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
+                    _liveRefDate = parseFifaDate($scope.raceData.date);
                 }
                 if (_liveRefDate && !isNaN(_liveRefDate.getTime())) {
                     var distToMatch = _liveRefDate.getTime() - now;
@@ -3117,68 +3076,27 @@
                         $scope.showCustomTimer = false;
                     }
                 } else {
-                    // No custom timer — but still apply the 10-minute pre-match STARTING SOON
-                    // window using raceData.date so the live player unlocks before kickoff
-                    var _noTimerDate = null;
-                    if ($scope.raceData && $scope.raceData.date) {
-                        _noTimerDate = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
-                    } else if ($scope.raceData && $scope.raceData.kickoffTs) {
-                        _noTimerDate = new Date($scope.raceData.kickoffTs);
-                    }
-                    if (_noTimerDate && !isNaN(_noTimerDate.getTime())) {
-                        var _noTimerDist = _noTimerDate.getTime() - now;
-                        var tenMinMs = 10 * 60 * 1000;
-                        if (_noTimerDist > 0 && _noTimerDist <= tenMinMs && $scope.streamLinks && $scope.streamLinks.length > 0) {
-                            // Within 10-minute pre-match window with streams ready — show STARTING SOON
-                            $scope.customTimerCountdown = "STARTING SOON";
-                            $scope.customTimerActive = false;
-                            $scope.showCustomTimer = true;
-                        } else if (_noTimerDist <= 0 && $scope.matchIsTimelyLive) {
-                            // Kickoff passed but still in live window
-                            $scope.customTimerCountdown = "LIVE NOW";
-                            $scope.customTimerActive = false;
-                            $scope.showCustomTimer = true;
+                    $scope.customTimerCountdown = "";
+                    $scope.customTimerActive = false;
+                    $scope.showCustomTimer = false;
+                }
+
+                // ── STEP 3: Match countdown display (using raceData.date for display)
+                if ($scope.raceData && $scope.raceData.date) {
+                    var matchDate = parseFifaDate($scope.raceData.date);
+                    if (matchDate && !isNaN(matchDate.getTime())) {
+                        var distCd = matchDate.getTime() - now;
+                        if (distCd > 0) {
+                            var d = Math.floor(distCd / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((distCd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((distCd % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((distCd % (1000 * 60)) / 1000);
+                            $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                            $scope.matchFuture = true;
                         } else {
-                            $scope.customTimerCountdown = "";
-                            $scope.customTimerActive = false;
-                            $scope.showCustomTimer = false;
+                            $scope.matchCountdownStr = "";
+                            $scope.matchFuture = false;
                         }
-                    } else {
-                        $scope.customTimerCountdown = "";
-                        $scope.customTimerActive = false;
-                        $scope.showCustomTimer = false;
-                    }
-                }
-
-                // ── STEP 3: Match countdown display
-                // Priority: customTimer.target (ISO UTC, most accurate) > kickoffTs (UTC ms) > raceData.date (display string)
-                var _step3Date = null;
-                if ($scope.customTimer && $scope.customTimer.target) {
-                    // customTimer.target is always an ISO UTC string — most reliable source
-                    _step3Date = safeDate($scope.customTimer.target);
-                }
-                if ((!_step3Date || isNaN(_step3Date.getTime())) && $scope.raceData && $scope.raceData.kickoffTs) {
-                    _step3Date = new Date($scope.raceData.kickoffTs);
-                }
-                if ((!_step3Date || isNaN(_step3Date.getTime())) && $scope.raceData && $scope.raceData.date) {
-                    _step3Date = parseFifaDate($scope.raceData.date, $scope.raceData.kickoffTs);
-                }
-
-                if (_step3Date && !isNaN(_step3Date.getTime())) {
-                    var distCd = _step3Date.getTime() - now;
-                    // Within the 10-minute pre-match window, don't show countdown — handled above as STARTING SOON
-                    var tenMinBeforeKickoff = 10 * 60 * 1000;
-                    if (distCd > tenMinBeforeKickoff) {
-                        var d = Math.floor(distCd / (1000 * 60 * 60 * 24));
-                        var h = Math.floor((distCd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        var m = Math.floor((distCd % (1000 * 60 * 60)) / (1000 * 60));
-                        var s = Math.floor((distCd % (1000 * 60)) / 1000);
-                        $scope.matchCountdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
-                        $scope.matchFuture = true;
-                    } else if (distCd > 0) {
-                        // 0-10 min before kickoff: treat as "about to start", not a future match
-                        $scope.matchCountdownStr = "";
-                        $scope.matchFuture = false;
                     } else {
                         $scope.matchCountdownStr = "";
                         $scope.matchFuture = false;
@@ -3187,7 +3105,6 @@
                     $scope.matchCountdownStr = "";
                     $scope.matchFuture = false;
                 }
-
 
                 // ── STEP 4: Schedule session status
                 if (!$scope.schedule) return;

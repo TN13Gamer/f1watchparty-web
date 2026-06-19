@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>watchf1.live | Live Stream</title>
 
     <script>
@@ -66,6 +70,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+
+    <!-- Lottie player for Scene loader animation -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.3/dist/lottie-player.js"></script>
 
     <style>
         [ng-cloak],
@@ -914,7 +921,7 @@
 
         .carbon-schedule-card {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             background-color: #0c0c0f !important;
             background-image:
                 linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
@@ -936,6 +943,8 @@
             z-index: 1;
             opacity: 0.18;
             pointer-events: none;
+            border-radius: inherit;
+            clip-path: inset(0 round 24px);
         }
 
         .carbon-schedule-card>*:not(.card-video-bg) {
@@ -973,6 +982,170 @@
 
         .schedule-row.ended {
             opacity: 0.4;
+        }
+
+        /* --- FIXTURE HIGHLIGHT CARD --- */
+        .fixture-highlight {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid var(--f1-red);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 0 20px var(--glow-color), inset 0 1px 1px rgba(255,255,255,0.07);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fixture-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--f1-red), transparent);
+            opacity: 0.6;
+        }
+
+        .fixture-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--f1-red);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fixture-label .fixture-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--f1-red);
+            box-shadow: 0 0 8px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .fixture-label.upcoming-label {
+            color: #ffb400;
+        }
+
+        .fixture-label.upcoming-label .fixture-dot {
+            background: #ffb400;
+            box-shadow: 0 0 8px #ffb400;
+            animation: none;
+        }
+
+        .fixture-session-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            line-height: 1.1;
+        }
+
+        .fixture-time-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .fixture-time {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--f1-red);
+        }
+
+        .fixture-day {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .fixture-countdown {
+            margin-top: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fixture-countdown i {
+            color: #ffb400;
+            font-size: 11px;
+        }
+
+        .fixture-live-pulse {
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--f1-green);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .fixture-no-upcoming {
+            text-align: center;
+            padding: 14px 10px;
+            color: var(--text-gray);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px dashed rgba(255,255,255,0.07);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* Past sessions toggle btn */
+        .past-sessions-toggle {
+            width: 100%;
+            background: transparent;
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: var(--text-gray);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 9px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+
+        .past-sessions-toggle:hover {
+            background: rgba(255,255,255,0.04);
+            color: #fff;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .past-sessions-list {
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+            max-height: 0;
+        }
+
+        .past-sessions-list.open {
+            max-height: 500px;
+        }
+
+        .schedule-row.ended {
+            opacity: 0.38;
         }
 
         .sess-name {
@@ -1267,71 +1440,20 @@
             display: none;
         }
 
-        .loader {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.5s;
-        }
-
-        .loader.hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-            border-top-color: var(--f1-red);
-            animation: spin 0.8s ease-in-out infinite;
-            margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(230, 0, 0, 0.2);
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading-text {
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            color: #555;
-            animation: fadeText 1.5s infinite alternate;
-            text-transform: uppercase;
-        }
-
-        @keyframes fadeText {
-            from {
-                opacity: 0.5;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
+        /* ── Loading Screen ── */
 
         /* WatchF1.live Loading Animation */
+        /* ── Loading Screen ── */
         .loader {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
             height: 100%;
-            background: #050505;
+            height: 100dvh;
+            background: #000;
+            overflow: hidden;
             z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
             transition: opacity 0.5s ease;
         }
 
@@ -1340,53 +1462,15 @@
             pointer-events: none;
         }
 
-        .loading-logo-container {
-            text-align: center;
-        }
-
-        .loading-logo-svg {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            overflow: visible;
-        }
-
-        .loading-logo-svg text {
-            font-family: 'Titillium Web', sans-serif;
-            font-weight: 900;
-            font-size: 70px;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            stroke: var(--f1-red);
-            stroke-width: 2;
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            /* Draw outline for 1.5s, then hold. Delay fill by 1.5s so it starts after outline completes */
-            animation:
-                drawOutline 1.5s ease-in-out forwards,
-                fillLogo 0.8s ease-in-out 1.5s forwards;
-        }
-
-        @keyframes drawOutline {
-            0% {
-                stroke-dashoffset: 1000;
-            }
-
-            100% {
-                stroke-dashoffset: 0;
-            }
-        }
-
-        @keyframes fillLogo {
-            0% {
-                fill: transparent;
-            }
-
-            100% {
-                fill: var(--f1-red);
-                stroke-width: 0;
-                opacity: 1;
-            }
+        /* 4:3 ratio centred — black bars invisible against black bg */
+        .loader lottie-player {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width:  min(100vw, 133.33dvh);
+            height: min(100dvh, 75vw);
         }
 
         /* Chat Sidebar Drawer (Twitch brand themed) */
@@ -1608,9 +1692,26 @@
             .stream-btn {
                 flex: 0 0 auto !important;
                 text-align: center;
-                font-size: 13px;
-                padding: 10px 18px;
-                border-radius: 12px;
+                font-size: 12px;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+
+            /* Theater/Chat buttons: icon-only on mobile to save toolbar space */
+            .control-btn {
+                padding: 8px 10px !important;
+                min-width: 34px;
+            }
+            .control-btn .btn-label {
+                display: none;
+            }
+            .control-btn i {
+                margin-right: 0 !important;
+            }
+
+            /* Hide SOURCE: label on very narrow screens */
+            @media (max-width: 480px) {
+                .source-label { display: none !important; }
             }
 
             .tab-btn {
@@ -1664,6 +1765,45 @@
                 border-radius: 0;
             }
 
+            /* ── Sport toggle: icon-only on mobile ── */
+            .sport-toggle-container {
+                margin-left: 6px;
+                padding: 3px;
+            }
+
+            .sport-toggle-btn {
+                padding: 7px 10px;
+                gap: 0;
+                min-width: 34px;
+                min-height: 34px;
+                justify-content: center;
+            }
+
+            .sport-toggle-btn .toggle-label {
+                display: none;
+            }
+
+            /* ── iOS safe-area insets ── */
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .container {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+
+            footer {
+                padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+
+            /* Smooth momentum scroll on iOS */
+            .video-toolbar,
+            .standings-list.expanded {
+                -webkit-overflow-scrolling: touch;
+            }
+
             .status-area {
                 gap: 6px;
                 flex-wrap: wrap;
@@ -1699,6 +1839,25 @@
 
             .chat-sidebar.open {
                 right: 0;
+            }
+
+            /* ── Countdown card timer fix: override inline aspect-ratio + padding ── */
+            .countdown-card {
+                aspect-ratio: unset !important;
+                padding: 28px 20px !important;
+                border-radius: 16px !important;
+                min-height: 180px;
+            }
+
+            /* Hide long description on mobile to make room for the timer */
+            .countdown-card > p {
+                display: none !important;
+            }
+
+            /* Shrink race name on mobile */
+            .countdown-card > h2 {
+                font-size: 18px !important;
+                margin-bottom: 8px !important;
             }
         }
 
@@ -1780,13 +1939,15 @@
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
 
-    <!-- Loading Animation -->
+    <!-- Loading Animation (Lottie Scene animation) -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
-        <div class="loading-logo-container">
-            <svg class="loading-logo-svg" viewBox="0 0 600 100">
-                <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">WatchF1.live</text>
-            </svg>
-        </div>
+        <lottie-player
+            src="f1-loader.json"
+            background="transparent"
+            speed="1"
+            loop
+            autoplay>
+        </lottie-player>
     </div>
 
     <!-- Main Dashboard View -->
@@ -1796,10 +1957,10 @@
                 <span class="logo-text">WatchF1<span style="color: var(--f1-red);">.Live</span></span>
                 <div class="sport-toggle-container">
                     <button class="sport-toggle-btn active">
-                        <i class="fa-solid fa-car-side"></i> F1 Party
+                        <i class="fa-solid fa-car-side"></i><span class="toggle-label"> F1 Party</span>
                     </button>
                     <button class="sport-toggle-btn" ng-click="goToFifa()">
-                        <i class="fa-solid fa-futbol"></i> FIFA Party
+                        <i class="fa-solid fa-futbol"></i><span class="toggle-label"> FIFA Party</span>
                     </button>
                 </div>
             </div>
@@ -1939,14 +2100,14 @@
                         ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
                     <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
                     <div class="spacer"></div>
-                    <button class="stream-btn" ng-click="toggleTheater()">
+                    <button class="stream-btn control-btn" ng-click="toggleTheater()" title="Theater Mode">
                         <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
                             style="margin-right: 5px;"></i>
-                        {{ isTheater ? 'Exit Theater' : 'Theater Mode' }}
+                        <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
                     </button>
-                    <button class="stream-btn chat-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()">
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" title="Chat">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
-                        {{ isChatOpen ? 'Chat' : 'Chat' }}
+                        <span class="btn-label">Chat</span>
                     </button>
                 </div>
                 <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
@@ -1978,20 +2139,82 @@
                     <video autoplay loop muted playsinline class="card-video-bg">
                         <source src="racing.mp4" type="video/mp4">
                     </video>
-                    <div class="card-title">Weekend Schedule</div>
-                    <div class="schedule-row" ng-repeat="session in schedule" ng-class="session.status">
+                    <div class="card-title">
+                        <i class="fa-solid fa-calendar-day" style="font-size:11px;"></i>
+                        Weekend Schedule
+                    </div>
+
+                    <!-- CURRENT FIXTURE: Live session -->
+                    <div class="fixture-highlight" ng-if="activeSession">
+                        <div class="fixture-label">
+                            <span class="fixture-dot"></span> LIVE NOW
+                        </div>
+                        <div class="fixture-session-name">{{activeSession.name}}</div>
+                        <div class="fixture-time-row">
+                            <span class="fixture-time">{{formatTime12(activeSession.time)}}</span>
+                            <span class="fixture-day">{{activeSession.day}}</span>
+                        </div>
+                        <div class="fixture-live-pulse">
+                            <i class="fa-solid fa-circle fa-beat" style="font-size:9px;"></i> Track is LIVE
+                        </div>
+                    </div>
+
+                    <!-- CURRENT FIXTURE: Next upcoming session -->
+                    <div class="fixture-highlight" ng-if="!activeSession && nextUp">
+                        <div class="fixture-label upcoming-label">
+                            <span class="fixture-dot"></span> UP NEXT
+                        </div>
+                        <div class="fixture-session-name">{{nextUp.name}}</div>
+                        <div class="fixture-time-row">
+                            <span class="fixture-time" style="color: #ffb400;">{{formatTime12(nextUp.time)}}</span>
+                            <span class="fixture-day">{{nextUp.day}}</span>
+                        </div>
+                        <div class="fixture-countdown">
+                            <i class="fa-regular fa-clock"></i>
+                            Starts in {{nextUp.timerStr}}
+                        </div>
+                    </div>
+
+                    <!-- No upcoming sessions this weekend -->
+                    <div class="fixture-no-upcoming" ng-if="!activeSession && !nextUp && schedule.length > 0">
+                        <i class="fa-solid fa-flag-checkered" style="margin-right:6px; opacity:0.5;"></i>
+                        Weekend Complete
+                    </div>
+
+                    <!-- Upcoming sessions (non-live, non-ended) other than nextUp -->
+                    <div ng-repeat="session in schedule" ng-if="session.status === 'upcoming' && session !== nextUp" class="schedule-row upcoming">
                         <div class="sess-info">
                             <span class="sess-name">{{session.name}}</span>
-                            <span class="sess-status" style="color: var(--f1-red);" ng-if="session.status === 'live'">TRACK
-                                LIVE</span>
-                            <span class="sess-status" style="color: #666;"
-                                ng-if="session.status === 'upcoming'">UPCOMING</span>
+                            <span class="sess-status" style="color: #666;">UPCOMING</span>
                         </div>
                         <div class="sess-time-box">
                             <div class="sess-time">{{formatTime12(session.time)}}</div>
                             <div class="sess-day">{{session.day}}</div>
                         </div>
                     </div>
+
+                    <!-- Past sessions toggle -->
+                    <button class="past-sessions-toggle" ng-if="hasPastSessions()" ng-click="showPast = !showPast">
+                        <i class="fa-solid" ng-class="showPast ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        {{ showPast ? 'Hide Past Sessions' : 'View Past Sessions' }}
+                        <span style="opacity:0.5;">({{pastSessionCount()}})</span>
+                    </button>
+
+                    <!-- Past sessions list -->
+                    <div class="past-sessions-list" ng-class="{'open': showPast}">
+                        <div style="height:8px;"></div>
+                        <div class="schedule-row ended" ng-repeat="session in schedule" ng-if="session.status === 'ended'">
+                            <div class="sess-info">
+                                <span class="sess-name">{{session.name}}</span>
+                                <span class="sess-status" style="color: #555;">ENDED</span>
+                            </div>
+                            <div class="sess-time-box">
+                                <div class="sess-time">{{formatTime12(session.time)}}</div>
+                                <div class="sess-day">{{session.day}}</div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
@@ -2296,6 +2519,21 @@
             $scope.schedule = [];
             $scope.weather = null;
             $scope.standingsView = 'drivers';
+
+            // ── LocalStorage instant pre-render ──
+            // Render cached data immediately (before Firestore arrives)
+            try {
+                var _cachedStandings = localStorage.getItem('f1_cached_standings');
+                if (_cachedStandings) { $scope.standings = JSON.parse(_cachedStandings); console.log('🏎️ [cache] Pre-rendered', $scope.standings.length, 'standings'); }
+            } catch(e) {}
+            try {
+                var _cachedConstructors = localStorage.getItem('f1_cached_constructors');
+                if (_cachedConstructors) { $scope.constructors = JSON.parse(_cachedConstructors); }
+            } catch(e) {}
+            try {
+                var _cachedSchedule = localStorage.getItem('f1_cached_schedule');
+                if (_cachedSchedule) { $scope.schedule = JSON.parse(_cachedSchedule); }
+            } catch(e) {}
 
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
@@ -2609,6 +2847,13 @@
                     });
                 }
 
+                // Cache to LocalStorage for instant pre-render on next page load
+                try {
+                    if ($scope.standings.length) localStorage.setItem('f1_cached_standings', JSON.stringify($scope.standings));
+                    if ($scope.constructors.length) localStorage.setItem('f1_cached_constructors', JSON.stringify($scope.constructors));
+                    if ($scope.schedule.length) localStorage.setItem('f1_cached_schedule', JSON.stringify($scope.schedule));
+                } catch(e) {}
+
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];
                 }
@@ -2674,6 +2919,18 @@
             $interval(updateTimers, 1000);
 
             function pad(num) { return num < 10 ? '0' + num : num; }
+
+            $scope.showPast = false;
+
+            $scope.hasPastSessions = function() {
+                if (!$scope.schedule) return false;
+                return $scope.schedule.some(function(s) { return s.status === 'ended'; });
+            };
+
+            $scope.pastSessionCount = function() {
+                if (!$scope.schedule) return 0;
+                return $scope.schedule.filter(function(s) { return s.status === 'ended'; }).length;
+            };
 
             $scope.formatTime12 = function (t) {
                 if (!t) return "";
