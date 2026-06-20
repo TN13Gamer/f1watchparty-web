@@ -1933,6 +1933,26 @@
             border-color: rgba(255, 255, 255, 0.2);
             transform: translateX(-3px);
         }
+        /* Mobile/Tablet Performance Optimizations (max-width: 1024px) */
+        @media (max-width: 1024px) {
+            #vanta-overlay {
+                display: none !important;
+            }
+            /* Disable heavy backdrop-filters and use flat opaque background backups */
+            .glass-card,
+            .video-wrapper,
+            .track-map-card,
+            .countdown-timer-box,
+            .countdown-gp-info,
+            .weather-pill,
+            .timer-pill,
+            .sport-toggle-container,
+            header {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(10, 10, 14, 0.96) !important;
+            }
+        }
     </style>
 </head>
 
@@ -2626,6 +2646,19 @@
             });
             // --------------------------
 
+            // Watch stream playing state to pause/destroy Vanta background
+            $scope.$watch(function() {
+                return $scope.widgets && $scope.widgets.videoPlayer && !$scope.customTimerActive && $scope.streamLinks && $scope.streamLinks.length > 0;
+            }, function(isStreamActive) {
+                if (isStreamActive) {
+                    console.log('📺 Stream is active, destroying Vanta network loop to maximize performance.');
+                    if (typeof destroyVanta === 'function') destroyVanta();
+                } else {
+                    console.log('📺 No active stream, restoring Vanta network loop.');
+                    if (typeof initVanta === 'function') initVanta();
+                }
+            });
+
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
 
@@ -2761,12 +2794,15 @@
                 return new Date(val);
             }
 
+            const isF1LoadedBefore = sessionStorage.getItem('f1_loaded_before') === 'true';
+            sessionStorage.setItem('f1_loaded_before', 'true');
+
             const startTime = Date.now();
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
-                    const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
+                    const minDuration = isF1LoadedBefore ? 150 : 1800;
                     const delay = Math.max(0, minDuration - elapsed);
 
                     $timeout(function () {

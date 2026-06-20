@@ -4,7 +4,11 @@
   "crons": [
     {
       "path": "/api/sync-fifa",
-      "schedule": "0 0 * * *"
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/sync-standings",
+      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [

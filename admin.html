@@ -1533,11 +1533,16 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             function apiUrl(path) {
+                var urlParams = new URLSearchParams(window.location.search);
+                var useLocalBackend = urlParams.get('local') === 'true' || 
+                                      window.location.port === '3000' || 
+                                      window.location.hostname === 'localhost' || 
+                                      window.location.hostname === '127.0.0.1';
+                
+                if (useLocalBackend) {
+                    return 'http://localhost:3000' + path;
+                }
                 if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('local') === 'true') {
-                        return 'http://localhost:3000' + path;
-                    }
                     return 'https://f1watchparty-web.vercel.app' + path;
                 }
                 return path;

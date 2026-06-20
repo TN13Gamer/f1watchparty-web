@@ -2059,7 +2059,7 @@
         }
 
         /* Mobile Performance Optimizations */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             /* Disable heavy visual elements */
             .blob {
                 display: none !important;
@@ -2104,7 +2104,7 @@
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
     <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
-        <video id="bg-video" loop muted playsinline style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;" src="intro.mp4"></video>
+        <video id="bg-video" autoplay loop muted playsinline preload="auto" style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;" src="intro.mp4"></video>
     </div>
     <audio id="intro-audio" src="intro.webm"></audio>
 
@@ -2829,6 +2829,24 @@
                 }
             }, true);
 
+            // Pause background video when main stream is active to reduce device lag/CPU usage
+            $scope.$watch(function() {
+                return $scope.widgets && $scope.widgets.videoPlayer && !$scope.customTimerActive && $scope.streamLinks && $scope.streamLinks.length > 0;
+            }, function(isStreamActive) {
+                const bgVideo = document.getElementById('bg-video');
+                if (bgVideo) {
+                    if (isStreamActive) {
+                        console.log('📺 Stream active, pausing background video to save resources.');
+                        bgVideo.pause();
+                    } else {
+                        console.log('📺 Stream inactive, resuming background video.');
+                        if ($scope.hasEntered) {
+                            bgVideo.play().catch(e => console.log('Video play failed:', e));
+                        }
+                    }
+                }
+            });
+
             $scope.showPopup = function (data) {
                 $scope.activePopup = data;
                 setTimeout(() => {
@@ -2944,12 +2962,15 @@
             }
 
 
+            const isFifaLoadedBefore = sessionStorage.getItem('fifa_loaded_before') === 'true';
+            sessionStorage.setItem('fifa_loaded_before', 'true');
+
             const startTime = Date.now();
             db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
-                    const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
+                    const minDuration = isFifaLoadedBefore ? 150 : 1800;
                     const delay = Math.max(0, minDuration - elapsed);
 
                     $timeout(function () {
