@@ -2319,40 +2319,27 @@
             $scope.autoFetchFifaStreams = function() {
                 if ($scope.fetchingFifaStreams) return;
                 $scope.fetchingFifaStreams = true;
-                $scope.showToast("Saving changes & fetching streams from streamed.pk...", "info");
+                $scope.showToast("Fetching FIFA streams from streamed.pk...", "info");
 
-                // Step 1: Save the current configuration to Firestore first so backend sees the updated match details
-                let dataToSave = angular.copy($scope.config);
-                if (dataToSave.schedule) {
-                    dataToSave.schedule.forEach(s => { delete s.isLive; delete s.isUpcoming; delete s.countdown; });
-                }
-                
-                db.collection("app_data").doc("live_config").set(JSON.parse(angular.toJson(dataToSave)), { merge: true })
-                    .then(() => {
-                        // Step 2: Trigger backend standings and FIFA stream sync
-                        return $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'));
-                    })
-                    .then(() => {
-                        // Step 3: Fetch updated document from Firestore
-                        return db.collection("app_data").doc("live_config").get();
-                    })
-                    .then((doc) => {
-                        $timeout(() => {
-                            if (doc.exists) {
-                                const data = doc.data();
-                                if (data.fifa && data.fifa.streamLinks) {
-                                    $scope.config.fifa.streamLinks = data.fifa.streamLinks;
-                                }
-                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
-                                $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
-                            }
+                // Call backend sync API directly — it reads/writes Firestore via Admin SDK
+                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'))
+                    .then(function(res) {
+                        $timeout(function() {
                             $scope.fetchingFifaStreams = false;
+                            // Pull FIFA stream links from the sync response payload
+                            var syncData = res.data && res.data.data;
+                            if (syncData && syncData.fifa && syncData.fifa.streamLinks) {
+                                $scope.config.fifa = $scope.config.fifa || {};
+                                $scope.config.fifa.streamLinks = syncData.fifa.streamLinks;
+                            }
+                            $scope.showToast("FIFA streams fetched and updated successfully!", "success");
+                            $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
                         });
                     })
-                    .catch(err => {
-                        $timeout(() => {
+                    .catch(function(err) {
+                        $timeout(function() {
                             $scope.fetchingFifaStreams = false;
-                            var errMsg = err.data?.error || err.statusText || err.message || 'Unknown error';
+                            var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
                             $scope.showToast("Fetch streams failed: " + errMsg, "error");
                         });
                     });
@@ -2365,31 +2352,27 @@
                 $scope.fetchingFifaDetails = true;
                 $scope.showToast("Detecting next match from worldcup26.ir...", "info");
 
+                // Call backend sync API — it updates Firestore via Admin SDK then returns data
                 $http.get(apiUrl('/api/sync-standings?manual=true&type=fifadetails'))
-                    .then(() => db.collection("app_data").doc("live_config").get())
-                    .then((doc) => {
-                        $timeout(() => {
-                            if (doc.exists) {
-                                const data = doc.data();
-                                if (data.fifa) {
-                                    if (data.fifa.raceData) {
-                                        $scope.config.fifa.raceData = data.fifa.raceData;
-                                    }
-                                    if (data.fifa.customTimer) {
-                                        $scope.config.fifa.customTimer = data.fifa.customTimer;
-                                    }
-                                }
-                                const now = new Date();
-                                $scope.lastFifaDetailsSync = now.toLocaleTimeString();
-                                const matchName = data.fifa && data.fifa.raceData && data.fifa.raceData.name;
-                                $scope.showToast("Match details updated: " + (matchName || "?"), "success");
-                                $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
-                            }
+                    .then(function(res) {
+                        $timeout(function() {
                             $scope.fetchingFifaDetails = false;
+                            var syncData = res.data && res.data.data;
+                            var fifaData = syncData && syncData.fifa;
+                            if (fifaData) {
+                                $scope.config.fifa = $scope.config.fifa || {};
+                                if (fifaData.raceData) $scope.config.fifa.raceData = fifaData.raceData;
+                                if (fifaData.customTimer) $scope.config.fifa.customTimer = fifaData.customTimer;
+                            }
+                            var now = new Date();
+                            $scope.lastFifaDetailsSync = now.toLocaleTimeString();
+                            var matchName = fifaData && fifaData.raceData && fifaData.raceData.name;
+                            $scope.showToast("Match details updated: " + (matchName || "?"), "success");
+                            $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
                         });
                     })
-                    .catch(err => {
-                        $timeout(() => {
+                    .catch(function(err) {
+                        $timeout(function() {
                             $scope.fetchingFifaDetails = false;
                             var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
                             $scope.showToast("FIFA details sync failed: " + errMsg, "error");
