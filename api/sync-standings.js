@@ -40,8 +40,8 @@ async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
   }
 }
 
-async function fetchJson(url, timeoutMs = 4000) {
-  const cappedTimeout = Math.min(timeoutMs, 4000);
+async function fetchJson(url, timeoutMs = 3000) {
+  const cappedTimeout = Math.min(timeoutMs, 3000);
 
   if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
     try {
@@ -63,32 +63,8 @@ async function fetchJson(url, timeoutMs = 4000) {
     });
     return data;
   } catch (e) {
-    const isTimeout = e.code === 'ECONNABORTED' || e.message.includes('timeout');
-    if (process.env.VERCEL || isTimeout) {
-      throw new Error(`Axios failed: ${e.message}`);
-    }
-
-    console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
-    try {
-      const { exec } = require('child_process');
-      return await new Promise((resolve, reject) => {
-        const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
-        const cmd = `${curlCmd} -s -L -m ${Math.ceil(cappedTimeout / 1000)} -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
-        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: cappedTimeout }, (error, stdout, stderr) => {
-          if (error) {
-            return reject(error);
-          }
-          try {
-            const data = JSON.parse(stdout);
-            resolve(data);
-          } catch (jsonErr) {
-            reject(new Error(`Failed to parse JSON from curl: ${jsonErr.message}`));
-          }
-        });
-      });
-    } catch (curlErr) {
-      throw new Error(`Both Axios and curl failed. Axios: ${e.message}. Curl: ${curlErr.message}`);
-    }
+    // On Vercel or any timeout, fail fast — no curl fallback
+    throw new Error(`Fetch failed: ${e.message}`);
   }
 }
 
@@ -748,22 +724,42 @@ async function fetchStreamedFootballMatches(matchName, preferLiveOnly = false) {
         'https://streamed.pk/api/matches/all'
       ];
 
-  for (const endpoint of endpoints) {
-    try {
-      const matches = await fetchJson(endpoint, 8000);
-      if (!Array.isArray(matches)) continue;
+  // Fetch all endpoints in PARALLEL under a single 5s budget to avoid sequential timeout accumulation
+  const PARALLEL_TIMEOUT_MS = 5000;
+  const results = await Promise.allSettled(
+    endpoints.map(endpoint =>
+      fetchJson(endpoint, PARALLEL_TIMEOUT_MS)
+        .then(data => ({ endpoint, data }))
+        .catch(err => { console.error(`[sync-fifa] Failed ${endpoint}:`, err.message); return null; })
+    )
+  );
 
-      const selected = pickStreamedFootballMatch(matches, matchName);
-      if (selected) {
-        console.log(`[sync-fifa] Matched streamed.pk football event from ${endpoint}: "${selected.title}"`);
-        return { matches, selected, endpoint };
+  // Merge all unique matches, preferring earlier (higher-priority) endpoints
+  const seen = new Set();
+  const allMatches = [];
+  for (const r of results) {
+    if (r.status !== 'fulfilled' || !r.value || !Array.isArray(r.value.data)) continue;
+    for (const m of r.value.data) {
+      const key = m.id || m.title;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        allMatches.push(m);
       }
-    } catch (err) {
-      console.error(`[sync-fifa] Failed to fetch ${endpoint}:`, err.message);
     }
   }
 
-  return { matches: [], selected: null, endpoint: null };
+  if (allMatches.length === 0) {
+    console.log('[sync-fifa] streamed.pk returned no match data from any endpoint.');
+    return { matches: [], selected: null, endpoint: null };
+  }
+
+  const selected = pickStreamedFootballMatch(allMatches, matchName);
+  if (selected) {
+    console.log(`[sync-fifa] Matched streamed.pk football event (parallel fetch): "${selected.title}"`);
+    return { matches: allMatches, selected, endpoint: 'parallel' };
+  }
+
+  return { matches: allMatches, selected: null, endpoint: null };
 }
 
 async function resolveStreamedLinks(match) {
@@ -946,60 +942,45 @@ async function syncFifaStreams(config, ref, options = {}) {
   }
 
   try {
-    console.log(`[sync-fifa] Fetching live streamed.pk matches to match tokens: ${tokens.join(' ')}`);
-    let matches = await fetchJson('https://streamed.pk/api/matches/live', 8000);
+    // Fetch all streamed.pk endpoints in PARALLEL with a single 5s budget
+    console.log(`[sync-fifa] Fetching streamed.pk matches (parallel) for tokens: ${tokens.join(' ')}`);
+    const streamedEndpoints = [
+      'https://streamed.pk/api/matches/live',
+      'https://streamed.pk/api/matches/all-today',
+      'https://streamed.pk/api/matches/all'
+    ];
+    const PARALLEL_BUDGET_MS = 5000;
+    const parallelResults = await Promise.allSettled(
+      streamedEndpoints.map(ep =>
+        fetchJson(ep, PARALLEL_BUDGET_MS)
+          .catch(err => { console.error(`[sync-fifa] ${ep} failed:`, err.message); return null; })
+      )
+    );
 
-    if (!Array.isArray(matches)) {
-      console.log('[sync-fifa] Live matches response is not an array. Falling back to all matches.');
-      matches = await fetchJson('https://streamed.pk/api/matches/all', 8000);
-      if (!Array.isArray(matches)) {
-        console.log('[sync-fifa] Matches response is not an array.');
-        return;
+    // Deduplicate and merge all matches
+    const seen = new Set();
+    const allFetchedMatches = [];
+    for (const r of parallelResults) {
+      if (r.status !== 'fulfilled' || !Array.isArray(r.value)) continue;
+      for (const m of r.value) {
+        const key = m.id || m.title;
+        if (key && !seen.has(key)) { seen.add(key); allFetchedMatches.push(m); }
       }
+    }
+
+    if (allFetchedMatches.length === 0) {
+      console.log('[sync-fifa] streamed.pk returned no matches from any endpoint (likely Cloudflare-blocked).');
+      return;
     }
 
     // Filter by category: football
-    const footballMatches = matches.filter(m => m.category === 'football');
+    const footballMatches = allFetchedMatches.filter(m => m.category === 'football');
 
     // Find and rank all candidate matches
-    let candidates = [];
-    footballMatches.forEach(m => {
-      if (!m.title) return;
-      const titleLower = m.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-      let matchCount = 0;
-      tokens.forEach(t => {
-        if (titleLower.includes(t)) matchCount++;
-      });
-      if (matchCount > 0) {
-        candidates.push({ match: m, count: matchCount });
-      }
-    });
-
-    if (candidates.length === 0) {
-      const fallbackEndpoints = [
-        'https://streamed.pk/api/matches/all-today',
-        'https://streamed.pk/api/matches/all'
-      ];
-
-      for (const endpoint of fallbackEndpoints) {
-        try {
-          const fallbackMatches = await fetchJson(endpoint, 8000);
-          if (!Array.isArray(fallbackMatches)) continue;
-
-          candidates = fallbackMatches
-            .filter(m => m.category === 'football' && m.title)
-            .map(match => ({ match, count: scoreStreamedMatch(match, tokens) }))
-            .filter(item => item.count > 0);
-
-          if (candidates.length > 0) {
-            console.log(`[sync-fifa] Found ${candidates.length} matching candidates from ${endpoint}.`);
-            break;
-          }
-        } catch (err) {
-          console.error(`[sync-fifa] Failed fallback endpoint ${endpoint}:`, err.message);
-        }
-      }
-    }
+    let candidates = footballMatches
+      .filter(m => m.title)
+      .map(match => ({ match, count: scoreStreamedMatch(match, tokens) }))
+      .filter(item => item.count > 0);
 
     if (candidates.length === 0) {
       console.log('[sync-fifa] No matching football matches found on streamed.pk. Preserving existing stream links.');
@@ -1069,40 +1050,8 @@ async function syncFifaStreams(config, ref, options = {}) {
     }
 
     if (!selectedMatch || resolvedStreamLinks.length === 0) {
-      const fallbackEndpoints = [
-        'https://streamed.pk/api/matches/all-today',
-        'https://streamed.pk/api/matches/all'
-      ];
-
-      for (const endpoint of fallbackEndpoints) {
-        try {
-          const fallbackMatches = await fetchJson(endpoint, 8000);
-          if (!Array.isArray(fallbackMatches)) continue;
-
-          const fallbackCandidates = fallbackMatches
-            .filter(m => m.category === 'football' && m.title)
-            .map(match => ({ match, count: scoreStreamedMatch(match, tokens) }))
-            .filter(item => item.count > 0)
-            .sort((a, b) => {
-              if (b.count !== a.count) return b.count - a.count;
-              return (b.match.sources || []).length - (a.match.sources || []).length;
-            });
-
-          for (const candidate of fallbackCandidates) {
-            const links = await resolveStreamedLinks(candidate.match);
-            if (links.length > 0) {
-              selectedMatch = candidate.match;
-              resolvedStreamLinks = links;
-              console.log(`[sync-fifa] Resolved ${links.length} links from fallback ${endpoint} using "${candidate.match.title}".`);
-              break;
-            }
-          }
-
-          if (selectedMatch && resolvedStreamLinks.length > 0) break;
-        } catch (err) {
-          console.error(`[sync-fifa] Failed stream fallback ${endpoint}:`, err.message);
-        }
-      }
+      // All endpoints were already fetched in parallel above — no additional fallback needed
+      console.log('[sync-fifa] No matching streams resolved from parallel fetch. Preserving existing links.');
     }
 
     if (selectedMatch && resolvedStreamLinks.length > 0) {
