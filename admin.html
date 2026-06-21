@@ -2332,8 +2332,15 @@
                                 $scope.config.fifa = $scope.config.fifa || {};
                                 $scope.config.fifa.streamLinks = syncData.fifa.streamLinks;
                             }
-                            $scope.showToast("FIFA streams fetched and updated successfully!", "success");
-                            $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
+                            
+                            var syncObj = res.data && res.data.sync;
+                            var fifaStreamsError = syncObj && syncObj.fifaStreams && syncObj.fifaStreams.error;
+                            if (fifaStreamsError) {
+                                $scope.showToast("FIFA streams warning: " + fifaStreamsError, "error");
+                            } else {
+                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
+                                $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
+                            }
                         });
                     })
                     .catch(function(err) {
@@ -2367,8 +2374,15 @@
                             var now = new Date();
                             $scope.lastFifaDetailsSync = now.toLocaleTimeString();
                             var matchName = fifaData && fifaData.raceData && fifaData.raceData.name;
-                            $scope.showToast("Match details updated: " + (matchName || "?"), "success");
-                            $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
+                            
+                            var syncObj = res.data && res.data.sync;
+                            var fifaDetailsError = syncObj && syncObj.fifaDetails && syncObj.fifaDetails.error;
+                            if (fifaDetailsError) {
+                                $scope.showToast("FIFA details warning: " + fifaDetailsError, "error");
+                            } else {
+                                $scope.showToast("Match details updated: " + (matchName || "?"), "success");
+                                $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
+                            }
                         });
                     })
                     .catch(function(err) {

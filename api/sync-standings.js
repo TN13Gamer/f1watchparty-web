@@ -40,21 +40,22 @@ async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
   }
 }
 
-async function fetchJson(url, timeoutMs = 25000) {
+async function fetchJson(url, timeoutMs = 4000) {
+  const cappedTimeout = Math.min(timeoutMs, 4000);
+
   if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
     try {
       console.log(`[fetchJson] Using Puppeteer to fetch ${url}...`);
-      const data = await fetchJsonWithPuppeteer(url, timeoutMs);
+      const data = await fetchJsonWithPuppeteer(url, cappedTimeout);
       return data;
     } catch (e) {
-      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios/curl.`);
+      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios.`);
     }
   }
 
   try {
-    // Try Axios first (much faster and avoids process spawning overhead/hanging)
     const { data } = await axios.get(url, {
-      timeout: timeoutMs,
+      timeout: cappedTimeout,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://streamed.pk/category/football'
@@ -62,14 +63,18 @@ async function fetchJson(url, timeoutMs = 25000) {
     });
     return data;
   } catch (e) {
-    // Fallback to native curl (helps bypass Cloudflare/Ddos-guard TLS fingerprints on serverless environments)
+    const isTimeout = e.code === 'ECONNABORTED' || e.message.includes('timeout');
+    if (process.env.VERCEL || isTimeout) {
+      throw new Error(`Axios failed: ${e.message}`);
+    }
+
     console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
     try {
       const { exec } = require('child_process');
       return await new Promise((resolve, reject) => {
         const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
-        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
-        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+        const cmd = `${curlCmd} -s -L -m ${Math.ceil(cappedTimeout / 1000)} -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: cappedTimeout }, (error, stdout, stderr) => {
           if (error) {
             return reject(error);
           }
@@ -77,12 +82,12 @@ async function fetchJson(url, timeoutMs = 25000) {
             const data = JSON.parse(stdout);
             resolve(data);
           } catch (jsonErr) {
-            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+            reject(new Error(`Failed to parse JSON from curl: ${jsonErr.message}`));
           }
         });
       });
     } catch (curlErr) {
-      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+      throw new Error(`Both Axios and curl failed. Axios: ${e.message}. Curl: ${curlErr.message}`);
     }
   }
 }
@@ -456,7 +461,7 @@ async function syncFifaMatchDetails(config, ref) {
   const fifa = config.fifa || {};
   let games = null;
   try {
-    const responseData = await fetchJson('https://worldcup26.ir/get/games', 12000);
+    const responseData = await fetchJson('https://worldcup26.ir/get/games', 3000);
     games = responseData && responseData.games;
   } catch (err) {
     console.error('[sync-fifa-details] FIFA details API fetch failed, trying local fallback file:', err.message);
@@ -472,6 +477,16 @@ async function syncFifaMatchDetails(config, ref) {
   if (!Array.isArray(games) || games.length === 0) {
     console.log('[sync-fifa-details] No games data available to sync details.');
     return;
+  }
+
+  // Fetch FotMob live scores in parallel/gracefully to overlay live scores/time
+  let fotmobMap = {};
+  try {
+    const { fetchFotmobLiveScores } = require('./fifa/fotmob');
+    fotmobMap = await fetchFotmobLiveScores();
+    console.log(`[sync-fifa-details] Loaded ${Object.keys(fotmobMap).length / 2} matches from FotMob.`);
+  } catch (err) {
+    console.error('[sync-fifa-details] FotMob live scores fetch failed:', err.message);
   }
 
   try {
@@ -499,7 +514,6 @@ async function syncFifaMatchDetails(config, ref) {
     // Helper: parse local_date "MM/DD/YYYY HH:MM" and stadium_id to UTC ms
     function parseGameDate(localDate, stadiumId) {
       if (!localDate) return null;
-      // Format: "06/12/2026 18:00"
       const [datePart, timePart] = localDate.split(' ');
       const [month, day, year] = datePart.split('/');
       const [hour, minute] = timePart.split(':');
@@ -508,10 +522,34 @@ async function syncFifaMatchDetails(config, ref) {
       return utcMs;
     }
 
+    function normName(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+    function getFotmobDataForGame(g) {
+      const homeName = g.home_team_name_en || g.home_team_label;
+      const awayName = g.away_team_name_en || g.away_team_label;
+      if (homeName && awayName) {
+        const key = normName(homeName) + '|' + normName(awayName);
+        return fotmobMap[key];
+      }
+      return null;
+    }
+
+    function isGameLive(g) {
+      const fm = getFotmobDataForGame(g);
+      if (fm) return fm.status === 'live';
+      return getFifaGameStatus(g).isLive;
+    }
+
+    function isGameFinished(g) {
+      const fm = getFotmobDataForGame(g);
+      if (fm) return fm.status === 'finished';
+      return getFifaGameStatus(g).isFinished;
+    }
+
     // 1) Find live match first — but only if kickoff was within 3.25 hours (prevents stale "live" labels)
     const THREE_QUARTER_HOURS_MS = 3.25 * 60 * 60 * 1000;
     let chosen = null;
-    const liveGame = games.find(g => getFifaGameStatus(g).isLive);
+    const liveGame = games.find(g => isGameLive(g));
     if (liveGame) {
       const liveKickoffMs = parseGameDate(liveGame.local_date, liveGame.stadium_id);
       if (liveKickoffMs && (now - liveKickoffMs) < THREE_QUARTER_HOURS_MS) {
@@ -524,7 +562,7 @@ async function syncFifaMatchDetails(config, ref) {
     // 2) If none live (or stale), pick next upcoming (closest future kickoff)
     if (!chosen) {
       const upcoming = games
-        .filter(g => getFifaGameStatus(g).status === 'notstarted')
+        .filter(g => !isGameFinished(g))
         .map(g => ({ ...g, _kickoffMs: parseGameDate(g.local_date, g.stadium_id) }))
         .filter(g => g._kickoffMs && g._kickoffMs > (now - 2.5 * 60 * 60 * 1000))
         .sort((a, b) => a._kickoffMs - b._kickoffMs);
@@ -532,10 +570,9 @@ async function syncFifaMatchDetails(config, ref) {
     }
 
     if (!chosen) {
-      console.log('[sync-fifa-details] No live or upcoming group matches found.');
+      console.log('[sync-fifa-details] No live or upcoming matches found.');
       return;
     }
-
 
     // Build match name — for group matches use team names; for knockouts use labels
     const isKnockout = !chosen.home_team_name_en;
@@ -560,38 +597,44 @@ async function syncFifaMatchDetails(config, ref) {
     // Friendly date string formatted in IST for display (e.g. "13 Jun 23:30")
     const friendlyDate = formatFixtureIst(kickoffMs);
 
-    const chosenStatus = getFifaGameStatus(chosen);
-    const isLive = chosenStatus.isLive;
-    const isFinished = chosenStatus.isFinished;
-    const homeScore = chosen.home_score || '0';
-    const awayScore = chosen.away_score || '0';
+    const isLive = isGameLive(chosen);
+    const isFinished = isGameFinished(chosen);
+    let homeScore = chosen.home_score || '0';
+    let awayScore = chosen.away_score || '0';
 
     let matchTime = '';
-    if (isLive && kickoffMs) {
-      const rawElapsed = String(chosen.time_elapsed || '').trim();
-      const elapsedMins = /^\d+$/.test(rawElapsed)
-        ? parseInt(rawElapsed, 10)
-        : Math.floor((Date.now() - kickoffMs) / 60000);
-      if (rawElapsed.toLowerCase() === 'ht') {
-        matchTime = 'HT';
-      } else if (elapsedMins < 0) {
-        matchTime = '0\'';
-      } else if (elapsedMins < 45) {
-        matchTime = `${elapsedMins}'`;
-      } else if (elapsedMins < 60) {
-        matchTime = 'HT';
-      } else if (elapsedMins < 105) {
-        matchTime = `${elapsedMins - 15}'`;
-      } else {
-        matchTime = '90+\'';
+    const fm = getFotmobDataForGame(chosen);
+    if (fm) {
+      homeScore = fm.homeScore;
+      awayScore = fm.awayScore;
+      matchTime = fm.matchTime;
+    } else {
+      if (isLive && kickoffMs) {
+        const rawElapsed = String(chosen.time_elapsed || '').trim();
+        const elapsedMins = /^\d+$/.test(rawElapsed)
+          ? parseInt(rawElapsed, 10)
+          : Math.floor((Date.now() - kickoffMs) / 60000);
+        if (rawElapsed.toLowerCase() === 'ht') {
+          matchTime = 'HT';
+        } else if (elapsedMins < 0) {
+          matchTime = '0\'';
+        } else if (elapsedMins < 45) {
+          matchTime = `${elapsedMins}'`;
+        } else if (elapsedMins < 60) {
+          matchTime = 'HT';
+        } else if (elapsedMins < 105) {
+          matchTime = `${elapsedMins - 15}'`;
+        } else {
+          matchTime = '90+\'';
+        }
+      } else if (isFinished) {
+        matchTime = 'FT';
       }
-    } else if (isFinished) {
-      matchTime = 'FT';
-    }
 
-    if (isLive) {
-      const googleMatchTime = await fetchGoogleFifaMatchTime(matchName);
-      if (googleMatchTime) matchTime = googleMatchTime;
+      if (isLive) {
+        const googleMatchTime = await fetchGoogleFifaMatchTime(matchName);
+        if (googleMatchTime) matchTime = googleMatchTime;
+      }
     }
 
     // Build updated fifa object (preserve existing keys, only update match-related fields)
@@ -789,7 +832,7 @@ async function fetchGoogleFifaMatchTime(matchName) {
   try {
     const query = matchName ? `fifa ${matchName}` : 'fifa live';
     const { data } = await axios.get('https://www.google.com/search', {
-      timeout: 10000,
+      timeout: 2000,
       params: { q: query, hl: 'en', gl: 'IN' },
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

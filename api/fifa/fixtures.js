@@ -32,17 +32,19 @@ async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
 }
 
 // Helper to fetch JSON with high timeout and Puppeteer/curl fallbacks to bypass DDoS-guard blocks
-async function fetchJson(url, timeoutMs = 25000) {
+async function fetchJson(url, timeoutMs = 4000) {
+  const cappedTimeout = Math.min(timeoutMs, 4000);
+
   if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
     try {
-      return await fetchJsonWithPuppeteer(url, timeoutMs);
+      return await fetchJsonWithPuppeteer(url, cappedTimeout);
     } catch (e) {
-      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios/curl.`);
+      console.log(`[fetchJson] Puppeteer failed for ${url}: ${e.message}. Falling back to Axios.`);
     }
   }
   try {
     const { data } = await axios.get(url, {
-      timeout: timeoutMs,
+      timeout: cappedTimeout,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://streamed.pk/category/football'
@@ -50,23 +52,28 @@ async function fetchJson(url, timeoutMs = 25000) {
     });
     return data;
   } catch (e) {
+    const isTimeout = e.code === 'ECONNABORTED' || e.message.includes('timeout');
+    if (process.env.VERCEL || isTimeout) {
+      throw new Error(`Axios failed: ${e.message}`);
+    }
+
     console.log(`[fetchJson] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
     try {
       const { exec } = require('child_process');
       return await new Promise((resolve, reject) => {
         const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
-        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
-        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+        const cmd = `${curlCmd} -s -L -m ${Math.ceil(cappedTimeout / 1000)} -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: cappedTimeout }, (error, stdout, stderr) => {
           if (error) return reject(error);
           try {
             resolve(JSON.parse(stdout));
           } catch (jsonErr) {
-            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+            reject(new Error(`Failed to parse JSON from curl: ${jsonErr.message}`));
           }
         });
       });
     } catch (curlErr) {
-      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+      throw new Error(`Both Axios and curl failed. Axios: ${e.message}. Curl: ${curlErr.message}`);
     }
   }
 }
