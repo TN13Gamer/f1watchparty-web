@@ -1,6 +1,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { fetchFotmobLiveScores } = require('./fotmob');
 
 // Puppeteer-based helper to bypass Cloudflare DDoS protection
 async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
@@ -256,7 +257,11 @@ function getGameStatus(game) {
     };
 }
 
-function formatData(games, teamsData) {
+// Normalize team name for FotMob map lookup
+function normName(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+function formatData(games, teamsData, fotmobMap) {
+    fotmobMap = fotmobMap || {};
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const roundMap = {
         group: null, // filled below
@@ -305,28 +310,46 @@ function formatData(games, teamsData) {
 
         const kickoffTs = getFixtureKickoffMs(g);
         const friendlyDate = formatFixtureIst(kickoffTs);
-
         const homeInfo = lookupTeam(g.home_team_id, g.home_team_name_en || g.home_team_label);
         const awayInfo = lookupTeam(g.away_team_id, g.away_team_name_en || g.away_team_label);
 
+        // --- FotMob live score overlay ---
+        const fmKey = normName(homeInfo.name) + '|' + normName(awayInfo.name);
+        const fmData = fotmobMap[fmKey];
+
         const gameStatus = getGameStatus(g);
-        const isFinished = gameStatus.isFinished;
-        const isLive = gameStatus.isLive;
+        let isFinished = gameStatus.isFinished;
+        let isLive = gameStatus.isLive;
         let matchTime = '';
-        if (isLive && kickoffTs && kickoffTs !== Number.MAX_SAFE_INTEGER) {
-            const rawElapsed = String(g.time_elapsed || '').trim();
-            const elapsedMins = /^\d+$/.test(rawElapsed)
-                ? parseInt(rawElapsed, 10)
-                : Math.floor((now - kickoffTs) / 60000);
-            if (String(g.time_elapsed || '').trim().toLowerCase() === 'ht') matchTime = 'HT';
-            else if (elapsedMins < 0) matchTime = '0\'';
-            else if (elapsedMins < 45) matchTime = `${elapsedMins}'`;
-            else if (elapsedMins < 60) matchTime = 'HT';
-            else if (elapsedMins < 105) matchTime = `${elapsedMins - 15}'`;
-            else matchTime = '90+\'';
-        } else if (isFinished) {
-            matchTime = 'FT';
+        let homeScore = g.home_score || '0';
+        let awayScore = g.away_score || '0';
+
+        if (fmData) {
+            // FotMob data is authoritative for live and finished matches
+            homeScore = fmData.homeScore;
+            awayScore = fmData.awayScore;
+            if (fmData.status === 'live') { isLive = true; isFinished = false; }
+            else if (fmData.status === 'finished') { isFinished = true; isLive = false; }
+            else if (fmData.status === 'notstarted') { isLive = false; isFinished = false; }
+            matchTime = fmData.matchTime;
+        } else {
+            if (isLive && kickoffTs && kickoffTs !== Number.MAX_SAFE_INTEGER) {
+                const rawElapsed = String(g.time_elapsed || '').trim();
+                const elapsedMins = /^\d+$/.test(rawElapsed)
+                    ? parseInt(rawElapsed, 10)
+                    : Math.floor((now - kickoffTs) / 60000);
+                if (String(g.time_elapsed || '').trim().toLowerCase() === 'ht') matchTime = 'HT';
+                else if (elapsedMins < 0) matchTime = "0'";
+                else if (elapsedMins < 45) matchTime = elapsedMins + "'";
+                else if (elapsedMins < 60) matchTime = 'HT';
+                else if (elapsedMins < 105) matchTime = (elapsedMins - 15) + "'";
+                else matchTime = "90+'";
+            } else if (isFinished) {
+                matchTime = 'FT';
+            }
         }
+
+        const derivedStatus = isLive ? 'live' : (isFinished ? 'finished' : 'notstarted');
 
         return {
             id: g.id,
@@ -336,17 +359,18 @@ function formatData(games, teamsData) {
             awayFlag: awayInfo.flag,
             homeCode: homeInfo.code,
             awayCode: awayInfo.code,
-            homeScore: g.home_score || '0',
-            awayScore: g.away_score || '0',
+            homeScore,
+            awayScore,
             localDate: friendlyDate,
             timezone: 'IST',
             kickoffTs,
             sortTs: kickoffTs,
-            status: gameStatus.status,
+            status: derivedStatus,
             finished: isFinished,
             round,
             stadium: stadium.name,
-            matchTime
+            matchTime,
+            liveSource: fmData ? 'fotmob' : 'worldcup26'
         };
     });
 }
@@ -366,9 +390,14 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const [gamesRes, teamsRes] = await Promise.all([
+        // Fetch fixture schedule + teams in parallel with FotMob live scores
+        const [gamesRes, teamsRes, fotmobMap] = await Promise.all([
             fetchJson('https://worldcup26.ir/get/games', 3000),
-            fetchJson('https://worldcup26.ir/get/teams', 3000)
+            fetchJson('https://worldcup26.ir/get/teams', 3000),
+            fetchFotmobLiveScores().catch(e => {
+                console.warn('[api/fifa/fixtures] FotMob fetch failed:', e.message);
+                return {};
+            })
         ]);
 
         const games = gamesRes && gamesRes.games;
@@ -378,9 +407,10 @@ module.exports = async (req, res) => {
             return res.json([]);
         }
 
-        const formatted = formatData(games, teamsData);
+        const formatted = formatData(games, teamsData, fotmobMap);
         cache = formatted;
         lastFetched = now;
+        console.log('[api/fifa/fixtures] FotMob overlay applied to', Object.keys(fotmobMap).length / 2, 'matches');
         return res.status(200).json(formatted);
     } catch (e) {
         console.error('[api/fifa/fixtures] Error:', e.message);
@@ -388,8 +418,10 @@ module.exports = async (req, res) => {
             console.log('[api/fifa/fixtures] Returning cached data due to API error');
             return res.status(200).json(cache);
         }
-        console.log('[api/fifa/fixtures] Returning static fallback data due to API error');
-        const formatted = formatData(fallbackGames, fallbackTeams);
+        // Try FotMob-only fallback with static fixture schedule
+        console.log('[api/fifa/fixtures] Trying FotMob-only with static fallback schedule...');
+        const fotmobMap = await fetchFotmobLiveScores().catch(() => ({}));
+        const formatted = formatData(fallbackGames, fallbackTeams, fotmobMap);
         return res.status(200).json(formatted);
     }
 };
