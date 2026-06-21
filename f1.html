@@ -2875,13 +2875,18 @@
             }
 
             function apiUrl(path) {
-                if (window.location.hostname === 'appassets.androidplatform.net') {
-                    return 'https://watchf1.live' + path;
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true') {
+                        return 'http://localhost:3000' + path;
+                    }
                 }
                 if (window.location.protocol === 'file:') {
-                    return 'http://localhost:3000' + path;
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var useLocal = urlParams.get('local') === 'true';
+                    return (useLocal ? 'http://localhost:3000' : 'https://watchf1.live') + path;
                 }
-                return path;
+                return 'https://watchf1.live' + path;
             }
 
             function safeDate(val) {

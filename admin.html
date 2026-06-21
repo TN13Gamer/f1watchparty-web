@@ -1533,24 +1533,18 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             function apiUrl(path) {
-                if (window.location.hostname === 'appassets.androidplatform.net') {
-                    return 'https://watchf1.live' + path;
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true') {
+                        return 'http://localhost:3000' + path;
+                    }
                 }
-                var urlParams = new URLSearchParams(window.location.search);
-                
-                // If loaded via file:// protocol
                 if (window.location.protocol === 'file:') {
+                    var urlParams = new URLSearchParams(window.location.search);
                     var useLocal = urlParams.get('local') === 'true';
                     return (useLocal ? 'http://localhost:3000' : 'https://watchf1.live') + path;
                 }
-                
-                // If running on a web server, only override to localhost:3000 if explicitly requested via ?local=true
-                if (urlParams.get('local') === 'true') {
-                    return 'http://localhost:3000' + path;
-                }
-                
-                // Otherwise, use relative path so browser hits the current server (whether localhost, 192.168.x.x, or a domain)
-                return path;
+                return 'https://watchf1.live' + path;
             }
 
             $scope.currentView = 'live'; 
