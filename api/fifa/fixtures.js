@@ -367,8 +367,8 @@ module.exports = async (req, res) => {
 
     try {
         const [gamesRes, teamsRes] = await Promise.all([
-            fetchJson('https://worldcup26.ir/get/games', 25000),
-            fetchJson('https://worldcup26.ir/get/teams', 25000)
+            fetchJson('https://worldcup26.ir/get/games', 3000),
+            fetchJson('https://worldcup26.ir/get/teams', 3000)
         ]);
 
         const games = gamesRes && gamesRes.games;

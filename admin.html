@@ -1542,9 +1542,9 @@
                 if (window.location.protocol === 'file:') {
                     var urlParams = new URLSearchParams(window.location.search);
                     var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://watchf1.live') + path;
+                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-tau.vercel.app') + path;
                 }
-                return 'https://watchf1.live' + path;
+                return 'https://f1watchparty-web-tau.vercel.app' + path;
             }
 
             $scope.currentView = 'live'; 

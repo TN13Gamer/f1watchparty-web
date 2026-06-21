@@ -134,8 +134,8 @@ module.exports = async (req, res) => {
 
     try {
         const [groupsRes, teamsRes] = await Promise.all([
-            fetchJson('https://worldcup26.ir/get/groups', 25000),
-            fetchJson('https://worldcup26.ir/get/teams', 25000)
+            fetchJson('https://worldcup26.ir/get/groups', 3000),
+            fetchJson('https://worldcup26.ir/get/teams', 3000)
         ]);
 
         const groupsData = groupsRes && groupsRes.groups;
