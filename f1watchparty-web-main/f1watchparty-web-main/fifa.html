@@ -2104,9 +2104,9 @@
 <body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
     oncontextmenu="return false;">
     <div class="video-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -4; overflow: hidden; pointer-events: none;">
-        <video id="bg-video" autoplay loop muted playsinline preload="auto" style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;" src="intro.mp4"></video>
+        <video id="bg-video" loop muted playsinline preload="none" style="position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw; min-height: 100vh; min-width: 177.77vh; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.25; object-fit: cover;"></video>
     </div>
-    <audio id="intro-audio" src="intro.webm"></audio>
+    <audio id="intro-audio" preload="none"></audio>
 
     <!-- Launch Screen -->
     <div id="launch-screen" ng-class="{'fade-out': hasEntered}">
@@ -2299,7 +2299,7 @@
                 <!-- FIFA Fixtures Card -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
-                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline src="fifa.mp4"></video>
+                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline ng-src="fifa.mp4"></video>
                     <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
                         <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
                         <!-- Fast refresh indicator when live -->
@@ -2673,10 +2673,18 @@
                 // Play audio and video on click to bypass autoplay restrictions
                 const bgVideo = document.getElementById('bg-video');
                 const introAudio = document.getElementById('intro-audio');
-                if (bgVideo && !isMobileDevice) {
-                    bgVideo.play().catch(e => console.log('Video play failed:', e));
+                if (bgVideo) {
+                    if (!bgVideo.src || bgVideo.src.indexOf('intro.mp4') === -1) {
+                        bgVideo.src = 'intro.mp4';
+                    }
+                    if (!isMobileDevice) {
+                        bgVideo.play().catch(e => console.log('Video play failed:', e));
+                    }
                 }
                 if (introAudio) {
+                    if (!introAudio.src || introAudio.src.indexOf('intro.webm') === -1) {
+                        introAudio.src = 'intro.webm';
+                    }
                     introAudio.play().catch(e => console.log('Audio play failed:', e));
                 }
             };
@@ -2686,10 +2694,18 @@
                 if ($scope.hasEntered) {
                     const bgVideo = document.getElementById('bg-video');
                     const introAudio = document.getElementById('intro-audio');
-                    if (bgVideo && !isMobileDevice) {
-                        bgVideo.play().catch(e => console.log('Video autoplay failed:', e));
+                    if (bgVideo) {
+                        if (!bgVideo.src || bgVideo.src.indexOf('intro.mp4') === -1) {
+                            bgVideo.src = 'intro.mp4';
+                        }
+                        if (!isMobileDevice) {
+                            bgVideo.play().catch(e => console.log('Video autoplay failed:', e));
+                        }
                     }
                     if (introAudio) {
+                        if (!introAudio.src || introAudio.src.indexOf('intro.webm') === -1) {
+                            introAudio.src = 'intro.webm';
+                        }
                         introAudio.play().catch(e => console.log('Audio autoplay failed:', e));
                     }
                 }
@@ -2970,7 +2986,7 @@
                 if (doc.exists) {
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
-                    const minDuration = isFifaLoadedBefore ? 150 : 1800;
+                    const minDuration = isFifaLoadedBefore ? 150 : 200;
                     const delay = Math.max(0, minDuration - elapsed);
 
                     $timeout(function () {

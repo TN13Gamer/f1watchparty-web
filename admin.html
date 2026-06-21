@@ -1533,18 +1533,23 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             function apiUrl(path) {
+                if (window.location.hostname === 'appassets.androidplatform.net') {
+                    return 'https://watchf1.live' + path;
+                }
                 var urlParams = new URLSearchParams(window.location.search);
-                var useLocalBackend = urlParams.get('local') === 'true' || 
-                                      window.location.port === '3000' || 
-                                      window.location.hostname === 'localhost' || 
-                                      window.location.hostname === '127.0.0.1';
                 
-                if (useLocalBackend) {
+                // If loaded via file:// protocol
+                if (window.location.protocol === 'file:') {
+                    var useLocal = urlParams.get('local') === 'true';
+                    return (useLocal ? 'http://localhost:3000' : 'https://watchf1.live') + path;
+                }
+                
+                // If running on a web server, only override to localhost:3000 if explicitly requested via ?local=true
+                if (urlParams.get('local') === 'true') {
                     return 'http://localhost:3000' + path;
                 }
-                if (window.location.protocol === 'file:') {
-                    return 'https://f1watchparty-web.vercel.app' + path;
-                }
+                
+                // Otherwise, use relative path so browser hits the current server (whether localhost, 192.168.x.x, or a domain)
                 return path;
             }
 

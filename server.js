@@ -101,7 +101,7 @@ async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
 }
 
 // Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
-async function fetchJson(url, timeoutMs = 25000) {
+async function fetchJson(url, timeoutMs = 8000) {
   if (url.includes('worldcup26.ir') && !process.env.VERCEL) {
     try {
       console.log(`[fetchJson] Using Puppeteer to fetch ${url}...`);
@@ -327,8 +327,10 @@ async function syncStreamsAutomatically(config, ref) {
                     };
                 });
 
-                await ref.update({ streamLinks: newLinks });
+                await ref.update({ streamLinks: newLinks, lastF1StreamsSync: new Date().toISOString() });
                 console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore.`);
+            } else {
+                await ref.update({ lastF1StreamsSync: new Date().toISOString() });
             }
         }
     } catch (err) {
@@ -505,6 +507,7 @@ async function syncFifaMatchDetailsLocal(config, ref) {
 
         const updatedFifa = {
             ...currentFifa,
+            lastDetailsSync: new Date().toISOString(),
             raceData: {
                 ...currentRaceData,
                 name: matchName,
@@ -585,7 +588,7 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
     const isLive = fifa.raceData?.isLive;
     if (!isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
       console.log('[local-sync-fifa] Match is >10 min away and not live. Clearing stale stream links.');
-      const updatedFifa = { ...fifa, streamLinks: [] };
+      const updatedFifa = { ...fifa, streamLinks: [], lastStreamsSync: new Date().toISOString() };
       await ref.update({ fifa: updatedFifa });
       return;
     } else if (isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
@@ -702,13 +705,14 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
     if (selectedMatch && resolvedStreamLinks.length > 0) {
       const updatedFifa = {
         ...fifa,
-        streamLinks: resolvedStreamLinks
+        streamLinks: resolvedStreamLinks,
+        lastStreamsSync: new Date().toISOString()
       };
       await ref.update({ fifa: updatedFifa });
       console.log(`[local-sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
     } else {
       console.log('[local-sync-fifa] None of the candidate matches yielded any active stream URLs. Clearing stale links.');
-      const updatedFifa = { ...fifa, streamLinks: [] };
+      const updatedFifa = { ...fifa, streamLinks: [], lastStreamsSync: new Date().toISOString() };
       await ref.update({ fifa: updatedFifa });
     }
   } catch (err) {
@@ -758,6 +762,10 @@ async function syncToFirebase() {
 
 // Polling intervals (only start in long-running mode, not on Vercel serverless)
 if (!process.env.VERCEL) {
+    // Run immediately on startup
+    fetchLatestSession();
+    syncToFirebase();
+
     setInterval(fetchLatestSession, 5 * 60 * 1000);
     setInterval(syncToFirebase, 5 * 60 * 1000);
 }
@@ -1021,7 +1029,7 @@ if (!process.env.VERCEL) {
 // --- API: Fetch FIFA Fixtures ---
 app.get('/api/fifa/fixtures', async (req, res) => {
     try {
-        if (cacheFixtures && (Date.now() - cacheFixturesTime < 60000)) {
+        if (cacheFixtures && (Date.now() - cacheFixturesTime < 900000)) {
             return res.json(cacheFixtures);
         }
         const [gamesRes, teamsRes] = await Promise.all([
@@ -1184,7 +1192,7 @@ app.get('/api/fifa/fixtures', async (req, res) => {
 // --- API: Fetch FIFA Standings ---
 app.get('/api/fifa/standings', async (req, res) => {
     try {
-        if (cacheStandings && (Date.now() - cacheStandingsTime < 30000)) {
+        if (cacheStandings && (Date.now() - cacheStandingsTime < 900000)) {
             return res.json(cacheStandings);
         }
         const [groupsRes, teamsRes] = await Promise.all([

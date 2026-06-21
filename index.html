@@ -445,10 +445,71 @@
         .container {
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        /* Mobile-app optimizations and Native look & feel */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            user-select: none !important;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
+            padding-bottom: 85px !important;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 72px;
+            background: rgba(13, 14, 21, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            width: 30%;
+            height: 100%;
+            transition: color 0.25s ease;
+            gap: 4px;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 1.3rem;
+            padding: 4px 16px;
+            border-radius: 16px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .bottom-nav .nav-item.active {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        body.page-home .bottom-nav .nav-item.active i {
+            background-color: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+        }
     </style>
 </head>
 
-<body>
+<body class="page-home">
 
     <div id="vanta-bg"></div>
     <div class="fifa-wavy-bg">
@@ -510,6 +571,22 @@
         </footer>
     </div>
 
+    <!-- Sticky Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item active" id="nav-home">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="f1.html" class="nav-item" id="nav-f1">
+            <i class="fa-solid fa-car-side"></i>
+            <span>F1 Party</span>
+        </a>
+        <a href="fifa.html" class="nav-item" id="nav-fifa">
+            <i class="fa-solid fa-soccer-ball"></i>
+            <span>FIFA 2026</span>
+        </a>
+    </div>
+
     <script>
         // Check if running locally or production to handle direct URL routing
         function navigateTo(event, localHtml, prodRoute) {
@@ -520,7 +597,8 @@
             // Storing destination
             const isLocal = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1';
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.hostname === 'appassets.androidplatform.net';
             let destination = isLocal ? localHtml : prodRoute;
 
             if (!isF1) {

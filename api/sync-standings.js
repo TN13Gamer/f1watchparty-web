@@ -390,9 +390,10 @@ async function syncStreamsAutomatically(config, ref) {
           };
         });
 
-        await ref.update({ streamLinks: newLinks });
+        await ref.update({ streamLinks: newLinks, lastF1StreamsSync: new Date().toISOString() });
         console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore matching: ${searchTokens.join(' ')}`);
       } else {
+        await ref.update({ lastF1StreamsSync: new Date().toISOString() });
         console.log(`[sync] No matching streams found for tokens: ${searchTokens.join(' ')}`);
       }
     }
@@ -598,6 +599,7 @@ async function syncFifaMatchDetails(config, ref) {
     const currentRaceData = currentFifa.raceData || {};
     const updatedFifa = {
       ...currentFifa,
+      lastDetailsSync: new Date().toISOString(),
       raceData: {
         ...currentRaceData,
         name: matchName,
@@ -829,6 +831,7 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
 
     const updatedFifa = {
       ...fifa,
+      lastDetailsSync: new Date().toISOString(),
       raceData: {
         ...currentRaceData,
         name: matchName,
@@ -884,7 +887,7 @@ async function syncFifaStreams(config, ref, options = {}) {
     const isLive = fifa.raceData?.isLive;
     if (!isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
       console.log('[sync-fifa] Next match is >10 minutes away and not live. Clearing stale stream links.');
-      const updatedFifa = { ...fifa, streamLinks: [] };
+      const updatedFifa = { ...fifa, streamLinks: [], lastStreamsSync: new Date().toISOString() };
       await ref.update({ fifa: updatedFifa });
       return;
     } else if (isManual && !isLive && (kickoffMs - now_s) > 10 * 60 * 1000) {
@@ -1063,17 +1066,103 @@ async function syncFifaStreams(config, ref, options = {}) {
       // Update fifa.streamLinks field in Firestore
       const updatedFifa = {
         ...fifa,
-        streamLinks: resolvedStreamLinks
+        streamLinks: resolvedStreamLinks,
+        lastStreamsSync: new Date().toISOString()
       };
       await ref.update({ fifa: updatedFifa });
       console.log(`[sync-fifa] Successfully updated ${resolvedStreamLinks.length} FIFA stream links in Firestore using match "${selectedMatch.title}".`);
     } else {
       // No streams found — clear any old stale links
       console.log('[sync-fifa] None of the candidate matches yielded active stream URLs. Preserving existing links.');
+      const updatedFifa = {
+        ...fifa,
+        lastStreamsSync: new Date().toISOString()
+      };
+      await ref.update({ fifa: updatedFifa });
     }
   } catch (err) {
     console.error('[sync-fifa] Error during auto-sync:', err.message);
     throw err;
+  }
+}
+
+async function fetchWeather(location) {
+  const weather = { air: 0, track: 0, condition: 'sunny' };
+  try {
+    const { data } = await axios.get(`https://wttr.in/${encodeURIComponent(location)}?format=j1`, { timeout: 8000 });
+    if (data && data.current_condition && data.current_condition[0]) {
+      let temp = parseInt(data.current_condition[0].temp_C || 0);
+      let desc = (data.current_condition[0].weatherDesc && data.current_condition[0].weatherDesc[0] && data.current_condition[0].weatherDesc[0].value || '').toLowerCase();
+      
+      weather.air = temp;
+      weather.track = temp + Math.floor(Math.random() * 8) + 4;
+      
+      if (desc.includes('rain') || desc.includes('drizzle') || desc.includes('shower')) weather.condition = 'rain';
+      else if (desc.includes('cloud') || desc.includes('overcast')) weather.condition = 'cloudy';
+      else if (desc.includes('storm') || desc.includes('thunder')) weather.condition = 'storm';
+      else weather.condition = 'sunny';
+    }
+  } catch(e) {
+    console.error('[sync-standings API] Weather fetch error:', e.message);
+  }
+  return weather;
+}
+
+async function syncF1LiveAndWeather(config, ref) {
+  try {
+    console.log('[sync-standings API] Fetching latest OpenF1 session...');
+    const { data } = await axios.get('https://api.openf1.org/v1/sessions?session_key=latest', { timeout: 8000 });
+    if (data && data.length > 0) {
+      const s = data[0];
+      const activeSession = {
+        name: s.session_name,
+        key: s.session_key,
+        location: s.location,
+        circuit: s.circuit_short_name || s.location,
+        date: s.date_start,
+        status: s.status
+      };
+      
+      let weatherObj = { air: 0, track: 0, condition: 'sunny' };
+      if (activeSession.location) {
+        weatherObj = await fetchWeather(activeSession.location);
+      }
+
+      // Check schedule live state
+      let scheduleIsLive = false;
+      if (Array.isArray(config.schedule)) {
+        const nowMs = Date.now();
+        config.schedule.forEach(sess => {
+          if (sess.timer) {
+            const start = new Date(sess.timer).getTime();
+            if (!isNaN(start)) {
+              let end = start + (2 * 60 * 60 * 1000); // 2 hours
+              if (sess.endTime && sess.endTime.includes(':')) {
+                const parts = sess.endTime.split(':');
+                const d = new Date(sess.timer);
+                d.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+                end = d.getTime();
+                if (end < start) end += 86400000;
+              }
+              if (nowMs >= start && nowMs < end) {
+                scheduleIsLive = true;
+              }
+            }
+          }
+        });
+      }
+
+      const isLiveRaceActive = (s.status === 'active') || scheduleIsLive;
+
+      await ref.update({
+        weather: weatherObj,
+        isLiveRaceActive: isLiveRaceActive,
+        lastF1LiveSync: new Date().toISOString()
+      });
+      console.log(`[sync-standings API] F1 Live update complete. isLiveRaceActive=${isLiveRaceActive}`);
+    }
+  } catch (err) {
+    console.error('[sync-standings API] F1 Live/Weather sync error:', err.message);
   }
 }
 
@@ -1104,6 +1193,15 @@ module.exports = async (req, res) => {
 
     const requestedType = req.query.type; // standings, f1streams, fifadetails, fifastreams
     const runAll = !requestedType;
+
+    // 0. Sync F1 Live and Weather info
+    if (runAll || requestedType === 'f1live' || requestedType === 'standings') {
+      try {
+        await syncF1LiveAndWeather(config, ref);
+      } catch (err) {
+        console.error('[sync-standings API] F1 Live/Weather sync failed:', err.message);
+      }
+    }
 
     // 1. Sync F1 Standings (if allowed and standings available)
     let standingsSynced = false;

@@ -1933,10 +1933,88 @@
             border-color: rgba(255, 255, 255, 0.2);
             transform: translateX(-3px);
         }
+
+        /* Mobile-app optimizations and Native look & feel */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            user-select: none !important;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
+            padding-bottom: 85px !important;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 72px;
+            background: rgba(13, 14, 21, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            width: 30%;
+            height: 100%;
+            transition: color 0.25s ease;
+            gap: 4px;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 1.3rem;
+            padding: 4px 16px;
+            border-radius: 16px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .bottom-nav .nav-item.active {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        body.page-f1 .bottom-nav .nav-item.active i {
+            background-color: rgba(230, 0, 0, 0.15);
+            color: #e60000;
+        }
+        
+        /* Mobile Chat Sidebar Overlay Adjustment */
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                width: 85% !important;
+                right: -85% !important;
+                background: rgba(13, 14, 21, 0.88) !important;
+                backdrop-filter: blur(25px) !important;
+                -webkit-backdrop-filter: blur(25px) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+                z-index: 10000 !important; /* Ensure above bottom nav when active */
+            }
+            .chat-sidebar.open {
+                transform: translateX(-100%) !important;
+            }
+        }
     </style>
 </head>
 
-<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}" class="page-f1"
     oncontextmenu="return false;">
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
@@ -2011,7 +2089,7 @@
             <div class="main-column">
                 <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive">
                     <div class="video-responsive" ng-if="streamLinks.length > 0">
-                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen" allowfullscreen
+                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                     <div ng-if="streamLinks.length === 0" style="
@@ -2500,13 +2578,13 @@
 
             $scope.goToFifa = function () {
                 sessionStorage.setItem('fifa_entered', 'true');
-                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'appassets.androidplatform.net';
                 window.location.href = isLocal ? 'fifa.html?enter=true' : '/fifa?enter=true';
             };
 
             $scope.goBack = function ($event) {
                 if ($event) $event.preventDefault();
-                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'appassets.androidplatform.net';
                 window.location.href = isLocal ? 'index.html' : '/';
             };
 
@@ -2750,13 +2828,25 @@
                 }
             }
 
+            function apiUrl(path) {
+                if (window.location.hostname === 'appassets.androidplatform.net') {
+                    return 'https://watchf1.live' + path;
+                }
+                if (window.location.protocol === 'file:') {
+                    return 'http://localhost:3000' + path;
+                }
+                return path;
+            }
+
             function safeDate(val) {
                 if (!val) return null;
                 if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
-                // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
-                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
-                    var parts = val.trim().split(/[\s\-:]/);
-                    return new Date(+parts[0], +parts[1]-1, +parts[2], +parts[3], +parts[4]);
+                if (typeof val === 'string') {
+                    // Match YYYY-MM-DD[T]HH:mm[:ss] and parse in user local timezone to avoid UTC shift
+                    var m = val.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+                    if (m) {
+                        return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], m[6] ? +m[6] : 0);
+                    }
                 }
                 return new Date(val);
             }
@@ -2862,6 +2952,31 @@
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
                 console.log("🏎️ Data Sync:", $scope.lastSyncTime, data);
                 updateTimers();
+
+                // ── Auto-sync F1 standings and streams in background if stale ──
+                if (data.autoSyncStandings !== false) {
+                    var nowTime = Date.now();
+                    var lastSync = data.lastStandingsSync ? new Date(data.lastStandingsSync).getTime() : 0;
+                    var lastStreamsSync = data.lastF1StreamsSync ? new Date(data.lastF1StreamsSync).getTime() : 0;
+                    
+                    var isLive = $scope.activeSession && $scope.activeSession.status === 'live';
+                    var standingsThreshold = isLive ? 2 * 60 * 1000 : 15 * 60 * 1000; // 2 min if live, 15 min if not
+                    var streamsThreshold = isLive ? 2 * 60 * 1000 : 15 * 60 * 1000; // 2 min if live, 15 min if not
+                    
+                    if (nowTime - lastSync > standingsThreshold) {
+                        console.log("🏎️ Standings stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=standings')).catch(function(err) {
+                            console.error("F1 standings auto-sync failed:", err);
+                        });
+                    }
+                    
+                    if (data.autoSyncStreams !== false && (nowTime - lastStreamsSync > streamsThreshold)) {
+                        console.log("🏎️ F1 streams stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=f1streams')).catch(function(err) {
+                            console.error("F1 streams auto-sync failed:", err);
+                        });
+                    }
+                }
             }
 
             function updateTimers() {
@@ -3109,6 +3224,21 @@
         <div style="margin-top: 10px; font-size: 8px; text-align: center; color: #6a6a7c;">
             Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
         </div>
+    </div>
+    <!-- Sticky Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item" id="nav-home">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="f1.html" class="nav-item active" id="nav-f1">
+            <i class="fa-solid fa-car-side"></i>
+            <span>F1 Party</span>
+        </a>
+        <a href="fifa.html" class="nav-item" id="nav-fifa">
+            <i class="fa-solid fa-soccer-ball"></i>
+            <span>FIFA 2026</span>
+        </a>
     </div>
 </body>
 
