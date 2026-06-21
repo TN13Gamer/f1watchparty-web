@@ -7,6 +7,52 @@
     <title>watchfifa.live | FIFA Watch Party</title>
 
     <script>
+        (function() {
+            function removeSandbox() {
+                var iframes = document.getElementsByTagName('iframe');
+                for (var i = 0; i < iframes.length; i++) {
+                    if (iframes[i].hasAttribute('sandbox')) {
+                        iframes[i].removeAttribute('sandbox');
+                        console.log('Web: Removed sandbox from iframe:', iframes[i].src);
+                    }
+                }
+            }
+            try {
+                var originalSetAttr = HTMLIFrameElement.prototype.setAttribute;
+                HTMLIFrameElement.prototype.setAttribute = function(name, val) {
+                    if (name.toLowerCase() === 'sandbox') {
+                        console.log('Web: Intercepted and blocked setAttribute(sandbox)');
+                        this.removeAttribute('sandbox');
+                        return;
+                    }
+                    originalSetAttr.call(this, name, val);
+                };
+                
+                Object.defineProperty(HTMLIFrameElement.prototype, 'sandbox', {
+                    get: function() {
+                        return this.getAttribute('sandbox') || '';
+                    },
+                    set: function(val) {
+                        console.log('Web: Intercepted and blocked sandbox property setter');
+                        this.removeAttribute('sandbox');
+                    },
+                    configurable: true,
+                    enumerable: true
+                });
+            } catch(e) { console.error('Web: error setting up sandbox overrides', e); }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                removeSandbox();
+                var observer = new MutationObserver(function(mutations) {
+                    removeSandbox();
+                });
+                observer.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+            });
+        })();
+
         (function () {
             document.documentElement.style.setProperty('--f1-red', '#FF0055');
             document.documentElement.style.setProperty('--glow-color', 'rgba(255, 0, 85, 0.15)');
