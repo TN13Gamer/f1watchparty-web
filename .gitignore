@@ -25,3 +25,5 @@ scratch/
 api_dump.json
 schedule_2026.json
 .vercel
+dist/
+
