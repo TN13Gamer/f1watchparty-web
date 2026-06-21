@@ -1,3 +1,12 @@
 # Ignore large background/intro video and audio files from Vercel deployment
 *.mp4
 *.webm
+android-app/
+windows-app/
+node_modules/
+f1watchparty-web-main/
+dist/
+scratch/
+serviceAccountKey.json
+f1-stream-live-firebase-adminsdk-*.json
+
