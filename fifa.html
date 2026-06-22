@@ -883,14 +883,6 @@
             transition: all 0.3s ease;
         }
 
-        .video-wrapper.stream-offline {
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            margin-bottom: 24px;
-            background: rgba(8, 8, 12, 0.4);
-            backdrop-filter: blur(20px);
-        }
-
         .video-wrapper::before {
             content: '';
             position: absolute;
@@ -3541,25 +3533,27 @@
         <div class="container">
             <div class="main-column">
                 <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
-                <div class="video-wrapper" ng-class="{'stream-offline': !(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)}">
+                <div class="video-wrapper">
                     <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                     <!-- Dark placeholder when no live stream -->
                     <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)" style="
-                        height: 120px;
+                        aspect-ratio: 16/9;
+                        background: rgba(8, 8, 12, 0.85);
+                        border-radius: 16px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        color: rgba(255, 255, 255, 0.3);
+                        color: #333;
                         font-size: 13px;
-                        font-weight: 800;
+                        font-weight: 700;
                         letter-spacing: 2px;
                         text-transform: uppercase;
                         gap: 10px;
                     ">
-                        <i class="fa-solid fa-circle" style="font-size: 8px; color: rgba(255, 255, 255, 0.2);"></i> STREAM OFFLINE
+                        <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
                 </div>
                 <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
@@ -3925,6 +3919,13 @@
                             <!-- Group selector -->
                             <select ng-model="selectedGroup" ng-options="g as g.name for g in groups" class="standings-select" style="max-width: 110px;">
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Description card -->
+                    <div class="standings-desc-card" ng-if="selectedGroup" style="padding: 10px 12px; margin-bottom: 12px;">
+                        <div class="standings-desc-text" style="font-size: 11px; line-height: 1.4; color: rgba(255, 255, 255, 0.5); margin-bottom: 0;">
+                            Follow the latest FIFA tournament standings with real-time updates. Track team performance, points, wins, losses, goal difference, and qualification status throughout the competition.
                         </div>
                     </div>
 
