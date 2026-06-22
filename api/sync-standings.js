@@ -1186,6 +1186,89 @@ async function syncF1LiveAndWeather(config, ref) {
 
 module.exports = async (req, res) => {
   console.log(`[sync-standings API] Received request: ${req.method} ${req.url}`);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const requestedType = req.query.type;
+
+  // ── LIVE-CONFIG: return Firebase live_config doc directly ──────────────────
+  if (requestedType === 'liveconfig') {
+    try {
+      if (!admin.apps.length) return res.json({});
+      const db = admin.firestore();
+      const doc = await db.collection('app_data').doc('live_config').get();
+      if (doc.exists) return res.json(doc.data());
+    } catch (e) {
+      console.warn('[sync-standings liveconfig] Firestore error:', e.message);
+    }
+    // Fallback to local backup file
+    try {
+      const fs = require('fs'); const path = require('path');
+      const bp = path.resolve(process.cwd(), 'firestore_live_config_utf8.json');
+      if (fs.existsSync(bp)) {
+        let raw = fs.readFileSync(bp, 'utf8');
+        if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+        const parsed = JSON.parse(raw);
+        function unwrap(v) { if (!v || typeof v !== 'object') return v; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return parseInt(v.integerValue, 10); if ('doubleValue' in v) return parseFloat(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(unwrap); if ('mapValue' in v) { const r={}; for(const k in (v.mapValue.fields||{})) r[k]=unwrap(v.mapValue.fields[k]); return r; } return v; }
+        if (parsed && parsed.fields) { const r={}; for(const k in parsed.fields) r[k]=unwrap(parsed.fields[k]); return res.json(r); }
+      }
+    } catch (e) { console.error('[sync-standings liveconfig] Backup failed:', e.message); }
+    return res.json({});
+  }
+
+  // ── FETCH-STREAMS: proxy pushembdz.store stream list ──────────────────────
+  if (requestedType === 'fetchstreams') {
+    try {
+      const { data } = await axios.get('https://api.pushembdz.store/v1/streams', {
+        timeout: 8000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+      });
+      return res.json(data);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  // ── FIFA POLL: GET/POST vote counts ───────────────────────────────────────
+  if (requestedType === 'fifapoll') {
+    const matchId = req.query.matchId || (req.body && req.body.matchId);
+    if (!matchId || typeof matchId !== 'string' || matchId.length > 80) return res.status(400).json({ error: 'Invalid matchId' });
+    if (!admin.apps.length) return res.status(500).json({ error: 'Firebase not available' });
+    const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
+    if (req.method === 'GET') {
+      try {
+        const snap = await pollRef.get();
+        if (!snap.exists) return res.json({ home: 0, away: 0, draw: 0, total: 0 });
+        const d = snap.data(); const h = d.home||0, a = d.away||0, dr = d.draw||0;
+        return res.json({ home: h, away: a, draw: dr, total: h+a+dr });
+      } catch (e) { return res.status(500).json({ error: 'Failed to read poll' }); }
+    }
+    if (req.method === 'POST') {
+      const choice = req.body && req.body.choice;
+      const voterId = req.body && req.body.voterId;
+      if (!['home','away','draw'].includes(choice)) return res.status(400).json({ error: 'Invalid choice' });
+      try {
+        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
+          const vRef = pollRef.collection('voters').doc(voterId);
+          const ev = await vRef.get();
+          if (ev.exists) {
+            const snap = await pollRef.get(); const d = snap.exists ? snap.data() : {};
+            const h=d.home||0, a=d.away||0, dr=d.draw||0;
+            return res.json({ home:h, away:a, draw:dr, total:h+a+dr, voted: ev.data().choice });
+          }
+          await vRef.set({ choice, votedAt: admin.firestore.FieldValue.serverTimestamp() });
+        }
+        await pollRef.set({ [choice]: admin.firestore.FieldValue.increment(1) }, { merge: true });
+        const snap = await pollRef.get(); const d = snap.exists ? snap.data() : {};
+        const h=d.home||0, a=d.away||0, dr=d.draw||0;
+        return res.json({ home:h, away:a, draw:dr, total:h+a+dr, voted: choice });
+      } catch (e) { return res.status(500).json({ error: 'Failed to record vote' }); }
+    }
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   if (!['GET','POST'].includes(req.method)) {
     console.log(`[sync-standings API] Invalid method: ${req.method}`);
     return res.status(405).end();
@@ -1208,7 +1291,6 @@ module.exports = async (req, res) => {
 
     let config = doc.data();
 
-    const requestedType = req.query.type; // standings, f1streams, fifadetails, fifastreams
     const runAll = !requestedType;
 
     // 0. Sync F1 Live and Weather info

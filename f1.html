@@ -2965,7 +2965,7 @@
             let localFallbackTimer = null;
 
             function fetchLocalFallback() {
-                $http.get(apiUrl('/api/live-config')).then(function(res) {
+                $http.get(apiUrl('/api/sync-standings?type=liveconfig')).then(function(res) {
                     if (res.data && Object.keys(res.data).length > 0) {
                         console.log('🔄 [fallback] Loaded config from local API');
                         processData(res.data);

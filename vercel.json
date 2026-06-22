@@ -1,20 +1,31 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "functions": {
-    "api/sync-standings.js": {
-      "maxDuration": 60
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 60
+      }
     },
-    "api/fifa/fixtures.js": {
-      "maxDuration": 60
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
     },
-    "api/fifa/streams.js": {
-      "maxDuration": 60
+    {
+      "src": "*.png",
+      "use": "@vercel/static"
     },
-    "api/fifa/details.js": {
-      "maxDuration": 60
+    {
+      "src": "*.json",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.webm",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "crons": [
     {
       "path": "/api/sync-standings",
@@ -23,8 +34,16 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/chat/:path",
+      "destination": "/api/chat/:path.js"
+    },
+    {
+      "source": "/api/fifa/:path",
+      "destination": "/api/fifa/:path.js"
+    },
+    {
+      "source": "/api/:path",
+      "destination": "/api/:path.js"
     },
     {
       "source": "/admin",

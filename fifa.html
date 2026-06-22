@@ -4564,7 +4564,7 @@
             let localFallbackTimer = null;
 
             function fetchLocalFallback() {
-                $http.get(apiUrl('/api/live-config')).then(function(res) {
+                $http.get(apiUrl('/api/sync-standings?type=liveconfig')).then(function(res) {
                     if (res.data && Object.keys(res.data).length > 0) {
                         console.log('🔄 [fallback] Loaded config from local API');
                         processData(res.data);
@@ -5175,7 +5175,7 @@
             }
 
             function fetchPollCounts(matchId) {
-                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)))
+                fetch(apiUrl('/api/sync-standings?type=fifapoll&matchId=' + encodeURIComponent(matchId)))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         $scope.$apply(function() {
@@ -5196,7 +5196,7 @@
                                     voterId = Math.random().toString(36).substring(2, 15);
                                     localStorage.setItem('poll_voter_id', voterId);
                                 }
-                                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
+                                fetch(apiUrl('/api/sync-standings?type=fifapoll&matchId=' + encodeURIComponent(matchId)), {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ choice: $scope.poll.userVote, voterId: voterId })
@@ -5309,7 +5309,7 @@
                 }
 
                 // Send vote to server API (uses Firebase Admin, bypasses Firestore rules)
-                fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
+                fetch(apiUrl('/api/sync-standings?type=fifapoll&matchId=' + encodeURIComponent(matchId)), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ choice: choice, voterId: voterId })

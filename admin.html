@@ -2471,8 +2471,8 @@
                     .split(/\s+/)
                     .filter(t => t.length > 0);
 
-                let primaryUrl = '/api/fetch-streams';
-                let fallbackUrl = window.location.origin + '/api/fetch-streams';
+                let primaryUrl = '/api/sync-standings?type=fetchstreams';
+                let fallbackUrl = window.location.origin + '/api/sync-standings?type=fetchstreams';
                 let targetUrl = apiUrl(primaryUrl);
 
                 function parseAndMatchStreams(res) {
