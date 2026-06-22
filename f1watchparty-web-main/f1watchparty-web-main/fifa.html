@@ -2418,14 +2418,14 @@
                     </div>
                 </div>
 
-                <!-- FIFA Fixtures Card -->
+                <!-- FIFA Fixtures Card (Group Stage) -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline ng-src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/fifa.mp4"></video>
                     <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
                         <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
                         <!-- Fast refresh indicator when live -->
-                        <span ng-if="hasLiveMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
+                        <span ng-if="hasLiveGroupMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
                             <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
                             LIVE · FAST REFRESH
                         </span>
@@ -2433,42 +2433,50 @@
 
                     <!-- Live & Upcoming Matches -->
                     <div class="fixtures-scroll-container">
-                        <div ng-if="liveAndUpcomingFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
-                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming matches
+                        <div ng-if="liveAndUpcomingGroupFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
+                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming group stage matches
                         </div>
-                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px;">
-                            <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                <!-- Home Team Flag -->
-                                <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
-                                    <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.homeTeam}}">
-                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                    </div>
-                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.homeTeam}}">
-                                </div>
-                                <!-- Score or VS -->
-                                <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
-                                    <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
-                                        <span style="color:#00ff55;">{{match.homeScore}}</span>
-                                        <span style="color: #555; margin: 0 1px;">-</span>
-                                        <span style="color:#00ff55;">{{match.awayScore}}</span>
-                                    </span>
-                                    <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
-                                </div>
-                                <!-- Away Team Flag -->
-                                <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
-                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'" title="{{match.awayTeam}}">
-                                    <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;" title="{{match.awayTeam}}">
-                                        <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                    </div>
-                                </div>
+                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingGroupFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 15px; align-items: stretch;">
+                            <!-- Group/Round Label -->
+                            <div style="font-size: 10px; font-weight: 800; color: var(--f1-red); text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">
+                                {{match.round}}
                             </div>
-                            <!-- Kickoff Time / Live status -->
-                            <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
-                                <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
-                                <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-                                    <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
-                                    <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                    <!-- Home Team Flag & Name -->
+                                    <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: right;" title="{{match.homeTeam}}">{{match.homeTeam}}</span>
+                                        <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                        </div>
+                                        <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
+                                    </div>
+                                    <!-- Score or VS -->
+                                    <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
+                                        <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
+                                            <span style="color:#00ff55;">{{match.homeScore}}</span>
+                                            <span style="color: #555; margin: 0 1px;">-</span>
+                                            <span style="color:#00ff55;">{{match.awayScore}}</span>
+                                        </span>
+                                        <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
+                                    </div>
+                                    <!-- Away Team Flag & Name -->
+                                    <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
+                                        <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
+                                        <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                        </div>
+                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: left;" title="{{match.awayTeam}}">{{match.awayTeam}}</span>
+                                    </div>
+                                </div>
+                                <!-- Kickoff Time / Live status -->
+                                <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
+                                    <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
+                                    <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                                        <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
+                                        <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2478,14 +2486,112 @@
                     </div>
 
                     <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
-                    <button class="past-sessions-toggle" ng-show="pastFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
+                    <button class="past-sessions-toggle" ng-show="pastGroupFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
                         <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastFixtures().length + ')' }}
+                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastGroupFixtures().length + ')' }}
                     </button>
 
                     <!-- Past matches list: shown/hidden with ng-show -->
                     <div class="past-matches-list" ng-show="ui.showPastMatches">
-                        <div class="schedule-row ended" ng-repeat="match in pastFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                        <div class="schedule-row ended" ng-repeat="match in pastGroupFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                            <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                <!-- Home -->
+                                <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
+                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                </div>
+                                <!-- Score -->
+                                <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
+                                    {{match.homeScore}} – {{match.awayScore}}
+                                </div>
+                                <!-- Away -->
+                                <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
+                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
+                                </div>
+                            </div>
+                            <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FIFA Knockout Stage Card -->
+                <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
+                    <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline ng-src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/fifa.mp4"></video>
+                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+                        <span><i class="fa-solid fa-sitemap"></i> Knockout Stage</span>
+                        <!-- Fast refresh indicator when live -->
+                        <span ng-if="hasLiveKnockoutMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
+                            LIVE · FAST REFRESH
+                        </span>
+                    </div>
+
+                    <!-- Live & Upcoming Matches -->
+                    <div class="fixtures-scroll-container">
+                        <div ng-if="liveAndUpcomingKnockoutFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
+                            <i class="fa-solid fa-trophy" style="margin-right:6px; opacity:0.5;"></i> No upcoming knockout matches
+                        </div>
+                        <div class="schedule-row" id="knockout-{{$index}}" ng-repeat="match in liveAndUpcomingKnockoutFixtures()" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 15px; align-items: stretch;">
+                            <!-- Group/Round Label -->
+                            <div style="font-size: 10px; font-weight: 800; color: var(--f1-red); text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">
+                                {{match.round}}
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                    <!-- Home Team Flag & Name -->
+                                    <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: right;" title="{{match.homeTeam}}">{{match.homeTeam}}</span>
+                                        <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                        </div>
+                                        <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
+                                    </div>
+                                    <!-- Score or VS -->
+                                    <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
+                                        <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
+                                            <span style="color:#00ff55;">{{match.homeScore}}</span>
+                                            <span style="color: #555; margin: 0 1px;">-</span>
+                                            <span style="color:#00ff55;">{{match.awayScore}}</span>
+                                        </span>
+                                        <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
+                                    </div>
+                                    <!-- Away Team Flag & Name -->
+                                    <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
+                                        <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
+                                        <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
+                                        </div>
+                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: left;" title="{{match.awayTeam}}">{{match.awayTeam}}</span>
+                                    </div>
+                                </div>
+                                <!-- Kickoff Time / Live status -->
+                                <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
+                                    <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
+                                    <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+                                        <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
+                                        <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
+                            No knockout stage matches available.
+                        </div>
+                    </div>
+
+                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
+                    <button class="past-sessions-toggle" ng-show="pastKnockoutFixtures().length > 0" ng-click="ui.showPastKnockoutMatches = !ui.showPastKnockoutMatches">
+                        <i class="fa-solid" ng-class="ui.showPastKnockoutMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        {{ ui.showPastKnockoutMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastKnockoutFixtures().length + ')' }}
+                    </button>
+
+                    <!-- Past matches list: shown/hidden with ng-show -->
+                    <div class="past-matches-list" ng-show="ui.showPastKnockoutMatches">
+                        <div class="schedule-row ended" ng-repeat="match in pastKnockoutFixtures()" style="opacity:0.6; margin-bottom:6px;">
                             <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
                                 <!-- Home -->
                                 <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
@@ -3440,30 +3546,57 @@
                 scheduleFixtureRefresh();
             });
 
-            // Helper: live + upcoming fixtures
-            $scope.liveAndUpcomingFixtures = function() {
+            var isGroupMatch = function(m) {
+                if (m.type) return m.type === 'group';
+                return m.round && m.round.toLowerCase().indexOf('group') !== -1;
+            };
+
+            // Helper: live + upcoming group fixtures
+            $scope.liveAndUpcomingGroupFixtures = function() {
                 if (!$scope.fixtures) return [];
                 return $scope.fixtures.filter(function(m) {
-                    return m.status === 'live' || m.status === 'notstarted';
+                    return isGroupMatch(m) && (m.status === 'live' || m.status === 'notstarted');
                 });
             };
 
-            // Helper: past (finished) fixtures
-            $scope.pastFixtures = function() {
+            // Helper: past (finished) group fixtures
+            $scope.pastGroupFixtures = function() {
                 if (!$scope.fixtures) return [];
                 return $scope.fixtures.filter(function(m) {
-                    return m.finished || (m.status !== 'live' && m.status !== 'notstarted');
+                    return isGroupMatch(m) && (m.finished || (m.status !== 'live' && m.status !== 'notstarted'));
                 });
             };
 
-            // Helper: any live match right now?
-            $scope.hasLiveMatches = function() {
+            // Helper: any live group match right now?
+            $scope.hasLiveGroupMatches = function() {
                 if (!$scope.fixtures) return false;
-                return $scope.fixtures.some(function(m) { return m.status === 'live'; });
+                return $scope.fixtures.some(function(m) { return isGroupMatch(m) && m.status === 'live'; });
+            };
+
+            // Helper: live + upcoming knockout fixtures
+            $scope.liveAndUpcomingKnockoutFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return !isGroupMatch(m) && (m.status === 'live' || m.status === 'notstarted');
+                });
+            };
+
+            // Helper: past (finished) knockout fixtures
+            $scope.pastKnockoutFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return !isGroupMatch(m) && (m.finished || (m.status !== 'live' && m.status !== 'notstarted'));
+                });
+            };
+
+            // Helper: any live knockout match right now?
+            $scope.hasLiveKnockoutMatches = function() {
+                if (!$scope.fixtures) return false;
+                return $scope.fixtures.some(function(m) { return !isGroupMatch(m) && m.status === 'live'; });
             };
 
             // UI state object — avoids AngularJS prototype chain issues with ng-if child scopes
-            $scope.ui = { showPastMatches: false };
+            $scope.ui = { showPastMatches: false, showPastKnockoutMatches: false };
 
             // ── Poll System (uses server API to bypass Firestore rules) ──
             $scope.poll = {

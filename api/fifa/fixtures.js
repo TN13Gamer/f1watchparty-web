@@ -355,7 +355,8 @@ function formatData(games, teamsData) {
             finished: isFinished,
             round,
             stadium: stadium.name,
-            matchTime
+            matchTime,
+            type: g.type
         };
     });
 }
