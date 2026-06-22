@@ -1,0 +1,1065 @@
+/* ==========================================================================
+   CSS Variables & Core Setup
+   ========================================================================== */
+:root {
+  --bg-dark: #050505;
+  --bg-panel: rgba(16, 18, 27, 0.7);
+  --bg-card: rgba(10, 11, 16, 0.6);
+  --border-glass: rgba(255, 255, 255, 0.05);
+  
+  --f1-red: #e60000;
+  --f1-red-glow: rgba(230, 0, 0, 0.15);
+  
+  --fifa-purple: #8000ff;
+  --fifa-purple-glow: rgba(128, 0, 255, 0.12);
+  
+  --text-white: #ffffff;
+  --text-silver: #d1d1d6;
+  --text-gray: #8e8e93;
+  --text-dark-gray: #3a3a3c;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-white);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* ==========================================================================
+   Ambient Background FX
+   ========================================================================== */
+.grid-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 50px 50px;
+  z-index: -3;
+  pointer-events: none;
+}
+
+.ambient-glow {
+  position: fixed;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  filter: blur(150px);
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: background 0.8s ease;
+}
+
+.ambient-left {
+  background: radial-gradient(circle, rgba(230, 0, 0, 0.09) 0%, transparent 70%);
+  top: -200px;
+  left: -200px;
+}
+
+.ambient-right {
+  background: radial-gradient(circle, rgba(128, 0, 255, 0.07) 0%, transparent 70%);
+  bottom: -200px;
+  right: -200px;
+}
+
+/* ==========================================================================
+   Navigation Views (SPA Architecture)
+   ========================================================================== */
+.view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(15px);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+.view.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   1. Splash Screen View
+   ========================================================================== */
+#splash-view {
+  background-color: #000000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transform: none; /* Keep splash centered static */
+}
+
+.splash-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 320px;
+}
+
+.splash-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.splash-icon {
+  width: 90px;
+  height: 90px;
+}
+
+.draw-circle {
+  animation: drawCircleAnim 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.draw-triangle {
+  opacity: 0;
+  transform: scale(0.5);
+  transform-origin: center;
+  animation: drawTriangleAnim 0.8s 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.splash-text {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.white-text { color: #ffffff; }
+.red-text { color: var(--f1-red); }
+.purple-text { color: var(--fifa-purple); }
+
+.loader-bar {
+  width: 180px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loader-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--f1-red);
+  border-radius: 2px;
+  animation: fillLoader 2.8s cubic-bezier(0.1, 0.8, 0.1, 1) forwards;
+}
+
+@keyframes drawCircleAnim {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes drawTriangleAnim {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fillLoader {
+  to { width: 100%; }
+}
+
+/* ==========================================================================
+   2. Home Dashboard View
+   ========================================================================== */
+.home-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 50px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 45px;
+}
+
+.home-logo {
+  font-family: 'Titillium Web', sans-serif;
+  font-size: 46px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.logo-icon {
+  font-size: 32px;
+  color: var(--f1-red);
+}
+
+.home-tagline {
+  color: var(--text-gray);
+  font-size: 15px;
+  max-width: 580px;
+  line-height: 1.5;
+}
+
+/* Sports Cards */
+.cards-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  width: 100%;
+  max-width: 850px;
+}
+
+@media (max-width: 760px) {
+  .cards-wrapper {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sport-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--border-glass);
+  border-radius: 28px;
+  padding: 40px 30px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+#card-f1:hover {
+  transform: translateY(-8px);
+  border-color: var(--f1-red);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(230, 0, 0, 0.08);
+}
+
+#card-fifa:hover {
+  transform: translateY(-8px);
+  border-color: var(--fifa-purple);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(128, 0, 255, 0.08);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.icon-box {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+}
+
+.icon-box.circle {
+  border-radius: 50%;
+}
+
+.icon-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Badges */
+.badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.badge.upcoming {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-silver);
+}
+
+.badge.upcoming::before {
+  background: var(--text-gray);
+}
+
+.badge.live {
+  color: #fff;
+  font-weight: 900;
+  animation: badgePulse 1.5s infinite alternate ease-in-out;
+}
+
+#badge-f1.live {
+  background: var(--f1-red);
+  box-shadow: 0 0 10px var(--f1-red-glow);
+}
+
+#badge-fifa.live {
+  background: var(--fifa-purple);
+  box-shadow: 0 0 10px var(--fifa-purple-glow);
+}
+
+.badge.live::before {
+  background: #fff;
+}
+
+@keyframes badgePulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.sport-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.sport-desc {
+  font-size: 14px;
+  color: var(--text-gray);
+  line-height: 1.5;
+  margin-bottom: 30px;
+  flex-grow: 1;
+}
+
+/* Enter Buttons */
+.enter-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.btn-f1 { background-color: var(--f1-red); }
+.btn-f1:hover { background-color: #ff1a1a; }
+.btn-fifa { background-color: var(--fifa-purple); }
+.btn-fifa:hover { background-color: #901aff; }
+
+.enter-btn i {
+  transition: transform 0.2s ease;
+}
+
+.enter-btn:hover i {
+  transform: translateX(4px);
+}
+
+.home-footer {
+  margin-top: 50px;
+  text-align: center;
+  max-width: 580px;
+}
+
+.home-footer p {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   3. Arena Common Layout (F1 / FIFA)
+   ========================================================================== */
+.arena-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px 60px 20px;
+}
+
+.arena-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.back-nav {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 16px;
+  transition: all 0.25s ease;
+}
+
+.back-nav:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(-2px);
+}
+
+.arena-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arena-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.arena-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.arena-live-dot.red-dot {
+  background-color: var(--f1-red);
+  box-shadow: 0 0 8px var(--f1-red);
+  animation: pulseDot 1.2s infinite;
+}
+
+.arena-live-dot.purple-dot {
+  background-color: var(--fifa-purple);
+  box-shadow: 0 0 8px var(--fifa-purple);
+  animation: pulseDot 1.2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+/* ==========================================================================
+   Custom Video Player
+   ========================================================================== */
+.player-wrapper {
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  position: relative;
+  background: #000000;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+.video-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.video-container iframe,
+.video-container video {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.player-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-gray);
+  font-size: 14px;
+}
+
+/* Player Overlay Controls */
+.player-controls-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.player-wrapper:hover .player-controls-overlay {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.control-btn {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.play-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+}
+
+.bottom-right-controls {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  display: flex;
+  gap: 8px;
+}
+
+.bottom-right-controls .control-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+/* Playing banner overlay */
+.playing-banner {
+  width: 100%;
+  background: #141622;
+  border-left: 3px solid transparent;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.banner-f1 {
+  border-color: var(--f1-red);
+}
+
+.banner-f1 i {
+  color: var(--f1-red);
+}
+
+.banner-fifa {
+  border-color: var(--fifa-purple);
+}
+
+.banner-fifa i {
+  color: var(--fifa-purple);
+}
+
+/* ==========================================================================
+   Tab Navigation & Panels
+   ========================================================================== */
+.tab-control {
+  margin-top: 16px;
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-gray);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+#f1-view .tab-item.active {
+  background: var(--f1-red);
+  color: #fff;
+}
+
+#fifa-view .tab-item.active {
+  background: var(--fifa-purple);
+  color: #fff;
+}
+
+.tab-content-wrapper {
+  margin-top: 16px;
+  width: 100%;
+  position: relative;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+  animation: panelFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   List Elements (Streams & Schedules)
+   ========================================================================== */
+.list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stream-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stream-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+#f1-view .stream-card.selected {
+  background: rgba(230, 0, 0, 0.08);
+  border-color: var(--f1-red);
+}
+
+#fifa-view .stream-card.selected {
+  background: rgba(128, 0, 255, 0.08);
+  border-color: var(--fifa-purple);
+}
+
+.stream-card i {
+  font-size: 16px;
+  color: var(--text-gray);
+}
+
+#f1-view .stream-card.selected i { color: var(--f1-red); }
+#fifa-view .stream-card.selected i { color: var(--fifa-purple); }
+
+.stream-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stream-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stream-status {
+  font-size: 12px;
+  color: var(--text-gray);
+}
+
+#f1-view .stream-card.selected .stream-status { color: var(--f1-red); }
+#fifa-view .stream-card.selected .stream-status { color: var(--fifa-purple); }
+
+/* Schedule Cards */
+.schedule-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.schedule-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.status-badge.upcoming {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-silver);
+}
+
+.status-badge.live {
+  background: var(--f1-red);
+  color: #fff;
+}
+
+.status-badge.ended {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dark-gray);
+}
+
+.schedule-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.schedule-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-silver);
+}
+
+.schedule-bottom.live {
+  color: var(--f1-red);
+}
+
+/* ==========================================================================
+   Standings & Tables (F1 / FIFA)
+   ========================================================================== */
+.standings-toggle-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-silver);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--f1-red);
+  border-color: var(--f1-red);
+  color: #fff;
+}
+
+#fifa-fixtures-tab .toggle-btn.active {
+  background: var(--fifa-purple);
+  border-color: var(--fifa-purple);
+  color: #fff;
+}
+
+.table-wrapper {
+  display: none;
+}
+
+.table-wrapper.active {
+  display: block;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+}
+
+.standings-table th {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-gray);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.standings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.driver-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.driver-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.05);
+  object-fit: cover;
+}
+
+.driver-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.driver-name {
+  font-weight: 600;
+  color: #fff;
+}
+
+.driver-team {
+  font-size: 12px;
+  color: var(--text-gray);
+}
+
+.pos-col {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-silver);
+}
+
+.pts-col {
+  font-weight: 700;
+  color: #fff;
+  text-align: right;
+}
+
+/* ==========================================================================
+   FIFA Custom Layouts (Fixtures & Groups)
+   ========================================================================== */
+.fixture-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fixture-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fixture-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-gray);
+}
+
+.fifa-badge-pulse {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.fifa-badge-pulse.live {
+  background: var(--f1-red);
+  color: #fff;
+  animation: badgePulse 1s infinite alternate;
+}
+
+.fifa-badge-pulse.countdown {
+  background: rgba(128, 0, 255, 0.08);
+  border: 1px solid rgba(128, 0, 255, 0.25);
+  color: var(--fifa-purple);
+}
+
+.fifa-badge-pulse.finished {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-gray);
+}
+
+/* Match layout */
+.match-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.team-block {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-block.home {
+  justify-content: flex-end;
+}
+
+.team-block.away {
+  justify-content: flex-start;
+}
+
+.team-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.flag-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.score-capsule {
+  margin: 0 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 6px 14px;
+  min-width: 60px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.score-capsule.live {
+  color: var(--fifa-purple);
+  border-color: rgba(128, 0, 255, 0.2);
+}
+
+.score-capsule.vs {
+  color: var(--text-gray);
+}
+
+/* Group Standings Stage */
+.groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.group-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-silver);
+  padding-left: 4px;
+}
+
+.fifa-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gd-col {
+  color: var(--text-gray);
+  font-family: monospace;
+  text-align: center;
+}

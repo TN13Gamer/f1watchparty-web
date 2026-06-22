@@ -1,0 +1,32 @@
+{
+  "name": "f1watchparty-windows",
+  "version": "1.0.0",
+  "description": "Windows desktop client for Formula 1 and FIFA watch parties.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.f1watchparty.windows",
+    "productName": "WatchPartyLive",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "style.css",
+      "renderer.js",
+      "assets/**/*"
+    ]
+  }
+}

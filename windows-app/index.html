@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WatchF1.Live Desktop</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Premium Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- HLS Player Library (for native streaming (.m3u8) on desktop) -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+
+  <!-- Ambient Grid & Glow Effects -->
+  <div class="grid-overlay"></div>
+  <div class="ambient-glow ambient-left"></div>
+  <div class="ambient-glow ambient-right"></div>
+
+  <!-- 1. SPLASH SCREEN VIEW -->
+  <div id="splash-view" class="view active">
+    <div class="splash-container">
+      <div class="splash-logo">
+        <svg class="splash-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(230, 0, 0, 0.2)" stroke-width="2"/>
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#e60000" stroke-width="4" stroke-dasharray="283" stroke-dashoffset="283" class="draw-circle"/>
+          <polygon points="40,30 70,50 40,70" fill="#e60000" class="draw-triangle"/>
+        </svg>
+        <div class="splash-text">
+          <span class="white-text">WATCHF1</span><span class="red-text">.LIVE</span>
+        </div>
+      </div>
+      <div class="loader-bar">
+        <div class="loader-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HOME VIEW -->
+  <div id="home-view" class="view">
+    <div class="home-container">
+      <header class="home-header">
+        <div class="home-logo">
+          <i class="fa-solid fa-play logo-icon"></i>WATCHF1<span class="red-text">.LIVE</span>
+        </div>
+        <p class="home-tagline">Select your arena. Connect with fans. Enjoy high-performance streaming in real-time.</p>
+      </header>
+
+      <main class="cards-wrapper">
+        <!-- F1 Sport Card -->
+        <div class="sport-card" id="card-f1">
+          <div class="card-top">
+            <div class="icon-box">
+              <img src="assets/f1-logo.png" alt="F1 Logo">
+            </div>
+            <div class="badge" id="badge-f1">UPCOMING</div>
+          </div>
+          <h2 class="sport-title">Formula 1</h2>
+          <p class="sport-desc">Live timing, Grand Prix race streams, schedule countdowns, and championship standings.</p>
+          <div class="card-action">
+            <button class="enter-btn btn-f1">
+              Enter Arena <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- FIFA Sport Card -->
+        <div class="sport-card" id="card-fifa">
+          <div class="card-top">
+            <div class="icon-box circle">
+              <img src="assets/fifa-logo.png" alt="FIFA Logo">
+            </div>
+            <div class="badge" id="badge-fifa">UPCOMING</div>
+          </div>
+          <h2 class="sport-title">FIFA 2026</h2>
+          <p class="sport-desc">Live soccer streams, match details, match schedules, and real-time custom fan chat.</p>
+          <div class="card-action">
+            <button class="enter-btn btn-fifa">
+              Enter Arena <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <footer class="home-footer">
+        <p>This app does not create, host, or share any video content. All video streams are from external websites that are freely available online.</p>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 3. F1 ARENA VIEW -->
+  <div id="f1-view" class="view">
+    <div class="arena-container">
+      <header class="arena-header">
+        <div class="back-nav btn-back" data-target="home-view">
+          <i class="fa-solid fa-arrow-left"></i>
+        </div>
+        <div class="arena-title-wrapper">
+          <h1 class="arena-title">F1 WATCH PARTY</h1>
+          <span class="arena-live-dot red-dot"></span>
+        </div>
+      </header>
+
+      <!-- Player section -->
+      <div class="player-wrapper">
+        <div class="video-container" id="f1-player-container">
+          <!-- Dynamically populated iframe or HTML5 video -->
+          <div class="player-placeholder">No stream is currently broadcasting.</div>
+        </div>
+        
+        <!-- Controls overlay (for native HTML5 HLS video) -->
+        <div class="player-controls-overlay" id="f1-player-controls">
+          <button class="control-btn play-btn" id="f1-play-pause-btn"><i class="fa-solid fa-pause"></i></button>
+          <div class="bottom-right-controls">
+            <button class="control-btn mute-btn" id="f1-mute-btn"><i class="fa-solid fa-volume-up"></i></button>
+            <button class="control-btn fullscreen-btn" id="f1-fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playing banner -->
+      <div class="playing-banner banner-f1">
+        <i class="fa-solid fa-play"></i> <span id="f1-playing-title">Playing: No Stream Selected</span>
+      </div>
+
+      <!-- Segmented Control Tabs -->
+      <div class="tab-control">
+        <div class="tab-item active" data-tab="f1-streams-tab">Streams</div>
+        <div class="tab-item" data-tab="f1-schedule-tab">Schedule</div>
+        <div class="tab-item" data-tab="f1-standings-tab">Standings</div>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-wrapper">
+        <!-- Streams Tab -->
+        <div id="f1-streams-tab" class="tab-panel active">
+          <div class="list-container" id="f1-streams-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="f1-schedule-tab" class="tab-panel">
+          <div class="list-container" id="f1-schedule-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Standings Tab -->
+        <div id="f1-standings-tab" class="tab-panel">
+          <div class="standings-toggle-bar">
+            <button class="toggle-btn active" id="btn-toggle-drivers">Drivers</button>
+            <button class="toggle-btn" id="btn-toggle-constructors">Constructors</button>
+          </div>
+          
+          <!-- Drivers Standings Table -->
+          <div id="f1-drivers-table-wrapper" class="table-wrapper active">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th style="width: 10%">Pos</th>
+                  <th style="width: 75%">Driver</th>
+                  <th style="width: 15%; text-align: right">PTS</th>
+                </tr>
+              </thead>
+              <tbody id="f1-drivers-list">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Constructors Standings Table -->
+          <div id="f1-constructors-table-wrapper" class="table-wrapper">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th style="width: 15%">Pos</th>
+                  <th style="width: 60%">Team</th>
+                  <th style="width: 25%; text-align: right">PTS</th>
+                </tr>
+              </thead>
+              <tbody id="f1-constructors-list">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. FIFA 2026 ARENA VIEW -->
+  <div id="fifa-view" class="view">
+    <div class="arena-container">
+      <header class="arena-header">
+        <div class="back-nav btn-back" data-target="home-view">
+          <i class="fa-solid fa-arrow-left"></i>
+        </div>
+        <div class="arena-title-wrapper">
+          <h1 class="arena-title">WatchFIFA<span class="purple-text">.Live</span></h1>
+          <span class="arena-live-dot purple-dot"></span>
+        </div>
+      </header>
+
+      <!-- Player section -->
+      <div class="player-wrapper">
+        <div class="video-container" id="fifa-player-container">
+          <div class="player-placeholder">No match stream selected.</div>
+        </div>
+        
+        <!-- Controls overlay (for native HTML5 HLS video) -->
+        <div class="player-controls-overlay" id="fifa-player-controls">
+          <button class="control-btn play-btn" id="fifa-play-pause-btn"><i class="fa-solid fa-pause"></i></button>
+          <div class="bottom-right-controls">
+            <button class="control-btn mute-btn" id="fifa-mute-btn"><i class="fa-solid fa-volume-up"></i></button>
+            <button class="control-btn fullscreen-btn" id="fifa-fullscreen-btn"><i class="fa-solid fa-expand"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playing banner -->
+      <div class="playing-banner banner-fifa">
+        <i class="fa-solid fa-play"></i> <span id="fifa-playing-title">Playing: No Stream Selected</span>
+      </div>
+
+      <!-- Segmented Control Tabs -->
+      <div class="tab-control">
+        <div class="tab-item active" data-tab="fifa-streams-tab">Streams</div>
+        <div class="tab-item" data-tab="fifa-fixtures-tab">Fixtures</div>
+        <div class="tab-item" data-tab="fifa-table-tab">Table</div>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="tab-content-wrapper">
+        <!-- Streams Tab -->
+        <div id="fifa-streams-tab" class="tab-panel active">
+          <div class="list-container" id="fifa-streams-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Fixtures Tab -->
+        <div id="fifa-fixtures-tab" class="tab-panel">
+          <div class="standings-toggle-bar">
+            <button class="toggle-btn active" id="btn-toggle-upcoming">Upcoming</button>
+            <button class="toggle-btn" id="btn-toggle-finished">Finished</button>
+          </div>
+          
+          <!-- Fixtures Lists -->
+          <div class="list-container active" id="fifa-fixtures-upcoming-list">
+            <!-- Dynamically populated -->
+          </div>
+          <div class="list-container" id="fifa-fixtures-finished-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Table Tab -->
+        <div id="fifa-table-tab" class="tab-panel">
+          <div class="groups-container" id="fifa-groups-list">
+            <!-- Dynamically populated with Group stages (Group A to H) -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
