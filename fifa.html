@@ -3471,41 +3471,12 @@
                         </div>
                         
                         <div class="standings-header-right">
-                            <!-- Season selector -->
-                            <select class="standings-select" style="width: 100px;">
-                                <option>2026 Season</option>
-                            </select>
-                            
                             <!-- Group selector -->
                             <select ng-model="selectedGroup" ng-options="g as g.name for g in groups" class="standings-select" style="max-width: 110px;">
                             </select>
                         </div>
                     </div>
 
-                    <!-- Description and dynamic stats card -->
-                    <div class="standings-desc-card" ng-if="selectedGroup">
-                        <div class="standings-desc-text">
-                            Follow the latest FIFA tournament standings with real-time updates. Track team performance, points, wins, losses, goal difference, and qualification status throughout the competition.
-                        </div>
-                        <div class="standings-stats-grid">
-                            <div class="standings-stat-pill">
-                                <span class="standings-stat-label">Matches Played</span>
-                                <span class="standings-stat-value">{{groupFinishedMatchesCount()}}</span>
-                            </div>
-                            <div class="standings-stat-pill">
-                                <span class="standings-stat-label">Total Goals</span>
-                                <span class="standings-stat-value">{{groupTotalGoalsCount()}}</span>
-                            </div>
-                            <div class="standings-stat-pill">
-                                <span class="standings-stat-label">Teams Qualified</span>
-                                <span class="standings-stat-value">Top 2</span>
-                            </div>
-                            <div class="standings-stat-pill">
-                                <span class="standings-stat-label">Next Match</span>
-                                <span class="standings-stat-value">{{getGroupUpcomingMatch()}}</span>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Standings Table -->
                     <div class="standings-table-wrap">
