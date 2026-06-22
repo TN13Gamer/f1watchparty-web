@@ -1383,6 +1383,14 @@
             letter-spacing: 0.5px;
         }
 
+        footer p:first-child {
+            font-size: 11px;
+            line-height: 1.4;
+            opacity: 0.55;
+            max-width: 600px;
+            margin: 0 auto 8px auto;
+        }
+
         body.theater-active header {
             height: 40px;
             padding: 0 20px;
@@ -2567,6 +2575,21 @@
         app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            function apiUrl(path) {
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true') {
+                        return 'http://localhost:3000' + path;
+                    }
+                }
+                if (window.location.protocol === 'file:') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var useLocal = urlParams.get('local') === 'true';
+                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
+                }
+                return 'https://f1watchparty-web-seven.vercel.app' + path;
+            }
+
             $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
@@ -2903,8 +2926,26 @@
             }
 
             const startTime = Date.now();
-            db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+            let localFallbackTimer = null;
+
+            function fetchLocalFallback() {
+                $http.get(apiUrl('/api/live-config')).then(function(res) {
+                    if (res.data && Object.keys(res.data).length > 0) {
+                        console.log('🔄 [fallback] Loaded config from local API');
+                        processData(res.data);
+                        $scope.dataLoaded = true;
+                    }
+                }, function(err) {
+                    console.error('Failed to fetch local config fallback:', err);
+                });
+            }
+
+            const unsubscribeLiveConfig = db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
+                    if (localFallbackTimer) {
+                        $interval.cancel(localFallbackTimer);
+                        localFallbackTimer = null;
+                    }
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
                     const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
@@ -2915,15 +2956,30 @@
                         $scope.dataLoaded = true;
                     }, delay);
                 }
+            }, (error) => {
+                console.warn("Firestore snapshot listener failed, using local API fallback:", error);
+                fetchLocalFallback();
+                if (!localFallbackTimer) {
+                    localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                }
             });
 
-            // Safety timeout: in case Firebase fails/stalls, hide the loader after 4 seconds anyway
+            // Safety timeout: in case Firebase fails/stalls, hide the loader and try local config
             $timeout(function () {
                 if (!$scope.dataLoaded) {
-                    console.warn("Firebase snapshot took too long; bypassing loader.");
-                    $scope.dataLoaded = true;
+                    console.warn("Firebase snapshot took too long; attempting local API fallback.");
+                    fetchLocalFallback();
+                    if (!localFallbackTimer) {
+                        localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                    }
                 }
             }, 4000);
+
+            $scope.$on('$destroy', function() {
+                if (localFallbackTimer) {
+                    $interval.cancel(localFallbackTimer);
+                }
+            });
 
             function processData(data) {
                 $scope.raceData = data.raceData || {};

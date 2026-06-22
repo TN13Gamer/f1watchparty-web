@@ -67,6 +67,119 @@ try {
   console.error('Failed to initialize Firebase Admin:', error);
 }
 
+// Local config in-memory fallback helper functions and variables
+function unwrapFirestore(val) {
+    if (!val || typeof val !== 'object') return val;
+    if ('stringValue' in val) return val.stringValue;
+    if ('integerValue' in val) return parseInt(val.integerValue, 10);
+    if ('doubleValue' in val) return parseFloat(val.doubleValue);
+    if ('booleanValue' in val) return val.booleanValue;
+    if ('nullValue' in val) return null;
+    if ('arrayValue' in val) {
+        return (val.arrayValue.values || []).map(unwrapFirestore);
+    }
+    if ('mapValue' in val) {
+        return unwrapFirestoreMap(val.mapValue.fields || {});
+    }
+    return val;
+}
+
+function unwrapFirestoreMap(fields) {
+    const res = {};
+    if (!fields) return res;
+    for (const k in fields) {
+        res[k] = unwrapFirestore(fields[k]);
+    }
+    return res;
+}
+
+let localConfig = {};
+try {
+    const backupPath = path.resolve(__dirname, 'firestore_live_config_utf8.json');
+    if (fs.existsSync(backupPath)) {
+        let rawContent = fs.readFileSync(backupPath, 'utf8');
+        if (rawContent.charCodeAt(0) === 0xFEFF) {
+            rawContent = rawContent.slice(1);
+        }
+        const rawBackup = JSON.parse(rawContent);
+        if (rawBackup && rawBackup.fields) {
+            localConfig = unwrapFirestoreMap(rawBackup.fields);
+            console.log('✅ Loaded backup live_config from JSON file');
+        }
+    }
+} catch (e) {
+    console.error('Failed to load backup live_config:', e.message);
+}
+
+function createLocalConfigRefWrapper(originalRef) {
+    return {
+        update: async function(updateData) {
+            // 1) Update localConfig in-memory
+            for (const key in updateData) {
+                if (updateData[key] && typeof updateData[key] === 'object' && !Array.isArray(updateData[key])) {
+                    localConfig[key] = {
+                        ...(localConfig[key] || {}),
+                        ...updateData[key]
+                    };
+                } else {
+                    localConfig[key] = updateData[key];
+                }
+            }
+            // 2) Try Firestore write
+            if (originalRef) {
+                try {
+                    await originalRef.update(updateData);
+                    console.log('✅ Synced config update to Firestore');
+                } catch (e) {
+                    console.warn('⚠️ Firestore update failed, in-memory updated:', e.message);
+                }
+            }
+        },
+        set: async function(setData, options) {
+            // 1) Update localConfig in-memory
+            if (options && options.merge) {
+                for (const key in setData) {
+                    if (setData[key] && typeof setData[key] === 'object' && !Array.isArray(setData[key])) {
+                        localConfig[key] = {
+                            ...(localConfig[key] || {}),
+                            ...setData[key]
+                        };
+                    } else {
+                        localConfig[key] = setData[key];
+                    }
+                }
+            } else {
+                localConfig = { ...setData };
+            }
+            // 2) Try Firestore write
+            if (originalRef) {
+                try {
+                    await originalRef.set(setData, options);
+                    console.log('✅ Synced config set to Firestore');
+                } catch (e) {
+                    console.warn('⚠️ Firestore set failed, in-memory updated:', e.message);
+                }
+            }
+        },
+        get: async function() {
+            if (originalRef) {
+                try {
+                    const doc = await originalRef.get();
+                    if (doc.exists) {
+                        return doc;
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Firestore get failed, falling back to in-memory config:', e.message);
+                }
+            }
+            return {
+                exists: true,
+                data: () => localConfig
+            };
+        }
+    };
+}
+
 // Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
 // Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
 async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
@@ -721,42 +834,47 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
 }
 
 async function syncToFirebase() {
-    if (!db) {
-        console.log('Simulating sync to Firebase...', new Date().toLocaleTimeString());
-        return;
+    let originalRef = null;
+    if (db) {
+        try {
+            originalRef = db.collection('app_data').doc('live_config');
+        } catch (e) {
+            console.error('Failed to get Firestore ref:', e.message);
+        }
     }
+    const wrappedRef = createLocalConfigRefWrapper(originalRef);
+
     try {
-        const liveConfigRef = db.collection('app_data').doc('live_config');
-        await liveConfigRef.set({
+        await wrappedRef.set({
             weather: state.weather,
             isLiveRaceActive: state.isLiveRace,
             lastAutoSync: Date.now()
         }, { merge: true });
-        console.log(`✅ Synced weather & session to Firebase at ${new Date().toLocaleTimeString()}.`);
+        console.log(`✅ Synced weather & session to Local Config at ${new Date().toLocaleTimeString()}.`);
 
         // Fetch current config to check if stream auto-sync is enabled
-        const configDoc = await liveConfigRef.get();
+        const configDoc = await wrappedRef.get();
         if (configDoc.exists) {
             const config = configDoc.data();
-            await syncStreamsAutomatically(config, liveConfigRef);
+            await syncStreamsAutomatically(config, wrappedRef);
 
             // Auto-sync FIFA match details from worldcup26.ir (if enabled)
             try {
                 let updatedFifa = null;
                 if (config.fifa && config.fifa.autoSyncDetails !== false) {
-                    updatedFifa = await syncFifaMatchDetailsLocal(config, liveConfigRef);
+                    updatedFifa = await syncFifaMatchDetailsLocal(config, wrappedRef);
                 }
                 const currentConfig = {
                     ...config,
                     fifa: updatedFifa || config.fifa || {}
                 };
-                await syncFifaStreamsLocal(currentConfig, liveConfigRef);
+                await syncFifaStreamsLocal(currentConfig, wrappedRef);
             } catch(fe) {
                 console.error('[local-sync] FIFA sync error:', fe.message);
             }
         }
     } catch (e) {
-        console.error('Firebase sync error:', e);
+        console.error('Local sync update error:', e);
     }
 }
 
@@ -769,6 +887,11 @@ if (!process.env.VERCEL) {
     setInterval(fetchLatestSession, 5 * 60 * 1000);
     setInterval(syncToFirebase, 5 * 60 * 1000);
 }
+
+// --- API: Get Live Config (in-memory fallback for Firestore quota exceeded) ---
+app.get('/api/live-config', (req, res) => {
+    res.json(localConfig || {});
+});
 
 // --- API: Live Leaderboard (scraped from F1.com) ---
 app.get('/api/live-leaderboard', async (req, res) => {

@@ -1288,6 +1288,14 @@
             letter-spacing: 0.5px;
         }
 
+        footer p:first-child {
+            font-size: 11px;
+            line-height: 1.4;
+            opacity: 0.55;
+            max-width: 600px;
+            margin: 0 auto 8px auto;
+        }
+
         body.theater-active header {
             height: 40px;
             padding: 0 20px;
@@ -2851,14 +2859,14 @@
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 16px;
-            font-size: 11px;
-            line-height: 1.5;
-            color: rgba(255, 255, 255, 0.6);
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 9.5px;
+            line-height: 1.3;
+            color: rgba(255, 255, 255, 0.45);
         }
         .standings-desc-text {
-            margin-bottom: 10px;
+            margin-bottom: 0;
         }
         .standings-stats-grid {
             display: grid;
@@ -3038,21 +3046,21 @@
         .match-info-card {
             background: linear-gradient(135deg, rgba(11, 17, 26, 0.9) 0%, rgba(4, 8, 15, 0.95) 100%) !important;
             border: 1px solid rgba(0, 255, 136, 0.15) !important;
-            border-radius: 24px !important;
-            padding: 24px !important;
+            border-radius: 20px !important;
+            padding: 14px 20px !important;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
             backdrop-filter: blur(25px);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: 'Outfit', sans-serif;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .match-info-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(0, 255, 136, 0.35) !important;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 255, 136, 0.1) !important;
+            transform: translateY(-2px);
+            border-color: rgba(0, 255, 136, 0.3) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 136, 0.08) !important;
         }
 
         /* Stadium Light Glow Backdrops */
@@ -3094,9 +3102,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            padding-bottom: 12px;
+            padding-bottom: 8px;
         }
 
         .match-tournament-branding {
@@ -3179,14 +3187,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 32px;
-            margin: 15px 0 25px 0;
+            gap: 20px;
+            margin: 8px 0 16px 0;
         }
 
         .broadcast-team {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             flex: 1;
             transition: all 0.3s ease;
         }
@@ -3202,36 +3210,36 @@
         }
 
         .team-logo-container {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
             padding: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             backdrop-filter: blur(5px);
         }
 
         .match-info-card:hover .team-logo-container {
-            transform: scale(1.08) rotate(2deg);
+            transform: scale(1.06) rotate(2deg);
         }
         .match-info-card:hover .broadcast-team.home .team-logo-container {
-            transform: scale(1.08) rotate(-2deg);
+            transform: scale(1.06) rotate(-2deg);
         }
 
         .team-logo-container img {
             max-width: 90%;
             max-height: 90%;
             object-fit: contain;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+            filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
         }
 
         .team-name {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 900;
             color: #fff;
             letter-spacing: -0.5px;
@@ -3244,24 +3252,24 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            min-width: 140px;
+            gap: 4px;
+            min-width: 110px;
         }
 
         .score-display-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 6px 18px;
-            border-radius: 16px;
+            padding: 4px 14px;
+            border-radius: 12px;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
         }
 
         .score-number {
-            font-size: 36px;
+            font-size: 28px;
             font-weight: 900;
             color: #00FF88;
             font-family: 'Outfit', sans-serif;
@@ -3270,19 +3278,19 @@
         }
 
         .score-divider {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.4);
         }
 
         .vs-badge {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 900;
             color: rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.08);
             background: rgba(255, 255, 255, 0.02);
-            padding: 4px 14px;
-            border-radius: 10px;
+            padding: 2px 10px;
+            border-radius: 8px;
             letter-spacing: 1px;
         }
 
@@ -3290,10 +3298,10 @@
             background: rgba(0, 255, 136, 0.1);
             border: 1px solid rgba(0, 255, 136, 0.25);
             color: #00FF88;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
-            padding: 3px 10px;
-            border-radius: 8px;
+            padding: 2px 8px;
+            border-radius: 6px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
@@ -3308,19 +3316,19 @@
         .match-details-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 10px;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
-            padding-top: 20px;
+            padding-top: 14px;
         }
 
         .match-info-block {
             background: rgba(255, 255, 255, 0.015);
             border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 12px 14px;
+            border-radius: 12px;
+            padding: 8px 12px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             min-width: 0;
         }
@@ -3331,16 +3339,16 @@
         }
 
         .info-block-icon {
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             background: rgba(0, 255, 136, 0.06);
             border: 1px solid rgba(0, 255, 136, 0.15);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #00FF88;
-            font-size: 14px;
+            font-size: 11px;
             flex-shrink: 0;
             box-shadow: 0 0 10px rgba(0, 255, 136, 0.05);
         }
@@ -3353,7 +3361,7 @@
         }
 
         .info-block-label {
-            font-size: 9px;
+            font-size: 8px;
             text-transform: uppercase;
             font-weight: 800;
             color: rgba(255, 255, 255, 0.4);
@@ -3362,7 +3370,7 @@
         }
 
         .info-block-value {
-            font-size: 13px;
+            font-size: 11.5px;
             font-weight: 700;
             color: #fff;
             white-space: nowrap;
@@ -3409,7 +3417,7 @@
                 grid-template-columns: 1fr;
             }
             .match-info-card {
-                padding: 18px !important;
+                padding: 10px 14px !important;
             }
         }
     </style>
@@ -3923,8 +3931,8 @@
                     </div>
 
                     <!-- Description card -->
-                    <div class="standings-desc-card" ng-if="selectedGroup" style="padding: 10px 12px; margin-bottom: 12px;">
-                        <div class="standings-desc-text" style="font-size: 11px; line-height: 1.4; color: rgba(255, 255, 255, 0.5); margin-bottom: 0;">
+                    <div class="standings-desc-card" ng-if="selectedGroup" style="padding: 6px 10px; margin-bottom: 8px;">
+                        <div class="standings-desc-text" style="font-size: 9.5px; line-height: 1.3; color: rgba(255, 255, 255, 0.45); margin-bottom: 0;">
                             Follow the latest FIFA tournament standings with real-time updates. Track team performance, points, wins, losses, goal difference, and qualification status throughout the competition.
                         </div>
                     </div>
@@ -4519,8 +4527,26 @@
 
 
             const startTime = Date.now();
-            db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+            let localFallbackTimer = null;
+
+            function fetchLocalFallback() {
+                $http.get(apiUrl('/api/live-config')).then(function(res) {
+                    if (res.data && Object.keys(res.data).length > 0) {
+                        console.log('🔄 [fallback] Loaded config from local API');
+                        processData(res.data);
+                        $scope.dataLoaded = true;
+                    }
+                }, function(err) {
+                    console.error('Failed to fetch local config fallback:', err);
+                });
+            }
+
+            const unsubscribeLiveConfig = db.collection("app_data").doc("live_config").onSnapshot((doc) => {
                 if (doc.exists) {
+                    if (localFallbackTimer) {
+                        $interval.cancel(localFallbackTimer);
+                        localFallbackTimer = null;
+                    }
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
                     const minDuration = 200; // Enforce minimum 0.2 seconds for outline drawing animation
@@ -4531,15 +4557,30 @@
                         $scope.dataLoaded = true;
                     }, delay);
                 }
+            }, (error) => {
+                console.warn("Firestore snapshot listener failed, using local API fallback:", error);
+                fetchLocalFallback();
+                if (!localFallbackTimer) {
+                    localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                }
             });
 
-            // Safety timeout: in case Firebase fails/stalls, hide the loader after 2.5s anyway
+            // Safety timeout: in case Firebase fails/stalls, hide the loader and try local config
             $timeout(function () {
                 if (!$scope.dataLoaded) {
-                    console.warn("Firebase snapshot took too long; bypassing loader.");
-                    $scope.dataLoaded = true;
+                    console.warn("Firebase snapshot took too long; attempting local API fallback.");
+                    fetchLocalFallback();
+                    if (!localFallbackTimer) {
+                        localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                    }
                 }
             }, 2500);
+
+            $scope.$on('$destroy', function() {
+                if (localFallbackTimer) {
+                    $interval.cancel(localFallbackTimer);
+                }
+            });
 
             function processData(data) {
                 // Set activeSport bound value
