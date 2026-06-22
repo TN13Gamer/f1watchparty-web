@@ -7,6 +7,9 @@
     },
     "api/fifa/fixtures.js": {
       "maxDuration": 60
+    },
+    "api/fifa/streams.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

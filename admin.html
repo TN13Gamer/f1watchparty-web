@@ -2321,25 +2321,24 @@
                 $scope.fetchingFifaStreams = true;
                 $scope.showToast("Fetching FIFA streams from streamed.pk...", "info");
 
-                // Call backend sync API directly — it reads/writes Firestore via Admin SDK
-                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'), { timeout: 30000 })
+                // Get current match name for better stream matching
+                var matchName = ($scope.config && $scope.config.fifa && $scope.config.fifa.raceData && $scope.config.fifa.raceData.name) || '';
+
+                // Call the dedicated fast streams endpoint (uses official streamed.pk API)
+                var streamsUrl = '/api/fifa/streams?save=true' + (matchName ? '&match=' + encodeURIComponent(matchName) : '');
+                $http.get(apiUrl(streamsUrl), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {
                             $scope.fetchingFifaStreams = false;
-                            // Pull FIFA stream links from the sync response payload
-                            var syncData = res.data && res.data.data;
-                            if (syncData && syncData.fifa && syncData.fifa.streamLinks) {
+                            var data = res.data;
+                            if (data && data.ok && data.streamLinks && data.streamLinks.length > 0) {
                                 $scope.config.fifa = $scope.config.fifa || {};
-                                $scope.config.fifa.streamLinks = syncData.fifa.streamLinks;
-                            }
-                            
-                            var syncObj = res.data && res.data.sync;
-                            var fifaStreamsError = syncObj && syncObj.fifaStreams && syncObj.fifaStreams.error;
-                            if (fifaStreamsError) {
-                                $scope.showToast("FIFA streams warning: " + fifaStreamsError, "error");
+                                $scope.config.fifa.streamLinks = data.streamLinks;
+                                $scope.showToast("FIFA streams fetched! " + data.count + " links for \"" + (data.matchTitle || matchName || 'match') + "\"", "success");
+                                $scope.addLog("Auto-fetched " + data.count + " FIFA stream links from streamed.pk: " + (data.matchTitle || ''));
                             } else {
-                                $scope.showToast("FIFA streams fetched and updated successfully!", "success");
-                                $scope.addLog("Auto-fetched FIFA stream sources from streamed.pk");
+                                var errMsg = (data && data.error) || 'No streams found';
+                                $scope.showToast("FIFA streams: " + errMsg, "error");
                             }
                         });
                     })
