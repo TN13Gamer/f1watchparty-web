@@ -3306,7 +3306,7 @@
         /* Details info blocks */
         .match-details-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
             padding-top: 20px;
@@ -3373,7 +3373,7 @@
         /* RESPONSIVE LAYOUTS */
         @media (max-width: 1200px) {
             .match-details-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -3533,12 +3533,12 @@
             <div class="main-column">
                 <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
                 <div class="video-wrapper">
-                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                     <!-- Dark placeholder when no live stream -->
-                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0)" style="
+                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)" style="
                         aspect-ratio: 16/9;
                         background: rgba(8, 8, 12, 0.85);
                         border-radius: 16px;
@@ -3555,7 +3555,7 @@
                         <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px; flex-shrink: 0;">SOURCE:</span>
                     <div class="stream-buttons-scroll" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-grow: 1; flex-shrink: 1; min-width: 0; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
@@ -3580,11 +3580,7 @@
                     <div class="match-info-pitch-lines"></div>
 
                     <!-- Top Branding & Status Row -->
-                    <div class="match-info-top-row">
-                        <div class="match-tournament-branding">
-                            <i class="fa-solid fa-trophy trophy-accent"></i>
-                            <span>{{ raceData.competition || 'FIFA World Cup 2026' }}</span>
-                        </div>
+                    <div class="match-info-top-row" style="justify-content: flex-end;">
                         <div class="match-status-badge-container">
                             <span class="match-live-badge pulse-badge" ng-if="raceData.isLive">
                                 <span class="live-dot"></span> LIVE
@@ -3637,15 +3633,6 @@
 
                     <!-- Info Blocks Section -->
                     <div class="match-details-grid">
-                        <!-- 🌎 Competition -->
-                        <div class="match-info-block">
-                            <div class="info-block-icon"><i class="fa-solid fa-earth-americas"></i></div>
-                            <div class="info-block-content">
-                                <span class="info-block-label">Competition</span>
-                                <span class="info-block-value">{{ raceData.competition || 'FIFA World Cup 2026' }}</span>
-                            </div>
-                        </div>
-
                         <!-- 📅 Matchday -->
                         <div class="match-info-block">
                             <div class="info-block-icon"><i class="fa-solid fa-calendar-day"></i></div>
