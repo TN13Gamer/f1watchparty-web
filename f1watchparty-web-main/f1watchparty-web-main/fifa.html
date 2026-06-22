@@ -2388,8 +2388,7 @@
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="event-header">
                         <div>
-                            <span class="event-round">{{raceData.round}}</span>
-                            <div class="event-title">{{raceData.name}}</div>
+                            <div class="event-title" style="margin-top: 5px;">{{raceData.name}}</div>
                         </div>
                         <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
                             <span
@@ -2625,7 +2624,7 @@
 
                     <!-- ── BEFORE VOTING: full buttons ── -->
                     <div ng-if="poll.userVote === null">
-                        <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}} · {{raceData.round}}</div>
+                        <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}}</div>
 
                         <button class="poll-team-btn" ng-click="castVote('home')">
                             <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
@@ -3037,7 +3036,13 @@
             try {
                 var _cachedGroups = localStorage.getItem('fifa_cached_groups');
                 if (_cachedGroups) {
-                    $scope.groups = JSON.parse(_cachedGroups);
+                    var cached = JSON.parse(_cachedGroups);
+                    if (Array.isArray(cached)) {
+                        cached.sort(function(a, b) {
+                            return (a.name || '').localeCompare(b.name || '');
+                        });
+                    }
+                    $scope.groups = cached;
                     $scope.autoSelectGroup();
                     console.log('⚽ [cache] Pre-rendered', $scope.groups.length, 'groups from LocalStorage');
                 }
@@ -3503,7 +3508,13 @@
                 });
 
                 $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
-                    $scope.groups = res.data || [];
+                    var loadedGroups = res.data || [];
+                    if (Array.isArray(loadedGroups)) {
+                        loadedGroups.sort(function(a, b) {
+                            return (a.name || '').localeCompare(b.name || '');
+                        });
+                    }
+                    $scope.groups = loadedGroups;
                     // Cache to LocalStorage for instant next-load
                     try { localStorage.setItem('fifa_cached_groups', JSON.stringify($scope.groups)); } catch(e) {}
                     $scope.autoSelectGroup();
