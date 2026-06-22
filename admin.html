@@ -2357,31 +2357,24 @@
             $scope.autoFetchFifaDetails = function() {
                 if ($scope.fetchingFifaDetails) return;
                 $scope.fetchingFifaDetails = true;
-                $scope.showToast("Detecting next match from worldcup26.ir...", "info");
+                $scope.showToast("Detecting next match from streamed.pk...", "info");
 
-                // Call backend sync API — it updates Firestore via Admin SDK then returns data
-                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifadetails'), { timeout: 30000 })
+                // Call the dedicated fast details endpoint (uses official streamed.pk + FotMob APIs)
+                $http.get(apiUrl('/api/fifa/details?save=true'), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {
                             $scope.fetchingFifaDetails = false;
-                            var syncData = res.data && res.data.data;
-                            var fifaData = syncData && syncData.fifa;
-                            if (fifaData) {
+                            var data = res.data;
+                            if (data && data.ok && data.raceData) {
                                 $scope.config.fifa = $scope.config.fifa || {};
-                                if (fifaData.raceData) $scope.config.fifa.raceData = fifaData.raceData;
-                                if (fifaData.customTimer) $scope.config.fifa.customTimer = fifaData.customTimer;
-                            }
-                            var now = new Date();
-                            $scope.lastFifaDetailsSync = now.toLocaleTimeString();
-                            var matchName = fifaData && fifaData.raceData && fifaData.raceData.name;
-                            
-                            var syncObj = res.data && res.data.sync;
-                            var fifaDetailsError = syncObj && syncObj.fifaDetails && syncObj.fifaDetails.error;
-                            if (fifaDetailsError) {
-                                $scope.showToast("FIFA details warning: " + fifaDetailsError, "error");
+                                $scope.config.fifa.raceData = data.raceData;
+                                if (data.customTimer) $scope.config.fifa.customTimer = data.customTimer;
+                                $scope.lastFifaDetailsSync = new Date().toLocaleTimeString();
+                                $scope.showToast("Match details updated: " + (data.matchTitle || data.raceData.name || "?"), "success");
+                                $scope.addLog("Auto-fetched FIFA match details: " + (data.matchTitle || ''));
                             } else {
-                                $scope.showToast("Match details updated: " + (matchName || "?"), "success");
-                                $scope.addLog("Auto-fetched FIFA match details from worldcup26.ir: " + (matchName || ""));
+                                var errMsg = (data && data.error) || 'No match data returned';
+                                $scope.showToast("FIFA details warning: " + errMsg, "error");
                             }
                         });
                     })

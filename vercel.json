@@ -10,6 +10,9 @@
     },
     "api/fifa/streams.js": {
       "maxDuration": 60
+    },
+    "api/fifa/details.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
