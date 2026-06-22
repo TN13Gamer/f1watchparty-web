@@ -81,6 +81,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
     <!-- Lottie Light Player for FIFA Loader (Optimized for PC/Mobile) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
+    <!-- Canvas Confetti for Poll Complete Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         [ng-cloak],
@@ -1912,17 +1914,31 @@
         }
 
         .fixtures-scroll-container {
-            max-height: 400px;
+            max-height: 340px;
             overflow-y: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE and Edge */
-            padding-right: 5px;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(0, 255, 85, 0.3) rgba(255, 255, 255, 0.03); /* Firefox */
+            padding-right: 8px;
         }
 
         .fixtures-scroll-container::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
+            display: block !important;
+            width: 5px !important;
+            height: 5px !important;
+        }
+
+        .fixtures-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 85, 0.3) !important;
+            border-radius: 10px !important;
+        }
+
+        .fixtures-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 85, 0.5) !important;
+        }
+
+        .fixtures-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-radius: 10px !important;
         }
 
         /* Past matches toggle btn (FIFA) */
@@ -1961,147 +1977,358 @@
         }
         .past-matches-list::-webkit-scrollbar { display: none; }
 
-        /* ── Poll Card ── */
+        /* ── Redesigned Tournament Poll Card ── */
         .poll-card {
-            background: linear-gradient(135deg, rgba(255,0,85,0.06) 0%, rgba(10,10,14,0.95) 100%);
-            border: 1px solid rgba(255,0,85,0.15);
-        }
-        .poll-team-btn {
-            width: 100%;
-            background: rgba(255,255,255,0.03);
-            border: 1.5px solid rgba(255,255,255,0.07);
-            border-radius: 12px;
-            padding: 11px 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Outfit', sans-serif;
-            text-align: left;
-            margin-bottom: 8px;
+            background: #0B0F14 !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
-        .poll-team-btn:hover:not(:disabled) {
-            background: rgba(255,255,255,0.07);
-            border-color: rgba(255,255,255,0.2);
-            transform: translateY(-1px);
-        }
-        .poll-team-btn.voted-this {
-            border-color: var(--f1-red);
-            background: rgba(255,0,85,0.1);
-        }
-        .poll-team-btn.voted-this .poll-bar-fill {
-            background: var(--f1-red);
-        }
-        .poll-team-btn.voted-other {
-            opacity: 0.6;
-        }
-        .poll-team-btn.voted-other .poll-bar-fill {
-            background: rgba(255,255,255,0.2);
-        }
-        .poll-team-btn:disabled { cursor: default; }
-        .poll-bar-track {
+        /* Stadium light glow and pitch circle background */
+        .poll-card::before {
+            content: '';
             position: absolute;
-            bottom: 0; left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(255,255,255,0.05);
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 255, 85, 0.08) 0%, rgba(0, 229, 255, 0.03) 50%, transparent 100%);
+            pointer-events: none;
+            z-index: 1;
         }
-        .poll-bar-fill {
-            height: 100%;
-            background: var(--f1-red);
-            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-            border-radius: 0 2px 0 0;
+        .poll-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 160px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
         }
-        .poll-flag {
-            width: 28px; height: 20px;
-            object-fit: cover;
-            border-radius: 3px;
-            border: 1px solid rgba(255,255,255,0.1);
-            flex-shrink: 0;
+        
+        .poll-header {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 20px;
+            text-align: center;
         }
-        .poll-team-name {
-            flex: 1;
-            font-size: 12px;
+        
+        .poll-title {
+            font-size: 15px;
             font-weight: 800;
             color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
-        .poll-pct {
-            font-size: 13px;
-            font-weight: 900;
-            color: #fff;
-            opacity: 0.7;
-            flex-shrink: 0;
-            min-width: 36px;
-            text-align: right;
-        }
-        .poll-votes-total {
-            text-align: center;
-            font-size: 10px;
-            color: #555;
-            font-weight: 700;
+        
+        .poll-subtitle {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+            text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 6px;
         }
-        .poll-divider {
-            text-align: center;
-            font-size: 9px;
-            font-weight: 800;
-            color: #444;
-            letter-spacing: 2px;
-            margin: 4px 0;
+        
+        /* Options Container */
+        .poll-options {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-
-        /* Collapsed post-vote summary strip */
-        .poll-collapsed {
+        
+        /* Option Card */
+        .poll-option-card {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            user-select: none;
+        }
+        .poll-option-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        .poll-option-card.selected {
+            background: rgba(0, 255, 85, 0.04);
+            border-color: #00ff55;
+            box-shadow: 0 0 15px rgba(0, 255, 85, 0.15), inset 0 0 0 1px rgba(0, 255, 85, 0.2);
+        }
+        .poll-option-card.selected.draw-selected {
+            background: rgba(0, 229, 255, 0.04);
+            border-color: #00e5ff;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.15), inset 0 0 0 1px rgba(0, 229, 255, 0.2);
+        }
+        
+        /* Custom Radio Circle */
+        .poll-radio-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            padding: 15px 10px;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
         }
-        .poll-col-team {
+        .poll-option-card:hover .poll-radio-indicator {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .poll-option-card.selected .poll-radio-indicator {
+            border-color: #00ff55;
+            background: rgba(0, 255, 85, 0.1);
+        }
+        .poll-option-card.selected.draw-selected .poll-radio-indicator {
+            border-color: #00e5ff;
+            background: rgba(0, 229, 255, 0.1);
+        }
+        .poll-radio-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: transparent;
+            transform: scale(0);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .poll-option-card.selected .poll-radio-dot {
+            background: #00ff55;
+            transform: scale(1);
+            box-shadow: 0 0 8px #00ff55;
+        }
+        .poll-option-card.selected.draw-selected .poll-radio-dot {
+            background: #00e5ff;
+            transform: scale(1);
+            box-shadow: 0 0 8px #00e5ff;
+        }
+        
+        .poll-flag-img {
+            width: 28px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .poll-opt-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Submit Button */
+        .poll-submit-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00ff55 0%, #00b33c 100%);
+            border: none;
+            color: #050a05;
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 4px 15px rgba(0, 255, 85, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .poll-submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 85, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #26ff70 0%, #00cc44 100%);
+        }
+        .poll-submit-btn:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(0, 255, 85, 0.2);
+        }
+        .poll-submit-btn:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.25);
+            box-shadow: none;
+            cursor: not-allowed;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Results View */
+        .poll-results-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .poll-result-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 14px 16px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .poll-result-card.is-winner {
+            border-color: rgba(0, 255, 85, 0.3);
+            background: rgba(0, 255, 85, 0.01);
+            box-shadow: 0 4px 20px rgba(0, 255, 85, 0.05);
+        }
+        .poll-result-card.is-winner.draw-winner {
+            border-color: rgba(0, 229, 255, 0.3);
+            background: rgba(0, 229, 255, 0.01);
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.05);
+        }
+        
+        .poll-result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .poll-result-team {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .poll-result-pct {
+            font-size: 16px;
+            font-weight: 900;
+            color: #fff;
+        }
+        .poll-result-card.is-winner .poll-result-pct {
+            color: #00ff55;
+            text-shadow: 0 0 10px rgba(0, 255, 85, 0.3);
+        }
+        .poll-result-card.is-winner.draw-winner .poll-result-pct {
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+        
+        /* Glass Progress Bar */
+        .poll-progress-track {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .poll-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        .poll-result-card.is-winner .poll-progress-fill {
+            background: linear-gradient(90deg, #00b33c 0%, #00ff55 100%);
+            box-shadow: 0 0 8px rgba(0, 255, 85, 0.4);
+        }
+        .poll-result-card.is-winner.draw-winner .poll-progress-fill {
+            background: linear-gradient(90deg, #0099b3 0%, #00e5ff 100%);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+        }
+        
+        /* Social Proof and Timer */
+        .poll-footer {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .poll-social-proof {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .poll-col-flag {
-            width: 36px;
+        
+        .poll-avatars {
+            display: flex;
+            align-items: center;
+        }
+        
+        .poll-avatar-img {
+            width: 24px;
             height: 24px;
+            border-radius: 50%;
+            border: 2px solid #0B0F14;
+            margin-left: -8px;
             object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.15);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-        .poll-col-pct {
-            font-size: 20px;
-            font-weight: 900;
-            color: #fff;
-            letter-spacing: -0.5px;
+        .poll-avatar-img:first-child {
+            margin-left: 0;
         }
-        .poll-col-pct.winner {
-            color: var(--f1-red);
-            text-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
-        }
-        .poll-col-vs {
+        
+        .poll-voters-count {
             font-size: 11px;
-            font-weight: 800;
-            color: #444;
-            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
         }
+        
+        .poll-timer-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #00ff55;
+            text-shadow: 0 0 8px rgba(0, 255, 85, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .poll-timer-wrapper.closed {
+            color: rgba(255, 255, 255, 0.35);
+            text-shadow: none;
+        }
+        
         .poll-voted-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 255, 85, 0.1);
+            color: #00ff55;
             font-size: 9px;
             font-weight: 800;
-            color: var(--f1-red);
-            letter-spacing: 1.5px;
-            text-align: center;
-            margin-top: 2px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 85, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* Mobile Performance Optimizations */
@@ -2345,7 +2572,7 @@
 
         /* Specific styles for sidebar fixtures card */
         .group-fixtures-card .fixtures-scroll-container {
-            max-height: 260px !important;
+            max-height: 340px !important;
             overflow-y: auto !important;
         }
 
@@ -2567,64 +2794,123 @@
             <div class="sidebar">
                 <!-- ⚽ Match Poll Card -->
                 <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
-                    <div class="card-title" style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
-                        <span><i class="fa-solid fa-chart-simple"></i> Who Will Win?</span>
-                        <span style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:var(--f1-red); opacity:0.8;">LIVE POLL</span>
+                    <div class="poll-header">
+                        <div class="poll-title"><i class="fa-solid fa-chart-simple"></i> Match Prediction</div>
+                        <div class="poll-subtitle">{{raceData.name}}</div>
                     </div>
 
-                    <!-- ── BEFORE VOTING: full buttons ── -->
+                    <!-- ── BEFORE VOTING: selection state ── -->
                     <div ng-if="poll.userVote === null">
-                        <div style="font-size:11px; font-weight:700; color:#555; letter-spacing:0.5px; text-align:center; margin-bottom:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{raceData.name}}</div>
+                        <div class="poll-options">
+                            <!-- Home Team Option -->
+                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'home'}" ng-click="selectVote('home')">
+                                <div class="poll-radio-indicator">
+                                    <div class="poll-radio-dot"></div>
+                                </div>
+                                <img class="poll-flag-img" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                                <span class="poll-opt-name">{{poll.homeTeam}}</span>
+                            </div>
 
-                        <button class="poll-team-btn" ng-click="castVote('home')">
-                            <img class="poll-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
-                            <span class="poll-team-name">{{poll.homeTeam}}</span>
-                            <span class="poll-pct">Vote</span>
+                            <!-- Draw Option -->
+                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'draw', 'draw-selected': selectedVote === 'draw'}" ng-click="selectVote('draw')">
+                                <div class="poll-radio-indicator">
+                                    <div class="poll-radio-dot"></div>
+                                </div>
+                                <i class="fa-solid fa-handshake" style="color: rgba(255,255,255,0.4); font-size: 16px; flex-shrink: 0;"></i>
+                                <span class="poll-opt-name">Draw</span>
+                            </div>
+
+                            <!-- Away Team Option -->
+                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'away'}" ng-click="selectVote('away')">
+                                <div class="poll-radio-indicator">
+                                    <div class="poll-radio-dot"></div>
+                                </div>
+                                <img class="poll-flag-img" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
+                                <span class="poll-opt-name">{{poll.awayTeam}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Dedicated Submit Button -->
+                        <button class="poll-submit-btn" ng-disabled="selectedVote === null" ng-click="submitVote()">
+                            <i class="fa-solid fa-paper-plane"></i> Vote Now
                         </button>
+                    </div>
 
-                        <div class="poll-divider">VS</div>
+                    <!-- ── AFTER VOTING: results ── -->
+                    <div ng-if="poll.userVote !== null" class="poll-results-container">
+                        <!-- Home Team Result -->
+                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('home')}">
+                            <div class="poll-result-header">
+                                <div class="poll-result-team">
+                                    <img class="poll-flag-img" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                                    <span class="poll-opt-name">{{poll.homeTeam}}</span>
+                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'home'">Your Vote</span>
+                                </div>
+                                <span class="poll-result-pct">{{poll.homePct}}%</span>
+                            </div>
+                            <div class="poll-progress-track">
+                                <div class="poll-progress-fill" style="width: {{poll.homePct}}%"></div>
+                            </div>
+                        </div>
 
-                        <button class="poll-team-btn" ng-click="castVote('away')">
-                            <img class="poll-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
-                            <span class="poll-team-name">{{poll.awayTeam}}</span>
-                            <span class="poll-pct">Vote</span>
-                        </button>
+                        <!-- Draw Result -->
+                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('draw'), 'draw-winner': isWinningOption('draw')}">
+                            <div class="poll-result-header">
+                                <div class="poll-result-team">
+                                    <i class="fa-solid fa-handshake" style="color: rgba(255,255,255,0.4); font-size: 16px;"></i>
+                                    <span class="poll-opt-name">Draw</span>
+                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'draw'">Your Vote</span>
+                                </div>
+                                <span class="poll-result-pct">{{poll.drawPct}}%</span>
+                            </div>
+                            <div class="poll-progress-track">
+                                <div class="poll-progress-fill" style="width: {{poll.drawPct}}%"></div>
+                            </div>
+                        </div>
 
-                        <button class="poll-team-btn" style="margin-bottom:0;" ng-click="castVote('draw')">
-                            <i class="fa-solid fa-handshake" style="color:#888; font-size:16px; flex-shrink:0;"></i>
-                            <span class="poll-team-name" style="color:#aaa;">Draw</span>
-                            <span class="poll-pct" style="color:#555;">Vote</span>
-                        </button>
-
-                        <div class="poll-votes-total">
-                            <span ng-if="poll.totalVotes > 0" style="color:#555;">{{poll.totalVotes}} votes cast</span>
-                            <span ng-if="poll.totalVotes === 0" style="color:#333;">Be the first to vote!</span>
+                        <!-- Away Team Result -->
+                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('away')}">
+                            <div class="poll-result-header">
+                                <div class="poll-result-team">
+                                    <img class="poll-flag-img" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
+                                    <span class="poll-opt-name">{{poll.awayTeam}}</span>
+                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'away'">Your Vote</span>
+                                </div>
+                                <span class="poll-result-pct">{{poll.awayPct}}%</span>
+                            </div>
+                            <div class="poll-progress-track">
+                                <div class="poll-progress-fill" style="width: {{poll.awayPct}}%"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- ── AFTER VOTING: compact collapsed strip ── -->
-                    <div ng-if="poll.userVote !== null" class="poll-collapsed">
-                        <!-- Home team -->
-                        <div class="poll-col-team">
-                            <img class="poll-col-flag" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
-                            <span class="poll-col-pct" ng-class="{'winner': poll.homePct > poll.awayPct && poll.homePct > poll.drawPct}">{{poll.homePct}}%</span>
+                    <!-- ── FOOTER: social proof + countdown ── -->
+                    <div class="poll-footer">
+                        <div class="poll-social-proof">
+                            <div class="poll-avatars">
+                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=33" alt="">
+                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=12" alt="">
+                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=56" alt="">
+                            </div>
+                            <span class="poll-voters-count" ng-if="poll.loaded && poll.totalVotes > 0">
+                                {{poll.totalVotes === 1 ? '1 vote cast' : (poll.totalVotes | number) + ' votes cast'}}
+                            </span>
+                            <span class="poll-voters-count" ng-if="poll.loaded && poll.totalVotes === 0">
+                                Be the first to vote!
+                            </span>
+                            <span class="poll-voters-count" ng-if="!poll.loaded">
+                                Loading counts...
+                            </span>
                         </div>
-                        <!-- Separator / Draw -->
-                        <div class="poll-col-vs" style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                            <span>VS</span>
-                            <span style="font-size:8px; font-weight:700; color:#555;" ng-if="poll.drawPct > 0">Draw: {{poll.drawPct}}%</span>
+                        
+                        <!-- Timer/Status -->
+                        <div class="poll-timer-wrapper" ng-class="{'closed': raceData.isFinished || (!matchCountdownStr && !raceData.isLive)}">
+                            <i class="fa-regular fa-clock"></i>
+                            <span ng-if="matchCountdownStr">{{matchCountdownStr}}</span>
+                            <span ng-if="!matchCountdownStr && raceData.isLive">LIVE</span>
+                            <span ng-if="!matchCountdownStr && !raceData.isLive && raceData.isFinished">CLOSED</span>
+                            <span ng-if="!matchCountdownStr && !raceData.isLive && !raceData.isFinished">OPEN</span>
                         </div>
-                        <!-- Away team -->
-                        <div class="poll-col-team">
-                            <span class="poll-col-pct" ng-class="{'winner': poll.awayPct > poll.homePct && poll.awayPct > poll.drawPct}">{{poll.awayPct}}%</span>
-                            <img class="poll-col-flag" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
-                        </div>
-                    </div>
-                    <div class="poll-voted-badge" ng-if="poll.userVote !== null">
-                        ✓ VOTED &nbsp;·&nbsp;
-                        <span ng-if="!poll.loaded">counting...</span>
-                        <span ng-if="poll.loaded && poll.totalVotes > 0">{{poll.totalVotes}} {{poll.totalVotes === 1 ? 'vote' : 'votes'}}</span>
-                        <span ng-if="poll.loaded && poll.totalVotes === 0">1 vote</span>
                     </div>
                 </div>
 
@@ -2689,6 +2975,29 @@
                         <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
                             No fixtures available.
                         </div>
+
+                        <!-- Past matches list: shown/hidden with ng-show inside scroll container -->
+                        <div class="past-matches-list" ng-show="ui.showPastMatches" style="margin-top: 10px;">
+                            <div class="schedule-row ended" ng-repeat="match in pastGroupFixtures()" style="opacity:0.6; margin-bottom:6px;">
+                                <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                                    <!-- Home -->
+                                    <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
+                                        <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
+                                        <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                    </div>
+                                    <!-- Score -->
+                                    <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
+                                        {{match.homeScore}} – {{match.awayScore}}
+                                    </div>
+                                    <!-- Away -->
+                                    <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
+                                        <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
+                                        <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
+                                    </div>
+                                </div>
+                                <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
@@ -2696,29 +3005,6 @@
                         <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                         {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastGroupFixtures().length + ')' }}
                     </button>
-
-                    <!-- Past matches list: shown/hidden with ng-show -->
-                    <div class="past-matches-list" ng-show="ui.showPastMatches">
-                        <div class="schedule-row ended" ng-repeat="match in pastGroupFixtures()" style="opacity:0.6; margin-bottom:6px;">
-                            <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                                <!-- Home -->
-                                <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
-                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
-                                    <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
-                                </div>
-                                <!-- Score -->
-                                <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
-                                    {{match.homeScore}} – {{match.awayScore}}
-                                </div>
-                                <!-- Away -->
-                                <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
-                                    <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
-                                    <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
-                                </div>
-                            </div>
-                            <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
-                        </div>
-                    </div>
 
                 </div>
 
@@ -3770,6 +4056,44 @@
                     });
             }
 
+            $scope.selectedVote = null;
+
+            $scope.selectVote = function(choice) {
+                if ($scope.poll.userVote !== null) return;
+                $scope.selectedVote = choice;
+            };
+
+            $scope.submitVote = function() {
+                if (!$scope.selectedVote || $scope.poll.userVote !== null) return;
+                
+                // Trigger canvas-confetti animation
+                try {
+                    confetti({
+                        particleCount: 120,
+                        spread: 70,
+                        origin: { y: 0.8 },
+                        colors: ['#00ff55', '#00e5ff', '#ffffff']
+                    });
+                } catch (e) {
+                    console.warn('[poll] Confetti error:', e);
+                }
+
+                $scope.castVote($scope.selectedVote);
+            };
+
+            $scope.isWinningOption = function(option) {
+                if (!$scope.poll.loaded) return false;
+                var h = $scope.poll.homePct || 0;
+                var a = $scope.poll.awayPct || 0;
+                var d = $scope.poll.drawPct || 0;
+                var max = Math.max(h, a, d);
+                if (max === 0) return false;
+                if (option === 'home') return h === max && h > 0;
+                if (option === 'away') return a === max && a > 0;
+                if (option === 'draw') return d === max && d > 0;
+                return false;
+            };
+
             $scope.initPoll = function(matchId, homeTeam, awayTeam, homeFlag, awayFlag) {
                 if (!matchId || $scope.poll.matchId === matchId) return;
 
@@ -3782,6 +4106,7 @@
                 $scope.poll.homeFlag  = homeFlag;
                 $scope.poll.awayFlag  = awayFlag;
                 $scope.poll.loaded    = false;
+                $scope.selectedVote   = null;
 
                 // Restore user's previous vote for this match from localStorage
                 var voteKey = 'poll_vote_' + matchId;
