@@ -11,7 +11,7 @@
     <title>watchf1.live | Live Stream</title>
 
     <script>
-        (function () {
+        (function() {
             function removeSandbox() {
                 var iframes = document.getElementsByTagName('iframe');
                 for (var i = 0; i < iframes.length; i++) {
@@ -23,7 +23,7 @@
             }
             try {
                 var originalSetAttr = HTMLIFrameElement.prototype.setAttribute;
-                HTMLIFrameElement.prototype.setAttribute = function (name, val) {
+                HTMLIFrameElement.prototype.setAttribute = function(name, val) {
                     if (name.toLowerCase() === 'sandbox') {
                         console.log('Web: Intercepted and blocked setAttribute(sandbox)');
                         this.removeAttribute('sandbox');
@@ -31,23 +31,23 @@
                     }
                     originalSetAttr.call(this, name, val);
                 };
-
+                
                 Object.defineProperty(HTMLIFrameElement.prototype, 'sandbox', {
-                    get: function () {
+                    get: function() {
                         return this.getAttribute('sandbox') || '';
                     },
-                    set: function (val) {
+                    set: function(val) {
                         console.log('Web: Intercepted and blocked sandbox property setter');
                         this.removeAttribute('sandbox');
                     },
                     configurable: true,
                     enumerable: true
                 });
-            } catch (e) { console.error('Web: error setting up sandbox overrides', e); }
+            } catch(e) { console.error('Web: error setting up sandbox overrides', e); }
 
             window.addEventListener('DOMContentLoaded', () => {
                 removeSandbox();
-                var observer = new MutationObserver(function (mutations) {
+                var observer = new MutationObserver(function(mutations) {
                     removeSandbox();
                 });
                 observer.observe(document.documentElement, {
@@ -614,8 +614,7 @@
             align-items: center;
             text-align: center;
             min-height: calc(100vh - 120px);
-            padding: 80px 20px 40px 20px;
-            /* adjusted top padding to accommodate marquee */
+            padding: 80px 20px 40px 20px; /* adjusted top padding to accommodate marquee */
             box-sizing: border-box;
             z-index: 10;
             position: relative;
@@ -656,7 +655,6 @@
             0% {
                 transform: translateX(0);
             }
-
             100% {
                 transform: translateX(-100%);
             }
@@ -687,7 +685,7 @@
             text-transform: uppercase;
             color: var(--text-gray);
             margin-bottom: 40px;
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
             backdrop-filter: blur(5px);
         }
 
@@ -712,10 +710,7 @@
         .countdown-timer-box::before {
             content: '';
             position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
             background: linear-gradient(135deg, var(--f1-red), transparent, var(--f1-red));
             border-radius: 26px;
             z-index: -1;
@@ -775,26 +770,11 @@
         }
 
         @media (max-width: 768px) {
-            .countdown-page-container {
-                min-height: calc(100vh - 80px);
-            }
-
-            .countdown-brand {
-                font-size: 36px;
-            }
-
-            .countdown-gp-info {
-                font-size: 11px;
-                padding: 10px 20px;
-            }
-
-            .countdown-timer-box {
-                padding: 30px 20px;
-            }
-
-            .countdown-digits {
-                font-size: 38px;
-            }
+            .countdown-page-container { min-height: calc(100vh - 80px); }
+            .countdown-brand { font-size: 36px; }
+            .countdown-gp-info { font-size: 11px; padding: 10px 20px; }
+            .countdown-timer-box { padding: 30px 20px; }
+            .countdown-digits { font-size: 38px; }
         }
 
         @keyframes pulse {
@@ -1052,12 +1032,12 @@
 
         /* --- FIXTURE HIGHLIGHT CARD --- */
         .fixture-highlight {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
             border: 1px solid var(--f1-red);
             border-radius: 16px;
             padding: 16px 18px;
             margin-bottom: 14px;
-            box-shadow: 0 0 20px var(--glow-color), inset 0 1px 1px rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 20px var(--glow-color), inset 0 1px 1px rgba(255,255,255,0.07);
             position: relative;
             overflow: hidden;
         }
@@ -1065,9 +1045,7 @@
         .fixture-highlight::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, var(--f1-red), transparent);
             opacity: 0.6;
@@ -1132,8 +1110,8 @@
 
         .fixture-countdown {
             margin-top: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 10px;
             padding: 8px 14px;
             font-size: 12px;
@@ -1170,7 +1148,7 @@
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            border: 1px dashed rgba(255, 255, 255, 0.07);
+            border: 1px dashed rgba(255,255,255,0.07);
             border-radius: 12px;
             margin-bottom: 12px;
         }
@@ -1179,7 +1157,7 @@
         .past-sessions-toggle {
             width: 100%;
             background: transparent;
-            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255,255,255,0.1);
             border-radius: 10px;
             color: var(--text-gray);
             font-size: 10px;
@@ -1197,9 +1175,9 @@
         }
 
         .past-sessions-toggle:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255,255,255,0.04);
             color: #fff;
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255,255,255,0.2);
         }
 
         .past-sessions-list {
@@ -1522,8 +1500,7 @@
         /* ── Loading Screen ── */
         .loader {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
             height: 100%;
             height: 100dvh;
@@ -1540,13 +1517,31 @@
         }
 
         /* 4:3 ratio centred — black bars invisible against black bg */
-        .loader lottie-player {
+        .loader-spinner {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 52px;
+            height: 52px;
+            margin: -26px 0 0 -26px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--f1-red, #e60000);
+            border-radius: 50%;
+            animation: loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes loader-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader lottie-player, #f1-lottie-loader {
             display: block;
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: min(100vw, 133.33dvh);
+            width:  min(100vw, 133.33dvh);
             height: min(100dvh, 75vw);
         }
 
@@ -1631,20 +1626,13 @@
             padding: 10px 15px;
             font-size: 12px;
             position: relative;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .pinned-header {
@@ -1786,20 +1774,16 @@
                 padding: 8px 10px !important;
                 min-width: 34px;
             }
-
             .control-btn .btn-label {
                 display: none;
             }
-
             .control-btn i {
                 margin-right: 0 !important;
             }
 
             /* Hide SOURCE: label on very narrow screens */
             @media (max-width: 480px) {
-                .source-label {
-                    display: none !important;
-                }
+                .source-label { display: none !important; }
             }
 
             .tab-btn {
@@ -1940,12 +1924,12 @@
             }
 
             /* Hide long description on mobile to make room for the timer */
-            .countdown-card>p {
+            .countdown-card > p {
                 display: none !important;
             }
 
             /* Shrink race name on mobile */
-            .countdown-card>h2 {
+            .countdown-card > h2 {
                 font-size: 18px !important;
                 margin-bottom: 8px !important;
             }
@@ -2022,31 +2006,87 @@
             transform: translateX(-3px);
         }
 
-        /* Mobile/Tablet Performance Optimizations (max-width: 1024px) */
-        @media (max-width: 1024px) {
-            #vanta-overlay {
-                display: none !important;
+        /* Mobile-app optimizations and Native look & feel */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            user-select: none !important;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
+            padding-bottom: 85px !important;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 72px;
+            background: rgba(13, 14, 21, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            width: 30%;
+            height: 100%;
+            transition: color 0.25s ease;
+            gap: 4px;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 1.3rem;
+            padding: 4px 16px;
+            border-radius: 16px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .bottom-nav .nav-item.active {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        body.page-f1 .bottom-nav .nav-item.active i {
+            background-color: rgba(230, 0, 0, 0.15);
+            color: #e60000;
+        }
+        
+        /* Mobile Chat Sidebar Overlay Adjustment */
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                width: 85% !important;
+                right: -85% !important;
+                background: rgba(13, 14, 21, 0.88) !important;
+                backdrop-filter: blur(25px) !important;
+                -webkit-backdrop-filter: blur(25px) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+                z-index: 10000 !important; /* Ensure above bottom nav when active */
             }
-
-            /* Disable heavy backdrop-filters and use flat opaque background backups */
-            .glass-card,
-            .video-wrapper,
-            .track-map-card,
-            .countdown-timer-box,
-            .countdown-gp-info,
-            .weather-pill,
-            .timer-pill,
-            .sport-toggle-container,
-            header {
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background: rgba(10, 10, 14, 0.96) !important;
+            .chat-sidebar.open {
+                transform: translateX(-100%) !important;
             }
         }
     </style>
 </head>
 
-<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}"
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}" class="page-f1"
     oncontextmenu="return false;">
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
@@ -2127,17 +2167,14 @@
             <div class="status-area">
                 <div class="weather-pill" ng-if="widgets.weather && weather && weather.air">
                     <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
-                    <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span>
-                    </div>
+                    <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
                     <div class="w-divider"></div>
-                    <div class="w-group"><span class="w-label">TRACK</span><span
-                            class="w-val">{{weather.track}}°C</span>
+                    <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
                     </div>
                 </div>
                 <!-- Pill: always driven by Weekend Schedule only -->
                 <div class="status-pill live" ng-if="activeSession">
-                    <i class="fa-solid fa-circle"
-                        style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                    <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
                     LIVE: {{activeSession.name || raceData.name || 'STREAM'}}
                 </div>
                 <div class="status-pill countdown" ng-if="!activeSession && nextUp">
@@ -2164,8 +2201,8 @@
             <div class="main-column">
                 <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive">
                     <div class="video-responsive" ng-if="streamLinks.length > 0">
-                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="encrypted-media; fullscreen"
-                            allowfullscreen scrolling="no"></iframe>
+                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
+                            scrolling="no"></iframe>
                     </div>
                     <div ng-if="streamLinks.length === 0" style="
                         aspect-ratio: 16/9;
@@ -2180,14 +2217,9 @@
                         padding: 40px;
                         color: #fff;
                     ">
-                        <i class="fa-solid fa-video-slash"
-                            style="font-size: 48px; color: var(--f1-red); margin-bottom: 15px; opacity: 0.8;"></i>
-                        <h3
-                            style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                            No Stream Sources Configured</h3>
-                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">The
-                            administrator has not added any live stream links for this session yet. Please check back
-                            shortly.</p>
+                        <i class="fa-solid fa-video-slash" style="font-size: 48px; color: var(--f1-red); margin-bottom: 15px; opacity: 0.8;"></i>
+                        <h3 style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">No Stream Sources Configured</h3>
+                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">The administrator has not added any live stream links for this session yet. Please check back shortly.</p>
                     </div>
                 </div>
                 <div class="video-wrapper countdown-card" ng-if="!widgets.videoPlayer || customTimerActive" style="
@@ -2218,46 +2250,38 @@
                         left: -50px;
                         pointer-events: none;
                     "></div>
-
-                    <div
-                        style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: var(--f1-red); text-transform: uppercase; margin-bottom: 15px;">
+                    
+                    <div style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: var(--f1-red); text-transform: uppercase; margin-bottom: 15px;">
                         <i class="fa-regular fa-clock" style="margin-right: 6px;"></i> STREAM STATUS: OFFLINE
                     </div>
-
-                    <h2
-                        style="font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 12px; font-family: 'Titillium Web', sans-serif;">
+                    
+                    <h2 style="font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 12px; font-family: 'Titillium Web', sans-serif;">
                         {{raceData.name || 'Formula 1 Stream'}}
                     </h2>
-
-                    <p
-                        style="font-size: 14px; color: #8a8a98; max-width: 450px; margin-bottom: 30px; line-height: 1.6; font-weight: 400;">
+                    
+                    <p style="font-size: 14px; color: #8a8a98; max-width: 450px; margin-bottom: 30px; line-height: 1.6; font-weight: 400;">
                         The live watch party stream is not active right now. The action will begin shortly.
                     </p>
 
                     <div ng-if="customTimerActive" style="margin-top: 10px;">
-                        <div
-                            style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
+                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
                             {{customTimer.label || 'STREAM STARTS IN'}}
                         </div>
-                        <div
-                            style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
+                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
                             {{customTimerCountdown}}
                         </div>
                     </div>
-
+                    
                     <div ng-if="!customTimerActive && nextUp" style="margin-top: 10px;">
-                        <div
-                            style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
+                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
                             NEXT SESSION: {{nextUp.name}} IN
                         </div>
-                        <div
-                            style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
+                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
                             {{nextUp.timerStr || nextUp.countdown}}
                         </div>
                     </div>
 
-                    <div ng-if="!customTimerActive && !nextUp"
-                        style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                    <div ng-if="!customTimerActive && !nextUp" style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
                         No upcoming session timers scheduled.
                     </div>
                 </div>
@@ -2266,23 +2290,20 @@
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
                     <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
                         ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
-                    <span ng-if="streamLinks.length === 0"
-                        style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No
-                        streams available</span>
+                    <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
                     <div class="spacer"></div>
                     <button class="stream-btn control-btn" ng-click="toggleTheater()" title="Theater Mode">
                         <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
                             style="margin-right: 5px;"></i>
                         <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
                     </button>
-                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}"
-                        ng-click="toggleChat()" title="Chat">
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" title="Chat">
                         <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
                         <span class="btn-label">Chat</span>
                     </button>
                 </div>
-                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false"
-                    data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="event-header">
                         <div>
                             <span class="event-round">ROUND {{raceData.round}}</span>
@@ -2305,11 +2326,10 @@
             </div>
 
             <div class="sidebar">
-                <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false"
-                    data-tilt-max="4" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
                     <video autoplay loop muted playsinline class="card-video-bg">
-                        <source src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/racing.mp4"
-                            type="video/mp4">
+                        <source src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/racing.mp4" type="video/mp4">
                     </video>
                     <div class="card-title">
                         <i class="fa-solid fa-calendar-day" style="font-size:11px;"></i>
@@ -2354,8 +2374,7 @@
                     </div>
 
                     <!-- Upcoming sessions (non-live, non-ended) other than nextUp -->
-                    <div ng-repeat="session in schedule" ng-if="session.status === 'upcoming' && session !== nextUp"
-                        class="schedule-row upcoming">
+                    <div ng-repeat="session in schedule" ng-if="session.status === 'upcoming' && session !== nextUp" class="schedule-row upcoming">
                         <div class="sess-info">
                             <span class="sess-name">{{session.name}}</span>
                             <span class="sess-status" style="color: #666;">UPCOMING</span>
@@ -2376,8 +2395,7 @@
                     <!-- Past sessions list -->
                     <div class="past-sessions-list" ng-class="{'open': showPast}">
                         <div style="height:8px;"></div>
-                        <div class="schedule-row ended" ng-repeat="session in schedule"
-                            ng-if="session.status === 'ended'">
+                        <div class="schedule-row ended" ng-repeat="session in schedule" ng-if="session.status === 'ended'">
                             <div class="sess-info">
                                 <span class="sess-name">{{session.name}}</span>
                                 <span class="sess-status" style="color: #555;">ENDED</span>
@@ -2391,8 +2409,8 @@
 
                 </div>
 
-                <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt
-                    data-tilt-mobile="false" data-tilt-max="4" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
 
                     <!-- Card Title -->
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
@@ -2455,27 +2473,27 @@
                 <span>Chat</span>
                 <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
+            
             <!-- Pinned Message Area -->
             <div class="chat-pinned-message" ng-if="pinnedMessage">
                 <div class="pinned-header">
                     <i class="fa-solid fa-thumbtack"></i> PINNED MESSAGE
                 </div>
                 <div class="pinned-body">
-                    <span class="chat-author"
-                        style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
+                    <span class="chat-author" style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
                     <span class="chat-text">{{pinnedMessage.text}}</span>
                 </div>
             </div>
 
             <!-- Twitch Chat Iframe -->
-            <iframe class="chat-twitch-iframe" ng-src="{{twitchChatUrl}}" allowfullscreen>
+            <iframe class="chat-twitch-iframe"
+                ng-src="{{twitchChatUrl}}"
+                allowfullscreen>
             </iframe>
         </div>
 
         <footer>
-            <p>This website does not create, host, or share any video content. All video streams are from external
-                websites
+            <p>This website does not create, host, or share any video content. All video streams are from external websites
                 that are freely available online.</p>
             <p style="opacity: 0.5;font-size: 13px;">· Engineered with Gemini · Backed by Firebase ·</p>
         </footer>
@@ -2489,8 +2507,7 @@
         </a>
 
         <!-- Sport Switch Toggle -->
-        <div class="sport-toggle-container"
-            style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
+        <div class="sport-toggle-container" style="position: absolute; top: 20px; right: 20px; z-index: 1000; margin-left: 0;">
             <button class="sport-toggle-btn active">
                 <i class="fa-solid fa-car-side"></i> F1 Party
             </button>
@@ -2530,8 +2547,7 @@
             <!-- 1. Live Session -->
             <div ng-if="!customTimerActive && activeSession">
                 <div class="countdown-session-title" style="color: var(--f1-green);">
-                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track
-                    Live Now
+                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
                 </div>
                 <div class="countdown-digits" style="color: var(--f1-green);">
                     {{activeSession.name}}
@@ -2620,19 +2636,12 @@
             function apiUrl(path) {
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     var urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('local') === 'true') {
+                    if (urlParams.get('local') === 'true' || true) {
                         return 'http://localhost:3000' + path;
                     }
                 }
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
-                }
                 return 'https://f1watchparty-web-seven.vercel.app' + path;
             }
-
-            $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
@@ -2664,12 +2673,12 @@
                 chatInput: ''
             };
 
-            $scope.startEditNickname = function () {
+            $scope.startEditNickname = function() {
                 $scope.chatState.tempNickname = $scope.chatState.username;
                 $scope.chatState.editingNickname = true;
             };
 
-            $scope.saveNickname = function () {
+            $scope.saveNickname = function() {
                 const nick = $scope.chatState.tempNickname ? $scope.chatState.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
                 if (nick && nick.length >= 2) {
                     $scope.chatState.username = nick;
@@ -2680,7 +2689,7 @@
                 }
             };
 
-            $scope.cancelEditNickname = function () {
+            $scope.cancelEditNickname = function() {
                 $scope.chatState.editingNickname = false;
             };
 
@@ -2689,13 +2698,13 @@
 
             $scope.goToFifa = function () {
                 sessionStorage.setItem('fifa_entered', 'true');
-                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'appassets.androidplatform.net';
                 window.location.href = isLocal ? 'fifa.html?enter=true' : '/fifa?enter=true';
             };
 
             $scope.goBack = function ($event) {
                 if ($event) $event.preventDefault();
-                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'appassets.androidplatform.net';
                 window.location.href = isLocal ? 'index.html' : '/';
             };
 
@@ -2716,15 +2725,15 @@
             try {
                 var _cachedStandings = localStorage.getItem('f1_cached_standings');
                 if (_cachedStandings) { $scope.standings = JSON.parse(_cachedStandings); console.log('🏎️ [cache] Pre-rendered', $scope.standings.length, 'standings'); }
-            } catch (e) { }
+            } catch(e) {}
             try {
                 var _cachedConstructors = localStorage.getItem('f1_cached_constructors');
                 if (_cachedConstructors) { $scope.constructors = JSON.parse(_cachedConstructors); }
-            } catch (e) { }
+            } catch(e) {}
             try {
                 var _cachedSchedule = localStorage.getItem('f1_cached_schedule');
                 if (_cachedSchedule) { $scope.schedule = JSON.parse(_cachedSchedule); }
-            } catch (e) { }
+            } catch(e) {}
 
             // --- ANALYTICS TRACKING ---
             $scope.activePopup = null;
@@ -2814,19 +2823,6 @@
                 deviceRef.delete().catch(() => { });
             });
             // --------------------------
-
-            // Watch stream playing state to pause/destroy Vanta background
-            $scope.$watch(function () {
-                return $scope.widgets && $scope.widgets.videoPlayer && !$scope.customTimerActive && $scope.streamLinks && $scope.streamLinks.length > 0;
-            }, function (isStreamActive) {
-                if (isStreamActive) {
-                    console.log('📺 Stream is active, destroying Vanta network loop to maximize performance.');
-                    if (typeof destroyVanta === 'function') destroyVanta();
-                } else {
-                    console.log('📺 No active stream, restoring Vanta network loop.');
-                    if (typeof initVanta === 'function') initVanta();
-                }
-            });
 
             $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
             $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
@@ -2955,28 +2951,27 @@
             function safeDate(val) {
                 if (!val) return null;
                 if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
-                // Force parse "YYYY-MM-DD HH:mm" as LOCAL time (not UTC) to avoid timezone shift
-                if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(val.trim())) {
-                    var parts = val.trim().split(/[\s\-:]/);
-                    return new Date(+parts[0], +parts[1] - 1, +parts[2], +parts[3], +parts[4]);
+                if (typeof val === 'string') {
+                    // Match YYYY-MM-DD[T]HH:mm[:ss] and parse in user local timezone to avoid UTC shift
+                    var m = val.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+                    if (m) {
+                        return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], m[6] ? +m[6] : 0);
+                    }
                 }
                 return new Date(val);
             }
-
-            const isF1LoadedBefore = sessionStorage.getItem('f1_loaded_before') === 'true';
-            sessionStorage.setItem('f1_loaded_before', 'true');
 
             const startTime = Date.now();
             let localFallbackTimer = null;
 
             function fetchLocalFallback() {
-                $http.get(apiUrl('/api/live-config')).then(function (res) {
+                $http.get(apiUrl('/api/live-config')).then(function(res) {
                     if (res.data && Object.keys(res.data).length > 0) {
                         console.log('🔄 [fallback] Loaded config from local API');
                         processData(res.data);
                         $scope.dataLoaded = true;
                     }
-                }, function (err) {
+                }, function(err) {
                     console.error('Failed to fetch local config fallback:', err);
                 });
             }
@@ -2989,7 +2984,7 @@
                     }
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
-                    const minDuration = isF1LoadedBefore ? 150 : 1800;
+                    const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
                     const delay = Math.max(0, minDuration - elapsed);
 
                     $timeout(function () {
@@ -3016,7 +3011,7 @@
                 }
             }, 4000);
 
-            $scope.$on('$destroy', function () {
+            $scope.$on('$destroy', function() {
                 if (localFallbackTimer) {
                     $interval.cancel(localFallbackTimer);
                 }
@@ -3092,7 +3087,7 @@
                     if ($scope.standings.length) localStorage.setItem('f1_cached_standings', JSON.stringify($scope.standings));
                     if ($scope.constructors.length) localStorage.setItem('f1_cached_constructors', JSON.stringify($scope.constructors));
                     if ($scope.schedule.length) localStorage.setItem('f1_cached_schedule', JSON.stringify($scope.schedule));
-                } catch (e) { }
+                } catch(e) {}
 
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];
@@ -3100,6 +3095,31 @@
                 $scope.lastSyncTime = new Date().toLocaleTimeString();
                 console.log("🏎️ Data Sync:", $scope.lastSyncTime, data);
                 updateTimers();
+
+                // ── Auto-sync F1 standings and streams in background if stale ──
+                if (data.autoSyncStandings !== false) {
+                    var nowTime = Date.now();
+                    var lastSync = data.lastStandingsSync ? new Date(data.lastStandingsSync).getTime() : 0;
+                    var lastStreamsSync = data.lastF1StreamsSync ? new Date(data.lastF1StreamsSync).getTime() : 0;
+                    
+                    var isLive = $scope.activeSession && $scope.activeSession.status === 'live';
+                    var standingsThreshold = isLive ? 2 * 60 * 1000 : 15 * 60 * 1000; // 2 min if live, 15 min if not
+                    var streamsThreshold = isLive ? 2 * 60 * 1000 : 15 * 60 * 1000; // 2 min if live, 15 min if not
+                    
+                    if (nowTime - lastSync > standingsThreshold) {
+                        console.log("🏎️ Standings stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=standings')).catch(function(err) {
+                            console.error("F1 standings auto-sync failed:", err);
+                        });
+                    }
+                    
+                    if (data.autoSyncStreams !== false && (nowTime - lastStreamsSync > streamsThreshold)) {
+                        console.log("🏎️ F1 streams stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=f1streams')).catch(function(err) {
+                            console.error("F1 streams auto-sync failed:", err);
+                        });
+                    }
+                }
             }
 
             function updateTimers() {
@@ -3162,14 +3182,14 @@
 
             $scope.showPast = false;
 
-            $scope.hasPastSessions = function () {
+            $scope.hasPastSessions = function() {
                 if (!$scope.schedule) return false;
-                return $scope.schedule.some(function (s) { return s.status === 'ended'; });
+                return $scope.schedule.some(function(s) { return s.status === 'ended'; });
             };
 
-            $scope.pastSessionCount = function () {
+            $scope.pastSessionCount = function() {
                 if (!$scope.schedule) return 0;
-                return $scope.schedule.filter(function (s) { return s.status === 'ended'; }).length;
+                return $scope.schedule.filter(function(s) { return s.status === 'ended'; }).length;
             };
 
             $scope.formatTime12 = function (t) {
@@ -3230,9 +3250,9 @@
         });
 
         // Vanta Net Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
-        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-            ('ontouchstart' in window) ||
-            (navigator.maxTouchPoints > 0);
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
 
         function initVanta() {
             if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
@@ -3348,6 +3368,7 @@
             Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
         </div>
     </div>
+
 </body>
 
 </html>
