@@ -259,8 +259,13 @@ async function fetchJson(url, timeoutMs = 8000) {
   }
 }
 
-// Load static 2026 schedule
-const schedule2026 = require('./schedule_2026.json');
+// Load static 2026 schedule (optional — file may be gitignored locally)
+let schedule2026 = [];
+try {
+  schedule2026 = require('./schedule_2026.json');
+} catch (e) {
+  console.warn('schedule_2026.json not found — using empty schedule.');
+}
 
 const state = {
   activeSession: null,
@@ -1035,13 +1040,22 @@ function formatFifaFixtureIst(kickoffMs) {
 
 function getServerFifaGameStatus(game) {
     const raw = String(game && game.time_elapsed || '').trim().toLowerCase();
-    const isFinished = String(game && game.finished || '').toUpperCase() === 'TRUE' ||
+    let isFinished = String(game && game.finished || '').toUpperCase() === 'TRUE' ||
         raw === 'finished' ||
         raw === 'ft';
-    const isNotStarted = raw === 'notstarted' ||
+
+    const kickoffMs = getFifaFixtureKickoffMs(game);
+    const now = Date.now();
+    if (kickoffMs && kickoffMs !== Number.MAX_SAFE_INTEGER && (now - kickoffMs) > 2.5 * 60 * 60 * 1000) {
+        isFinished = true;
+    }
+
+    const isNotStarted = !isFinished && (
+        raw === 'notstarted' ||
         raw === 'not started' ||
         raw === 'ns' ||
-        raw === '';
+        raw === ''
+    );
     const isLive = !isFinished && !isNotStarted && (
         raw === 'live' ||
         raw === 'ht' ||
@@ -1152,7 +1166,7 @@ if (!process.env.VERCEL) {
 // --- API: Fetch FIFA Fixtures ---
 app.get('/api/fifa/fixtures', async (req, res) => {
     try {
-        if (cacheFixtures && (Date.now() - cacheFixturesTime < 900000)) {
+        if (cacheFixtures && (Date.now() - cacheFixturesTime < 30000)) {
             return res.json(cacheFixtures);
         }
         const [gamesRes, teamsRes] = await Promise.all([
@@ -1371,6 +1385,10 @@ app.use('/api/fifa/poll', require('./api/fifa/poll.js'));
 
 // --- API: Sync Standings (Vercel cron handler) ---
 app.all('/api/sync-standings', require('./api/sync-standings.js'));
+
+// --- API: FIFA details & streams (shared with Vercel serverless handlers) ---
+app.get('/api/fifa/details', (req, res) => require('./api/fifa/details.js')(req, res));
+app.get('/api/fifa/streams', (req, res) => require('./api/fifa/streams.js')(req, res));
 
 // --- Custom Chat System SSE Broadcast ---
 let sseClients = [];

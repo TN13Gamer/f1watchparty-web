@@ -1443,6 +1443,19 @@
             visibility: hidden;
         }
 
+        .loader-spinner {
+            width: 52px;
+            height: 52px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--fifa-green, #00ff55);
+            border-radius: 50%;
+            animation: loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes loader-spin {
+            to { transform: rotate(360deg); }
+        }
+
         #lottie-loader {
             display: block;
             position: absolute;
@@ -2790,11 +2803,12 @@
             }
             .video-wrapper { order: 1; }
             .video-toolbar { order: 2; }
-            .stream-controls { order: 3; }
-            .poll-card { order: 4; }
-            .group-fixtures-card { order: 5; }
-            .standings-card { order: 6; }
-            .knockout-stage-card { order: 7; }
+            .match-info-card { order: 3; }
+            .stream-controls { order: 4; }
+            .poll-card { order: 5; }
+            .group-fixtures-card { order: 6; }
+            .standings-card { order: 7; }
+            .knockout-stage-card { order: 8; }
         }
 
         /* ── Premium FIFA Standings Table Widget ── */
@@ -3092,7 +3106,14 @@
             opacity: 0.8;
         }
 
-        .match-info-card > * {
+        .match-info-bg-glow,
+        .match-info-pitch-lines {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .match-info-card > *:not(.match-info-bg-glow):not(.match-info-pitch-lines) {
             position: relative;
             z-index: 2;
         }
@@ -3475,7 +3496,7 @@
     <!-- Launch Screen -->
     <div id="launch-screen" ng-class="{'fade-out': hasEntered}">
         <div class="launch-content">
-            <img class="launch-logo" src="fifa-logo.png" alt="FIFA Logo">
+            <img class="launch-logo" src="https://upload.wikimedia.org/wikipedia/en/6/67/2026_FIFA_World_Cup_logo.svg" alt="FIFA Logo">
             <button class="enter-btn" ng-click="enterParty()">Enter Party</button>
         </div>
     </div>
@@ -3483,27 +3504,51 @@
     <!-- Loading Animation -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
         <div id="lottie-loader"></div>
+        <div class="loader-spinner"></div>
     </div>
     <script>
         (function () {
-            var loaderAnim = lottie.loadAnimation({
-                container: document.getElementById('lottie-loader'),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'fifa-loader.json?v=' + Date.now(),
-                rendererSettings: {
-                    progressiveLoad: true,
-                    hideOnInvisible: true
-                }
-            });
-
-            // Cleanup when loader transitions out
             var loaderEl = document.querySelector('.loader');
+            var spinnerEl = document.querySelector('.loader-spinner');
+            var lottieEl = document.getElementById('lottie-loader');
+            var loaderAnim = null;
+            var lottieLoaded = false;
+
+            if (typeof lottie !== 'undefined') {
+                try {
+                    loaderAnim = lottie.loadAnimation({
+                        container: lottieEl,
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: 'fifa-loader.json?v=' + Date.now(),
+                        rendererSettings: {
+                            progressiveLoad: true,
+                            hideOnInvisible: true
+                        }
+                    });
+                    loaderAnim.addEventListener('DOMLoaded', function() {
+                        lottieLoaded = true;
+                        if (spinnerEl) spinnerEl.style.display = 'none';
+                    });
+                    // If lottie doesn't load within 2s, show spinner
+                    setTimeout(function() {
+                        if (!lottieLoaded && spinnerEl) {
+                            spinnerEl.style.display = 'block';
+                            if (lottieEl) lottieEl.style.display = 'none';
+                        }
+                    }, 2000);
+                } catch(e) {
+                    if (spinnerEl) spinnerEl.style.display = 'block';
+                }
+            } else {
+                if (spinnerEl) spinnerEl.style.display = 'block';
+            }
+
             if (loaderEl) {
                 loaderEl.addEventListener('transitionend', function (e) {
                     if (loaderEl.classList.contains('hide') && e.propertyName === 'opacity') {
-                        loaderAnim.destroy();
+                        if (loaderAnim) loaderAnim.destroy();
                         loaderEl.style.display = 'none';
                     }
                 });
@@ -3582,15 +3627,15 @@
 
         <div class="container">
             <div class="main-column">
-                <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
+                <!-- Video player: shows stream when live, placeholder when not -->
                 <div class="video-wrapper">
                     <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
-                    <!-- Dark placeholder when no live stream -->
                     <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)" style="
                         aspect-ratio: 16/9;
+                        max-height: 56vw;
                         background: rgba(8, 8, 12, 0.85);
                         border-radius: 16px;
                         display: flex;
@@ -3602,6 +3647,7 @@
                         letter-spacing: 2px;
                         text-transform: uppercase;
                         gap: 10px;
+                        overflow: hidden;
                     ">
                         <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
@@ -4507,18 +4553,17 @@
             }
 
             function apiUrl(path) {
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                if (window.location.protocol === 'file:') {
                     var urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('local') === 'true') {
                         return 'http://localhost:3000' + path;
                     }
+                    return 'https://f1watchparty-web-seven.vercel.app' + path;
                 }
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return 'http://localhost:3000' + path;
                 }
-                return 'https://f1watchparty-web-seven.vercel.app' + path;
+                return window.location.origin + path;
             }
 
 
@@ -4793,7 +4838,8 @@
                 if ($scope.fixtures) {
                     $scope.fixtures.forEach(function(m) {
                         if (m.status === 'notstarted') {
-                            var kickoffDate = parseFifaDate(m.localDate);
+                            var kickoffMs = (typeof m.kickoffTs === 'number') ? m.kickoffTs : null;
+                            var kickoffDate = kickoffMs ? new Date(kickoffMs) : parseFifaDate(m.localDate);
                             if (kickoffDate && !isNaN(kickoffDate.getTime())) {
                                 var diff = kickoffDate.getTime() - now;
                                 if (diff > 0) {
@@ -4930,8 +4976,10 @@
                 console.log('⚽ Scheduling next fixture refresh in', delay / 1000, 'seconds (isLive:', isLive, ')');
                 _fixtureRefreshInterval = $interval(function() {
                     $scope.loadFifaData();
-                }, delay, 1);
+                }, delay);
             }
+
+            scheduleFixtureRefresh();
 
             // Watch for changes in live states to immediately adjust the polling speed
             $scope.$watch(function() {
@@ -5146,12 +5194,19 @@
 
                             // Self-healing: if user voted locally, but server says 0 votes for their choice,
                             // resubmit the vote to make sure it is saved on the server!
-                            if ($scope.poll.userVote && data[$scope.poll.userVote] === 0) {
+                            if ($scope.poll.userVote && data[$scope.poll.userVote] === 0 &&
+                                !sessionStorage.getItem('poll_healed_' + matchId)) {
+                                sessionStorage.setItem('poll_healed_' + matchId, '1');
                                 console.log('[poll] Auto-submitting vote to server for:', matchId);
+                                var voterId = localStorage.getItem('f1_device_id') || localStorage.getItem('poll_voter_id');
+                                if (!voterId) {
+                                    voterId = Math.random().toString(36).substring(2, 15);
+                                    localStorage.setItem('poll_voter_id', voterId);
+                                }
                                 fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ choice: $scope.poll.userVote })
+                                    body: JSON.stringify({ choice: $scope.poll.userVote, voterId: voterId })
                                 })
                                 .then(function(r) { return r.json(); })
                                 .then(function(newData) {
@@ -5254,11 +5309,17 @@
                 };
                 calcPollPct(localCounts);
 
+                var voterId = localStorage.getItem('f1_device_id') || localStorage.getItem('poll_voter_id');
+                if (!voterId) {
+                    voterId = Math.random().toString(36).substring(2, 15);
+                    localStorage.setItem('poll_voter_id', voterId);
+                }
+
                 // Send vote to server API (uses Firebase Admin, bypasses Firestore rules)
                 fetch(apiUrl('/api/fifa/poll?matchId=' + encodeURIComponent(matchId)), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ choice: choice })
+                    body: JSON.stringify({ choice: choice, voterId: voterId })
                 })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
@@ -5282,9 +5343,8 @@
                 if (!newVal || !newVal.name) return;
                 // Build a stable match ID from name (slug)
                 var id = (newVal.name || '').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g,'_').substring(0, 40);
-                // Find the current match from fixtures to get flags
-                var match = null;
-                if ($scope.fixtures && $scope.fixtures.length) {
+                var match = $scope.getCurrentFixture();
+                if (!match && $scope.fixtures && $scope.fixtures.length) {
                     match = $scope.fixtures.find(function(m) { return m.status === 'live'; })
                          || $scope.fixtures.find(function(m) { return m.status === 'notstarted'; });
                 }

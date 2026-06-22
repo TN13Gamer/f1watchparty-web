@@ -88,14 +88,32 @@ module.exports = async (req, res) => {
     }
   }
 
-  // POST /api/fifa/poll?matchId=xxx body: { choice: 'home'|'away'|'draw' }
+  // POST /api/fifa/poll?matchId=xxx body: { choice: 'home'|'away'|'draw', voterId?: string }
   if (req.method === 'POST') {
     const choice = req.body && req.body.choice;
+    const voterId = req.body && req.body.voterId;
     if (!['home', 'away', 'draw'].includes(choice)) {
       return res.status(400).json({ error: 'Invalid choice. Must be home, away, or draw.' });
     }
 
     try {
+      if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
+        const voterRef = pollRef.collection('voters').doc(voterId);
+        const existingVote = await voterRef.get();
+        if (existingVote.exists) {
+          const snap = await pollRef.get();
+          const data = snap.exists ? snap.data() : { home: 0, away: 0, draw: 0 };
+          const home = data.home || 0;
+          const away = data.away || 0;
+          const draw = data.draw || 0;
+          return res.json({ home, away, draw, total: home + away + draw, voted: existingVote.data().choice });
+        }
+        await voterRef.set({
+          choice,
+          votedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
       const inc = admin.firestore.FieldValue.increment(1);
       await pollRef.set({ [choice]: inc }, { merge: true });
 

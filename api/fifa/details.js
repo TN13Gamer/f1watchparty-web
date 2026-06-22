@@ -154,7 +154,7 @@ module.exports = async (req, res) => {
       // Find matching streamed entry
       chosenStreamed = allFootball.find(m => {
         const t = (m.title || '').toLowerCase();
-        return normName(t).includes(homeKey) || normName(t).includes(awayKey);
+        return normName(t).includes(homeKey) && normName(t).includes(awayKey);
       });
       chosenFotmob = liveFm;
       console.log(`[fifa/details] Found live match from FotMob: key=${liveKey}`);

@@ -1517,6 +1517,24 @@
         }
 
         /* 4:3 ratio centred — black bars invisible against black bg */
+        .loader-spinner {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 52px;
+            height: 52px;
+            margin: -26px 0 0 -26px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--f1-red, #e60000);
+            border-radius: 50%;
+            animation: loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes loader-spin {
+            to { transform: rotate(360deg); }
+        }
+
         .loader lottie-player {
             display: block;
             position: absolute;
@@ -2075,13 +2093,7 @@
 
     <!-- Loading Animation (Lottie Scene animation) -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
-        <lottie-player
-            src="f1-loader.json"
-            background="transparent"
-            speed="1"
-            loop
-            autoplay>
-        </lottie-player>
+        <div class="loader-spinner"></div>
     </div>
 
     <!-- Main Dashboard View -->
@@ -2576,21 +2588,18 @@
 
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
             function apiUrl(path) {
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                if (window.location.protocol === 'file:') {
                     var urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('local') === 'true') {
                         return 'http://localhost:3000' + path;
                     }
+                    return 'https://f1watchparty-web-seven.vercel.app' + path;
                 }
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return 'http://localhost:3000' + path;
                 }
-                return 'https://f1watchparty-web-seven.vercel.app' + path;
+                return window.location.origin + path;
             }
-
-            $scope.isTheater = false;
             $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
             $scope.isChatOpen = false;
             $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
@@ -2895,21 +2904,6 @@
                     const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
                     window.pendingVantaColor = vantaColor;
                 }
-            }
-
-            function apiUrl(path) {
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('local') === 'true') {
-                        return 'http://localhost:3000' + path;
-                    }
-                }
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
-                }
-                return 'https://f1watchparty-web-seven.vercel.app' + path;
             }
 
             function safeDate(val) {

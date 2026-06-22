@@ -1533,18 +1533,17 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             function apiUrl(path) {
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                if (window.location.protocol === 'file:') {
                     var urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('local') === 'true') {
                         return 'http://localhost:3000' + path;
                     }
+                    return 'https://f1watchparty-web-seven.vercel.app' + path;
                 }
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var useLocal = urlParams.get('local') === 'true';
-                    return (useLocal ? 'http://localhost:3000' : 'https://f1watchparty-web-seven.vercel.app') + path;
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return 'http://localhost:3000' + path;
                 }
-                return 'https://f1watchparty-web-seven.vercel.app' + path;
+                return window.location.origin + path;
             }
 
             $scope.currentView = 'live'; 
@@ -2473,7 +2472,7 @@
                     .filter(t => t.length > 0);
 
                 let primaryUrl = '/api/fetch-streams';
-                let fallbackUrl = 'https://f1watchparty-web.vercel.app/api/fetch-streams';
+                let fallbackUrl = window.location.origin + '/api/fetch-streams';
                 let targetUrl = apiUrl(primaryUrl);
 
                 function parseAndMatchStreams(res) {
