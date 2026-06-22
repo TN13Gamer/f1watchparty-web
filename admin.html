@@ -2322,7 +2322,7 @@
                 $scope.showToast("Fetching FIFA streams from streamed.pk...", "info");
 
                 // Call backend sync API directly — it reads/writes Firestore via Admin SDK
-                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'))
+                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifastreams'), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {
                             $scope.fetchingFifaStreams = false;
@@ -2346,8 +2346,9 @@
                     .catch(function(err) {
                         $timeout(function() {
                             $scope.fetchingFifaStreams = false;
-                            var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
-                            $scope.showToast("Fetch streams failed: " + errMsg, "error");
+                            var status = err.status ? ' (HTTP ' + err.status + ')' : '';
+                            var errMsg = (err.data && (err.data.error || err.data.message)) || err.statusText || err.message || (err.status === -1 ? 'Request timed out or network error' : 'Unknown error');
+                            $scope.showToast("Fetch streams failed" + status + ": " + errMsg, "error");
                         });
                     });
             };
@@ -2360,7 +2361,7 @@
                 $scope.showToast("Detecting next match from worldcup26.ir...", "info");
 
                 // Call backend sync API — it updates Firestore via Admin SDK then returns data
-                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifadetails'))
+                $http.get(apiUrl('/api/sync-standings?manual=true&type=fifadetails'), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {
                             $scope.fetchingFifaDetails = false;
@@ -2388,8 +2389,9 @@
                     .catch(function(err) {
                         $timeout(function() {
                             $scope.fetchingFifaDetails = false;
-                            var errMsg = (err.data && err.data.error) || err.statusText || err.message || 'Unknown error';
-                            $scope.showToast("FIFA details sync failed: " + errMsg, "error");
+                            var status = err.status ? ' (HTTP ' + err.status + ')' : '';
+                            var errMsg = (err.data && (err.data.error || err.data.message)) || err.statusText || err.message || (err.status === -1 ? 'Request timed out or network error' : 'Unknown error');
+                            $scope.showToast("FIFA details sync failed" + status + ": " + errMsg, "error");
                         });
                     });
             };
