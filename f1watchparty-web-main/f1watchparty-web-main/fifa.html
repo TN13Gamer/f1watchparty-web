@@ -880,6 +880,15 @@
             border-bottom: none;
             position: relative;
             z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .video-wrapper.stream-offline {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            margin-bottom: 24px;
+            background: rgba(8, 8, 12, 0.4);
+            backdrop-filter: blur(20px);
         }
 
         .video-wrapper::before {
@@ -3532,27 +3541,25 @@
         <div class="container">
             <div class="main-column">
                 <!-- Video player: always rendered; shows stream when live, dark placeholder when not -->
-                <div class="video-wrapper">
+                <div class="video-wrapper" ng-class="{'stream-offline': !(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)}">
                     <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
                     <!-- Dark placeholder when no live stream -->
                     <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)" style="
-                        aspect-ratio: 16/9;
-                        background: rgba(8, 8, 12, 0.85);
-                        border-radius: 16px;
+                        height: 120px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        color: #333;
+                        color: rgba(255, 255, 255, 0.3);
                         font-size: 13px;
-                        font-weight: 700;
+                        font-weight: 800;
                         letter-spacing: 2px;
                         text-transform: uppercase;
                         gap: 10px;
                     ">
-                        <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
+                        <i class="fa-solid fa-circle" style="font-size: 8px; color: rgba(255, 255, 255, 0.2);"></i> STREAM OFFLINE
                     </div>
                 </div>
                 <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
