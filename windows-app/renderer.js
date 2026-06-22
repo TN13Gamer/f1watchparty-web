@@ -3,8 +3,8 @@ const path = require('path');
 
 // Constants
 const FIRESTORE_URL = "https://firestore.googleapis.com/v1/projects/f1-stream-live/databases/(default)/documents/app_data/live_config";
-const FIFA_FIXTURES_URL = "https://watchf1.live/api/fifa/fixtures";
-const FIFA_STANDINGS_URL = "https://watchf1.live/api/fifa/standings";
+const FIFA_FIXTURES_URL = "https://f1watchparty-web-seven.vercel.app/api/fifa/fixtures";
+const FIFA_STANDINGS_URL = "https://f1watchparty-web-seven.vercel.app/api/fifa/standings";
 
 // State
 let liveConfig = null;

@@ -11,8 +11,8 @@ import java.net.URL
 object ApiDataFetcher {
     private const val TAG = "ApiDataFetcher"
     private const val FIRESTORE_URL = "https://firestore.googleapis.com/v1/projects/f1-stream-live/databases/(default)/documents/app_data/live_config"
-    private const val FIFA_FIXTURES_URL = "https://watchf1.live/api/fifa/fixtures"
-    private const val FIFA_STANDINGS_URL = "https://watchf1.live/api/fifa/standings"
+    private const val FIFA_FIXTURES_URL = "https://f1watchparty-web-seven.vercel.app/api/fifa/fixtures"
+    private const val FIFA_STANDINGS_URL = "https://f1watchparty-web-seven.vercel.app/api/fifa/standings"
 
     private fun makeRequest(urlStr: String): String? {
         var connection: HttpURLConnection? = null
