@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { setCors } = require('./_firebase');
+const { setCors } = require('../../lib/_firebase');
 
 module.exports = async (req, res) => {
   setCors(res, 'GET, OPTIONS');

@@ -1,4 +1,4 @@
-const { initFirebaseAdmin, parseBody, setCors } = require('../_firebase');
+const { initFirebaseAdmin, parseBody, setCors } = require('../../../lib/_firebase');
 
 module.exports = async (req, res) => {
   setCors(res, 'POST, OPTIONS');

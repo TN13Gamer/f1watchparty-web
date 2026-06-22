@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { initFirebaseAdmin, setCors } = require('./_firebase');
+const { initFirebaseAdmin, setCors } = require('../../lib/_firebase');
 
 function unwrapFirestore(val) {
   if (!val || typeof val !== 'object') return val;
