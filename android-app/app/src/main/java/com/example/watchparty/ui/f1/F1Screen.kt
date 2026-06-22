@@ -4,6 +4,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -317,13 +319,20 @@ fun F1Screen(
 
                                 removeSandbox();
 
-                                var observer = new MutationObserver(function(mutations) {
-                                    removeSandbox();
-                                });
-                                observer.observe(document.documentElement, {
-                                    childList: true,
-                                    subtree: true
-                                });
+                                function initObserver() {
+                                    if (document.documentElement) {
+                                        var observer = new MutationObserver(function(mutations) {
+                                            removeSandbox();
+                                        });
+                                        observer.observe(document.documentElement, {
+                                            childList: true,
+                                            subtree: true
+                                        });
+                                    } else {
+                                        setTimeout(initObserver, 50);
+                                    }
+                                }
+                                initObserver();
                             })();
                         """.trimIndent()
 
@@ -342,6 +351,15 @@ fun F1Screen(
                                     settings.setSupportMultipleWindows(true)
                                     android.webkit.CookieManager.getInstance().setAcceptCookie(true)
                                     android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
+                                    if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                                        try {
+                                            WebViewCompat.addDocumentStartJavaScript(this, sandboxRemovalJs, setOf("*"))
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("WebView", "Error adding document start script", e)
+                                        }
+                                    }
+
                                     webViewClient = object : WebViewClient() {
                                         override fun onReceivedSslError(view: WebView?, handler: android.webkit.SslErrorHandler?, error: android.net.http.SslError?) {
                                             handler?.proceed()
@@ -996,7 +1014,7 @@ private fun parseResilientDate(dateStr: String): Date? {
             if (format.contains("'Z'")) {
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
             } else {
-                sdf.timeZone = TimeZone.getTimeZone("America/New_York")
+                sdf.timeZone = TimeZone.getDefault()
             }
             val date = sdf.parse(dateStr)
             if (date != null) return date

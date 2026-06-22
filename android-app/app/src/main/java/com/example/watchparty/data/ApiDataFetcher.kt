@@ -20,8 +20,8 @@ object ApiDataFetcher {
             val url = URL(urlStr)
             connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
-            connection.connectTimeout = 2000
-            connection.readTimeout = 3000
+            connection.connectTimeout = 10000
+            connection.readTimeout = 15000
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             connection.setRequestProperty("Accept", "application/json")
             

@@ -163,7 +163,7 @@ async function initializeData() {
 async function fetchRemoteData(url) {
   // Use AbortController to set a 2-second timeout so slow responses fall back quickly.
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -1097,21 +1097,20 @@ function findNextF1Session() {
 
 function parseResilientDate(dateStr) {
   if (!dateStr) return null;
-  let clean = dateStr.trim();
-  // Try direct parse
+  const clean = dateStr.trim();
+  // Match YYYY-MM-DD[T]HH:mm[:ss] and parse in user local timezone to avoid UTC shift
+  const m = clean.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (m) {
+    return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], m[6] ? +m[6] : 0);
+  }
+  
+  // Fallbacks
   let d = new Date(clean);
   if (!isNaN(d.getTime())) return d;
   
-  // Clean formats like "yyyy-MM-dd HH:mm:ss" or spaces
-  clean = clean.replace(' ', 'T');
-  d = new Date(clean);
+  const cleanT = clean.replace(' ', 'T');
+  d = new Date(cleanT);
   if (!isNaN(d.getTime())) return d;
-
-  // Add UTC trailing Z if missing and contains T
-  if (clean.includes('T') && !clean.endsWith('Z')) {
-    d = new Date(clean + 'Z');
-    if (!isNaN(d.getTime())) return d;
-  }
   
   return null;
 }

@@ -522,7 +522,7 @@ private fun parseResilientDate(dateStr: String): Date? {
             if (format.contains("'Z'")) {
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
             } else {
-                sdf.timeZone = TimeZone.getTimeZone("America/New_York")
+                sdf.timeZone = TimeZone.getDefault()
             }
             val date = sdf.parse(dateStr)
             if (date != null) return date
