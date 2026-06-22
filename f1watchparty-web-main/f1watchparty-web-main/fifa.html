@@ -1977,15 +1977,18 @@
         }
         .past-matches-list::-webkit-scrollbar { display: none; }
 
-        /* ── Redesigned Tournament Poll Card ── */
+        /* ── Redesigned Anonymous Sports Match Poll ── */
         .poll-card {
-            background: #0B0F14 !important;
+            background: #0A0A0A !important;
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border-radius: 20px !important;
+            padding: 18px !important;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        /* Stadium light glow and pitch circle background */
         .poll-card::before {
             content: '';
             position: absolute;
@@ -1994,91 +1997,76 @@
             transform: translateX(-50%);
             width: 300px;
             height: 300px;
-            background: radial-gradient(circle, rgba(0, 255, 85, 0.08) 0%, rgba(0, 229, 255, 0.03) 50%, transparent 100%);
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.06) 0%, transparent 70%);
             pointer-events: none;
             z-index: 1;
         }
-        .poll-card::after {
-            content: '';
-            position: absolute;
-            bottom: -50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 160px;
-            height: 160px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
+
         .poll-header {
             position: relative;
             z-index: 2;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             text-align: center;
         }
-        
         .poll-title {
             font-size: 15px;
             font-weight: 800;
             color: #fff;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
-        
         .poll-subtitle {
             font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.45);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
-        /* Options Container */
+
+        /* Voting state */
         .poll-options {
             position: relative;
             z-index: 2;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
-        
-        /* Option Card */
-        .poll-option-card {
-            width: 100%;
+        .poll-large-card {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 16px;
-            padding: 12px 16px;
+            padding: 14px 18px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
             user-select: none;
+            position: relative;
         }
-        .poll-option-card:hover {
+        .poll-large-card:hover {
             background: rgba(255, 255, 255, 0.04);
             border-color: rgba(255, 255, 255, 0.15);
             transform: translateY(-2px);
         }
-        .poll-option-card.selected {
-            background: rgba(0, 255, 85, 0.04);
-            border-color: #00ff55;
-            box-shadow: 0 0 15px rgba(0, 255, 85, 0.15), inset 0 0 0 1px rgba(0, 255, 85, 0.2);
+        .poll-large-card.selected {
+            background: rgba(0, 255, 136, 0.04);
+            border-color: #00FF88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.15), inset 0 0 0 1px rgba(0, 255, 136, 0.2);
         }
-        .poll-option-card.selected.draw-selected {
+        .poll-large-card.selected.draw-selected {
             background: rgba(0, 229, 255, 0.04);
-            border-color: #00e5ff;
+            border-color: #00E5FF;
             box-shadow: 0 0 15px rgba(0, 229, 255, 0.15), inset 0 0 0 1px rgba(0, 229, 255, 0.2);
         }
-        
-        /* Custom Radio Circle */
+
         .poll-radio-indicator {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.2);
             display: flex;
@@ -2087,15 +2075,15 @@
             transition: all 0.25s ease;
             flex-shrink: 0;
         }
-        .poll-option-card:hover .poll-radio-indicator {
+        .poll-large-card:hover .poll-radio-indicator {
             border-color: rgba(255, 255, 255, 0.4);
         }
-        .poll-option-card.selected .poll-radio-indicator {
-            border-color: #00ff55;
-            background: rgba(0, 255, 85, 0.1);
+        .poll-large-card.selected .poll-radio-indicator {
+            border-color: #00FF88;
+            background: rgba(0, 255, 136, 0.1);
         }
-        .poll-option-card.selected.draw-selected .poll-radio-indicator {
-            border-color: #00e5ff;
+        .poll-large-card.selected.draw-selected .poll-radio-indicator {
+            border-color: #00E5FF;
             background: rgba(0, 229, 255, 0.1);
         }
         .poll-radio-dot {
@@ -2106,17 +2094,17 @@
             transform: scale(0);
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .poll-option-card.selected .poll-radio-dot {
-            background: #00ff55;
+        .poll-large-card.selected .poll-radio-dot {
+            background: #00FF88;
             transform: scale(1);
-            box-shadow: 0 0 8px #00ff55;
+            box-shadow: 0 0 6px #00FF88;
         }
-        .poll-option-card.selected.draw-selected .poll-radio-dot {
-            background: #00e5ff;
+        .poll-large-card.selected.draw-selected .poll-radio-dot {
+            background: #00E5FF;
             transform: scale(1);
-            box-shadow: 0 0 8px #00e5ff;
+            box-shadow: 0 0 6px #00E5FF;
         }
-        
+
         .poll-flag-img {
             width: 28px;
             height: 20px;
@@ -2125,7 +2113,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             flex-shrink: 0;
         }
-        
         .poll-opt-name {
             flex: 1;
             font-size: 13px;
@@ -2133,25 +2120,24 @@
             color: #fff;
             letter-spacing: 0.3px;
         }
-        
-        /* Submit Button */
+
         .poll-submit-btn {
             width: 100%;
-            margin-top: 16px;
-            padding: 14px 20px;
+            margin-top: 14px;
+            padding: 13px 20px;
             border-radius: 12px;
-            background: linear-gradient(135deg, #00ff55 0%, #00b33c 100%);
+            background: linear-gradient(135deg, #00FF88 0%, #00b366 100%);
             border: none;
             color: #050a05;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative;
             z-index: 2;
-            box-shadow: 0 4px 15px rgba(0, 255, 85, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2159,12 +2145,12 @@
         }
         .poll-submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 255, 85, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
-            background: linear-gradient(135deg, #26ff70 0%, #00cc44 100%);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #26ff97 0%, #00cc73 100%);
         }
         .poll-submit-btn:active:not(:disabled) {
             transform: translateY(1px);
-            box-shadow: 0 2px 10px rgba(0, 255, 85, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 255, 136, 0.2);
         }
         .poll-submit-btn:disabled {
             background: rgba(255, 255, 255, 0.05);
@@ -2173,162 +2159,369 @@
             cursor: not-allowed;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        
-        /* Results View */
-        .poll-results-container {
+
+        /* Compact Results State */
+        .poll-compact-results {
             position: relative;
             z-index: 2;
             display: flex;
             flex-direction: column;
             gap: 12px;
+            padding: 8px 0;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .poll-results-teams-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .poll-results-team-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .poll-results-vs {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 900;
+            letter-spacing: 1px;
         }
         
-        .poll-result-card {
-            background: rgba(255, 255, 255, 0.01);
+        /* Split Progress Bar */
+        .poll-split-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .poll-bar-segment {
+            height: 100%;
+            transition: width 1.2s cubic-bezier(0.1, 0.8, 0.2, 1);
+            position: relative;
+        }
+        .poll-bar-segment.home {
+            background: linear-gradient(90deg, #00b366, #00FF88);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        .poll-bar-segment.draw {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .poll-bar-segment.away {
+            background: linear-gradient(90deg, #00E5FF, #0099b3);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .poll-compact-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+            margin-top: 4px;
+            position: relative;
+            z-index: 2;
+        }
+        .poll-anonymous-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 255, 136, 0.1);
+            color: #00FF88;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .poll-anonymous-badge.closed {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ── Premium Tabbed Fixtures Widget ── */
+        .group-fixtures-card {
+            background: #0A0A0A !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            padding: 18px !important;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .fixtures-tab-header {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-top: 14px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+            user-select: none;
+        }
+        .fixtures-tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+            position: relative;
+            z-index: 3;
+            outline: none;
+        }
+        .fixtures-tab-btn.active {
+            color: #050a05;
+        }
+        .fixtures-tab-slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background: #00FF88;
+            border-radius: 8px;
+            transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1;
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+        }
+        .fixtures-tab-btn.tab-finished-btn.active ~ .fixtures-tab-slider {
+            transform: translateX(100%);
+        }
+
+        .fixture-cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        .fixture-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 16px;
             padding: 14px 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+        .fixture-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(0, 255, 136, 0.25);
+            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.1);
+        }
+        .fixture-card.is-live {
+            border-color: rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 136, 0.01);
+        }
+
+        .fixture-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .fixture-competition-badge {
+            font-size: 9px;
+            font-weight: 800;
+            color: #00FF88;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(0, 255, 136, 0.15);
+        }
+        .fixture-countdown-timer {
+            font-size: 11px;
+            font-weight: 800;
+            color: #00FF88;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-shadow: 0 0 6px rgba(0, 255, 136, 0.2);
+        }
+        .fixture-status-badge {
+            font-size: 9px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .fixture-status-badge.live {
+            color: #00FF88;
+            background: rgba(0, 255, 136, 0.15);
+            border-color: rgba(0, 255, 136, 0.25);
+            animation: pulse-red 1.2s infinite;
+        }
+
+        .fixture-match-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 2px 0;
+        }
+        .fixture-team-block {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        .fixture-team-block.home {
+            justify-content: flex-end;
+            text-align: right;
+        }
+        .fixture-team-block.away {
+            justify-content: flex-start;
+            text-align: left;
+        }
+        .fixture-team-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fixture-flag-img {
+            width: 24px;
+            height: 16px;
+            object-fit: cover;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+        .fixture-score-or-vs {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 6px 14px;
+            border-radius: 8px;
+            min-width: 54px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 900;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .fixture-score-or-vs.live-score {
+            color: #00FF88;
+            border-color: rgba(0, 255, 136, 0.25);
+            text-shadow: 0 0 6px rgba(0, 255, 136, 0.2);
+        }
+        .fixture-score-or-vs.vs {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        .fixture-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .fixture-date-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
+        }
+        .fixture-action-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .fixture-action-btn.watch-btn {
+            background: #00FF88;
+            color: #050a05;
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+        }
+        .fixture-action-btn.watch-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);
+            background: #26ff97;
+        }
+        .fixture-action-btn.highlights-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .fixture-action-btn.highlights-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Loading Skeletons */
+        .fixture-skeleton-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .skeleton-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 14px 16px;
+            height: 98px;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-        .poll-result-card.is-winner {
-            border-color: rgba(0, 255, 85, 0.3);
-            background: rgba(0, 255, 85, 0.01);
-            box-shadow: 0 4px 20px rgba(0, 255, 85, 0.05);
-        }
-        .poll-result-card.is-winner.draw-winner {
-            border-color: rgba(0, 229, 255, 0.3);
-            background: rgba(0, 229, 255, 0.01);
-            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.05);
-        }
-        
-        .poll-result-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .poll-result-team {
-            display: flex;
-            align-items: center;
             gap: 10px;
         }
-        
-        .poll-result-pct {
-            font-size: 16px;
-            font-weight: 900;
-            color: #fff;
+        .skeleton-pulse {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02), transparent);
+            animation: skeleton-slide 1.5s infinite;
         }
-        .poll-result-card.is-winner .poll-result-pct {
-            color: #00ff55;
-            text-shadow: 0 0 10px rgba(0, 255, 85, 0.3);
-        }
-        .poll-result-card.is-winner.draw-winner .poll-result-pct {
-            color: #00e5ff;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-        }
-        
-        /* Glass Progress Bar */
-        .poll-progress-track {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.04);
+        .skeleton-line {
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .poll-progress-fill {
-            height: 100%;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-        .poll-result-card.is-winner .poll-progress-fill {
-            background: linear-gradient(90deg, #00b33c 0%, #00ff55 100%);
-            box-shadow: 0 0 8px rgba(0, 255, 85, 0.4);
-        }
-        .poll-result-card.is-winner.draw-winner .poll-progress-fill {
-            background: linear-gradient(90deg, #0099b3 0%, #00e5ff 100%);
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
         }
         
-        /* Social Proof and Timer */
-        .poll-footer {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            z-index: 2;
+        @keyframes skeleton-slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
-        
-        .poll-social-proof {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .poll-avatars {
-            display: flex;
-            align-items: center;
-        }
-        
-        .poll-avatar-img {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid #0B0F14;
-            margin-left: -8px;
-            object-fit: cover;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-        .poll-avatar-img:first-child {
-            margin-left: 0;
-        }
-        
-        .poll-voters-count {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 600;
-        }
-        
-        .poll-timer-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #00ff55;
-            text-shadow: 0 0 8px rgba(0, 255, 85, 0.2);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .poll-timer-wrapper.closed {
-            color: rgba(255, 255, 255, 0.35);
-            text-shadow: none;
-        }
-        
-        .poll-voted-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: rgba(0, 255, 85, 0.1);
-            color: #00ff55;
-            font-size: 9px;
-            font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid rgba(0, 255, 85, 0.2);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Mobile Performance Optimizations */
@@ -2799,11 +2992,11 @@
                         <div class="poll-subtitle">{{raceData.name}}</div>
                     </div>
 
-                    <!-- ── BEFORE VOTING: selection state ── -->
+                    <!-- ── VOTING STATE: selection state ── -->
                     <div ng-if="poll.userVote === null">
                         <div class="poll-options">
-                            <!-- Home Team Option -->
-                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'home'}" ng-click="selectVote('home')">
+                            <!-- Team 1 Card -->
+                            <div class="poll-large-card" ng-class="{'selected': selectedVote === 'home'}" ng-click="selectVote('home')">
                                 <div class="poll-radio-indicator">
                                     <div class="poll-radio-dot"></div>
                                 </div>
@@ -2811,8 +3004,8 @@
                                 <span class="poll-opt-name">{{poll.homeTeam}}</span>
                             </div>
 
-                            <!-- Draw Option -->
-                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'draw', 'draw-selected': selectedVote === 'draw'}" ng-click="selectVote('draw')">
+                            <!-- Draw Card (Optional) -->
+                            <div class="poll-large-card" ng-class="{'selected': selectedVote === 'draw', 'draw-selected': selectedVote === 'draw'}" ng-click="selectVote('draw')">
                                 <div class="poll-radio-indicator">
                                     <div class="poll-radio-dot"></div>
                                 </div>
@@ -2820,8 +3013,8 @@
                                 <span class="poll-opt-name">Draw</span>
                             </div>
 
-                            <!-- Away Team Option -->
-                            <div class="poll-option-card" ng-class="{'selected': selectedVote === 'away'}" ng-click="selectVote('away')">
+                            <!-- Team 2 Card -->
+                            <div class="poll-large-card" ng-class="{'selected': selectedVote === 'away'}" ng-click="selectVote('away')">
                                 <div class="poll-radio-indicator">
                                     <div class="poll-radio-dot"></div>
                                 </div>
@@ -2830,181 +3023,197 @@
                             </div>
                         </div>
 
-                        <!-- Dedicated Submit Button -->
+                        <!-- Dedicated Vote Now Button -->
                         <button class="poll-submit-btn" ng-disabled="selectedVote === null" ng-click="submitVote()">
                             <i class="fa-solid fa-paper-plane"></i> Vote Now
                         </button>
                     </div>
 
-                    <!-- ── AFTER VOTING: results ── -->
-                    <div ng-if="poll.userVote !== null" class="poll-results-container">
-                        <!-- Home Team Result -->
-                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('home')}">
-                            <div class="poll-result-header">
-                                <div class="poll-result-team">
-                                    <img class="poll-flag-img" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
-                                    <span class="poll-opt-name">{{poll.homeTeam}}</span>
-                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'home'">Your Vote</span>
-                                </div>
-                                <span class="poll-result-pct">{{poll.homePct}}%</span>
+                    <!-- ── RESULTS STATE: compact collapsed view ── -->
+                    <div ng-if="poll.userVote !== null" class="poll-compact-results">
+                        <!-- Compact layout: Team 1 FLAG  HomePct%  VS  AwayPct%  Team 2 FLAG -->
+                        <div class="poll-results-teams-row">
+                            <div class="poll-results-team-label">
+                                <img class="poll-flag-img" ng-if="poll.homeFlag" ng-src="{{poll.homeFlag}}" alt="" onerror="this.style.display='none'">
+                                <span ng-class="{'winner': isWinningOption('home')}" style="color: {{isWinningOption('home') ? '#00FF88' : '#fff'}}">{{poll.homePct}}%</span>
                             </div>
-                            <div class="poll-progress-track">
-                                <div class="poll-progress-fill" style="width: {{poll.homePct}}%"></div>
+                            
+                            <div class="poll-results-vs">
+                                <span ng-if="poll.drawPct > 0">Draw {{poll.drawPct}}%</span>
+                                <span ng-if="poll.drawPct === 0">VS</span>
                             </div>
-                        </div>
-
-                        <!-- Draw Result -->
-                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('draw'), 'draw-winner': isWinningOption('draw')}">
-                            <div class="poll-result-header">
-                                <div class="poll-result-team">
-                                    <i class="fa-solid fa-handshake" style="color: rgba(255,255,255,0.4); font-size: 16px;"></i>
-                                    <span class="poll-opt-name">Draw</span>
-                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'draw'">Your Vote</span>
-                                </div>
-                                <span class="poll-result-pct">{{poll.drawPct}}%</span>
-                            </div>
-                            <div class="poll-progress-track">
-                                <div class="poll-progress-fill" style="width: {{poll.drawPct}}%"></div>
+                            
+                            <div class="poll-results-team-label">
+                                <span ng-class="{'winner': isWinningOption('away')}" style="color: {{isWinningOption('away') ? '#00E5FF' : '#fff'}}">{{poll.awayPct}}%</span>
+                                <img class="poll-flag-img" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
                             </div>
                         </div>
 
-                        <!-- Away Team Result -->
-                        <div class="poll-result-card" ng-class="{'is-winner': isWinningOption('away')}">
-                            <div class="poll-result-header">
-                                <div class="poll-result-team">
-                                    <img class="poll-flag-img" ng-if="poll.awayFlag" ng-src="{{poll.awayFlag}}" alt="" onerror="this.style.display='none'">
-                                    <span class="poll-opt-name">{{poll.awayTeam}}</span>
-                                    <span class="poll-voted-badge" ng-if="poll.userVote === 'away'">Your Vote</span>
-                                </div>
-                                <span class="poll-result-pct">{{poll.awayPct}}%</span>
-                            </div>
-                            <div class="poll-progress-track">
-                                <div class="poll-progress-fill" style="width: {{poll.awayPct}}%"></div>
-                            </div>
+                        <!-- Split Progress Bar -->
+                        <div class="poll-split-bar">
+                            <div class="poll-bar-segment home" style="width: {{poll.homePct}}%"></div>
+                            <div class="poll-bar-segment draw" style="width: {{poll.drawPct}}%"></div>
+                            <div class="poll-bar-segment away" style="width: {{poll.awayPct}}%"></div>
                         </div>
-                    </div>
 
-                    <!-- ── FOOTER: social proof + countdown ── -->
-                    <div class="poll-footer">
-                        <div class="poll-social-proof">
-                            <div class="poll-avatars">
-                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=33" alt="">
-                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=12" alt="">
-                                <img class="poll-avatar-img" src="https://i.pravatar.cc/60?img=56" alt="">
-                            </div>
-                            <span class="poll-voters-count" ng-if="poll.loaded && poll.totalVotes > 0">
-                                {{poll.totalVotes === 1 ? '1 vote cast' : (poll.totalVotes | number) + ' votes cast'}}
+                        <!-- Footer stats and badge -->
+                        <div class="poll-compact-footer">
+                            <span ng-if="poll.loaded && poll.totalVotes > 0">
+                                {{poll.totalVotes | number}} {{poll.totalVotes === 1 ? 'Vote' : 'Votes'}}
                             </span>
-                            <span class="poll-voters-count" ng-if="poll.loaded && poll.totalVotes === 0">
-                                Be the first to vote!
+                            <span ng-if="poll.loaded && poll.totalVotes === 0">1 Vote</span>
+                            <span ng-if="!poll.loaded">Syncing...</span>
+                            
+                            <!-- You Voted Badge / Poll Closed -->
+                            <span class="poll-anonymous-badge" ng-class="{'closed': raceData.isFinished}">
+                                <i class="fa-solid fa-circle-check"></i>
+                                {{ raceData.isFinished ? 'Closed' : 'You Voted' }}
                             </span>
-                            <span class="poll-voters-count" ng-if="!poll.loaded">
-                                Loading counts...
-                            </span>
-                        </div>
-                        
-                        <!-- Timer/Status -->
-                        <div class="poll-timer-wrapper" ng-class="{'closed': raceData.isFinished || (!matchCountdownStr && !raceData.isLive)}">
-                            <i class="fa-regular fa-clock"></i>
-                            <span ng-if="matchCountdownStr">{{matchCountdownStr}}</span>
-                            <span ng-if="!matchCountdownStr && raceData.isLive">LIVE</span>
-                            <span ng-if="!matchCountdownStr && !raceData.isLive && raceData.isFinished">CLOSED</span>
-                            <span ng-if="!matchCountdownStr && !raceData.isLive && !raceData.isFinished">OPEN</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- FIFA Fixtures Card (Group Stage) -->
+                      <!-- FIFA Fixtures Card (Group Stage) -->
                 <div class="glass-card carbon-schedule-card group-fixtures-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline ng-src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/fifa.mp4"></video>
-                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+                    
+                    <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0;">
                         <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
                         <!-- Fast refresh indicator when live -->
-                        <span ng-if="hasLiveGroupMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00ff55; display:flex; align-items:center; gap:5px;">
-                            <span style="width:5px;height:5px;border-radius:50%;background:#00ff55;box-shadow:0 0 6px #00ff55;animation:pulse-red 0.8s infinite;"></span>
+                        <span ng-if="hasLiveGroupMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00FF88; display:flex; align-items:center; gap:5px;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:#00FF88;box-shadow:0 0 6px #00FF88;animation:pulse-red 0.8s infinite;"></span>
                             LIVE · FAST REFRESH
                         </span>
                     </div>
 
-                    <!-- Live & Upcoming Matches -->
-                    <div class="fixtures-scroll-container">
-                        <div ng-if="liveAndUpcomingGroupFixtures().length === 0 && fixtures.length > 0" style="text-align:center; padding:16px 10px; color:var(--text-gray); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:12px; margin-bottom:10px;">
-                            <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming group stage matches
-                        </div>
-                        <div class="schedule-row" id="fixture-{{$index}}" ng-repeat="match in liveAndUpcomingGroupFixtures() | limitTo: 4" ng-class="{'live': match.status === 'live', 'upcoming': match.status === 'notstarted'}" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 15px; align-items: stretch;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                                <div class="match-scoreboard" style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                    <!-- Home Team Flag & Name -->
-                                    <div style="display: flex; align-items: center; justify-content: flex-end; flex: 1; min-width: 0; gap: 6px;">
-                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: right;" title="{{match.homeTeam}}">{{match.homeTeam}}</span>
-                                        <div ng-if="!match.homeFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                        </div>
-                                        <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
-                                    </div>
-                                    <!-- Score or VS -->
-                                    <div style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 8px; min-width: 55px; flex-shrink: 0; text-align: center;">
-                                        <span style="font-size: 16px; font-weight: 900; letter-spacing: 0.5px;" ng-if="match.status === 'live'">
-                                            <span style="color:#00ff55;">{{match.homeScore}}</span>
-                                            <span style="color: #555; margin: 0 1px;">-</span>
-                                            <span style="color:#00ff55;">{{match.awayScore}}</span>
-                                        </span>
-                                        <span style="font-size: 12px; font-weight: 800; color: var(--text-gray);" ng-if="match.status === 'notstarted'">VS</span>
-                                    </div>
-                                    <!-- Away Team Flag & Name -->
-                                    <div style="display: flex; align-items: center; justify-content: flex-start; flex: 1; min-width: 0; gap: 6px;">
-                                        <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width: 30px; height: 20px; object-fit: cover; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'">
-                                        <div ng-if="!match.awayFlag" style="width: 30px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 2px; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-solid fa-question" style="font-size: 10px; color: #888;"></i>
-                                        </div>
-                                        <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: left;" title="{{match.awayTeam}}">{{match.awayTeam}}</span>
-                                    </div>
-                                </div>
-                                <!-- Kickoff Time / Live status -->
-                                <div class="sess-time-box" style="text-align: right; flex-shrink: 0; min-width: 55px; border-left: 1px solid rgba(255,255,255,0.05); padding-left: 8px;">
-                                    <div style="font-size: 11px; font-weight: 700; color: #fff;" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[2] || ''}} {{match.timezone || ''}}</div>
-                                    <div style="font-size: 9px; color: var(--text-gray);" ng-if="match.status === 'notstarted'">{{match.localDate.split(' ')[0]}} {{match.localDate.split(' ')[1]}}</div>
-                                    <div ng-if="match.status === 'live'" style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-                                        <div style="font-size: 9px; font-weight: 800; color: #00ff55; letter-spacing: 0.5px; animation: pulse 1s infinite;">LIVE</div>
-                                        <div ng-if="match.matchTime" style="font-size: 11px; font-weight: 900; color: #00ff55; letter-spacing: 0.5px;">{{match.matchTime}}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div ng-if="fixtures.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
-                            No fixtures available.
-                        </div>
-
-                        <!-- Past matches list: shown/hidden with ng-show inside scroll container -->
-                        <div class="past-matches-list" ng-show="ui.showPastMatches" style="margin-top: 10px;">
-                            <div class="schedule-row ended" ng-repeat="match in pastGroupFixtures()" style="opacity:0.6; margin-bottom:6px;">
-                                <div class="match-scoreboard" style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                                    <!-- Home -->
-                                    <div style="display:flex; align-items:center; justify-content:flex-end; flex:1; gap:6px;">
-                                        <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.homeTeam}}</span>
-                                        <img ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
-                                    </div>
-                                    <!-- Score -->
-                                    <div style="background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:6px; min-width:52px; text-align:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0;">
-                                        {{match.homeScore}} – {{match.awayScore}}
-                                    </div>
-                                    <!-- Away -->
-                                    <div style="display:flex; align-items:center; justify-content:flex-start; flex:1; gap:6px;">
-                                        <img ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" style="width:26px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0;" onerror="this.style.display='none'">
-                                        <span style="font-size:11px; font-weight:700; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">{{match.awayTeam}}</span>
-                                    </div>
-                                </div>
-                                <div style="font-size:9px; font-weight:800; color:#555; padding-left:8px; border-left:1px solid rgba(255,255,255,0.05); flex-shrink:0; min-width:20px;">FT</div>
-                            </div>
-                        </div>
+                    <!-- Toggle tabs -->
+                    <div class="fixtures-tab-header">
+                        <button class="fixtures-tab-btn tab-upcoming-btn" ng-class="{'active': fixturesTab === 'upcoming'}" ng-click="setFixturesTab('upcoming')">
+                            Upcoming
+                        </button>
+                        <button class="fixtures-tab-btn tab-finished-btn" ng-class="{'active': fixturesTab === 'finished'}" ng-click="setFixturesTab('finished')">
+                            Finished
+                        </button>
+                        <div class="fixtures-tab-slider"></div>
                     </div>
 
-                    <!-- Past Matches toggle button: use ng-show not ng-if to avoid child-scope gotcha -->
-                    <button class="past-sessions-toggle" ng-show="pastGroupFixtures().length > 0" ng-click="ui.showPastMatches = !ui.showPastMatches">
-                        <i class="fa-solid" ng-class="ui.showPastMatches ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        {{ ui.showPastMatches ? 'Hide Past Matches' : 'View Past Matches (' + pastGroupFixtures().length + ')' }}
-                    </button>
+                    <!-- Main scroll container for cards -->
+                    <div class="fixtures-scroll-container">
+                        
+                        <!-- 1. Skeletons (while loading) -->
+                        <div ng-if="!fixturesLoaded" class="fixture-skeleton-wrapper">
+                            <div class="skeleton-card" ng-repeat="i in [1, 2]">
+                                <div class="skeleton-pulse"></div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <div class="skeleton-line" style="width: 70px; height: 10px;"></div>
+                                    <div class="skeleton-line" style="width: 50px; height: 10px;"></div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <div class="skeleton-line" style="width: 60px; height: 14px;"></div>
+                                    <div class="skeleton-line" style="width: 45px; height: 26px;"></div>
+                                    <div class="skeleton-line" style="width: 60px; height: 14px;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                                    <div class="skeleton-line" style="width: 80px; height: 9px;"></div>
+                                    <div class="skeleton-line" style="width: 60px; height: 18px;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Active Tab Content (when loaded) -->
+                        <div ng-if="fixturesLoaded" class="fixture-cards-list">
+                            
+                            <!-- Upcoming Tab -->
+                            <div ng-if="fixturesTab === 'upcoming'" class="fade-in" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div ng-if="liveAndUpcomingGroupFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
+                                    <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming group stage matches
+                                </div>
+                                
+                                <div class="fixture-card" ng-repeat="match in liveAndUpcomingGroupFixtures()" ng-class="{'is-live': match.status === 'live'}">
+                                    <div class="fixture-card-header">
+                                        <span class="fixture-competition-badge">{{match.round || 'World Cup 2026'}}</span>
+                                        
+                                        <!-- Countdown or LIVE status -->
+                                        <span class="fixture-countdown-timer" ng-if="match.status === 'notstarted' && match.countdownStr">
+                                            <i class="fa-regular fa-clock"></i> {{match.countdownStr}}
+                                        </span>
+                                        <span class="fixture-status-badge live" ng-if="match.status === 'live'">
+                                            LIVE
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="fixture-match-row">
+                                        <!-- Home Team -->
+                                        <div class="fixture-team-block home">
+                                            <span class="fixture-team-name" title="{{match.homeTeam}}">{{match.homeTeam}}</span>
+                                            <img class="fixture-flag-img" ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" onerror="this.style.display='none'">
+                                        </div>
+                                        
+                                        <!-- Score or VS -->
+                                        <div class="fixture-score-or-vs" ng-class="{'live-score': match.status === 'live', 'vs': match.status === 'notstarted'}">
+                                            <span ng-if="match.status === 'live'">{{match.homeScore}} - {{match.awayScore}}</span>
+                                            <span ng-if="match.status === 'notstarted'">VS</span>
+                                        </div>
+                                        
+                                        <!-- Away Team -->
+                                        <div class="fixture-team-block away">
+                                            <img class="fixture-flag-img" ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" onerror="this.style.display='none'">
+                                            <span class="fixture-team-name" title="{{match.awayTeam}}">{{match.awayTeam}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="fixture-footer-row">
+                                        <span class="fixture-date-time">{{match.localDate}} {{match.timezone || 'IST'}}</span>
+                                        <button class="fixture-action-btn watch-btn" ng-click="watchMatch(match)">
+                                            {{ match.status === 'live' ? 'Watch Live' : 'Watch Match' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Finished Tab -->
+                            <div ng-if="fixturesTab === 'finished'" class="fade-in" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div ng-if="pastGroupFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
+                                    <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No finished matches
+                                </div>
+                                
+                                <div class="fixture-card" ng-repeat="match in pastGroupFixtures()">
+                                    <div class="fixture-card-header">
+                                        <span class="fixture-competition-badge">{{match.round || 'World Cup 2026'}}</span>
+                                        <span class="fixture-status-badge">FT</span>
+                                    </div>
+                                    
+                                    <div class="fixture-match-row">
+                                        <!-- Home Team -->
+                                        <div class="fixture-team-block home">
+                                            <span class="fixture-team-name" title="{{match.homeTeam}}">{{match.homeTeam}}</span>
+                                            <img class="fixture-flag-img" ng-if="match.homeFlag" ng-src="{{match.homeFlag}}" alt="" onerror="this.style.display='none'">
+                                        </div>
+                                        
+                                        <!-- Score -->
+                                        <div class="fixture-score-or-vs" style="font-weight:900;">
+                                            {{match.homeScore}} - {{match.awayScore}}
+                                        </div>
+                                        
+                                        <!-- Away Team -->
+                                        <div class="fixture-team-block away">
+                                            <img class="fixture-flag-img" ng-if="match.awayFlag" ng-src="{{match.awayFlag}}" alt="" onerror="this.style.display='none'">
+                                            <span class="fixture-team-name" title="{{match.awayTeam}}">{{match.awayTeam}}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="fixture-footer-row">
+                                        <span class="fixture-date-time">{{match.localDate}} FT</span>
+                                        <button class="fixture-action-btn highlights-btn" ng-click="showHighlights(match)">
+                                            Highlights
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
 
                 </div>
 
@@ -3343,6 +3552,8 @@
             $scope.raceData = {};
             $scope.nextRace = {};
             $scope.fixtures = [];
+            $scope.fixturesTab = 'upcoming';
+            $scope.fixturesLoaded = false;
             $scope.groups = [];
             $scope.selectedGroup = null;
 
@@ -3351,6 +3562,35 @@
             $scope.schedule = [];
             $scope.weather = null;
             $scope.standingsView = 'drivers';
+
+            $scope.setFixturesTab = function(tab) {
+                $scope.fixturesTab = tab;
+            };
+
+            $scope.watchMatch = function(match) {
+                if (match.status === 'live') {
+                    var videoElem = document.querySelector('.video-wrapper');
+                    if (videoElem) {
+                        videoElem.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    $scope.showPopup({
+                        type: 'info',
+                        icon: 'fa-futbol',
+                        title: 'MATCH NOT STARTED',
+                        msg: match.homeTeam + ' vs ' + match.awayTeam + ' starts at ' + match.localDate
+                    });
+                }
+            };
+
+            $scope.showHighlights = function(match) {
+                $scope.showPopup({
+                    type: 'info',
+                    icon: 'fa-video',
+                    title: 'MATCH HIGHLIGHTS',
+                    msg: 'Highlights for ' + match.homeTeam + ' vs ' + match.awayTeam + ' will be available soon!'
+                });
+            };
 
             // ── LocalStorage instant pre-render ──
             // Render cached fixtures & standings immediately (before Firestore arrives)
@@ -3743,29 +3983,53 @@
                 }
 
                 // ── STEP 4: Schedule session status
-                if (!$scope.schedule) return;
-                $scope.nextUp = null; $scope.activeSession = null;
-                $scope.schedule.forEach(function (session) {
-                    if (isNaN(session.start)) return;
-                    if (now < session.start) {
-                        session.status = 'upcoming';
-                        if (!$scope.nextUp || session.start < $scope.nextUp.start) $scope.nextUp = session;
+                if ($scope.schedule) {
+                    $scope.nextUp = null; $scope.activeSession = null;
+                    $scope.schedule.forEach(function (session) {
+                        if (isNaN(session.start)) return;
+                        if (now < session.start) {
+                            session.status = 'upcoming';
+                            if (!$scope.nextUp || session.start < $scope.nextUp.start) $scope.nextUp = session;
+                        }
+                        else if (now >= session.start && now < session.end) {
+                            session.status = 'live';
+                            $scope.activeSession = session;
+                        }
+                        else {
+                            session.status = 'ended';
+                        }
+                    });
+                    if ($scope.nextUp) {
+                        var dist = $scope.nextUp.start - now;
+                        var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                        var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                        var s = Math.floor((dist % (1000 * 60)) / 1000);
+                        $scope.nextUp.timerStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
                     }
-                    else if (now >= session.start && now < session.end) {
-                        session.status = 'live';
-                        $scope.activeSession = session;
-                    }
-                    else {
-                        session.status = 'ended';
-                    }
-                });
-                if ($scope.nextUp) {
-                    var dist = $scope.nextUp.start - now;
-                    var d = Math.floor(dist / (1000 * 60 * 60 * 24));
-                    var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
-                    var s = Math.floor((dist % (1000 * 60)) / 1000);
-                    $scope.nextUp.timerStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                }
+
+                // ── STEP 5: Fixtures countdown timer loop
+                if ($scope.fixtures) {
+                    $scope.fixtures.forEach(function(m) {
+                        if (m.status === 'notstarted') {
+                            var kickoffDate = parseFifaDate(m.localDate);
+                            if (kickoffDate && !isNaN(kickoffDate.getTime())) {
+                                var diff = kickoffDate.getTime() - now;
+                                if (diff > 0) {
+                                    var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                    var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                    var mVal = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                    var s = Math.floor((diff % (1000 * 60)) / 1000);
+                                    m.countdownStr = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(mVal) + "m " + pad(s) + "s";
+                                } else {
+                                    m.countdownStr = "";
+                                }
+                            } else {
+                                m.countdownStr = "";
+                            }
+                        }
+                    });
                 }
             }
 
@@ -3833,8 +4097,10 @@
                         }
                     }, 100);
 
+                    $scope.fixturesLoaded = true;
                 }, function(err) {
                     console.error('Failed to load FIFA fixtures:', err);
+                    $scope.fixturesLoaded = true;
                 });
 
                 $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
