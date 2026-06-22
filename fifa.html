@@ -3032,6 +3032,385 @@
             height: 28px;
             background: rgba(255,255,255,0.01);
         }
+
+        /* REDESIGNED MATCH INFO CARD */
+        .match-info-card {
+            background: linear-gradient(135deg, rgba(11, 17, 26, 0.9) 0%, rgba(4, 8, 15, 0.95) 100%) !important;
+            border: 1px solid rgba(0, 255, 136, 0.15) !important;
+            border-radius: 24px !important;
+            padding: 24px !important;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(25px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 24px;
+        }
+
+        .match-info-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 255, 136, 0.35) !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 255, 136, 0.1) !important;
+        }
+
+        /* Stadium Light Glow Backdrops */
+        .match-info-bg-glow {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Decorative pitch lines */
+        .match-info-pitch-lines {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 50% 100%, transparent 120px, rgba(255, 255, 255, 0.015) 120px, rgba(255, 255, 255, 0.015) 122px, transparent 122px),
+                linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 30px;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .match-info-card > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Branding and badges */
+        .match-info-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 12px;
+        }
+
+        .match-tournament-branding {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .trophy-accent {
+            color: #00FF88;
+            filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+        }
+
+        .match-status-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .match-live-badge {
+            background: rgba(230, 0, 0, 0.15);
+            border: 1px solid rgba(230, 0, 0, 0.5);
+            color: #ff3b30;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 10px rgba(230, 0, 0, 0.25);
+            text-transform: uppercase;
+        }
+
+        .pulse-badge {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: #ff3b30;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #ff3b30;
+        }
+
+        .match-upcoming-badge {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.35);
+            color: #00FF88;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .match-finished-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        /* Broadcast Title Container */
+        .match-broadcast-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            margin: 15px 0 25px 0;
+        }
+
+        .broadcast-team {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .broadcast-team.home {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .broadcast-team.away {
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .team-logo-container {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(5px);
+        }
+
+        .match-info-card:hover .team-logo-container {
+            transform: scale(1.08) rotate(2deg);
+        }
+        .match-info-card:hover .broadcast-team.home .team-logo-container {
+            transform: scale(1.08) rotate(-2deg);
+        }
+
+        .team-logo-container img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
+
+        .team-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -0.5px;
+            text-transform: capitalize;
+        }
+
+        /* VS and Scores Display */
+        .broadcast-score-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 140px;
+        }
+
+        .score-display-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 6px 18px;
+            border-radius: 16px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .score-number {
+            font-size: 36px;
+            font-weight: 900;
+            color: #00FF88;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: -1px;
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .score-divider {
+            font-size: 24px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .vs-badge {
+            font-size: 16px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 4px 14px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+        }
+
+        .match-time-pill {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            color: #00FF88;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .match-time-pill.finished {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Details info blocks */
+        .match-details-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 20px;
+        }
+
+        .match-info-block {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 0;
+        }
+
+        .match-info-card:hover .match-info-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(0, 255, 136, 0.08);
+        }
+
+        .info-block-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 255, 136, 0.06);
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00FF88;
+            font-size: 14px;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.05);
+        }
+
+        .info-block-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex-grow: 1;
+        }
+
+        .info-block-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .info-block-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
+        /* RESPONSIVE LAYOUTS */
+        @media (max-width: 1200px) {
+            .match-details-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .match-broadcast-title {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .broadcast-team {
+                justify-content: center !important;
+                text-align: center !important;
+                flex-direction: column !important;
+                gap: 8px;
+            }
+            .broadcast-team.home {
+                flex-direction: column-reverse !important;
+            }
+            .match-details-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .score-number {
+                font-size: 30px;
+            }
+            .team-name {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .match-details-grid {
+                grid-template-columns: 1fr;
+            }
+            .match-info-card {
+                padding: 18px !important;
+            }
+        }
     </style>
 </head>
 
@@ -3194,35 +3573,113 @@
                         <span class="btn-label">Chat</span>
                     </button>
                 </div>
-                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                <div class="match-info-card" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
                     data-tilt-speed="400" data-tilt-perspective="1000">
-                    <div class="event-header">
-                        <div>
-                            <div class="event-title" style="margin-top: 5px;">{{raceData.name}}</div>
+                    <!-- Ambient Glow backdrop -->
+                    <div class="match-info-bg-glow"></div>
+                    <div class="match-info-pitch-lines"></div>
+
+                    <!-- Top Branding & Status Row -->
+                    <div class="match-info-top-row">
+                        <div class="match-tournament-branding">
+                            <i class="fa-solid fa-trophy trophy-accent"></i>
+                            <span>{{ raceData.competition || 'FIFA World Cup 2026' }}</span>
                         </div>
-                        <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
-                            <span
-                                style="width:10px; height:10px; background:var(--f1-green); border-radius:50%; box-shadow: 0 0 10px var(--f1-green);"></span>
-                            <span style="opacity:0.7;">FEED:</span> <span
-                                style="font-weight: 600;">{{currentStream.name}}</span>
+                        <div class="match-status-badge-container">
+                            <span class="match-live-badge pulse-badge" ng-if="raceData.isLive">
+                                <span class="live-dot"></span> LIVE
+                            </span>
+                            <span class="match-upcoming-badge" ng-if="!raceData.isLive && !raceData.isFinished">
+                                UPCOMING
+                            </span>
+                            <span class="match-finished-badge" ng-if="raceData.isFinished && !raceData.isLive">
+                                FINAL
+                            </span>
                         </div>
                     </div>
-                    <div class="meta-grid">
-                        <div class="meta-item"><strong>Location</strong>{{raceData.location}}</div>
-                        <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit}}</div>
-                        <div class="meta-item"><strong>Kickoff</strong>{{raceData.date}}</div>
-                        <div class="meta-item" ng-if="raceData.isLive && streamLinks.length > 0">
-                            <strong>Score</strong>
-                            <span style="font-weight: 900; font-size: 20px; color: #00ff55; letter-spacing: 2px;">
-                                {{raceData.homeScore}} – {{raceData.awayScore}}
-                            </span>
-                            <span style="margin-left: 6px; background: #00ff55; color: #000; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">LIVE</span>
-                            <span ng-if="raceData.matchTime" style="margin-left: 5px; background: rgba(0,255,85,0.15); color: #00ff55; font-size: 11px; font-weight: 900; border-radius: 3px; padding: 2px 6px; vertical-align: middle; border: 1px solid rgba(0,255,85,0.3);">{{raceData.matchTime}}</span>
+
+                    <!-- Centered Match Title -->
+                    <div class="match-broadcast-title">
+                        <!-- Home Team -->
+                        <div class="broadcast-team home">
+                            <div class="team-name">{{ getCurrentFixture().homeTeam || (raceData.name.split(' vs ')[0] || 'TBD') }}</div>
+                            <div class="team-logo-container">
+                                <img ng-src="{{ getCurrentFixture().homeFlag || 'https://flagcdn.com/w80/us.png' }}" alt="" onerror="this.style.display='none'">
+                            </div>
                         </div>
-                        <div class="meta-item" ng-if="raceData.isFinished && !raceData.isLive">
-                            <strong>Final Score</strong>
-                            <span style="font-weight: 900; font-size: 18px; color: #fff;">{{raceData.homeScore}} – {{raceData.awayScore}}</span>
-                            <span style="margin-left: 6px; background: #555; color: #ccc; font-size: 9px; font-weight: 900; border-radius: 3px; padding: 2px 5px; vertical-align: middle; letter-spacing: 1px;">FT</span>
+
+                        <!-- VS & Score Center -->
+                        <div class="broadcast-score-center">
+                            <div class="score-display-row" ng-if="raceData.isLive || raceData.isFinished">
+                                <span class="score-number">{{ raceData.homeScore }}</span>
+                                <span class="score-divider">:</span>
+                                <span class="score-number">{{ raceData.awayScore }}</span>
+                            </div>
+                            <div class="vs-badge" ng-if="!raceData.isLive && !raceData.isFinished">
+                                VS
+                            </div>
+                            <div class="match-time-pill" ng-if="raceData.isLive && getCurrentFixture().matchTime">
+                                {{ getCurrentFixture().matchTime }}
+                            </div>
+                            <div class="match-time-pill finished" ng-if="raceData.isFinished && !raceData.isLive">
+                                FT
+                            </div>
+                        </div>
+
+                        <!-- Away Team -->
+                        <div class="broadcast-team away">
+                            <div class="team-logo-container">
+                                <img ng-src="{{ getCurrentFixture().awayFlag || 'https://flagcdn.com/w80/us.png' }}" alt="" onerror="this.style.display='none'">
+                            </div>
+                            <div class="team-name">{{ getCurrentFixture().awayTeam || (raceData.name.split(' vs ')[1] || 'TBD') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Info Blocks Section -->
+                    <div class="match-details-grid">
+                        <!-- 🌎 Competition -->
+                        <div class="match-info-block">
+                            <div class="info-block-icon"><i class="fa-solid fa-earth-americas"></i></div>
+                            <div class="info-block-content">
+                                <span class="info-block-label">Competition</span>
+                                <span class="info-block-value">{{ raceData.competition || 'FIFA World Cup 2026' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 📅 Matchday -->
+                        <div class="match-info-block">
+                            <div class="info-block-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                            <div class="info-block-content">
+                                <span class="info-block-label">Matchday</span>
+                                <span class="info-block-value">{{ getCurrentFixture().round || raceData.round || 'Group Stage' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 🕒 Kickoff Time -->
+                        <div class="match-info-block">
+                            <div class="info-block-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="info-block-content">
+                                <span class="info-block-label">Kickoff Time</span>
+                                <span class="info-block-value">{{ getCurrentFixture().localDate || raceData.date || 'TBD' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 🏟 Stadium -->
+                        <div class="match-info-block">
+                            <div class="info-block-icon"><i class="fa-solid fa-landmark"></i></div>
+                            <div class="info-block-content">
+                                <span class="info-block-label">Stadium</span>
+                                <span class="info-block-value" title="{{ getCurrentFixture().stadium || raceData.circuit || 'TBD Stadium' }}">{{ getCurrentFixture().stadium || raceData.circuit || 'TBD Stadium' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 📍 Location -->
+                        <div class="match-info-block">
+                            <div class="info-block-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="info-block-content">
+                                <span class="info-block-label">Location</span>
+                                <span class="info-block-value">{{ raceData.location || 'North America' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3559,9 +4016,6 @@
                         </table>
                     </div>
                     
-                    <div style="font-size: 8px; color: rgba(255,255,255,0.25); text-align: right; margin-top: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;" ng-if="lastSyncTime">
-                        Last Updated: {{lastSyncTime}}
-                    </div>
                 </div>
             </div>
         </div>
@@ -4329,6 +4783,14 @@
 
             $interval(updateTimers, 1000);
 
+            $scope.getCurrentFixture = function() {
+                if (!$scope.fixtures || !$scope.raceData || !$scope.raceData.name) return null;
+                var rName = $scope.raceData.name.toLowerCase();
+                return $scope.fixtures.find(function(m) {
+                    var fName = ((m.homeTeam || '') + ' vs ' + (m.awayTeam || '')).toLowerCase();
+                    return fName === rName;
+                }) || null;
+            };
 
             $scope.loadFifaData = function() {
                 $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
