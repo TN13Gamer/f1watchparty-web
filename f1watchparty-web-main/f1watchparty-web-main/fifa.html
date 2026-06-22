@@ -3387,37 +3387,79 @@
         }
 
         @media (max-width: 768px) {
+            .match-info-card {
+                padding: 12px 14px !important;
+            }
+            .match-info-top-row {
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+            }
             .match-broadcast-title {
-                flex-direction: column;
-                gap: 16px;
+                gap: 8px;
+                margin: 6px 0 10px 0;
             }
             .broadcast-team {
-                justify-content: center !important;
-                text-align: center !important;
-                flex-direction: column !important;
                 gap: 8px;
+                flex: 1;
+                min-width: 0;
             }
             .broadcast-team.home {
-                flex-direction: column-reverse !important;
+                justify-content: flex-end;
+                text-align: right;
+            }
+            .broadcast-team.away {
+                justify-content: flex-start;
+                text-align: left;
+            }
+            .team-logo-container {
+                width: 36px;
+                height: 36px;
+                flex-shrink: 0;
+            }
+            .team-name {
+                font-size: 12px;
+                font-weight: 800;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 70px;
+            }
+            .broadcast-score-center {
+                min-width: 80px;
+                flex-shrink: 0;
+            }
+            .score-number {
+                font-size: 24px;
             }
             .match-details-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
+                gap: 6px;
+                padding-top: 10px;
             }
-            .score-number {
-                font-size: 30px;
+            .match-info-block {
+                padding: 6px 8px;
+                gap: 6px;
             }
-            .team-name {
-                font-size: 20px;
+            .info-block-icon {
+                width: 22px;
+                height: 22px;
+                font-size: 9px;
+            }
+            .info-block-value {
+                font-size: 10px;
+            }
+            .info-block-label {
+                font-size: 7px;
             }
         }
 
         @media (max-width: 480px) {
             .match-details-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
-            .match-info-card {
-                padding: 10px 14px !important;
+            .team-name {
+                max-width: 55px;
+                font-size: 11px;
             }
         }
     </style>
@@ -3930,12 +3972,7 @@
                         </div>
                     </div>
 
-                    <!-- Description card -->
-                    <div class="standings-desc-card" ng-if="selectedGroup" style="padding: 6px 10px; margin-bottom: 8px;">
-                        <div class="standings-desc-text" style="font-size: 9.5px; line-height: 1.3; color: rgba(255, 255, 255, 0.45); margin-bottom: 0;">
-                            Follow the latest FIFA tournament standings with real-time updates. Track team performance, points, wins, losses, goal difference, and qualification status throughout the competition.
-                        </div>
-                    </div>
+
 
 
                     <!-- Standings Table -->
@@ -4081,48 +4118,7 @@
             EVENT <span>• {{raceData.name}}</span>
         </div>
 
-        <!-- Timer Card -->
-        <div class="countdown-timer-box">
-            <!-- 0. Custom Countdown Timer (if enabled & active) -->
-            <div ng-if="showCustomTimer">
-                <div class="countdown-session-title">
-                    <i class="fa-regular fa-clock"></i> {{customTimerCountdown === 'LIVE NOW' ? 'MATCH STATUS' : (customTimer.label || 'STREAM STARTS')}}
-                </div>
-                <div class="countdown-digits">
-                    {{customTimerCountdown || '00:00:00'}}
-                </div>
-            </div>
 
-            <!-- 1. Live Session -->
-            <div ng-if="!showCustomTimer && activeSession">
-                <div class="countdown-session-title" style="color: var(--f1-green);">
-                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
-                </div>
-                <div class="countdown-digits" style="color: var(--f1-green);">
-                    {{activeSession.name}}
-                </div>
-            </div>
-
-            <!-- 2. Upcoming Session Countdown -->
-            <div ng-if="!showCustomTimer && !activeSession && matchFuture">
-                <div class="countdown-session-title">
-                    <i class="fa-regular fa-clock"></i> MATCH KICKS OFF IN
-                </div>
-                <div class="countdown-digits">
-                    {{matchCountdownStr || '00:00:00'}}
-                </div>
-            </div>
-
-            <!-- 3. Offline State -->
-            <div class="countdown-offline" ng-if="!showCustomTimer && !activeSession && !matchFuture">
-                <div class="countdown-offline-badge">
-                    <i class="fa-solid fa-circle" style="color: #444; font-size: 10px;"></i> Offline
-                </div>
-                <div class="countdown-offline-text">
-                    Watch Party is currently offline. No upcoming matches scheduled.
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
