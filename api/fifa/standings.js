@@ -115,7 +115,7 @@ function formatStandings(groupsData, teamsData) {
                 pts: parseInt(t.pts || 0)
             };
         }).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
-    }));
+    })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function computeDynamicStandings() {
@@ -242,7 +242,7 @@ function computeDynamicStandings() {
             name: `Group ${g.name}`,
             teams: groupTeams
         };
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 module.exports = async (req, res) => {

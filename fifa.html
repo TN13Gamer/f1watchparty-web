@@ -2388,7 +2388,7 @@
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="event-header">
                         <div>
-                            <span class="event-round">ROUND {{raceData.round}}</span>
+                            <span class="event-round">{{raceData.round}}</span>
                             <div class="event-title">{{raceData.name}}</div>
                         </div>
                         <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
@@ -2417,9 +2417,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="sidebar">
+
                 <!-- FIFA Fixtures Card -->
                 <div class="glass-card carbon-schedule-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
@@ -2509,7 +2507,9 @@
                     </div>
 
                 </div>
-
+            </div>
+            
+            <div class="sidebar">
                 <!-- ⚽ Match Poll Card -->
                 <div class="glass-card poll-card" ng-if="poll.matchId && raceData.name" data-tilt data-tilt-mobile="false" data-tilt-max="3" data-tilt-speed="400" data-tilt-perspective="1000">
                     <div class="card-title" style="margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
