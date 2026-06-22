@@ -2787,6 +2787,251 @@
             .standings-card { order: 6; }
             .knockout-stage-card { order: 7; }
         }
+
+        /* ── Premium FIFA Standings Table Widget ── */
+        .standings-card {
+            background: #0A0A0A !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            padding: 20px !important;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .standings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 14px;
+        }
+
+        .standings-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .standings-logo-icon {
+            font-size: 20px;
+            color: #00FF88;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.3));
+        }
+
+        .standings-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .standings-select {
+            background: rgba(15, 15, 20, 0.6);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .standings-select:hover {
+            border-color: rgba(0, 255, 136, 0.3);
+            background: rgba(15, 15, 20, 0.8);
+        }
+
+        /* Description card above the table */
+        .standings-desc-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .standings-desc-text {
+            margin-bottom: 10px;
+        }
+        .standings-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 10px;
+        }
+        .standings-stat-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .standings-stat-label {
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        .standings-stat-value {
+            color: #fff;
+            font-weight: 800;
+        }
+
+        /* Standings Table container for scrollability */
+        .standings-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            position: relative;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 255, 85, 0.2) rgba(0, 0, 0, 0.1);
+        }
+        .standings-table-wrap::-webkit-scrollbar {
+            height: 4px;
+            display: block !important;
+        }
+        .standings-table-wrap::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 85, 0.25);
+            border-radius: 10px;
+        }
+        .standings-table-wrap::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 85, 0.45);
+        }
+        .standings-table-wrap::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .standings-table th {
+            position: sticky;
+            top: 0;
+            background: #0A0A0A;
+            z-index: 10;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 800;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .standings-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            transition: all 0.2s ease;
+        }
+
+        .standings-row {
+            transition: background 0.2s, transform 0.2s;
+            position: relative;
+        }
+        .standings-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+            transform: scale(1.005);
+        }
+
+        /* Qualification border/left line indicator */
+        .standings-row.qualifying-row {
+            border-left: 2px solid #00FF88;
+        }
+        .standings-row.qualifying-row td:first-child {
+            padding-left: 4px;
+        }
+
+        /* Dashed qualification line below index 2 */
+        .standings-row.qualification-cutoff {
+            border-bottom: 1px dashed rgba(0, 255, 136, 0.3) !important;
+        }
+
+        /* Favorite team highlight */
+        .standings-row.is-favorite-team {
+            background: rgba(0, 255, 136, 0.04) !important;
+            border-left: 2px solid #00FF88 !important;
+            box-shadow: inset 0 0 10px rgba(0, 255, 136, 0.05);
+        }
+        .standings-row.is-favorite-team td {
+            color: #00FF88 !important;
+            font-weight: 700;
+        }
+
+        .st-pos-col {
+            font-weight: 800;
+            width: 25px;
+            text-align: center;
+        }
+        .st-pos-col.p1 { color: #ffd700; }
+        .st-pos-col.p2 { color: #c0c0c0; }
+        
+        .st-team-col {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 28px;
+            min-width: 110px;
+        }
+        
+        .st-fav-star {
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.15);
+            transition: color 0.2s, transform 0.2s;
+            font-size: 10px;
+        }
+        .st-fav-star:hover {
+            color: #ffd700;
+            transform: scale(1.2);
+        }
+        .st-fav-star.active {
+            color: #ffd700;
+            text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+        }
+
+        .st-flag {
+            width: 16px;
+            height: 11px;
+            object-fit: cover;
+            border-radius: 1px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .st-stat-col {
+            text-align: center;
+            width: 20px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .st-stat-col.pts {
+            font-weight: 800;
+            color: #00ff55;
+            width: 28px;
+        }
+        .st-stat-col.gd {
+            color: rgba(255, 255, 255, 0.5);
+            font-family: monospace;
+        }
+
+        /* Skeleton styling */
+        .standings-skeleton-row {
+            height: 28px;
+            background: rgba(255,255,255,0.01);
+        }
     </style>
 </head>
 
@@ -3073,7 +3318,7 @@
                     </div>
                 </div>
 
-                      <!-- FIFA Fixtures Card (Group Stage) -->
+                      <!-- FIFA Fixtures Card (All Matches) -->
                 <div class="glass-card carbon-schedule-card group-fixtures-card" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
                     <video class="card-video-bg" ng-if="!isMobile" autoplay loop muted playsinline ng-src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/fifa.mp4"></video>
@@ -3081,7 +3326,7 @@
                     <div class="card-title" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0;">
                         <span><i class="fa-solid fa-calendar-days"></i> Match Fixtures</span>
                         <!-- Fast refresh indicator when live -->
-                        <span ng-if="hasLiveGroupMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00FF88; display:flex; align-items:center; gap:5px;">
+                        <span ng-if="hasLiveMatches()" style="font-size:9px; font-weight:800; letter-spacing:1.5px; color:#00FF88; display:flex; align-items:center; gap:5px;">
                             <span style="width:5px;height:5px;border-radius:50%;background:#00FF88;box-shadow:0 0 6px #00FF88;animation:pulse-red 0.8s infinite;"></span>
                             LIVE · FAST REFRESH
                         </span>
@@ -3126,11 +3371,11 @@
                             
                             <!-- Upcoming Tab -->
                             <div ng-if="fixturesTab === 'upcoming'" class="fade-in" style="display: flex; flex-direction: column; gap: 12px;">
-                                <div ng-if="liveAndUpcomingGroupFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
-                                    <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming group stage matches
+                                <div ng-if="liveAndUpcomingFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
+                                    <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No upcoming matches
                                 </div>
                                 
-                                <div class="fixture-card" ng-repeat="match in liveAndUpcomingGroupFixtures()" ng-class="{'is-live': match.status === 'live'}">
+                                <div class="fixture-card" ng-repeat="match in liveAndUpcomingFixtures()" ng-class="{'is-live': match.status === 'live'}">
                                     <div class="fixture-card-header">
                                         <span class="fixture-competition-badge">{{match.round || 'World Cup 2026'}}</span>
                                         
@@ -3165,8 +3410,8 @@
                                     
                                     <div class="fixture-footer-row">
                                         <span class="fixture-date-time">{{match.localDate}} {{match.timezone || 'IST'}}</span>
-                                        <button class="fixture-action-btn watch-btn" ng-click="watchMatch(match)">
-                                            {{ match.status === 'live' ? 'Watch Live' : 'Watch Match' }}
+                                        <button class="fixture-action-btn watch-btn" ng-click="watchMatch(match)" ng-if="match.status === 'live'">
+                                            Watch Live
                                         </button>
                                     </div>
                                 </div>
@@ -3174,11 +3419,11 @@
 
                             <!-- Finished Tab -->
                             <div ng-if="fixturesTab === 'finished'" class="fade-in" style="display: flex; flex-direction: column; gap: 12px;">
-                                <div ng-if="pastGroupFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
+                                <div ng-if="pastFixtures().length === 0" style="text-align:center; padding:24px 10px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:700; border:1px dashed rgba(255,255,255,0.07); border-radius:16px;">
                                     <i class="fa-solid fa-futbol" style="margin-right:6px; opacity:0.5;"></i> No finished matches
                                 </div>
                                 
-                                <div class="fixture-card" ng-repeat="match in pastGroupFixtures()">
+                                <div class="fixture-card" ng-repeat="match in pastFixtures()">
                                     <div class="fixture-card-header">
                                         <span class="fixture-competition-badge">{{match.round || 'World Cup 2026'}}</span>
                                         <span class="fixture-status-badge">FT</span>
@@ -3205,9 +3450,6 @@
                                     
                                     <div class="fixture-footer-row">
                                         <span class="fixture-date-time">{{match.localDate}} FT</span>
-                                        <button class="fixture-action-btn highlights-btn" ng-click="showHighlights(match)">
-                                            Highlights
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -3218,55 +3460,136 @@
                 </div>
 
                 <!-- FIFA Standings Card -->
-                <div class="glass-card standings-card" style="padding-bottom: 10px;" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                <div class="glass-card standings-card" data-tilt data-tilt-mobile="false" data-tilt-max="3"
                     data-tilt-speed="400" data-tilt-perspective="1000">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 15px;">
-                        <div class="card-title" style="margin-bottom:0;">
-                            <i class="fa-solid fa-trophy"></i> Standings
+                    
+                    <!-- Header Section -->
+                    <div class="standings-header">
+                        <div class="standings-header-left">
+                            <span class="standings-logo-icon"><i class="fa-solid fa-trophy"></i></span>
+                            <div class="card-title" style="margin-bottom:0; display:inline-block; vertical-align:middle;">Standings</div>
                         </div>
-                        <select ng-model="selectedGroup" ng-options="g as g.name for g in groups" style="
-                            background: rgba(15, 15, 20, 0.6);
-                            color: #fff;
-                            border: 1px solid var(--border);
-                            padding: 4px 8px;
-                            border-radius: 8px;
-                            font-weight: 700;
-                            font-size: 11px;
-                            outline: none;
-                            cursor: pointer;
-                            max-width: 110px;
-                        "></select>
+                        
+                        <div class="standings-header-right">
+                            <!-- Season selector -->
+                            <select class="standings-select" style="width: 100px;">
+                                <option>2026 Season</option>
+                            </select>
+                            
+                            <!-- Group selector -->
+                            <select ng-model="selectedGroup" ng-options="g as g.name for g in groups" class="standings-select" style="max-width: 110px;">
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                    <!-- Description and dynamic stats card -->
+                    <div class="standings-desc-card" ng-if="selectedGroup">
+                        <div class="standings-desc-text">
+                            Follow the latest FIFA tournament standings with real-time updates. Track team performance, points, wins, losses, goal difference, and qualification status throughout the competition.
+                        </div>
+                        <div class="standings-stats-grid">
+                            <div class="standings-stat-pill">
+                                <span class="standings-stat-label">Matches Played</span>
+                                <span class="standings-stat-value">{{groupFinishedMatchesCount()}}</span>
+                            </div>
+                            <div class="standings-stat-pill">
+                                <span class="standings-stat-label">Total Goals</span>
+                                <span class="standings-stat-value">{{groupTotalGoalsCount()}}</span>
+                            </div>
+                            <div class="standings-stat-pill">
+                                <span class="standings-stat-label">Teams Qualified</span>
+                                <span class="standings-stat-value">Top 2</span>
+                            </div>
+                            <div class="standings-stat-pill">
+                                <span class="standings-stat-label">Next Match</span>
+                                <span class="standings-stat-value">{{getGroupUpcomingMatch()}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Standings Table -->
+                    <div class="standings-table-wrap">
+                        
+                        <!-- 1. Skeleton loader (if not loaded) -->
+                        <table class="standings-table" ng-if="groups.length === 0">
                             <thead>
-                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">
-                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">POS</th>
-                                    <th style="padding: 6px 2px;">TEAM</th>
-                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">P</th>
-                                    <th style="padding: 6px 2px; text-align: center; width: 25px;">GD</th>
-                                    <th style="padding: 6px 2px; text-align: center; width: 30px;">PTS</th>
+                                <tr>
+                                    <th class="st-pos-col">#</th>
+                                    <th>Team</th>
+                                    <th class="st-stat-col">P</th>
+                                    <th class="st-stat-col">W</th>
+                                    <th class="st-stat-col">D</th>
+                                    <th class="st-stat-col">L</th>
+                                    <th class="st-stat-col">GF</th>
+                                    <th class="st-stat-col">GA</th>
+                                    <th class="st-stat-col">GD</th>
+                                    <th class="st-stat-col pts">PTS</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="t in selectedGroup.teams" style="border-bottom: 1px solid rgba(255,255,255,0.03); height: 36px;">
-                                    <td style="padding: 6px 2px; text-align: center; font-weight: 800; color: var(--text-gray);" ng-class="{'p1': $index === 0, 'p2': $index === 1, 'p3': $index === 2}">
-                                        {{$index + 1}}
+                                <tr ng-repeat="i in [1,2,3,4]" class="standings-skeleton-row">
+                                    <td colspan="10" style="padding: 10px; text-align: center; position: relative; overflow: hidden;">
+                                        <div class="skeleton-pulse"></div>
+                                        <div style="background: rgba(255,255,255,0.03); height: 12px; width: 100%; border-radius: 4px;"></div>
                                     </td>
-                                    <td style="padding: 6px 2px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; height: 36px;">
-                                        <img ng-src="{{t.flag}}" alt="" style="width: 16px; height: 11px; object-fit: cover; border-radius: 1px;" onerror="this.style.display='none'">
-                                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px;" title="{{t.name}}">{{t.name}}</span>
-                                    </td>
-                                    <td style="padding: 6px 2px; text-align: center; font-weight: 600;">{{t.mp}}</td>
-                                    <td style="padding: 6px 2px; text-align: center; color: var(--text-gray);">{{t.gd > 0 ? '+' : ''}}{{t.gd}}</td>
-                                    <td style="padding: 6px 2px; text-align: center; font-weight: 900; color: #00ff55;">{{t.pts}}</td>
                                 </tr>
                             </tbody>
                         </table>
-                        <div ng-if="groups.length === 0" style="text-align: center; padding: 20px; color: var(--text-gray); font-size: 13px;">
-                            No standings available.
-                        </div>
+
+                        <!-- 2. Real data table -->
+                        <table class="standings-table" ng-if="groups.length > 0">
+                            <thead>
+                                <tr>
+                                    <th class="st-pos-col">#</th>
+                                    <th>Team</th>
+                                    <th class="st-stat-col" title="Played">P</th>
+                                    <th class="st-stat-col" title="Won">W</th>
+                                    <th class="st-stat-col" title="Drawn">D</th>
+                                    <th class="st-stat-col" title="Lost">L</th>
+                                    <th class="st-stat-col" title="Goals For">GF</th>
+                                    <th class="st-stat-col" title="Goals Against">GA</th>
+                                    <th class="st-stat-col" title="Goal Difference">GD</th>
+                                    <th class="st-stat-col pts" title="Points">PTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="t in selectedGroup.teams" 
+                                    class="standings-row" 
+                                    ng-class="{'qualifying-row': $index < 2, 'qualification-cutoff': $index === 1, 'is-favorite-team': favTeamId === t.teamId}">
+                                    
+                                    <!-- Position -->
+                                    <td class="st-pos-col" ng-class="{'p1': $index === 0, 'p2': $index === 1}">
+                                        {{$index + 1}}
+                                    </td>
+                                    
+                                    <!-- Team Name + Flag + Favorite star -->
+                                    <td>
+                                        <div class="st-team-col">
+                                            <!-- Favorite Star Icon -->
+                                            <span class="st-fav-star" ng-class="{'active': favTeamId === t.teamId}" ng-click="toggleFavoriteTeam(t)">
+                                                <i class="fa-solid fa-star"></i>
+                                            </span>
+                                            <img ng-src="{{t.flag}}" alt="" class="st-flag" onerror="this.style.display='none'">
+                                            <span style="text-transform: capitalize;" title="{{t.name}}">{{t.name}}</span>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Stats -->
+                                    <td class="st-stat-col">{{t.mp}}</td>
+                                    <td class="st-stat-col">{{t.w}}</td>
+                                    <td class="st-stat-col">{{t.d}}</td>
+                                    <td class="st-stat-col">{{t.l}}</td>
+                                    <td class="st-stat-col">{{t.gf}}</td>
+                                    <td class="st-stat-col">{{t.ga}}</td>
+                                    <td class="st-stat-col gd">{{t.gd > 0 ? '+' : ''}}{{t.gd}}</td>
+                                    <td class="st-stat-col pts">{{t.pts}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="font-size: 8px; color: rgba(255,255,255,0.25); text-align: right; margin-top: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;" ng-if="lastSyncTime">
+                        Last Updated: {{lastSyncTime}}
                     </div>
                 </div>
             </div>
@@ -4178,6 +4501,70 @@
             $scope.hasLiveGroupMatches = function() {
                 if (!$scope.fixtures) return false;
                 return $scope.fixtures.some(function(m) { return isGroupMatch(m) && m.status === 'live'; });
+            };
+
+            // Helper: live + upcoming fixtures (all)
+            $scope.liveAndUpcomingFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.status === 'live' || m.status === 'notstarted';
+                });
+            };
+
+            // Helper: past (finished) fixtures (all)
+            $scope.pastFixtures = function() {
+                if (!$scope.fixtures) return [];
+                return $scope.fixtures.filter(function(m) {
+                    return m.finished || (m.status !== 'live' && m.status !== 'notstarted');
+                });
+            };
+
+            // Helper: any live match right now?
+            $scope.hasLiveMatches = function() {
+                if (!$scope.fixtures) return false;
+                return $scope.fixtures.some(function(m) { return m.status === 'live'; });
+            };
+
+            // Standings stats calculations
+            $scope.groupFinishedMatchesCount = function() {
+                if (!$scope.selectedGroup || !$scope.selectedGroup.teams) return 0;
+                var sum = 0;
+                $scope.selectedGroup.teams.forEach(function(t) { sum += (t.mp || 0); });
+                return Math.floor(sum / 2);
+            };
+
+            $scope.groupTotalGoalsCount = function() {
+                if (!$scope.selectedGroup || !$scope.selectedGroup.teams) return 0;
+                var sum = 0;
+                $scope.selectedGroup.teams.forEach(function(t) { sum += (t.gf || 0); });
+                return sum;
+            };
+
+            $scope.getGroupUpcomingMatch = function() {
+                if (!$scope.selectedGroup || !$scope.selectedGroup.teams || !$scope.fixtures) return 'TBD';
+                var teamNames = $scope.selectedGroup.teams.map(function(t) { return t.name.toLowerCase(); });
+                var upcoming = $scope.fixtures.filter(function(m) {
+                    return m.status === 'notstarted' &&
+                           (teamNames.includes((m.homeTeam || '').toLowerCase()) ||
+                            teamNames.includes((m.awayTeam || '').toLowerCase()));
+                }).sort(function(a, b) { return getFixtureDisplayTime(a) - getFixtureDisplayTime(b); });
+                
+                if (upcoming.length > 0) {
+                    return upcoming[0].localDate.split(' ')[0] + ' ' + upcoming[0].localDate.split(' ')[1];
+                }
+                return 'Completed';
+            };
+
+            // Favorite Team logic
+            $scope.favTeamId = localStorage.getItem('fifa_fav_team_id') || null;
+            $scope.toggleFavoriteTeam = function(team) {
+                if ($scope.favTeamId === team.teamId) {
+                    $scope.favTeamId = null;
+                    localStorage.removeItem('fifa_fav_team_id');
+                } else {
+                    $scope.favTeamId = team.teamId;
+                    localStorage.setItem('fifa_fav_team_id', team.teamId);
+                }
             };
 
             // Helper: live + upcoming knockout fixtures
