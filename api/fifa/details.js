@@ -6,30 +6,7 @@
  */
 
 const axios = require('axios');
-const admin = require('firebase-admin');
-
-// Firebase init
-if (!admin.apps.length) {
-  try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({ credential: admin.credential.cert(sa) });
-    } else {
-      const fs = require('fs');
-      const path = require('path');
-      const possiblePaths = [
-        path.resolve(__dirname, '../../serviceAccountKey.json'),
-        path.resolve(__dirname, '../../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-      ];
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          admin.initializeApp({ credential: admin.credential.cert(require(p)) });
-          break;
-        }
-      }
-    }
-  } catch (e) { console.error('[fifa/details] Firebase init error:', e.message); }
-}
+const { db } = require('../_supabase');
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
@@ -41,8 +18,9 @@ function formatIst(ms) {
 }
 
 const STREAMED_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-  'Referer': 'https://streamed.pk/',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Referer': 'https://streamed.st/',
+  'Origin': 'https://streamed.st'
 };
 
 const FOTMOB_HEADERS = {
@@ -51,10 +29,40 @@ const FOTMOB_HEADERS = {
   'Referer': 'https://www.fotmob.com/',
 };
 
+// Robust fetch helper with curl fallback to bypass Cloudflare TLS fingerprinting and handle timeouts/blocks gracefully
+async function fetchJson(url, timeoutMs = 8000) {
+  try {
+    const { data } = await axios.get(url, {
+      timeout: timeoutMs,
+      headers: STREAMED_HEADERS
+    });
+    return data;
+  } catch (e) {
+    console.log(`[fifa/details] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
+    try {
+      const { exec } = require('child_process');
+      return await new Promise((resolve, reject) => {
+        const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
+        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Referer: https://streamed.st/" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+          if (error) return reject(error);
+          try {
+            resolve(JSON.parse(stdout));
+          } catch (jsonErr) {
+            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+          }
+        });
+      });
+    } catch (curlErr) {
+      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+    }
+  }
+}
+
 function normName(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 
 function inferVenueFromTitle(title) {
-  // streamed.pk match titles don't include venue — return generic for now
+  // streamed.st match titles don't include venue — return generic for now
   return { stadium: 'FIFA World Cup 2026 Venue', city: '', country: 'United States' };
 }
 
@@ -69,12 +77,12 @@ module.exports = async (req, res) => {
   try {
     const now = Date.now();
 
-    // Step 1: Fetch football matches from streamed.pk + today's schedule in parallel
+    // Step 1: Fetch football matches from streamed.st + today's schedule in parallel
     const [footballRes, liveRes, fotmobRes] = await Promise.allSettled([
-      axios.get('https://streamed.pk/api/matches/football', { timeout: 4000, headers: STREAMED_HEADERS })
-        .then(r => Array.isArray(r.data) ? r.data : []),
-      axios.get('https://streamed.pk/api/matches/live', { timeout: 4000, headers: STREAMED_HEADERS })
-        .then(r => Array.isArray(r.data) ? r.data : []),
+      fetchJson('https://streamed.st/api/matches/football', 7000)
+        .then(data => Array.isArray(data) ? data : []),
+      fetchJson('https://streamed.st/api/matches/live', 7000)
+        .then(data => Array.isArray(data) ? data : []),
       // FotMob for live scores (World Cup pl=77)
       (async () => {
         const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -136,11 +144,11 @@ module.exports = async (req, res) => {
     }
 
     if (allFootball.length === 0) {
-      return res.json({ ok: false, error: 'No football matches from streamed.pk', raceData: null });
+      return res.json({ ok: false, error: 'No football matches from streamed.st', raceData: null });
     }
 
     // Step 2: Find best match from fotmob — live first, then upcoming by kickoff
-    // FotMob data has kickoffUtcMs; streamed.pk has .date (unix ms)
+    // FotMob data has kickoffUtcMs; streamed.st has .date (unix ms)
     let chosenStreamed = null;
     let chosenFotmob = null;
 
@@ -160,7 +168,7 @@ module.exports = async (req, res) => {
       console.log(`[fifa/details] Found live match from FotMob: key=${liveKey}`);
     }
 
-    // If no live match, pick the next upcoming from streamed.pk by .date (unix ms)
+    // If no live match, pick the next upcoming from streamed.st by .date (unix ms)
     if (!chosenStreamed) {
       const upcoming = allFootball
         .filter(m => m.date && m.date > (now - 3 * 60 * 60 * 1000)) // not ended >3h ago
@@ -223,30 +231,26 @@ module.exports = async (req, res) => {
       isManual: false,
     };
 
-    // Step 4: Save to Firestore if requested
-    if (saveToFirestore && admin.apps.length) {
+    // Step 4: Save to Supabase if requested
+    if (saveToFirestore) {
       try {
-        const db = admin.firestore();
-        const ref = db.collection('app_data').doc('live_config');
-        const doc = await ref.get();
-        if (doc.exists) {
-          const currentFifa = (doc.data().fifa) || {};
-          // Preserve manual customTimer if set
-          const timerToSave = (currentFifa.customTimer && currentFifa.customTimer.isManual)
-            ? currentFifa.customTimer
-            : customTimer;
-          await ref.update({
-            fifa: {
-              ...currentFifa,
-              raceData,
-              customTimer: timerToSave,
-              lastDetailsSync: new Date().toISOString(),
-            }
-          });
-          console.log(`[fifa/details] Saved to Firestore: ${title}`);
-        }
+        const config = await db.getConfig();
+        const currentFifa = config.fifa || {};
+        // Preserve manual customTimer if set
+        const timerToSave = (currentFifa.customTimer && currentFifa.customTimer.isManual)
+          ? currentFifa.customTimer
+          : customTimer;
+        await db.updateConfig({
+          fifa: {
+            ...currentFifa,
+            raceData,
+            customTimer: timerToSave,
+            lastDetailsSync: new Date().toISOString(),
+          }
+        });
+        console.log(`[fifa/details] Saved to Supabase: ${title}`);
       } catch (e) {
-        console.error('[fifa/details] Firestore save error:', e.message);
+        console.error('[fifa/details] Supabase save error:', e.message);
       }
     }
 

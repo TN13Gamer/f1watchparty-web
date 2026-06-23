@@ -1,41 +1,48 @@
 /**
  * /api/fifa/streams — Fast FIFA stream fetcher
- * Uses streamed.pk official API: GET /api/matches/football (sport-specific, small payload)
+ * Uses streamed.st official API: GET /api/matches/football (sport-specific, small payload)
  * Then resolves embedUrls from match sources in parallel.
  * Designed to complete well within Vercel's 10s function limit.
  */
 
 const axios = require('axios');
-const admin = require('firebase-admin');
-
-// Firebase init (shared pattern)
-if (!admin.apps.length) {
-  try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({ credential: admin.credential.cert(sa) });
-    } else {
-      const fs = require('fs');
-      const path = require('path');
-      const possiblePaths = [
-        path.resolve(__dirname, '../../serviceAccountKey.json'),
-        path.resolve(__dirname, '../../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-      ];
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          admin.initializeApp({ credential: admin.credential.cert(require(p)) });
-          break;
-        }
-      }
-    }
-  } catch (e) { console.error('[fifa/streams] Firebase init error:', e.message); }
-}
+const { db } = require('../_supabase');
 
 const STREAMED_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Referer': 'https://streamed.pk/',
-  'Origin': 'https://streamed.pk'
+  'Referer': 'https://streamed.st/',
+  'Origin': 'https://streamed.st'
 };
+
+// Robust fetch helper with curl fallback to bypass Cloudflare TLS fingerprinting and handle timeouts/blocks gracefully
+async function fetchJson(url, timeoutMs = 8000) {
+  try {
+    const { data } = await axios.get(url, {
+      timeout: timeoutMs,
+      headers: STREAMED_HEADERS
+    });
+    return data;
+  } catch (e) {
+    console.log(`[fifa/streams] Axios failed for ${url}: ${e.message}. Falling back to curl.`);
+    try {
+      const { exec } = require('child_process');
+      return await new Promise((resolve, reject) => {
+        const curlCmd = process.platform === 'win32' ? 'curl.exe' : 'curl';
+        const cmd = `${curlCmd} -s -L -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -H "Referer: https://streamed.st/" "${url}"`;
+        exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: timeoutMs }, (error, stdout, stderr) => {
+          if (error) return reject(error);
+          try {
+            resolve(JSON.parse(stdout));
+          } catch (jsonErr) {
+            reject(new Error(`Failed to parse JSON from curl stdout: ${jsonErr.message}. Output was: ${stdout.substring(0, 200)}`));
+          }
+        });
+      });
+    } catch (curlErr) {
+      throw new Error(`Both Axios and curl failed to fetch ${url}. Axios: ${e.message}. Curl: ${curlErr.message}`);
+    }
+  }
+}
 
 // Blocked sources that never return valid stream embeds
 const BLOCKED_SOURCES = new Set(['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport']);
@@ -79,16 +86,16 @@ module.exports = async (req, res) => {
   try {
     // Step 1: Fetch football matches ONLY (correct sport-specific endpoint = fast, small payload)
     // Try live first, fall back to all-today and all in parallel
-    const TIMEOUT = 4000;
+    const TIMEOUT = 7000;
     const endpoints = [
-      'https://streamed.pk/api/matches/football',
-      'https://streamed.pk/api/matches/live',
+      'https://streamed.st/api/matches/football',
+      'https://streamed.st/api/matches/live',
     ];
 
     const fetchResults = await Promise.allSettled(
       endpoints.map(ep =>
-        axios.get(ep, { timeout: TIMEOUT, headers: STREAMED_HEADERS })
-          .then(r => Array.isArray(r.data) ? r.data : [])
+        fetchJson(ep, TIMEOUT)
+          .then(data => Array.isArray(data) ? data : [])
           .catch(e => { console.warn(`[fifa/streams] ${ep} failed:`, e.message); return []; })
       )
     );
@@ -107,7 +114,7 @@ module.exports = async (req, res) => {
     console.log(`[fifa/streams] Got ${allMatches.length} total football/live matches`);
 
     if (allMatches.length === 0) {
-      return res.json({ ok: false, error: 'No matches returned from streamed.pk', streamLinks: [] });
+      return res.json({ ok: false, error: 'No matches returned from streamed.st', streamLinks: [] });
     }
 
     // Step 2: Find best matching football match
@@ -146,9 +153,8 @@ module.exports = async (req, res) => {
     await Promise.all(
       sources.map(async (src) => {
         try {
-          const url = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
-          const resp = await axios.get(url, { timeout: 3000, headers: STREAMED_HEADERS });
-          const streams = resp.data;
+          const url = `https://streamed.st/api/stream/${src.source}/${src.id}`;
+          const streams = await fetchJson(url, 4000);
           if (Array.isArray(streams)) {
             streams.forEach(stream => {
               if (stream.embedUrl) {
@@ -168,25 +174,21 @@ module.exports = async (req, res) => {
 
     console.log(`[fifa/streams] Resolved ${streamLinks.length} stream links`);
 
-    // Step 4: Optionally save to Firestore
-    if (saveToFirestore && admin.apps.length) {
+    // Step 4: Optionally save to Supabase
+    if (saveToFirestore) {
       try {
-        const db = admin.firestore();
-        const ref = db.collection('app_data').doc('live_config');
-        const doc = await ref.get();
-        if (doc.exists) {
-          const currentFifa = (doc.data().fifa) || {};
-          await ref.update({
-            fifa: {
-              ...currentFifa,
-              streamLinks,
-              lastStreamsSync: new Date().toISOString()
-            }
-          });
-          console.log(`[fifa/streams] Saved ${streamLinks.length} links to Firestore`);
-        }
+        const config = await db.getConfig();
+        const currentFifa = config.fifa || {};
+        await db.updateConfig({
+          fifa: {
+            ...currentFifa,
+            streamLinks,
+            lastStreamsSync: new Date().toISOString()
+          }
+        });
+        console.log(`[fifa/streams] Saved ${streamLinks.length} links to Supabase`);
       } catch (e) {
-        console.error('[fifa/streams] Firestore save error:', e.message);
+        console.error('[fifa/streams] Supabase save error:', e.message);
       }
     }
 

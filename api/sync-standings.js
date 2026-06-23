@@ -5,7 +5,7 @@
  */
 
 const axios = require('axios');
-const admin = require('firebase-admin');
+const supabaseDb = require('./_supabase').db;
 const cheerio = require('cheerio');
 
 // Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
@@ -57,7 +57,7 @@ async function fetchJson(url, timeoutMs = 25000) {
       timeout: timeoutMs,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://streamed.pk/category/football'
+        'Referer': 'https://streamed.st/category/football'
       }
     });
     return data;
@@ -101,45 +101,7 @@ function formatFixtureIst(kickoffMs) {
 }
 
 
-if (!admin.apps.length) {
-  try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({ credential: admin.credential.cert(sa) });
-      } else {
-        const fs = require('fs');
-        const path = require('path');
-        let keyPath = null;
-        
-        const possiblePaths = [
-          path.resolve(__dirname, '../serviceAccountKey.json'),
-          path.resolve(__dirname, '../../serviceAccountKey.json'),
-          path.resolve(__dirname, '../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-          path.resolve(__dirname, '../../f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-          path.resolve(__dirname, '../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-          path.resolve(__dirname, '../../f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-          path.resolve(process.cwd(), './serviceAccountKey.json'),
-          path.resolve(process.cwd(), './f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json'),
-          path.resolve(process.cwd(), './f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json')
-        ];
-        
-        for (const p of possiblePaths) {
-          if (fs.existsSync(p)) {
-            keyPath = p;
-            break;
-          }
-        }
-        
-        if (keyPath) {
-          const sa = require(keyPath);
-          admin.initializeApp({ credential: admin.credential.cert(sa) });
-          console.log('[sync] Firebase initialized using local file:', keyPath);
-        } else {
-          console.warn('[sync] No Firebase credentials found.');
-        }
-      }
-  } catch(e) { console.error('[sync] Firebase init error:', e.message); }
-}
+// Firebase Admin initialization removed in V2 in favor of Supabase.
 
 const TEAM_ALIASES = {
   'Mercedes':         ['mercedes', 'amg'],
@@ -722,11 +684,11 @@ function pickStreamedFootballMatch(matches, matchName) {
 
 async function fetchStreamedFootballMatches(matchName, preferLiveOnly = false) {
   const endpoints = preferLiveOnly
-    ? ['https://streamed.pk/api/matches/live']
+    ? ['https://streamed.st/api/matches/live']
     : [
-        'https://streamed.pk/api/matches/live',
-        'https://streamed.pk/api/matches/all-today',
-        'https://streamed.pk/api/matches/all'
+        'https://streamed.st/api/matches/live',
+        'https://streamed.st/api/matches/all-today',
+        'https://streamed.st/api/matches/all'
       ];
 
   for (const endpoint of endpoints) {
@@ -736,7 +698,7 @@ async function fetchStreamedFootballMatches(matchName, preferLiveOnly = false) {
 
       const selected = pickStreamedFootballMatch(matches, matchName);
       if (selected) {
-        console.log(`[sync-fifa] Matched streamed.pk football event from ${endpoint}: "${selected.title}"`);
+        console.log(`[sync-fifa] Matched streamed.st football event from ${endpoint}: "${selected.title}"`);
         return { matches, selected, endpoint };
       }
     } catch (err) {
@@ -758,7 +720,7 @@ async function resolveStreamedLinks(match) {
         return;
       }
 
-      const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+      const streamUrl = `https://streamed.st/api/stream/${src.source}/${src.id}`;
       const streams = await fetchJson(streamUrl, 8000);
       if (Array.isArray(streams)) {
         streams.forEach((stream) => {
@@ -773,7 +735,7 @@ async function resolveStreamedLinks(match) {
         });
       }
     } catch (err) {
-      console.error(`[sync-fifa] Failed to fetch streamed.pk source ${src.source}:`, err.message);
+      console.error(`[sync-fifa] Failed to fetch streamed.st source ${src.source}:`, err.message);
     }
   });
 
@@ -841,7 +803,7 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
   try {
     const { selected: selectedMatch } = await fetchStreamedFootballMatches(currentRaceData.name, true);
     if (!selectedMatch) {
-      console.log('[sync-fifa-live] No live football match found on streamed.pk.');
+      console.log('[sync-fifa-live] No live football match found on streamed.st.');
       return null;
     }
 
@@ -859,7 +821,7 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
         ...currentRaceData,
         name: matchName,
         round: currentRaceData.round || 'Live Football',
-        circuit: currentRaceData.circuit || 'streamed.pk',
+        circuit: currentRaceData.circuit || 'streamed.st',
         location: currentRaceData.location || 'Live',
         date: kickoffDate && !isNaN(kickoffDate.getTime()) ? formatFixtureIst(kickoffDate.getTime()) : (currentRaceData.date || ''),
         isLive: true,
@@ -878,10 +840,10 @@ async function syncFifaLiveFromStreamed(config, ref, options = {}) {
     };
 
     await ref.update({ fifa: updatedFifa });
-    console.log(`[sync-fifa-live] Updated FIFA live match from streamed.pk: "${matchName}" with ${streamLinks.length} stream links.`);
+    console.log(`[sync-fifa-live] Updated FIFA live match from streamed.st: "${matchName}" with ${streamLinks.length} stream links.`);
     return updatedFifa;
   } catch (err) {
-    console.error('[sync-fifa-live] streamed.pk live sync failed:', err.message);
+    console.error('[sync-fifa-live] streamed.st live sync failed:', err.message);
     if (options.throwOnError) throw err;
     return null;
   }
@@ -926,12 +888,12 @@ async function syncFifaStreams(config, ref, options = {}) {
   }
 
   try {
-    console.log(`[sync-fifa] Fetching live streamed.pk matches to match tokens: ${tokens.join(' ')}`);
-    let matches = await fetchJson('https://streamed.pk/api/matches/live', 8000);
+    console.log(`[sync-fifa] Fetching live streamed.st matches to match tokens: ${tokens.join(' ')}`);
+    let matches = await fetchJson('https://streamed.st/api/matches/live', 8000);
 
     if (!Array.isArray(matches)) {
       console.log('[sync-fifa] Live matches response is not an array. Falling back to all matches.');
-      matches = await fetchJson('https://streamed.pk/api/matches/all', 8000);
+      matches = await fetchJson('https://streamed.st/api/matches/all', 8000);
       if (!Array.isArray(matches)) {
         console.log('[sync-fifa] Matches response is not an array.');
         return;
@@ -957,8 +919,8 @@ async function syncFifaStreams(config, ref, options = {}) {
 
     if (candidates.length === 0) {
       const fallbackEndpoints = [
-        'https://streamed.pk/api/matches/all-today',
-        'https://streamed.pk/api/matches/all'
+        'https://streamed.st/api/matches/all-today',
+        'https://streamed.st/api/matches/all'
       ];
 
       for (const endpoint of fallbackEndpoints) {
@@ -982,7 +944,7 @@ async function syncFifaStreams(config, ref, options = {}) {
     }
 
     if (candidates.length === 0) {
-      console.log('[sync-fifa] No matching football matches found on streamed.pk. Preserving existing stream links.');
+      console.log('[sync-fifa] No matching football matches found on streamed.st. Preserving existing stream links.');
       return;
     }
 
@@ -1014,7 +976,7 @@ async function syncFifaStreams(config, ref, options = {}) {
             if (['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport'].includes(src.source.toLowerCase())) {
               return;
             }
-            const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+            const streamUrl = `https://streamed.st/api/stream/${src.source}/${src.id}`;
             const streams = await fetchJson(streamUrl, 8000);
             if (Array.isArray(streams)) {
               streams.forEach((stream) => {
@@ -1050,8 +1012,8 @@ async function syncFifaStreams(config, ref, options = {}) {
 
     if (!selectedMatch || resolvedStreamLinks.length === 0) {
       const fallbackEndpoints = [
-        'https://streamed.pk/api/matches/all-today',
-        'https://streamed.pk/api/matches/all'
+        'https://streamed.st/api/matches/all-today',
+        'https://streamed.st/api/matches/all'
       ];
 
       for (const endpoint of fallbackEndpoints) {
@@ -1195,29 +1157,15 @@ module.exports = async (req, res) => {
 
   const requestedType = req.query.type;
 
-  // ── LIVE-CONFIG: return Firebase live_config doc directly ──────────────────
+  // ── LIVE-CONFIG: return Supabase config directly ──────────────────
   if (requestedType === 'liveconfig') {
     try {
-      if (!admin.apps.length) return res.json({});
-      const db = admin.firestore();
-      const doc = await db.collection('app_data').doc('live_config').get();
-      if (doc.exists) return res.json(doc.data());
+      const config = await supabaseDb.getConfig();
+      return res.json(config);
     } catch (e) {
-      console.warn('[sync-standings liveconfig] Firestore error:', e.message);
+      console.warn('[sync-standings liveconfig] Supabase error:', e.message);
+      return res.json({});
     }
-    // Fallback to local backup file
-    try {
-      const fs = require('fs'); const path = require('path');
-      const bp = path.resolve(process.cwd(), 'firestore_live_config_utf8.json');
-      if (fs.existsSync(bp)) {
-        let raw = fs.readFileSync(bp, 'utf8');
-        if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
-        const parsed = JSON.parse(raw);
-        function unwrap(v) { if (!v || typeof v !== 'object') return v; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return parseInt(v.integerValue, 10); if ('doubleValue' in v) return parseFloat(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(unwrap); if ('mapValue' in v) { const r={}; for(const k in (v.mapValue.fields||{})) r[k]=unwrap(v.mapValue.fields[k]); return r; } return v; }
-        if (parsed && parsed.fields) { const r={}; for(const k in parsed.fields) r[k]=unwrap(parsed.fields[k]); return res.json(r); }
-      }
-    } catch (e) { console.error('[sync-standings liveconfig] Backup failed:', e.message); }
-    return res.json({});
   }
 
   // ── FETCH-STREAMS: proxy pushembdz.store stream list ──────────────────────
@@ -1236,86 +1184,26 @@ module.exports = async (req, res) => {
   // ── FIFA POLL: GET/POST vote counts ───────────────────────────────────────
   if (requestedType === 'fifapoll') {
     const matchId = req.query.matchId || (req.body && req.body.matchId);
+    const voterId = req.query.voterId || (req.body && req.body.voterId) || 'anonymous';
     if (!matchId || typeof matchId !== 'string' || matchId.length > 80) return res.status(400).json({ error: 'Invalid matchId' });
 
-    if (!memoryPolls[matchId]) {
-      memoryPolls[matchId] = { home: 0, away: 0, draw: 0, voters: {} };
-    }
-
-    const useFirebase = admin.apps.length > 0;
-
     if (req.method === 'GET') {
-      if (!useFirebase) {
-        const m = memoryPolls[matchId];
-        return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
-      }
-      const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
       try {
-        const snap = await pollRef.get();
-        if (!snap.exists) {
-          const m = memoryPolls[matchId];
-          return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
-        }
-        const d = snap.data(); const h = d.home||0, a = d.away||0, dr = d.draw||0;
-        memoryPolls[matchId].home = Math.max(memoryPolls[matchId].home, h);
-        memoryPolls[matchId].away = Math.max(memoryPolls[matchId].away, a);
-        memoryPolls[matchId].draw = Math.max(memoryPolls[matchId].draw, dr);
-        return res.json({ home: h, away: a, draw: dr, total: h+a+dr });
+        const poll = await supabaseDb.getPoll(matchId);
+        return res.json(poll);
       } catch (e) {
-        console.warn('[sync-standings fifapoll] Firestore GET error, using memory:', e.message);
-        const m = memoryPolls[matchId];
-        return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
+        return res.status(500).json({ error: 'Failed to read poll' });
       }
     }
     if (req.method === 'POST') {
       const choice = req.body && req.body.choice;
-      const voterId = req.body && req.body.voterId;
       if (!['home','away','draw'].includes(choice)) return res.status(400).json({ error: 'Invalid choice' });
 
-      if (!useFirebase) {
-        const m = memoryPolls[matchId];
-        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
-          if (m.voters[voterId]) {
-            return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw, voted: m.voters[voterId] });
-          }
-          m.voters[voterId] = choice;
-        }
-        m[choice] += 1;
-        const total = m.home + m.away + m.draw;
-        return res.json({ home: m.home, away: m.away, draw: m.draw, total: total, voted: choice });
-      }
-
-      const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
       try {
-        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
-          const vRef = pollRef.collection('voters').doc(voterId);
-          const ev = await vRef.get();
-          if (ev.exists) {
-            const snap = await pollRef.get(); const d = snap.exists ? snap.data() : {};
-            const h=d.home||0, a=d.away||0, dr=d.draw||0;
-            return res.json({ home:h, away:a, draw:dr, total:h+a+dr, voted: ev.data().choice });
-          }
-          await vRef.set({ choice, votedAt: admin.firestore.FieldValue.serverTimestamp() });
-        }
-        await pollRef.set({ [choice]: admin.firestore.FieldValue.increment(1) }, { merge: true });
-        const snap = await pollRef.get(); const d = snap.exists ? snap.data() : {};
-        const h=d.home||0, a=d.away||0, dr=d.draw||0;
-        memoryPolls[matchId].home = Math.max(memoryPolls[matchId].home, h);
-        memoryPolls[matchId].away = Math.max(memoryPolls[matchId].away, a);
-        memoryPolls[matchId].draw = Math.max(memoryPolls[matchId].draw, dr);
-        return res.json({ home:h, away:a, draw:dr, total:h+a+dr, voted: choice });
+        const result = await supabaseDb.castVote(matchId, voterId, choice);
+        return res.json(result);
       } catch (e) {
-        console.warn('[sync-standings fifapoll] Firestore POST error, using memory:', e.message);
-        const m = memoryPolls[matchId];
-        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
-          if (m.voters[voterId]) {
-            return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw, voted: m.voters[voterId] });
-          }
-          m.voters[voterId] = choice;
-        }
-        m[choice] += 1;
-        const total = m.home + m.away + m.draw;
-        return res.json({ home: m.home, away: m.away, draw: m.draw, total: total, voted: choice });
+        return res.status(500).json({ error: 'Failed to record vote' });
       }
     }
     return res.status(405).json({ error: 'Method not allowed' });
@@ -1327,59 +1215,28 @@ module.exports = async (req, res) => {
   }
 
   try {
-    console.log('[sync-standings API] Accessing Firestore...');
-    if (!admin.apps.length) {
-      return res.status(500).json({
-        ok: false,
-        error: 'Firebase Admin is not initialized. Set FIREBASE_SERVICE_ACCOUNT in production or add a local service account file.'
-      });
-    }
-
-    const db = admin.firestore();
-    const rawRef = db.collection('app_data').doc('live_config');
-    let doc;
+    console.log('[sync-standings API] Accessing Supabase...');
     let config = {};
     try {
-      doc = await rawRef.get();
-      console.log('[sync-standings API] Firestore live_config doc exists:', doc.exists);
-      if (doc.exists) {
-        config = doc.data();
-      }
+      config = await supabaseDb.getConfig();
     } catch (dbErr) {
-      console.warn('[sync-standings API] Firestore get failed (possibly quota exceeded), using backup:', dbErr.message);
-      try {
-        const fs = require('fs'); const path = require('path');
-        const bp = path.resolve(process.cwd(), 'firestore_live_config_utf8.json');
-        if (fs.existsSync(bp)) {
-          let raw = fs.readFileSync(bp, 'utf8');
-          if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
-          const parsed = JSON.parse(raw);
-          function unwrap(v) { if (!v || typeof v !== 'object') return v; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return parseInt(v.integerValue, 10); if ('doubleValue' in v) return parseFloat(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(unwrap); if ('mapValue' in v) { const r={}; for(const k in (v.mapValue.fields||{})) r[k]=unwrap(v.mapValue.fields[k]); return r; } return v; }
-          if (parsed && parsed.fields) {
-            for(const k in parsed.fields) config[k]=unwrap(parsed.fields[k]);
-          }
-        }
-      } catch (backupErr) {
-        console.error('[sync-standings API] Backup config load failed:', backupErr.message);
-      }
+      console.warn('[sync-standings API] Supabase config load failed:', dbErr.message);
     }
 
     const ref = {
       update: async (data) => {
         try {
-          return await rawRef.update(data);
-        } catch (e) {
-          console.warn('[sync-standings API] Firestore update ignored (quota exceeded):', e.message);
+          await supabaseDb.updateConfig(data);
           for (const k in data) {
             config[k] = data[k];
           }
+        } catch (e) {
+          console.warn('[sync-standings API] Supabase update failed:', e.message);
         }
       },
       set: async (data, options) => {
         try {
-          return await rawRef.set(data, options);
-        } catch (e) {
-          console.warn('[sync-standings API] Firestore set ignored (quota exceeded):', e.message);
+          await supabaseDb.setConfig(data, options);
           if (options && options.merge) {
             for (const k in data) {
               config[k] = data[k];
@@ -1387,17 +1244,15 @@ module.exports = async (req, res) => {
           } else {
             config = data;
           }
+        } catch (e) {
+          console.warn('[sync-standings API] Supabase set failed:', e.message);
         }
       },
       get: async () => {
-        try {
-          return await rawRef.get();
-        } catch (e) {
-          return {
-            exists: true,
-            data: () => config
-          };
-        }
+        return {
+          exists: true,
+          data: () => config
+        };
       }
     };
 
@@ -1535,22 +1390,22 @@ module.exports = async (req, res) => {
       const fifa = config.fifa || {};
       const shouldSync = fifa.autoSyncDetails !== false || req.query.manual === 'true';
       if (shouldSync) {
-        console.log('[sync-standings API] Starting FIFA streamed.pk live sync...');
+        console.log('[sync-standings API] Starting FIFA streamed.st live sync...');
         try {
           updatedFifaConfig = await syncFifaLiveFromStreamed(config, ref);
           if (updatedFifaConfig) {
-            console.log('[sync-standings API] FIFA live config updated from streamed.pk.');
+            console.log('[sync-standings API] FIFA live config updated from streamed.st.');
             config = { ...config, fifa: updatedFifaConfig };
             streamedLiveSynced = true;
             fifaDetailsSynced = true;
           }
         } catch (err) {
-          console.error('[sync] streamed.pk FIFA live sync error:', err.message);
+          console.error('[sync] streamed.st FIFA live sync error:', err.message);
           fifaDetailsError = err.message;
         }
 
         if (!updatedFifaConfig) {
-          console.log('[sync-standings API] No streamed.pk live match found. Falling back to FIFA details sync...');
+          console.log('[sync-standings API] No streamed.st live match found. Falling back to FIFA details sync...');
           try {
             updatedFifaConfig = await syncFifaMatchDetails(config, ref);
             if (updatedFifaConfig) {
@@ -1571,14 +1426,14 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 4. Automatically sync FIFA streams from streamed.pk
+    // 4. Automatically sync FIFA streams from streamed.st
     let fifaStreamsSynced = false;
     let fifaStreamsError = null;
     if (runAll || requestedType === 'fifastreams') {
       console.log('[sync-standings API] Starting FIFA streams sync...');
       try {
         if (streamedLiveSynced && config.fifa && Array.isArray(config.fifa.streamLinks) && config.fifa.streamLinks.length > 0) {
-          console.log('[sync-standings API] FIFA streams already updated by streamed.pk live sync.');
+          console.log('[sync-standings API] FIFA streams already updated by streamed.st live sync.');
         } else {
           await syncFifaStreams(config, ref, { manual: req.query.manual === 'true' });
         }
@@ -1599,7 +1454,7 @@ module.exports = async (req, res) => {
       sync: {
         standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
         f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
-        fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.pk' : 'worldcup26.ir', error: fifaDetailsError },
+        fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.st' : 'worldcup26.ir', error: fifaDetailsError },
         fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
       },
       data: {
@@ -1612,7 +1467,7 @@ module.exports = async (req, res) => {
       },
       standings: { synced: standingsSynced, updated: changed, syncedAt, source, error: standingsError },
       f1Streams: { synced: f1StreamsSynced, error: f1StreamsError },
-      fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.pk' : 'worldcup26.ir', error: fifaDetailsError },
+      fifaDetails: { synced: fifaDetailsSynced, source: streamedLiveSynced ? 'streamed.st' : 'worldcup26.ir', error: fifaDetailsError },
       fifaStreams: { synced: fifaStreamsSynced, error: fifaStreamsError }
     });
   } catch(err) {

@@ -1312,7 +1312,7 @@
                             <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 5px;"></i> Auto-Fetch Streams
                         </h4>
                         <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
-                            Fetch football embed links automatically from streamed.pk based on the match name.
+                            Fetch football embed links automatically from streamed.st based on the match name.
                         </p>
                         <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                             <div style="flex: 1; min-width: 200px;">
@@ -2322,12 +2322,12 @@
             $scope.autoFetchFifaStreams = function() {
                 if ($scope.fetchingFifaStreams) return;
                 $scope.fetchingFifaStreams = true;
-                $scope.showToast("Fetching FIFA streams from streamed.pk...", "info");
+                $scope.showToast("Fetching FIFA streams from streamed.st...", "info");
 
                 // Get current match name for better stream matching
                 var matchName = ($scope.config && $scope.config.fifa && $scope.config.fifa.raceData && $scope.config.fifa.raceData.name) || '';
 
-                // Call the dedicated fast streams endpoint (uses official streamed.pk API)
+                // Call the dedicated fast streams endpoint (uses official streamed.st API)
                 var streamsUrl = '/api/fifa/streams?save=true' + (matchName ? '&match=' + encodeURIComponent(matchName) : '');
                 $http.get(apiUrl(streamsUrl), { timeout: 30000 })
                     .then(function(res) {
@@ -2338,7 +2338,7 @@
                                 $scope.config.fifa = $scope.config.fifa || {};
                                 $scope.config.fifa.streamLinks = data.streamLinks;
                                 $scope.showToast("FIFA streams fetched! " + data.count + " links for \"" + (data.matchTitle || matchName || 'match') + "\"", "success");
-                                $scope.addLog("Auto-fetched " + data.count + " FIFA stream links from streamed.pk: " + (data.matchTitle || ''));
+                                $scope.addLog("Auto-fetched " + data.count + " FIFA stream links from streamed.st: " + (data.matchTitle || ''));
                             } else {
                                 var errMsg = (data && data.error) || 'No streams found';
                                 $scope.showToast("FIFA streams: " + errMsg, "error");
@@ -2360,9 +2360,9 @@
             $scope.autoFetchFifaDetails = function() {
                 if ($scope.fetchingFifaDetails) return;
                 $scope.fetchingFifaDetails = true;
-                $scope.showToast("Detecting next match from streamed.pk...", "info");
+                $scope.showToast("Detecting next match from streamed.st...", "info");
 
-                // Call the dedicated fast details endpoint (uses official streamed.pk + FotMob APIs)
+                // Call the dedicated fast details endpoint (uses official streamed.st + FotMob APIs)
                 $http.get(apiUrl('/api/fifa/details?save=true'), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {

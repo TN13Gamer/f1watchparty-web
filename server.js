@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const admin = require('firebase-admin');
+const { db: supabaseDb } = require('./api/_supabase');
 const fs = require('fs');
 const path = require('path');
 
@@ -27,45 +27,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Firebase initialization
-let db;
-try {
-  if (admin.apps.length) {
-    // Already initialized (e.g. by a required module like sync-standings.js)
-    db = admin.firestore();
-    console.log('[server] Reusing existing Firebase app instance.');
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    // Vercel / Production mode: load from environment variable
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    db = admin.firestore();
-    console.log('Firebase Admin initialized from Environment Variable.');
-  } else {
-    // Local development mode: check root or nested folder for credentials
-    const path = require('path');
-    let keyPath = null;
-    if (fs.existsSync('./serviceAccountKey.json')) {
-      keyPath = path.resolve('./serviceAccountKey.json');
-    } else if (fs.existsSync('./f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json')) {
-      keyPath = path.resolve('./f1watchparty-web-main/f1watchparty-web-main/f1-stream-live-firebase-adminsdk-fbsvc-17b6e466e3.json');
-    }
-
-    if (keyPath) {
-      const serviceAccount = require(keyPath);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-      db = admin.firestore();
-      console.log('Firebase Admin initialized from file:', keyPath);
-    } else {
-      console.warn('\n!!! WARNING !!!\nNo Firebase credentials found (env or file). Firebase writes will be simulated.\n');
-    }
-  }
-} catch (error) {
-  console.error('Failed to initialize Firebase Admin:', error);
-}
+// Firebase Admin initialization removed in V2 in favor of Supabase.
 
 // Local config in-memory fallback helper functions and variables
 function unwrapFirestore(val) {
@@ -111,74 +73,7 @@ try {
     console.error('Failed to load backup live_config:', e.message);
 }
 
-function createLocalConfigRefWrapper(originalRef) {
-    return {
-        update: async function(updateData) {
-            // 1) Update localConfig in-memory
-            for (const key in updateData) {
-                if (updateData[key] && typeof updateData[key] === 'object' && !Array.isArray(updateData[key])) {
-                    localConfig[key] = {
-                        ...(localConfig[key] || {}),
-                        ...updateData[key]
-                    };
-                } else {
-                    localConfig[key] = updateData[key];
-                }
-            }
-            // 2) Try Firestore write
-            if (originalRef) {
-                try {
-                    await originalRef.update(updateData);
-                    console.log('✅ Synced config update to Firestore');
-                } catch (e) {
-                    console.warn('⚠️ Firestore update failed, in-memory updated:', e.message);
-                }
-            }
-        },
-        set: async function(setData, options) {
-            // 1) Update localConfig in-memory
-            if (options && options.merge) {
-                for (const key in setData) {
-                    if (setData[key] && typeof setData[key] === 'object' && !Array.isArray(setData[key])) {
-                        localConfig[key] = {
-                            ...(localConfig[key] || {}),
-                            ...setData[key]
-                        };
-                    } else {
-                        localConfig[key] = setData[key];
-                    }
-                }
-            } else {
-                localConfig = { ...setData };
-            }
-            // 2) Try Firestore write
-            if (originalRef) {
-                try {
-                    await originalRef.set(setData, options);
-                    console.log('✅ Synced config set to Firestore');
-                } catch (e) {
-                    console.warn('⚠️ Firestore set failed, in-memory updated:', e.message);
-                }
-            }
-        },
-        get: async function() {
-            if (originalRef) {
-                try {
-                    const doc = await originalRef.get();
-                    if (doc.exists) {
-                        return doc;
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Firestore get failed, falling back to in-memory config:', e.message);
-                }
-            }
-            return {
-                exists: true,
-                data: () => localConfig
-            };
-        }
-    };
-}
+// Local ref wrapper removed in favor of direct Supabase db config wrapper
 
 // Helper to fetch JSON with high timeout and native curl fallback to avoid connection issues / DDoS-guard blocks
 // Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
@@ -230,7 +125,7 @@ async function fetchJson(url, timeoutMs = 8000) {
       timeout: timeoutMs,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://streamed.pk/category/football'
+        'Referer': 'https://streamed.st/category/football'
       }
     });
     return data;
@@ -730,7 +625,7 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
 
   try {
     console.log(`[local-sync-fifa] Fetching matches to match tokens: ${tokens.join(' ')}`);
-    const matches = await fetchJson('https://streamed.pk/api/matches/all');
+    const matches = await fetchJson('https://streamed.st/api/matches/all');
 
     if (!Array.isArray(matches)) {
       console.log('[local-sync-fifa] Matches response is not an array.');
@@ -754,7 +649,7 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
     });
 
     if (candidates.length === 0) {
-      console.log('[local-sync-fifa] No matching football matches found on streamed.pk. Clearing stale stream links.');
+      console.log('[local-sync-fifa] No matching football matches found on streamed.st. Clearing stale stream links.');
       const updatedFifa = { ...fifa, streamLinks: [] };
       await ref.update({ fifa: updatedFifa });
       return;
@@ -786,7 +681,7 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
             if (['golf', 'tennis', 'nba', 'nhl', 'nfl', 'mlb', 'ufc', 'boxing', 'cricket', 'rugby', 'f1', 'motogp', 'motorsport'].includes(src.source.toLowerCase())) {
               return;
             }
-            const streamUrl = `https://streamed.pk/api/stream/${src.source}/${src.id}`;
+            const streamUrl = `https://streamed.st/api/stream/${src.source}/${src.id}`;
             const streams = await fetchJson(streamUrl);
             if (Array.isArray(streams)) {
               streams.forEach((stream) => {
@@ -838,48 +733,76 @@ async function syncFifaStreamsLocal(config, ref, options = {}) {
   }
 }
 
-async function syncToFirebase() {
-    let originalRef = null;
-    if (db) {
+const wrappedRef = {
+    update: async (data) => {
         try {
-            originalRef = db.collection('app_data').doc('live_config');
+            await supabaseDb.updateConfig(data);
+            for (const k in data) {
+                localConfig[k] = data[k];
+            }
         } catch (e) {
-            console.error('Failed to get Firestore ref:', e.message);
+            console.warn('[server sync] Supabase update failed:', e.message);
+        }
+    },
+    set: async (data, options) => {
+        try {
+            await supabaseDb.setConfig(data, options);
+            if (options && options.merge) {
+                for (const k in data) {
+                    localConfig[k] = data[k];
+                }
+            } else {
+                localConfig = data;
+            }
+        } catch (e) {
+            console.warn('[server sync] Supabase set failed:', e.message);
+        }
+    },
+    get: async () => {
+        try {
+            const config = await supabaseDb.getConfig();
+            return {
+                exists: true,
+                data: () => config
+            };
+        } catch (e) {
+            return {
+                exists: true,
+                data: () => localConfig
+            };
         }
     }
-    const wrappedRef = createLocalConfigRefWrapper(originalRef);
+};
 
+async function syncToFirebase() {
     try {
         await wrappedRef.set({
             weather: state.weather,
             isLiveRaceActive: state.isLiveRace,
             lastAutoSync: Date.now()
         }, { merge: true });
-        console.log(`✅ Synced weather & session to Local Config at ${new Date().toLocaleTimeString()}.`);
+        console.log(`✅ Synced weather & session to Supabase config at ${new Date().toLocaleTimeString()}.`);
 
-        // Fetch current config to check if stream auto-sync is enabled
         const configDoc = await wrappedRef.get();
-        if (configDoc.exists) {
-            const config = configDoc.data();
-            await syncStreamsAutomatically(config, wrappedRef);
+        const config = configDoc.data();
+        await syncStreamsAutomatically(config, wrappedRef);
 
-            // Auto-sync FIFA match details from worldcup26.ir (if enabled)
-            try {
-                let updatedFifa = null;
-                if (config.fifa && config.fifa.autoSyncDetails !== false) {
-                    updatedFifa = await syncFifaMatchDetailsLocal(config, wrappedRef);
-                }
-                const currentConfig = {
-                    ...config,
-                    fifa: updatedFifa || config.fifa || {}
-                };
-                await syncFifaStreamsLocal(currentConfig, wrappedRef);
-            } catch(fe) {
-                console.error('[local-sync] FIFA sync error:', fe.message);
+        // Auto-sync FIFA match details from worldcup26.ir (if enabled)
+        try {
+            let updatedFifa = null;
+            if (config.fifa && config.fifa.autoSyncDetails !== false) {
+                updatedFifa = await syncFifaMatchDetailsLocal(config, wrappedRef);
             }
+            const currentConfig = {
+                ...config,
+                fifa: updatedFifa || config.fifa || {}
+            };
+            await syncFifaStreamsLocal(currentConfig, wrappedRef);
+        } catch(fe) {
+            console.error('[local-sync] FIFA sync error:', fe.message);
         }
     } catch (e) {
-        console.error('Local sync update error:', e);
+        console.error('Local sync update error:', e.message);
     }
 }
 
@@ -894,8 +817,13 @@ if (!process.env.VERCEL) {
 }
 
 // --- API: Get Live Config (in-memory fallback for Firestore quota exceeded) ---
-app.get('/api/live-config', (req, res) => {
-    res.json(localConfig || {});
+app.get('/api/live-config', async (req, res) => {
+    try {
+        const config = await supabaseDb.getConfig();
+        res.json(config || {});
+    } catch (e) {
+        res.json(localConfig || {});
+    }
 });
 
 // --- API: Live Leaderboard (scraped from F1.com) ---
@@ -1404,65 +1332,21 @@ function broadcastSSE(payload) {
   });
 }
 
-// Listen to Firestore chat_messages changes on the backend using Admin SDK (which bypasses client rules)
-if (db) {
-  db.collection("chat_messages")
-    .orderBy("timestamp", "desc")
-    .limit(60)
-    .onSnapshot(snapshot => {
-      const msgs = [];
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        msgs.push({
-          id: doc.id,
-          username: d.username,
-          text: d.text,
-          timestamp: d.timestamp ? d.timestamp.toDate().getTime() : Date.now(),
-          color: d.color || '#a970ff',
-          isAdmin: !!d.isAdmin
-        });
-      });
-      broadcastSSE({ type: 'chatList', data: msgs.reverse() });
-    }, err => {
-      console.error('Firestore chat listener error:', err);
-    });
-}
-
 // SSE stream endpoint
-app.get('/api/chat/stream', (req, res) => {
+app.get('/api/chat/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  // Add client to active clients list
   const client = { res };
   sseClients.push(client);
 
-  // Send the current chat list immediately on connection if Firestore is loaded
-  if (db) {
-    db.collection("chat_messages")
-      .orderBy("timestamp", "desc")
-      .limit(60)
-      .get()
-      .then(snapshot => {
-        const msgs = [];
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          msgs.push({
-            id: doc.id,
-            username: d.username,
-            text: d.text,
-            timestamp: d.timestamp ? d.timestamp.toDate().getTime() : Date.now(),
-            color: d.color || '#a970ff',
-            isAdmin: !!d.isAdmin
-          });
-        });
-        res.write(`data: ${JSON.stringify({ type: 'chatList', data: msgs.reverse() })}\n\n`);
-      })
-      .catch(err => {
-        console.error('Error fetching initial chat list for SSE:', err);
-      });
+  try {
+    const msgs = await supabaseDb.getChatMessages(60);
+    res.write(`data: ${JSON.stringify({ type: 'chatList', data: msgs })}\n\n`);
+  } catch (err) {
+    console.error('SSE initial chat fetch error:', err.message);
   }
 
   req.on('close', () => {
@@ -1471,72 +1355,49 @@ app.get('/api/chat/stream', (req, res) => {
 });
 
 // Chat send endpoint
-app.post('/api/chat/send', (req, res) => {
+app.post('/api/chat/send', async (req, res) => {
   const { username, text, color, isAdmin } = req.body;
   if (!text || !username) {
     return res.status(400).json({ error: 'Missing username or text' });
   }
 
-  if (!db) {
-    return res.status(500).json({ error: 'Database not initialized' });
-  }
-
-  db.collection("chat_messages").add({
-    username: username,
-    text: text,
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    color: color || '#a970ff',
-    isAdmin: !!isAdmin
-  }).then(() => {
-    res.json({ success: true });
-  }).catch(err => {
-    console.error('Error writing to Firestore:', err);
+  try {
+    const msg = await supabaseDb.addChatMessage({ username, text, color, isAdmin });
+    broadcastSSE({ type: 'chatMessage', data: msg });
+    res.json({ success: true, message: msg });
+  } catch (err) {
+    console.error('Error sending chat message:', err.message);
     res.status(500).json({ error: err.message });
-  });
+  }
 });
 
 // Chat delete endpoint (moderation)
-app.post('/api/chat/delete', (req, res) => {
+app.post('/api/chat/delete', async (req, res) => {
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: 'Missing document id' });
   }
 
-  if (!db) {
-    return res.status(500).json({ error: 'Database not initialized' });
+  try {
+    await supabaseDb.deleteChatMessage(id);
+    broadcastSSE({ type: 'chatDelete', id });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting chat message:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  db.collection("chat_messages").doc(id).delete()
-    .then(() => {
-      res.json({ success: true });
-    })
-    .catch(err => {
-      console.error('Error deleting from Firestore:', err);
-      res.status(500).json({ error: err.message });
-    });
 });
 
 // Chat clear endpoint (moderation)
-app.post('/api/chat/clear', (req, res) => {
-  if (!db) {
-    return res.status(500).json({ error: 'Database not initialized' });
+app.post('/api/chat/clear', async (req, res) => {
+  try {
+    await supabaseDb.clearChatMessages();
+    broadcastSSE({ type: 'chatClear' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error clearing chat:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  db.collection("chat_messages").get()
-    .then(snapshot => {
-      const batch = db.batch();
-      snapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      return batch.commit();
-    })
-    .then(() => {
-      res.json({ success: true });
-    })
-    .catch(err => {
-      console.error('Error clearing Firestore collection:', err);
-      res.status(500).json({ error: err.message });
-    });
 });
 
 // Route for /admin

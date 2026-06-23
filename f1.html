@@ -1516,24 +1516,7 @@
             pointer-events: none;
         }
 
-        /* 4:3 ratio centred — black bars invisible against black bg */
-        .loader-spinner {
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 52px;
-            height: 52px;
-            margin: -26px 0 0 -26px;
-            border: 3px solid rgba(255, 255, 255, 0.12);
-            border-top-color: var(--f1-red, #e60000);
-            border-radius: 50%;
-            animation: loader-spin 0.8s linear infinite;
-        }
 
-        @keyframes loader-spin {
-            to { transform: rotate(360deg); }
-        }
 
         .loader lottie-player, #f1-lottie-loader {
             display: block;
@@ -2091,18 +2074,15 @@
     <div class="video-overlay"></div>
     <div id="vanta-overlay"></div>
 
-    <!-- Loading Animation (Lottie Scene animation) -->
+    <!-- Loading Animation (Lottie F1 animation) -->
     <div class="loader" ng-class="{'hide': dataLoaded}">
         <div id="f1-lottie-loader"></div>
-        <div class="loader-spinner" id="f1-spinner"></div>
     </div>
     <script>
         (function () {
             var loaderEl = document.querySelector('.loader');
-            var spinnerEl = document.getElementById('f1-spinner');
             var lottieEl = document.getElementById('f1-lottie-loader');
             var loaderAnim = null;
-            var lottieLoaded = false;
 
             if (typeof lottie !== 'undefined') {
                 try {
@@ -2114,21 +2094,9 @@
                         path: 'f1-loader.json?v=' + Date.now(),
                         rendererSettings: { progressiveLoad: true, hideOnInvisible: true }
                     });
-                    loaderAnim.addEventListener('DOMLoaded', function () {
-                        lottieLoaded = true;
-                        if (spinnerEl) spinnerEl.style.display = 'none';
-                    });
-                    setTimeout(function () {
-                        if (!lottieLoaded && spinnerEl) {
-                            spinnerEl.style.display = 'block';
-                            if (lottieEl) lottieEl.style.display = 'none';
-                        }
-                    }, 2000);
                 } catch (e) {
-                    if (spinnerEl) spinnerEl.style.display = 'block';
+                    console.warn('F1 Lottie loader failed to initialize:', e);
                 }
-            } else {
-                if (spinnerEl) spinnerEl.style.display = 'block';
             }
 
             if (loaderEl) {
@@ -2984,7 +2952,7 @@
                     }
                     const data = doc.data();
                     const elapsed = Date.now() - startTime;
-                    const minDuration = 1800; // Enforce minimum 1.8 seconds for outline drawing animation
+                    const minDuration = 2500; // Enforce minimum 2.5s for Lottie animation to complete
                     const delay = Math.max(0, minDuration - elapsed);
 
                     $timeout(function () {
