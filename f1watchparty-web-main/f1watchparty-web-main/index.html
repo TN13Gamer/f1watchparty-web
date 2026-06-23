@@ -445,10 +445,25 @@
         .container {
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        /* Mobile-app optimizations and Native look & feel */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            user-select: none !important;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
+        }
     </style>
 </head>
 
-<body>
+<body class="page-home">
 
     <div id="vanta-bg"></div>
     <div class="fifa-wavy-bg">
@@ -510,6 +525,8 @@
         </footer>
     </div>
 
+
+
     <script>
         // Check if running locally or production to handle direct URL routing
         function navigateTo(event, localHtml, prodRoute) {
@@ -520,7 +537,8 @@
             // Storing destination
             const isLocal = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1';
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.hostname === 'appassets.androidplatform.net';
             let destination = isLocal ? localHtml : prodRoute;
 
             if (!isF1) {

@@ -3695,7 +3695,7 @@
                     <div class="match-broadcast-title">
                         <!-- Home Team -->
                         <div class="broadcast-team home">
-                            <div class="team-name">{{ getCurrentFixture().homeTeam || (raceData.name.split(' vs ')[0] || 'TBD') }}</div>
+                            <div class="team-name">{{ getCurrentFixture().homeTeam || splitTeams(raceData.name)[0] }}</div>
                             <div class="team-logo-container">
                                 <img ng-src="{{ getCurrentFixture().homeFlag || 'https://flagcdn.com/w80/us.png' }}" alt="" onerror="this.style.display='none'">
                             </div>
@@ -3724,7 +3724,7 @@
                             <div class="team-logo-container">
                                 <img ng-src="{{ getCurrentFixture().awayFlag || 'https://flagcdn.com/w80/us.png' }}" alt="" onerror="this.style.display='none'">
                             </div>
-                            <div class="team-name">{{ getCurrentFixture().awayTeam || (raceData.name.split(' vs ')[1] || 'TBD') }}</div>
+                            <div class="team-name">{{ getCurrentFixture().awayTeam || splitTeams(raceData.name)[1] }}</div>
                         </div>
                     </div>
 
@@ -5146,6 +5146,12 @@
                 loaded: false
             };
 
+            $scope.splitTeams = function(name) {
+                if (!name) return ['TBD', 'TBD'];
+                var parts = name.split(/\s+(?:vs\.?|v|-)\s+/i);
+                return [parts[0] || 'TBD', parts[1] || 'TBD'];
+            };
+
             var _pollInterval = null;
 
             function calcPollPct(p) {
@@ -5343,9 +5349,10 @@
                 }
                 var homeFlag = match ? match.homeFlag : '';
                 var awayFlag = match ? match.awayFlag : '';
-                var home = (newVal.name || '').split(' vs ')[0] || '';
-                var away = (newVal.name || '').split(' vs ')[1] || '';
-                if (home && away) {
+                var parts = $scope.splitTeams(newVal.name);
+                var home = parts[0];
+                var away = parts[1];
+                if (home && away && home !== 'TBD' && away !== 'TBD') {
                     $scope.initPoll(id, home.trim(), away.trim(), homeFlag, awayFlag);
                 }
             }, true);

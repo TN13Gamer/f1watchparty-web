@@ -1184,6 +1184,8 @@ async function syncF1LiveAndWeather(config, ref) {
 }
 
 
+const memoryPolls = {};
+
 module.exports = async (req, res) => {
   console.log(`[sync-standings API] Received request: ${req.method} ${req.url}`);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -1235,20 +1237,55 @@ module.exports = async (req, res) => {
   if (requestedType === 'fifapoll') {
     const matchId = req.query.matchId || (req.body && req.body.matchId);
     if (!matchId || typeof matchId !== 'string' || matchId.length > 80) return res.status(400).json({ error: 'Invalid matchId' });
-    if (!admin.apps.length) return res.status(500).json({ error: 'Firebase not available' });
-    const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
+
+    if (!memoryPolls[matchId]) {
+      memoryPolls[matchId] = { home: 0, away: 0, draw: 0, voters: {} };
+    }
+
+    const useFirebase = admin.apps.length > 0;
+
     if (req.method === 'GET') {
+      if (!useFirebase) {
+        const m = memoryPolls[matchId];
+        return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
+      }
+      const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
       try {
         const snap = await pollRef.get();
-        if (!snap.exists) return res.json({ home: 0, away: 0, draw: 0, total: 0 });
+        if (!snap.exists) {
+          const m = memoryPolls[matchId];
+          return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
+        }
         const d = snap.data(); const h = d.home||0, a = d.away||0, dr = d.draw||0;
+        memoryPolls[matchId].home = Math.max(memoryPolls[matchId].home, h);
+        memoryPolls[matchId].away = Math.max(memoryPolls[matchId].away, a);
+        memoryPolls[matchId].draw = Math.max(memoryPolls[matchId].draw, dr);
         return res.json({ home: h, away: a, draw: dr, total: h+a+dr });
-      } catch (e) { return res.status(500).json({ error: 'Failed to read poll' }); }
+      } catch (e) {
+        console.warn('[sync-standings fifapoll] Firestore GET error, using memory:', e.message);
+        const m = memoryPolls[matchId];
+        return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw });
+      }
     }
     if (req.method === 'POST') {
       const choice = req.body && req.body.choice;
       const voterId = req.body && req.body.voterId;
       if (!['home','away','draw'].includes(choice)) return res.status(400).json({ error: 'Invalid choice' });
+
+      if (!useFirebase) {
+        const m = memoryPolls[matchId];
+        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
+          if (m.voters[voterId]) {
+            return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw, voted: m.voters[voterId] });
+          }
+          m.voters[voterId] = choice;
+        }
+        m[choice] += 1;
+        const total = m.home + m.away + m.draw;
+        return res.json({ home: m.home, away: m.away, draw: m.draw, total: total, voted: choice });
+      }
+
+      const pollRef = admin.firestore().collection('app_data').doc('polls').collection('fifa').doc(matchId);
       try {
         if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
           const vRef = pollRef.collection('voters').doc(voterId);
@@ -1263,8 +1300,23 @@ module.exports = async (req, res) => {
         await pollRef.set({ [choice]: admin.firestore.FieldValue.increment(1) }, { merge: true });
         const snap = await pollRef.get(); const d = snap.exists ? snap.data() : {};
         const h=d.home||0, a=d.away||0, dr=d.draw||0;
+        memoryPolls[matchId].home = Math.max(memoryPolls[matchId].home, h);
+        memoryPolls[matchId].away = Math.max(memoryPolls[matchId].away, a);
+        memoryPolls[matchId].draw = Math.max(memoryPolls[matchId].draw, dr);
         return res.json({ home:h, away:a, draw:dr, total:h+a+dr, voted: choice });
-      } catch (e) { return res.status(500).json({ error: 'Failed to record vote' }); }
+      } catch (e) {
+        console.warn('[sync-standings fifapoll] Firestore POST error, using memory:', e.message);
+        const m = memoryPolls[matchId];
+        if (voterId && typeof voterId === 'string' && voterId.length <= 64) {
+          if (m.voters[voterId]) {
+            return res.json({ home: m.home, away: m.away, draw: m.draw, total: m.home + m.away + m.draw, voted: m.voters[voterId] });
+          }
+          m.voters[voterId] = choice;
+        }
+        m[choice] += 1;
+        const total = m.home + m.away + m.draw;
+        return res.json({ home: m.home, away: m.away, draw: m.draw, total: total, voted: choice });
+      }
     }
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -1284,12 +1336,70 @@ module.exports = async (req, res) => {
     }
 
     const db = admin.firestore();
-    const ref = db.collection('app_data').doc('live_config');
-    const doc = await ref.get();
-    console.log('[sync-standings API] Firestore live_config doc exists:', doc.exists);
-    if (!doc.exists) return res.json({ ok: false, message: 'live_config not found' });
+    const rawRef = db.collection('app_data').doc('live_config');
+    let doc;
+    let config = {};
+    try {
+      doc = await rawRef.get();
+      console.log('[sync-standings API] Firestore live_config doc exists:', doc.exists);
+      if (doc.exists) {
+        config = doc.data();
+      }
+    } catch (dbErr) {
+      console.warn('[sync-standings API] Firestore get failed (possibly quota exceeded), using backup:', dbErr.message);
+      try {
+        const fs = require('fs'); const path = require('path');
+        const bp = path.resolve(process.cwd(), 'firestore_live_config_utf8.json');
+        if (fs.existsSync(bp)) {
+          let raw = fs.readFileSync(bp, 'utf8');
+          if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+          const parsed = JSON.parse(raw);
+          function unwrap(v) { if (!v || typeof v !== 'object') return v; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return parseInt(v.integerValue, 10); if ('doubleValue' in v) return parseFloat(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(unwrap); if ('mapValue' in v) { const r={}; for(const k in (v.mapValue.fields||{})) r[k]=unwrap(v.mapValue.fields[k]); return r; } return v; }
+          if (parsed && parsed.fields) {
+            for(const k in parsed.fields) config[k]=unwrap(parsed.fields[k]);
+          }
+        }
+      } catch (backupErr) {
+        console.error('[sync-standings API] Backup config load failed:', backupErr.message);
+      }
+    }
 
-    let config = doc.data();
+    const ref = {
+      update: async (data) => {
+        try {
+          return await rawRef.update(data);
+        } catch (e) {
+          console.warn('[sync-standings API] Firestore update ignored (quota exceeded):', e.message);
+          for (const k in data) {
+            config[k] = data[k];
+          }
+        }
+      },
+      set: async (data, options) => {
+        try {
+          return await rawRef.set(data, options);
+        } catch (e) {
+          console.warn('[sync-standings API] Firestore set ignored (quota exceeded):', e.message);
+          if (options && options.merge) {
+            for (const k in data) {
+              config[k] = data[k];
+            }
+          } else {
+            config = data;
+          }
+        }
+      },
+      get: async () => {
+        try {
+          return await rawRef.get();
+        } catch (e) {
+          return {
+            exists: true,
+            data: () => config
+          };
+        }
+      }
+    };
 
     const runAll = !requestedType;
 
