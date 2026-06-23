@@ -51,7 +51,7 @@
   "lastStandingsSync": "2026-06-21T09:38:38.099Z",
   "fifa": {
     "twitchChannel": "watchf1olive",
-    "lastDetailsSync": "2026-06-23T17:36:58.482Z",
+    "lastDetailsSync": "2026-06-23T17:56:59.026Z",
     "customTimer": {
       "enabled": true,
       "label": "LIVE NOW",
@@ -63,10 +63,10 @@
       "isLive": true,
       "name": "Portugal vs Uzbekistan",
       "isFinished": false,
-      "matchTime": "36'",
+      "matchTime": "HT",
       "date": "23 Jun 22:30",
       "theme": "",
-      "homeScore": "2",
+      "homeScore": "3",
       "location": "Houston, United States",
       "circuit": "NRG Stadium",
       "laps": "",
@@ -221,7 +221,7 @@
     ],
     "lastStreamsSync": "2026-06-23T17:37:45.200Z"
   },
-  "lastAutoSync": 1782236216436,
+  "lastAutoSync": 1782237416463,
   "nextRace": {
     "name": "Austrian GP",
     "date": "26-28 Jun",
@@ -232,7 +232,7 @@
   "weather": {
     "air": 28,
     "condition": "sunny",
-    "track": 39
+    "track": 36
   },
   "customTimer": {
     "target": "2026-06-26 17:00",

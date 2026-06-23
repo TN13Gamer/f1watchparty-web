@@ -1,2264 +1,1650 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>watchfifa.live | V2 Football Streaming Experience</title>
-
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Third Party Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <style>
-        :root {
-            --bg-body: #03050c;
-            --fifa-green: #00ff55;
-            --fifa-green-glow: rgba(0, 255, 85, 0.15);
-            --fifa-blue: #0259ff;
-            --card-bg: rgba(9, 13, 30, 0.55);
-            --card-border: rgba(255, 255, 255, 0.05);
-            --text-white: #ffffff;
-            --text-muted: #8a96bc;
-            --glass-nav: rgba(5, 7, 20, 0.7);
-            --active-glow: 0 0 20px rgba(0, 255, 85, 0.4);
-            --radius-lg: 20px;
-            --radius-md: 12px;
-            --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            scrollbar-width: none;
-        }
-
-        *::-webkit-scrollbar {
-            display: none;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-white);
-            font-family: 'Outfit', sans-serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Subtle Stadium Lighting Background */
-        .bg-lights {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -2;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .bg-lights::before {
-            content: '';
-            position: absolute;
-            width: 800px;
-            height: 600px;
-            background: radial-gradient(circle, var(--fifa-green-glow) 0%, transparent 70%);
-            top: -300px;
-            left: 50%;
-            transform: translateX(-50%);
-            filter: blur(120px);
-            opacity: 0.8;
-            animation: light-pulse 10s infinite alternate ease-in-out;
-        }
-
-        .bg-lights::after {
-            content: '';
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(2, 89, 255, 0.08) 0%, transparent 70%);
-            bottom: -300px;
-            right: -100px;
-            filter: blur(150px);
-            opacity: 0.6;
-        }
-
-        @keyframes light-pulse {
-            0% { opacity: 0.6; transform: translateX(-50%) scale(1); }
-            100% { opacity: 0.9; transform: translateX(-50%) scale(1.1); }
-        }
-
-        /* Fullscreen Lottie Loader overlay */
-        #loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #02040a;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
-        }
-
-        #lottie-animation {
-            width: 250px;
-            height: 250px;
-        }
-
-        .loader-text {
-            font-size: 1.25rem;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 500;
-            margin-top: 20px;
-            animation: text-pulse 2s infinite ease-in-out;
-        }
-
-        @keyframes text-pulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
-        }
-
-        /* Sticky Glass Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 76px;
-            background-color: var(--glass-nav);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-bottom: 1px solid var(--card-border);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 40px;
-            transition: var(--transition);
-        }
-
-        .nav-logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo {
-            font-weight: 900;
-            font-size: 1.5rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            background: linear-gradient(135deg, #ffffff 50%, var(--text-muted));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo span {
-            color: var(--fifa-green);
-            -webkit-text-fill-color: var(--fifa-green);
-        }
-
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--fifa-green);
-            box-shadow: 0 0 10px var(--fifa-green);
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 0.2; }
-            50% { opacity: 1; }
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 4px;
-            border-radius: 50px;
-            border: 1px solid var(--card-border);
-        }
-
-        .nav-pill {
-            padding: 8px 24px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-pill:hover {
-            color: var(--text-white);
-        }
-
-        .nav-pill.active {
-            color: #03050c;
-            background-color: var(--fifa-green);
-            box-shadow: var(--active-glow);
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.15rem;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .nav-btn:hover {
-            color: var(--text-white);
-        }
-
-        .nav-btn-badge {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: var(--fifa-green);
-        }
-
-        .profile-area {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .profile-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--fifa-green), var(--fifa-blue));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: #02040a;
-        }
-
-        /* Container Layout */
-        .main-container {
-            max-width: 1720px;
-            margin: 0 auto;
-            padding: 106px 40px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        /* Hero Broadcast Row */
-        .broadcast-row {
-            display: grid;
-            grid-template-columns: 1fr 450px;
-            gap: 30px;
-        }
-
-        /* Left Player Block */
-        .player-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .player-viewport {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background-color: #000;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--card-border);
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
-        }
-
-        .player-viewport iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Custom Player Overlay Controls */
-        .player-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            background: linear-gradient(to top, rgba(3, 5, 12, 0.9) 0%, rgba(3, 5, 12, 0) 40%);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
-            padding: 20px;
-        }
-
-        .player-viewport:hover .player-overlay {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .overlay-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .badge-live {
-            background-color: #ff0055;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-live-pulse {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: #fff;
-            animation: pulse 1s infinite alternate;
-        }
-
-        @keyframes pulse {
-            from { transform: scale(0.8); opacity: 0.5; }
-            to { transform: scale(1.2); opacity: 1; }
-        }
-
-        .stream-health-indicator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--fifa-green);
-        }
-
-        .stream-health-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: var(--fifa-green);
-        }
-
-        .overlay-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .controls-left, .controls-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .control-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.25rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .control-btn:hover {
-            color: var(--fifa-green);
-            transform: scale(1.1);
-        }
-
-        /* Custom failsafe selectors underneath viewport */
-        .source-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 14px 20px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .source-title-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .source-selector-list {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .source-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .source-btn:hover {
-            color: var(--text-white);
-            border-color: var(--text-muted);
-        }
-
-        .source-btn.active {
-            background-color: var(--fifa-green);
-            color: #03050c;
-            border-color: var(--fifa-green);
-            box-shadow: 0 0 15px rgba(0, 255, 85, 0.25);
-        }
-
-        .failsafe-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-white);
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .failsafe-btn:hover {
-            background-color: #ff0055;
-            border-color: #ff0055;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
-        }
-
-        /* Right Match Center */
-        .match-center {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-        }
-
-        .match-center-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .competition-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: var(--fifa-green);
-            text-transform: uppercase;
-        }
-
-        .timer-badge {
-            background: rgba(0, 255, 85, 0.08);
-            border: 1px solid rgba(0, 255, 85, 0.2);
-            color: var(--fifa-green);
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .live-scoreboard {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-        }
-
-        .scoreboard-team {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            width: 35%;
-            text-align: center;
-        }
-
-        .scoreboard-flag {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .scoreboard-name {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--text-white);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .scoreboard-score-area {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 30%;
-        }
-
-        .scoreboard-score {
-            font-size: 2.8rem;
-            font-weight: 900;
-            letter-spacing: -1px;
-            color: var(--text-white);
-        }
-
-        .scoreboard-divider {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            opacity: 0.5;
-        }
-
-        .venue-metadata {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 12px 16px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            font-size: 0.85rem;
-        }
-
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .meta-label {
-            color: var(--text-muted);
-            font-weight: 500;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .meta-value {
-            color: var(--text-white);
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Stats center */
-        .live-stats-area {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .stats-section-title {
-            font-weight: 800;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-row {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .stat-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .stat-label-title {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .stat-bar-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-            overflow: hidden;
-            display: flex;
-        }
-
-        .stat-bar-home {
-            height: 100%;
-            background-color: var(--fifa-green);
-            border-radius: 3px 0 0 3px;
-            transition: width 0.8s ease-in-out;
-        }
-
-        .stat-bar-away {
-            height: 100%;
-            background-color: var(--fifa-blue);
-            border-radius: 0 3px 3px 0;
-            transition: width 0.8s ease-in-out;
-            margin-left: auto;
-        }
-
-        .stat-badge-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            text-align: center;
-        }
-
-        .stat-badge-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 10px;
-        }
-
-        .stat-badge-value {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: var(--text-white);
-            margin-top: 4px;
-        }
-
-        /* Match Timeline Events / commentary tabs */
-        .tab-bar {
-            display: flex;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            gap: 8px;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 12px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab-btn:hover {
-            color: var(--text-white);
-        }
-
-        .tab-btn.active {
-            color: var(--fifa-green);
-            border-color: var(--fifa-green);
-        }
-
-        .tab-content {
-            min-height: 200px;
-            max-height: 280px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-right: 4px;
-        }
-
-        .timeline-event {
-            display: flex;
-            gap: 14px;
-            font-size: 0.85rem;
-            align-items: flex-start;
-        }
-
-        .event-minute {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: 800;
-            color: var(--fifa-green);
-            min-width: 36px;
-            text-align: center;
-        }
-
-        .event-detail {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .event-title {
-            font-weight: 700;
-            color: var(--text-white);
-        }
-
-        .event-desc {
-            color: var(--text-muted);
-        }
-
-        /* Fixtures Section */
-        .section-title-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .section-headline {
-            font-weight: 800;
-            font-size: 1.5rem;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-headline i {
-            color: var(--fifa-green);
-        }
-
-        .fixtures-tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--card-border);
-            padding: 4px;
-            border-radius: 30px;
-        }
-
-        .fixture-tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .fixture-tab-btn.active {
-            background-color: var(--fifa-green);
-            color: #03050c;
-        }
-
-        .fixtures-carousel {
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            padding-bottom: 10px;
-        }
-
-        .fixture-card {
-            min-width: 280px;
-            width: 280px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            cursor: pointer;
-            transition: var(--transition);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .fixture-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(0, 255, 85, 0.25);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .fixture-card.active {
-            border-color: var(--fifa-green);
-            background: rgba(0, 255, 85, 0.02);
-        }
-
-        .fixture-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .fixture-match-badge {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        .fixture-match-badge.live {
-            background: rgba(255, 0, 85, 0.1);
-            color: #ff0055;
-            border: 1px solid rgba(255, 0, 85, 0.15);
-        }
-
-        .fixture-teams-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .fixture-team-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .fixture-team-name-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-
-        .fixture-flag {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .fixture-score {
-            font-weight: 800;
-            font-size: 1rem;
-        }
-
-        .fixture-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding-top: 10px;
-        }
-
-        .fixture-timer {
-            font-weight: 700;
-            color: var(--fifa-green);
-        }
-
-        /* Table & prediction section grid */
-        .bottom-sections-grid {
-            display: grid;
-            grid-template-columns: 1fr 450px;
-            gap: 30px;
-        }
-
-        /* Standings card */
-        .standings-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 30px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .standings-header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .group-selector-pills {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            width: 60%;
-        }
-
-        .group-pill {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .group-pill.active {
-            background-color: var(--fifa-green);
-            color: #03050c;
-            border-color: var(--fifa-green);
-        }
-
-        .standings-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .standings-table th, .standings-table td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .standings-table th {
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
-
-        .standings-table td {
-            font-weight: 500;
-        }
-
-        .td-team {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-        }
-
-        .td-rank {
-            color: var(--text-muted);
-            font-weight: 700;
-            width: 30px;
-            text-align: center;
-        }
-
-        .qualify-marker {
-            width: 4px;
-            height: 20px;
-            background-color: var(--fifa-green);
-            border-radius: 2px;
-            display: inline-block;
-            margin-right: 6px;
-        }
-
-        .eliminate-marker {
-            width: 4px;
-            height: 20px;
-            background-color: #ff0055;
-            border-radius: 2px;
-            display: inline-block;
-            margin-right: 6px;
-        }
-
-        .form-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 2px;
-        }
-
-        .form-w { background-color: var(--fifa-green); }
-        .form-d { background-color: var(--text-muted); }
-        .form-l { background-color: #ff0055; }
-
-        /* Predictions card */
-        .prediction-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-        }
-
-        .poll-title {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--text-white);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .poll-title i {
-            color: var(--fifa-green);
-        }
-
-        .poll-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .poll-btn {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--card-border);
-            color: var(--text-white);
-            padding: 16px 20px;
-            border-radius: var(--radius-md);
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .poll-btn:hover {
-            border-color: var(--fifa-green);
-            background: rgba(0, 255, 85, 0.02);
-            transform: scale(1.01);
-        }
-
-        .poll-results {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .result-bar-row {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .result-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 700;
-        }
-
-        .result-bar {
-            width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .result-fill {
-            height: 100%;
-            background-color: var(--text-muted);
-            border-radius: 5px;
-            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .result-fill.winning {
-            background-color: var(--fifa-green);
-            box-shadow: 0 0 10px rgba(0, 255, 85, 0.3);
-        }
-
-        .poll-voted-text {
-            font-size: 0.8rem;
-            color: var(--fifa-green);
-            font-weight: 600;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        /* Real-time custom Chat Area */
-        .chat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            height: 400px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-        }
-
-        .chat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .chat-title {
-            font-weight: 800;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chat-title i {
-            color: var(--fifa-green);
-        }
-
-        .chat-user-count {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--fifa-green);
-            background: rgba(0, 255, 85, 0.08);
-            padding: 2px 8px;
-            border-radius: 20px;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding-right: 4px;
-        }
-
-        .chat-bubble {
-            font-size: 0.85rem;
-            line-height: 1.4;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            word-wrap: break-word;
-        }
-
-        .chat-bubble-author {
-            font-weight: 700;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .chat-badge-admin {
-            background-color: #ff0055;
-            color: #fff;
-            font-size: 0.65rem;
-            padding: 1px 5px;
-            border-radius: 3px;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        .chat-input-area {
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 12px 16px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.85rem;
-            transition: var(--transition);
-        }
-
-        .chat-input:focus {
-            outline: none;
-            border-color: var(--fifa-green);
-        }
-
-        .chat-send-btn {
-            background-color: var(--fifa-green);
-            color: #03050c;
-            border: none;
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 0 10px rgba(0, 255, 85, 0.2);
-        }
-
-        .chat-send-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(0, 255, 85, 0.4);
-        }
-
-        /* Mobile Experience optimizations */
-        @media (max-width: 1024px) {
-            .navbar {
-                padding: 0 20px;
-            }
-            .main-container {
-                padding: 96px 20px 20px;
-                gap: 24px;
-            }
-            .broadcast-row {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            .bottom-sections-grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-            .group-selector-pills {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                height: 64px;
-            }
-            .logo {
-                font-size: 1.2rem;
-            }
-            .nav-links {
-                display: none; /* Hide on mobile to prevent clutter */
-            }
-            .main-container {
-                padding-top: 84px;
-            }
-            .scoreboard-flag {
-                width: 46px;
-                height: 46px;
-            }
-            .scoreboard-score {
-                font-size: 2.2rem;
-            }
-            .source-bar {
-                flex-direction: column;
-                gap: 12px;
-                align-items: flex-start;
-            }
-            .source-selector-list {
-                flex-wrap: wrap;
-            }
-            /* Sticky player on scroll for mobile */
-            .player-viewport.sticky {
-                position: fixed;
-                top: 64px;
-                left: 0;
-                width: 100vw;
-                z-index: 90;
-                border-radius: 0;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>watchfifa.live — Live Football Streaming</title>
+  <meta name="description" content="Watch FIFA World Cup 2026 live. Free HD football streaming with multiple broadcast sources and auto-failover.">
+  <meta name="theme-color" content="#05060f">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+
+  <!-- Lottie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* ═══════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════ */
+    :root {
+      --bg:           #05060f;
+      --surface:      #0b0e1a;
+      --elevated:     #10141f;
+      --border:       rgba(255,255,255,0.06);
+      --border-hi:    rgba(255,255,255,0.11);
+      --border-green: rgba(0,224,84,0.28);
+      --green:        #00e054;
+      --green-dim:    rgba(0,224,84,0.10);
+      --green-glow:   rgba(0,224,84,0.20);
+      --red:          #f02060;
+      --red-dim:      rgba(240,32,96,0.12);
+      --text:         #eef0f8;
+      --text-dim:     #8492b4;
+      --text-muted:   #4b5880;
+      --nav-h:        64px;
+      --r-sm:         6px;
+      --r-md:         12px;
+      --r-lg:         18px;
+      --r-xl:         24px;
+      --ease:         cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+    * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent; }
+
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; }
+    img { display: block; }
+
+    /* Subtle ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 35% at 50% -5%, rgba(0,224,84,0.055) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 30% at 90% 110%, rgba(0,80,255,0.04) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ═══════════════════════════════════════
+       FULLSCREEN LOADER
+    ═══════════════════════════════════════ */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.7s var(--ease), visibility 0.7s;
+    }
+    #loader.out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #lottie-wrap { width: 210px; height: 210px; }
+    .loader-text {
+      margin-top: 18px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      animation: txt-breathe 2.2s ease-in-out infinite;
+    }
+    @keyframes txt-breathe {
+      0%, 100% { opacity: 0.25; }
+      50%       { opacity: 0.9; }
+    }
+
+    /* ═══════════════════════════════════════
+       NAVIGATION BAR
+    ═══════════════════════════════════════ */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(5,6,15,0.88);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border-bottom: 1px solid var(--border);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      gap: 16px;
+    }
+
+    /* Brand */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 0 var(--green-glow);
+      animation: dot-pulse 2.2s ease infinite;
+      flex-shrink: 0;
+    }
+    @keyframes dot-pulse {
+      0%   { box-shadow: 0 0 0 0 var(--green-glow); }
+      65%  { box-shadow: 0 0 0 8px rgba(0,224,84,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,224,84,0); }
+    }
+    .brand-wordmark {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .brand-wordmark em {
+      color: var(--green);
+      font-style: normal;
+    }
+
+    /* Pill tabs */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px;
+    }
+    .nav-tab {
+      padding: 7px 20px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: var(--text-dim);
+      transition: all 0.2s var(--ease);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+    .nav-tab i { font-size: 0.75rem; }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active {
+      background: var(--green);
+      color: #020c05;
+    }
+
+    /* Nav actions */
+    .nav-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .nav-btn {
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--r-md);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      transition: all 0.2s var(--ease);
+    }
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    /* ═══════════════════════════════════════
+       PAGE WRAPPER
+    ═══════════════════════════════════════ */
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1840px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 20px) 24px 64px;
+    }
+
+    /* ═══════════════════════════════════════
+       HERO GRID  (player 75% | sidebar 25%)
+    ═══════════════════════════════════════ */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 288px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    /* ── LEFT: Player Column ── */
+    .player-col { display: flex; flex-direction: column; gap: 12px; }
+
+    .player-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.65);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .player-frame:hover {
+      border-color: var(--border-green);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 0 0 1px var(--border-green);
+    }
+
+    #stream-iframe {
+      width: 100%; height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Player overlay – visible on hover */
+    .player-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(5,6,15,0.9) 0%,
+        rgba(5,6,15,0.2) 35%,
+        transparent 55%
+      );
+      opacity: 0;
+      transition: opacity 0.28s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .player-frame:hover .player-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ov-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ov-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--red);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: 4px;
+    }
+    .badge-live-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      animation: li-blink 1.1s ease infinite;
+    }
+    @keyframes li-blink {
+      0%, 100% { opacity: 0.25; }
+      50%       { opacity: 1; }
+    }
+
+    .signal-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.58);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 4px 11px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--green);
+    }
+    .signal-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .ctrl {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--r-sm);
+      background: rgba(0,0,0,0.62);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 0.88rem;
+      transition: all 0.2s var(--ease);
+    }
+    .ctrl:hover {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+      transform: scale(1.06);
+    }
+
+    /* ── SOURCE BAR ── */
+    .source-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+      flex-wrap: wrap;
+    }
+    .source-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .source-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .src-btn {
+      padding: 5px 13px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      font-weight: 700;
+      transition: all 0.18s var(--ease);
+      white-space: nowrap;
+    }
+    .src-btn:hover { border-color: var(--border-hi); color: var(--text); }
+    .src-btn.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: #020c05;
+    }
+    .src-btn .qtag {
+      font-size: 0.62rem;
+      opacity: 0.7;
+      margin-left: 3px;
+      font-weight: 600;
+    }
+
+    .failover-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.76rem;
+      font-weight: 700;
+      margin-left: auto;
+      transition: all 0.18s var(--ease);
+      white-space: nowrap;
+    }
+    .failover-btn:hover { border-color: var(--red); color: var(--red); }
+    .failover-btn i { font-size: 0.72rem; }
+
+    /* ── RIGHT: Match Sidebar ── */
+    .match-sidebar {
+      position: sticky;
+      top: calc(var(--nav-h) + 16px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Match Info Card */
+    .match-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .match-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+    }
+    .comp-name {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--green);
+    }
+
+    .status-tag {
+      font-size: 0.67rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .status-tag.live     { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,32,96,0.22); }
+    .status-tag.upcoming { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
+    .status-tag.finished { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* Scoreboard */
+    .scoreboard {
+      padding: 18px 14px 14px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+    .team-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+    .team-flag {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.08);
+      background: var(--elevated);
+    }
+    .team-name-text {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.2;
+      max-width: 95px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .score-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .score-nums {
+      display: flex;
+      align-items: baseline;
+      gap: 1px;
+    }
+    .score-n {
+      font-size: 2.4rem;
+      font-weight: 900;
+      letter-spacing: -3px;
+      color: var(--text);
+      line-height: 1;
+    }
+    .score-sep {
+      font-size: 1.6rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      line-height: 1;
+      margin: 0 3px;
+      letter-spacing: 0;
+    }
+    .score-info {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .match-card-foot {
+      padding: 10px 15px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .foot-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .foot-row i {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      width: 12px;
+      text-align: center;
+    }
+    .foot-row span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Next Match mini card */
+    .next-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+    }
+    .next-card-label {
+      font-size: 0.64rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+    .next-card-match {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .next-card-time {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    /* ═══════════════════════════════════════
+       FIXTURES SECTION
+    ═══════════════════════════════════════ */
+    .section { margin-top: 30px; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title i { color: var(--green); font-size: 0.85rem; }
+
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .tab {
+      padding: 5px 14px;
+      border-radius: 100px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      transition: all 0.18s var(--ease);
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { background: var(--green); color: #020c05; }
+
+    /* Horizontal scroll track */
+    .fx-track {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Individual fixture card */
+    .fx-card {
+      min-width: 215px;
+      width: 215px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 13px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      cursor: pointer;
+      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    }
+    .fx-card:hover {
+      border-color: var(--border-hi);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .fx-card.is-live {
+      border-color: rgba(240,32,96,0.22);
+      background: rgba(240,32,96,0.035);
+    }
+    .fx-card.is-current {
+      border-color: var(--border-green);
+      background: var(--green-dim);
+    }
+
+    .fx-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .fx-round {
+      font-size: 0.64rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 120px;
+    }
+    .fx-live-tag {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--red);
+      background: var(--red-dim);
+      border: 1px solid rgba(240,32,96,0.18);
+      border-radius: 3px;
+      padding: 2px 6px;
+    }
+    .fx-time {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .fx-teams { display: flex; flex-direction: column; gap: 5px; }
+    .fx-team-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .fx-team-name {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .fx-score {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text);
+      min-width: 14px;
+      text-align: right;
+    }
+    .fx-divider { height: 1px; background: var(--border); margin: 1px 0; }
+
+    .fx-foot {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .fx-foot i { font-size: 0.58rem; }
+
+    .fx-empty {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 90px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    /* ═══════════════════════════════════════
+       STANDINGS — COLLAPSIBLE
+    ═══════════════════════════════════════ */
+    .standings-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .standings-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .standings-head:hover { background: rgba(255,255,255,0.02); }
+    .standings-head-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.93rem;
+      font-weight: 800;
+    }
+    .standings-head-left i { color: var(--green); font-size: 0.85rem; }
+    .chevron {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      transition: transform 0.28s var(--ease);
+    }
+    .standings-wrap.open .chevron { transform: rotate(180deg); }
+
+    .standings-body {
+      display: none;
+      padding: 0 18px 18px;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .standings-wrap.open .standings-body { display: flex; }
+
+    .group-pills {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      padding-top: 2px;
+    }
+    .grp-pill {
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .grp-pill:hover { color: var(--text); border-color: var(--border-hi); }
+    .grp-pill.active { background: var(--green); border-color: var(--green); color: #020c05; }
+
+    .st-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .st-table th {
+      padding: 6px 7px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .st-table th.left { text-align: left; padding-left: 0; }
+    .st-table td {
+      padding: 7px 7px;
+      text-align: center;
+      color: var(--text-dim);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,0.025);
+    }
+    .st-table tr:last-child td { border-bottom: none; }
+    .st-table .td-pos { color: var(--text-muted); font-size: 0.73rem; width: 22px; }
+    .st-table .td-team { text-align: left; padding-left: 0; color: var(--text); font-weight: 700; white-space: nowrap; }
+    .st-table .td-pts { color: var(--text); font-weight: 800; }
+    .q-bar { display: inline-block; width: 3px; height: 13px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+    .q-bar.up { background: var(--green); }
+    .q-bar.dn { background: var(--red); }
+
+    /* ═══════════════════════════════════════
+       MOBILE MINI PLAYER (sticky)
+    ═══════════════════════════════════════ */
+    .mini-player {
+      display: none; /* shown only on mobile via media query */
+      position: fixed;
+      top: var(--nav-h);
+      left: 0;
+      right: 0;
+      height: 58px;
+      background: rgba(5,6,15,0.96);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      z-index: 499;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      transform: translateY(-120%);
+      transition: transform 0.32s var(--ease);
+    }
+    .mini-player.show { transform: translateY(0); }
+
+    .mini-thumb {
+      width: 82px; height: 46px;
+      border-radius: var(--r-sm);
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .mini-thumb iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+
+    .mini-info { flex: 1; overflow: hidden; }
+    .mini-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mini-score {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--green);
+      margin-top: 2px;
+    }
+
+    .mini-back {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--r-sm);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════════════
+       SCORE FLASH ANIMATION
+    ═══════════════════════════════════════ */
+    @keyframes score-flash {
+      0%   { color: var(--green); text-shadow: 0 0 14px var(--green); }
+      100% { color: var(--text); text-shadow: none; }
+    }
+    .score-n.flashed { animation: score-flash 1.8s var(--ease); }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE BREAKPOINTS
+    ═══════════════════════════════════════ */
+
+    /* Tablet */
+    @media (max-width: 1100px) {
+      .hero-grid {
+        grid-template-columns: 1fr 260px;
+        gap: 14px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .match-sidebar {
+        position: static;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .match-card { grid-column: 1 / -1; }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      :root { --nav-h: 56px; }
+      .nav { padding: 0 14px; }
+      .brand-wordmark { font-size: 1.1rem; }
+      .nav-tabs { display: none; }
+
+      .page { padding-left: 12px; padding-right: 12px; }
+
+      .match-sidebar { grid-template-columns: 1fr; }
+      .next-card { display: none; }
+
+      .mini-player { display: flex; }
+
+      .source-label { display: none; }
+      .source-bar { gap: 7px; }
+
+      /* Standings collapsed on mobile */
+      .standings-wrap.open { /* unchanged — user controls it */ }
+
+      .section { margin-top: 22px; }
+      .fx-card { min-width: 190px; width: 190px; }
+    }
+
+    @media (max-width: 480px) {
+      .nav-btn { display: none; }
+      .fx-card { min-width: 175px; width: 175px; }
+      .page { padding-left: 10px; padding-right: 10px; }
+    }
+
+    @media (max-width: 360px) {
+      .fx-card { min-width: 162px; width: 162px; }
+    }
+  </style>
 </head>
-
 <body>
 
-    <div class="bg-lights"></div>
+<!-- ════════════════════════════════
+     LOADER
+════════════════════════════════ -->
+<div id="loader">
+  <div id="lottie-wrap"></div>
+  <div class="loader-text">Loading watchfifa.live</div>
+</div>
 
-    <!-- Screen Loading Wrapper -->
-    <div id="loader">
-        <div id="lottie-animation"></div>
-        <div class="loader-text">Loading watchfifa.live</div>
+<!-- ════════════════════════════════
+     MINI PLAYER (Mobile sticky)
+════════════════════════════════ -->
+<div class="mini-player" id="mini-player">
+  <div class="mini-thumb">
+    <iframe id="mini-iframe" src="" allow="autoplay" scrolling="no"></iframe>
+  </div>
+  <div class="mini-info">
+    <div class="mini-name" id="mini-name">Loading match...</div>
+    <div class="mini-score" id="mini-score">—</div>
+  </div>
+  <button class="mini-back" id="mini-back" title="Scroll to stream">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+     NAVIGATION
+════════════════════════════════ -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="/fifa" class="nav-brand" aria-label="watchfifa.live home">
+    <div class="live-dot" aria-hidden="true"></div>
+    <span class="brand-wordmark">watchfifa<em>.live</em></span>
+  </a>
+
+  <div class="nav-tabs">
+    <a href="/f1" class="nav-tab">
+      <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>F1 Party
+    </a>
+    <a href="/fifa" class="nav-tab active" aria-current="page">
+      <i class="fa-solid fa-futbol" aria-hidden="true"></i>FIFA Party
+    </a>
+  </div>
+
+  <div class="nav-actions">
+    <button class="nav-btn" id="btn-search" aria-label="Search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════
+     MAIN PAGE
+════════════════════════════════ -->
+<div class="page">
+
+  <!-- ── HERO: PLAYER + SIDEBAR ── -->
+  <section class="hero-grid" aria-label="Live stream">
+
+    <!-- Left: Player -->
+    <div class="player-col">
+
+      <!-- Stream Frame -->
+      <div class="player-frame" id="player-frame">
+        <iframe
+          id="stream-iframe"
+          src=""
+          allowfullscreen
+          scrolling="no"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          title="Live match stream"
+        ></iframe>
+
+        <!-- Hover Overlay -->
+        <div class="player-overlay" aria-hidden="true">
+          <div class="ov-top">
+            <div class="badge-live" id="badge-live" style="display:none;" aria-label="Live">
+              <div class="badge-live-dot"></div>LIVE
+            </div>
+            <div class="signal-pill" id="signal-pill">
+              <div class="signal-dot"></div>
+              <span>Good Signal</span>
+            </div>
+          </div>
+          <div class="ov-bottom">
+            <button class="ctrl" id="ctrl-theater" title="Theater mode">
+              <i class="fa-solid fa-rectangle-wide" aria-hidden="true"></i>
+            </button>
+            <button class="ctrl" id="ctrl-fullscreen" title="Fullscreen">
+              <i class="fa-solid fa-expand" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Source Bar -->
+      <div class="source-bar" id="source-bar" aria-label="Stream sources">
+        <span class="source-label">Feed</span>
+        <div class="source-list" id="source-list">
+          <span style="font-size:0.78rem;color:var(--text-muted);">Fetching streams...</span>
+        </div>
+        <button class="failover-btn" id="btn-failover" aria-label="Auto switch feed">
+          <i class="fa-solid fa-rotate" aria-hidden="true"></i>Auto Switch
+        </button>
+      </div>
+
     </div>
 
-    <!-- Navigation Header -->
-    <nav class="navbar">
-        <div class="nav-logo-area">
-            <div class="live-dot"></div>
-            <h1 class="logo">watchfifa<span>.live</span></h1>
+    <!-- Right: Match Sidebar -->
+    <div class="match-sidebar" id="match-sidebar">
+
+      <!-- Current match card -->
+      <div class="match-card" id="match-card">
+        <div class="match-card-head">
+          <span class="comp-name" id="mc-comp">FIFA World Cup 2026</span>
+          <span class="status-tag upcoming" id="mc-status">—</span>
         </div>
 
-        <div class="nav-links">
-            <a href="/f1" class="nav-pill">
-                <i class="fa-solid fa-flag-checkered"></i> F1 Party
-            </a>
-            <a href="/fifa" class="nav-pill active">
-                <i class="fa-solid fa-soccer-ball"></i> FIFA Party
-            </a>
+        <div class="scoreboard">
+          <div class="team-col">
+            <img class="team-flag" id="mc-home-flag"
+              src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA=="
+              alt="Home team">
+            <span class="team-name-text" id="mc-home-name">Home</span>
+          </div>
+
+          <div class="score-col">
+            <div class="score-nums">
+              <span class="score-n" id="mc-hs">—</span>
+              <span class="score-sep">:</span>
+              <span class="score-n" id="mc-as">—</span>
+            </div>
+            <span class="score-info" id="mc-time-lbl">—</span>
+          </div>
+
+          <div class="team-col">
+            <img class="team-flag" id="mc-away-flag"
+              src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA=="
+              alt="Away team">
+            <span class="team-name-text" id="mc-away-name">Away</span>
+          </div>
         </div>
 
-        <div class="nav-actions">
-            <button class="nav-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-            <button class="nav-btn">
-                <i class="fa-solid fa-bell"></i>
-                <div class="nav-btn-badge"></div>
-            </button>
-            <div class="profile-area">
-                <div class="profile-avatar">U</div>
-            </div>
+        <div class="match-card-foot">
+          <div class="foot-row">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+            <span id="mc-stadium">—</span>
+          </div>
+          <div class="foot-row">
+            <i class="fa-solid fa-calendar-alt" aria-hidden="true"></i>
+            <span id="mc-date">—</span>
+          </div>
         </div>
-    </nav>
-
-    <!-- Main Content Arena -->
-    <main class="main-container">
-
-        <!-- Hero Row: Stream box + Match Center -->
-        <section class="broadcast-row">
-            
-            <!-- Video Player block -->
-            <div class="player-container">
-                <div class="player-viewport" id="player-vp">
-                    <iframe id="stream-iframe" src="" allowfullscreen scrolling="no" allow="autoplay; encrypted-media"></iframe>
-                    
-                    <!-- Customized Controls Layer -->
-                    <div class="player-overlay">
-                        <div class="overlay-top">
-                            <div class="badge-live">
-                                <div class="badge-live-pulse"></div> Live
-                            </div>
-                            <div class="stream-health-indicator">
-                                <div class="stream-health-dot"></div> Stream Health: Excellent
-                            </div>
-                        </div>
-
-                        <div class="overlay-bottom">
-                            <div class="controls-left">
-                                <button class="control-btn" id="ctrl-play"><i class="fa-solid fa-pause"></i></button>
-                                <button class="control-btn" id="ctrl-volume"><i class="fa-solid fa-volume-high"></i></button>
-                            </div>
-                            <div class="controls-right">
-                                <button class="control-btn" id="ctrl-theater" title="Theater Mode"><i class="fa-solid fa-rectangle-ad"></i></button>
-                                <button class="control-btn" id="ctrl-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Failsafe switchboard controls -->
-                <div class="source-bar">
-                    <div class="source-title-area">
-                        <i class="fa-solid fa-server"></i>
-                        <span>Select Broadcast Feed:</span>
-                    </div>
-                    <div class="source-selector-list" id="source-list">
-                        <!-- Loaded dynamically -->
-                    </div>
-                    <button class="failsafe-btn" id="btn-failover">
-                        <i class="fa-solid fa-rotate"></i>
-                        <span>Auto Switch Feed</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Match Center Stats Block -->
-            <div class="match-center">
-                <div class="match-center-header">
-                    <span class="competition-badge" id="mc-comp">FIFA World Cup 2026</span>
-                    <span class="timer-badge" id="mc-timer">--:--</span>
-                </div>
-
-                <div class="live-scoreboard">
-                    <div class="scoreboard-team">
-                        <img class="scoreboard-flag" id="mc-home-flag" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA==" alt="Home Team">
-                        <span class="scoreboard-name" id="mc-home-name">Home Team</span>
-                    </div>
-
-                    <div class="scoreboard-score-area">
-                        <span class="scoreboard-score" id="mc-home-score">0</span>
-                        <span class="scoreboard-divider">:</span>
-                        <span class="scoreboard-score" id="mc-away-score">0</span>
-                    </div>
-
-                    <div class="scoreboard-team">
-                        <img class="scoreboard-flag" id="mc-away-flag" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA==" alt="Away Team">
-                        <span class="scoreboard-name" id="mc-away-name">Away Team</span>
-                    </div>
-                </div>
-
-                <!-- Info tags -->
-                <div class="venue-metadata">
-                    <div class="meta-item">
-                        <span class="meta-label">Stadium</span>
-                        <span class="meta-value" id="mc-stadium">World Cup Arena</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Location</span>
-                        <span class="meta-value" id="mc-location">United States</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Weather</span>
-                        <span class="meta-value" id="mc-weather">Sunny, 24°C</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Match Status</span>
-                        <span class="meta-value" id="mc-status">LIVE NOW</span>
-                    </div>
-                </div>
-
-                <!-- Comparative bar plots -->
-                <div class="live-stats-area">
-                    <span class="stats-section-title">Match Statistics</span>
-                    
-                    <div class="stat-row">
-                        <div class="stat-labels">
-                            <span id="mc-stat-pos-home">50%</span>
-                            <span class="stat-label-title">Ball Possession</span>
-                            <span id="mc-stat-pos-away">50%</span>
-                        </div>
-                        <div class="stat-bar-container">
-                            <div class="stat-bar-home" id="mc-bar-pos-home" style="width: 50%"></div>
-                            <div class="stat-bar-away" id="mc-bar-pos-away" style="width: 50%"></div>
-                        </div>
-                    </div>
-
-                    <div class="stat-badge-grid">
-                        <div class="stat-badge-box">
-                            <div class="meta-label">Shots</div>
-                            <div class="stat-badge-value" id="mc-stat-shots">8 - 6</div>
-                        </div>
-                        <div class="stat-badge-box">
-                            <div class="meta-label">Corners</div>
-                            <div class="stat-badge-value" id="mc-stat-corners">5 - 3</div>
-                        </div>
-                        <div class="stat-badge-box">
-                            <div class="meta-label">Yellow/Red</div>
-                            <div class="stat-badge-value" id="mc-stat-cards">1/0 - 2/0</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Fixtures Carousel section -->
-        <section>
-            <div class="section-title-wrapper">
-                <h2 class="section-headline"><i class="fa-solid fa-calendar-days"></i> Match Fixtures</h2>
-                <div class="fixtures-tabs" id="fixtures-tabs">
-                    <button class="fixture-tab-btn active" data-tab="live">Live Now</button>
-                    <button class="fixture-tab-btn" data-tab="upcoming">Upcoming</button>
-                    <button class="fixture-tab-btn" data-tab="finished">Finished</button>
-                </div>
-            </div>
-
-            <div class="fixtures-carousel" id="fixtures-list">
-                <!-- Loaded dynamically -->
-            </div>
-        </section>
-
-        <!-- Bottom Grid: Standings, Predictions, Chat -->
-        <section class="bottom-sections-grid">
-            
-            <!-- Left Side: Table Standings -->
-            <div class="standings-card">
-                <div class="standings-header-row">
-                    <h2 class="section-headline"><i class="fa-solid fa-list-ol"></i> Standings</h2>
-                    <div class="group-selector-pills" id="group-tabs">
-                        <!-- Loaded dynamically -->
-                    </div>
-                </div>
-
-                <div style="overflow-x: auto;">
-                    <table class="standings-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">Pos</th>
-                                <th>Team</th>
-                                <th style="text-align: center;">MP</th>
-                                <th style="text-align: center;">W</th>
-                                <th style="text-align: center;">D</th>
-                                <th style="text-align: center;">L</th>
-                                <th style="text-align: center;">GD</th>
-                                <th style="text-align: center; font-weight: 700;">PTS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="standings-body">
-                            <!-- Loaded dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Right Side: Predictions & Custom Chat -->
-            <div style="display: flex; flex-direction: column; gap: 30px;">
-                
-                <!-- Predictions Poll card -->
-                <div class="prediction-card">
-                    <div class="poll-title">
-                        <i class="fa-solid fa-square-poll-vertical"></i>
-                        <span>Who will win today's match?</span>
-                    </div>
-
-                    <div class="poll-options" id="poll-options">
-                        <button class="poll-btn" data-choice="home">
-                            <span id="poll-home-name">Home Team</span>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                        <button class="poll-btn" data-choice="draw">
-                            <span>Draw Match</span>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                        <button class="poll-btn" data-choice="away">
-                            <span id="poll-away-name">Away Team</span>
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
-
-                    <div class="poll-results" id="poll-results" style="display: none;">
-                        <div class="result-bar-row">
-                            <div class="result-meta">
-                                <span id="res-home-label">Home</span>
-                                <span id="res-home-pct">0%</span>
-                            </div>
-                            <div class="result-bar">
-                                <div class="result-fill" id="res-home-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="result-bar-row">
-                            <div class="result-meta">
-                                <span>Draw</span>
-                                <span id="res-draw-pct">0%</span>
-                            </div>
-                            <div class="result-bar">
-                                <div class="result-fill" id="res-draw-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="result-bar-row">
-                            <div class="result-meta">
-                                <span id="res-away-label">Away</span>
-                                <span id="res-away-pct">0%</span>
-                            </div>
-                            <div class="result-bar">
-                                <div class="result-fill" id="res-away-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="poll-voted-text" id="poll-voted-text">Thank you for voting!</div>
-                    </div>
-                </div>
-
-                <!-- Chat card -->
-                <div class="chat-card">
-                    <div class="chat-header">
-                        <div class="chat-title">
-                            <i class="fa-solid fa-comments"></i>
-                            <span>Fan Zone Chat</span>
-                        </div>
-                        <span class="chat-user-count" id="chat-count">LIVE</span>
-                    </div>
-
-                    <div class="chat-messages" id="chat-messages">
-                        <!-- Loaded dynamically -->
-                    </div>
-
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" id="chat-input-field" placeholder="Send a broadcast message...">
-                        <button class="chat-send-btn" id="btn-chat-send">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
-
-    <script>
-        // Core App Logic
-        document.addEventListener("DOMContentLoaded", () => {
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiBase = isLocal ? 'http://localhost:3000' : '';
-
-            // Setup Lottie Loader
-            const loader = document.getElementById("loader");
-            const animation = lottie.loadAnimation({
-                container: document.getElementById('lottie-animation'),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'scene.json' // FIFA Lottie file
-            });
-
-            // App State
-            let state = {
-                raceData: null,
-                streamLinks: [],
-                fixtures: [],
-                standings: [],
-                currentSourceIndex: 0,
-                selectedFixtureId: null
-            };
-
-            // Setup custom user ID
-            let voterId = localStorage.getItem('poll_voter_id');
-            if (!voterId) {
-                voterId = 'voter_' + Math.random().toString(36).substring(2, 15);
-                localStorage.setItem('poll_voter_id', voterId);
-            }
-
-            // Setup anonymous chat username
-            let chatUsername = localStorage.getItem('chat_username');
-            let chatColor = localStorage.getItem('chat_color');
-            const chatColors = ['#00ff55', '#00e5ff', '#ff007f', '#ffaa00', '#aa00ff', '#ffffff'];
-
-            if (!chatUsername) {
-                chatUsername = 'Fan_' + Math.floor(1000 + Math.random() * 9000);
-                chatColor = chatColors[Math.floor(Math.random() * chatColors.length)];
-                localStorage.setItem('chat_username', chatUsername);
-                localStorage.setItem('chat_color', chatColor);
-            }
-
-            // Auto failover trigger
-            const btnFailover = document.getElementById("btn-failover");
-            btnFailover.addEventListener("click", () => {
-                triggerFailover();
-            });
-
-            // UI Actions
-            function triggerFailover() {
-                if (state.streamLinks.length <= 1) return;
-                state.currentSourceIndex = (state.currentSourceIndex + 1) % state.streamLinks.length;
-                loadActiveStream();
-                alertBroadcast(`Swapped to Broadcast Feed ${state.currentSourceIndex + 1}`);
-            }
-
-            function alertBroadcast(msg) {
-                const healthVal = document.querySelector(".stream-health-indicator");
-                if (healthVal) {
-                    healthVal.textContent = `Feed Swapped: Source ${state.currentSourceIndex + 1}`;
-                    healthVal.style.color = '#ff0055';
-                    setTimeout(() => {
-                        healthVal.textContent = `Stream Health: Excellent`;
-                        healthVal.style.color = 'var(--fifa-green)';
-                    }, 3000);
-                }
-            }
-
-            // Custom Player Controls Setup
-            const playerVp = document.getElementById("player-vp");
-            const iframe = document.getElementById("stream-iframe");
-            const btnPlay = document.getElementById("ctrl-play");
-            const btnVolume = document.getElementById("ctrl-volume");
-            const btnTheater = document.getElementById("ctrl-theater");
-            const btnFullscreen = document.getElementById("ctrl-fullscreen");
-
-            // Theater mode toggle
-            btnTheater.addEventListener("click", () => {
-                playerVp.classList.toggle("theater-mode");
-                if (playerVp.classList.contains("theater-mode")) {
-                    playerVp.style.maxWidth = '100%';
-                    btnTheater.querySelector("i").className = "fa-solid fa-rectangle-xmark";
-                } else {
-                    playerVp.style.maxWidth = '';
-                    btnTheater.querySelector("i").className = "fa-solid fa-rectangle-ad";
-                }
-            });
-
-            // Fullscreen toggle
-            btnFullscreen.addEventListener("click", () => {
-                if (!document.fullscreenElement) {
-                    playerVp.requestFullscreen().catch(err => {
-                        console.error(`Error enabling fullscreen: ${err.message}`);
-                    });
-                } else {
-                    document.exitFullscreen();
-                }
-            });
-
-            // Volume Mute/Unmute toggle
-            btnVolume.addEventListener("click", () => {
-                // Since streams are nested iframe player elements, direct audio toggles are handled in player itself
-                // We toggle visual button state
-                const isMuted = btnVolume.querySelector("i").classList.contains("fa-volume-xmark");
-                if (isMuted) {
-                    btnVolume.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-                } else {
-                    btnVolume.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-                }
-            });
-
-            // Play/Pause iframe reload
-            btnPlay.addEventListener("click", () => {
-                const isPaused = btnPlay.querySelector("i").classList.contains("fa-play");
-                if (isPaused) {
-                    loadActiveStream();
-                    btnPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                } else {
-                    iframe.src = "";
-                    btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
-                }
-            });
-
-            // Fetch live config details & streams from Vercel/Local Server
-            async function fetchLiveConfig() {
-                try {
-                    const res = await fetch(`${apiBase}/api/live-config`);
-                    const config = await res.json();
-                    
-                    if (config.fifa) {
-                        state.raceData = config.fifa.raceData || {};
-                        state.streamLinks = config.fifa.streamLinks || [];
-                        
-                        updateMatchDetails(state.raceData);
-                        renderSourceSelector();
-                        loadActiveStream();
-                        initPoll(state.raceData);
-                    }
-                } catch (e) {
-                    console.error("Failed to load config details:", e.message);
-                } finally {
-                    // Hide Loader when main configurations are set
-                    setTimeout(() => {
-                        loader.style.opacity = "0";
-                        setTimeout(() => {
-                            loader.style.visibility = "hidden";
-                        }, 800);
-                    }, 500);
-                }
-            }
-
-            function updateMatchDetails(data) {
-                if (!data) return;
-
-                document.getElementById("mc-comp").textContent = data.round || "FIFA WORLD CUP 2026";
-                document.getElementById("mc-timer").textContent = data.matchTime || "00'";
-                if (data.isLive) {
-                    document.getElementById("mc-timer").classList.add("live");
-                    document.getElementById("mc-status").textContent = "LIVE NOW";
-                    document.getElementById("mc-status").style.color = "var(--fifa-green)";
-                } else {
-                    document.getElementById("mc-timer").classList.remove("live");
-                    document.getElementById("mc-status").textContent = data.isFinished ? "FINISHED" : "UPCOMING";
-                    document.getElementById("mc-status").style.color = "var(--text-muted)";
-                }
-
-                // Update team titles
-                const homeName = data.name ? data.name.split(" vs ")[0] : "Home";
-                const awayName = data.name ? data.name.split(" vs ")[1] : "Away";
-
-                document.getElementById("mc-home-name").textContent = homeName;
-                document.getElementById("mc-away-name").textContent = awayName;
-
-                document.getElementById("mc-home-score").textContent = data.homeScore || "0";
-                document.getElementById("mc-away-score").textContent = data.awayScore || "0";
-
-                document.getElementById("mc-stadium").textContent = data.circuit || "FIFA Arena";
-                document.getElementById("mc-location").textContent = data.location || "North America";
-
-                // Generate simulated values for details match stats
-                const hs = parseInt(data.homeScore || 0);
-                const as = parseInt(data.awayScore || 0);
-                let posHome = 50, posAway = 50, shots = "6 - 4", corners = "4 - 2", cards = "1/0 - 1/0";
-
-                if (data.isLive || data.isFinished) {
-                    posHome = 45 + Math.floor(hs * 3) - Math.floor(as * 2);
-                    posHome = Math.max(30, Math.min(70, posHome));
-                    posAway = 100 - posHome;
-
-                    const totalShotsHome = 5 + hs * 2 + Math.floor(Math.random() * 4);
-                    const totalShotsAway = 3 + as * 2 + Math.floor(Math.random() * 4);
-                    shots = `${totalShotsHome} - ${totalShotsAway}`;
-
-                    const cornerHome = 2 + Math.floor(totalShotsHome / 3);
-                    const cornerAway = 1 + Math.floor(totalShotsAway / 3);
-                    corners = `${cornerHome} - ${cornerAway}`;
-
-                    cards = `${Math.floor(Math.random()*3)}/0 - ${Math.floor(Math.random()*4)}/0`;
-                }
-
-                document.getElementById("mc-stat-pos-home").textContent = `${posHome}%`;
-                document.getElementById("mc-stat-pos-away").textContent = `${posAway}%`;
-                document.getElementById("mc-bar-pos-home").style.width = `${posHome}%`;
-                document.getElementById("mc-bar-pos-away").style.width = `${posAway}%`;
-
-                document.getElementById("mc-stat-shots").textContent = shots;
-                document.getElementById("mc-stat-corners").textContent = corners;
-                document.getElementById("mc-stat-cards").textContent = cards;
-            }
-
-            function renderSourceSelector() {
-                const list = document.getElementById("source-list");
-                list.innerHTML = "";
-
-                if (state.streamLinks.length === 0) {
-                    list.innerHTML = '<span style="font-size: 0.8rem; color: var(--text-muted);">No active feeds available</span>';
-                    return;
-                }
-
-                state.streamLinks.forEach((link, idx) => {
-                    const btn = document.createElement("button");
-                    btn.className = `source-btn ${idx === state.currentSourceIndex ? 'active' : ''}`;
-                    btn.textContent = `Source ${idx + 1}`;
-                    btn.addEventListener("click", () => {
-                        state.currentSourceIndex = idx;
-                        document.querySelectorAll(".source-btn").forEach(b => b.classList.remove("active"));
-                        btn.classList.add("active");
-                        loadActiveStream();
-                    });
-                    list.appendChild(btn);
-                });
-            }
-
-            function loadActiveStream() {
-                if (state.streamLinks.length === 0) return;
-                const active = state.streamLinks[state.currentSourceIndex];
-                if (active && active.url) {
-                    iframe.src = active.url;
-                }
-            }
-
-            // Fetch Fixtures List
-            async function fetchFixtures() {
-                try {
-                    const res = await fetch(`${apiBase}/api/fifa/fixtures`);
-                    const data = await res.json();
-                    if (Array.isArray(data)) {
-                        state.fixtures = data;
-                        renderFixtures();
-                    }
-                } catch (e) {
-                    console.error("Failed to load fixtures:", e.message);
-                }
-            }
-
-            let activeFixtureTab = 'live';
-            document.querySelectorAll(".fixture-tab-btn").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    document.querySelectorAll(".fixture-tab-btn").forEach(b => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    activeFixtureTab = btn.getAttribute("data-tab");
-                    renderFixtures();
-                });
-            });
-
-            function renderFixtures() {
-                const list = document.getElementById("fixtures-list");
-                list.innerHTML = "";
-
-                // Filter fixtures based on selected tab
-                const filtered = state.fixtures.filter(f => {
-                    if (activeFixtureTab === 'live') return f.status === 'live';
-                    if (activeFixtureTab === 'upcoming') return f.status === 'notstarted';
-                    return f.status === 'finished';
-                });
-
-                if (filtered.length === 0) {
-                    list.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-muted); width: 100%;">No matches found in this category</div>';
-                    return;
-                }
-
-                filtered.forEach(f => {
-                    const card = document.createElement("div");
-                    const isActive = state.raceData && state.raceData.name && state.raceData.name.includes(f.homeTeam);
-                    card.className = `fixture-card ${isActive ? 'active' : ''}`;
-                    
-                    const liveBadge = f.status === 'live' ? '<span class="fixture-match-badge live">LIVE</span>' : `<span class="fixture-match-badge">${f.round || 'Group Match'}</span>`;
-                    const statusText = f.status === 'live' ? `<span class="fixture-timer">${f.matchTime || 'LIVE'}</span>` : f.status === 'finished' ? '<span>FT</span>' : `<span>${f.localDate}</span>`;
-
-                    card.innerHTML = `
-                        <div class="fixture-card-header">
-                            <span>${f.stadium || 'Arena'}</span>
-                            ${liveBadge}
-                        </div>
-                        <div class="fixture-teams-grid">
-                            <div class="fixture-team-row">
-                                <div class="fixture-team-name-area">
-                                    <img class="fixture-flag" src="${f.homeFlag || 'https://flagcdn.com/w80/us.png'}" alt="">
-                                    <span>${f.homeTeam}</span>
-                                </div>
-                                <span class="fixture-score">${f.finished || f.status === 'live' ? f.homeScore : '-'}</span>
-                            </div>
-                            <div class="fixture-team-row">
-                                <div class="fixture-team-name-area">
-                                    <img class="fixture-flag" src="${f.awayFlag || 'https://flagcdn.com/w80/us.png'}" alt="">
-                                    <span>${f.awayTeam}</span>
-                                </div>
-                                <span class="fixture-score">${f.finished || f.status === 'live' ? f.awayScore : '-'}</span>
-                            </div>
-                        </div>
-                        <div class="fixture-card-footer">
-                            <span>Kickoff (IST)</span>
-                            ${statusText}
-                        </div>
-                    `;
-
-                    // Update Main Video Player to clicked match
-                    card.addEventListener("click", () => {
-                        loader.style.opacity = "1";
-                        loader.style.visibility = "visible";
-                        
-                        // Set manual fetch query to retrieve links for this match
-                        const name = `${f.homeTeam} vs ${f.awayTeam}`;
-                        fetch(`${apiBase}/api/fifa/streams?save=true&match=${encodeURIComponent(name)}`)
-                            .then(() => fetchLiveConfig())
-                            .catch(err => {
-                                console.error("Error setting custom match:", err.message);
-                                fetchLiveConfig();
-                            });
-                    });
-
-                    list.appendChild(card);
-                });
-            }
-
-            // Fetch Standings
-            async function fetchStandings() {
-                try {
-                    const res = await fetch(`${apiBase}/api/fifa/standings`);
-                    const data = await res.json();
-                    if (Array.isArray(data)) {
-                        state.standings = data;
-                        renderGroupTabs();
-                        renderStandings();
-                    }
-                } catch (e) {
-                    console.error("Failed to load standings:", e.message);
-                }
-            }
-
-            let activeGroupIdx = 0;
-
-            function renderGroupTabs() {
-                const container = document.getElementById("group-tabs");
-                container.innerHTML = "";
-
-                state.standings.forEach((g, idx) => {
-                    const btn = document.createElement("button");
-                    btn.className = `group-pill ${idx === activeGroupIdx ? 'active' : ''}`;
-                    btn.textContent = g.name.replace("Group ", "");
-                    btn.addEventListener("click", () => {
-                        activeGroupIdx = idx;
-                        document.querySelectorAll(".group-pill").forEach(p => p.classList.remove("active"));
-                        btn.classList.add("active");
-                        renderStandings();
-                    });
-                    container.appendChild(btn);
-                });
-            }
-
-            function renderStandings() {
-                const body = document.getElementById("standings-body");
-                body.innerHTML = "";
-
-                if (state.standings.length === 0) return;
-                const activeGroup = state.standings[activeGroupIdx];
-
-                activeGroup.teams.forEach((t, idx) => {
-                    const tr = document.createElement("tr");
-                    const marker = idx < 2 ? '<span class="qualify-marker"></span>' : idx === 3 ? '<span class="eliminate-marker"></span>' : '<span></span>';
-
-                    tr.innerHTML = `
-                        <td class="td-rank">${idx + 1}</td>
-                        <td>
-                            <div class="td-team">
-                                ${marker}
-                                <img class="fixture-flag" src="${t.flag || 'https://flagcdn.com/w80/us.png'}" alt="">
-                                <span>${t.name}</span>
-                            </div>
-                        </td>
-                        <td style="text-align: center;">${t.mp}</td>
-                        <td style="text-align: center;">${t.w}</td>
-                        <td style="text-align: center;">${t.d}</td>
-                        <td style="text-align: center;">${t.l}</td>
-                        <td style="text-align: center; color: ${t.gd > 0 ? 'var(--fifa-green)' : t.gd < 0 ? '#ff0055' : 'inherit'}">${t.gd > 0 ? '+' : ''}${t.gd}</td>
-                        <td style="text-align: center; font-weight: 800; color: var(--text-white);">${t.pts}</td>
-                    `;
-                    body.appendChild(tr);
-                });
-            }
-
-            // Predictions Poll System
-            let currentMatchId = "";
-
-            function initPoll(matchData) {
-                if (!matchData || !matchData.name) return;
-                const cleanId = matchData.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                currentMatchId = cleanId;
-
-                const homeName = matchData.name.split(" vs ")[0] || "Home";
-                const awayName = matchData.name.split(" vs ")[1] || "Away";
-
-                document.getElementById("poll-home-name").textContent = homeName;
-                document.getElementById("poll-away-name").textContent = awayName;
-
-                // Check if user already voted
-                const savedVote = localStorage.getItem(`voted_fifa_${cleanId}`);
-                if (savedVote) {
-                    showPollResults(cleanId);
-                } else {
-                    document.getElementById("poll-options").style.display = "flex";
-                    document.getElementById("poll-results").style.display = "none";
-                }
-            }
-
-            // Register click listener for voting buttons
-            document.querySelectorAll(".poll-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    const choice = btn.getAttribute("data-choice");
-                    castVote(choice);
-                });
-            });
-
-            async function castVote(choice) {
-                if (!currentMatchId) return;
-
-                // Fire confetti on vote
-                try {
-                    confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.85 },
-                        colors: ['#00ff55', '#0259ff', '#ffffff']
-                    });
-                } catch(e) {}
-
-                localStorage.setItem(`voted_fifa_${currentMatchId}`, choice);
-
-                try {
-                    const res = await fetch(`${apiBase}/api/fifa/poll?matchId=${currentMatchId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ choice, voterId })
-                    });
-                    const data = await res.json();
-                    renderPollPercentages(data);
-                } catch(e) {
-                    console.error("Failed to vote:", e.message);
-                }
-            }
-
-            async function showPollResults(matchId) {
-                document.getElementById("poll-options").style.display = "none";
-                document.getElementById("poll-results").style.display = "flex";
-
-                try {
-                    const res = await fetch(`${apiBase}/api/fifa/poll?matchId=${matchId}`);
-                    const data = await res.json();
-                    renderPollPercentages(data);
-                } catch (e) {
-                    console.error("Failed to load poll results:", e.message);
-                }
-            }
-
-            function renderPollPercentages(data) {
-                const total = data.total || 0;
-                let hp = 0, ap = 0, dp = 0;
-
-                if (total > 0) {
-                    hp = Math.round((data.home || 0) / total * 100);
-                    ap = Math.round((data.away || 0) / total * 100);
-                    dp = Math.round((data.draw || 0) / total * 100);
-                } else {
-                    hp = 33; ap = 33; dp = 34; // equal split fallback
-                }
-
-                document.getElementById("res-home-pct").textContent = `${hp}%`;
-                document.getElementById("res-away-pct").textContent = `${ap}%`;
-                document.getElementById("res-draw-pct").textContent = `${dp}%`;
-
-                const homeFill = document.getElementById("res-home-fill");
-                const awayFill = document.getElementById("res-away-fill");
-                const drawFill = document.getElementById("res-draw-fill");
-
-                homeFill.style.width = `${hp}%`;
-                awayFill.style.width = `${ap}%`;
-                drawFill.style.width = `${dp}%`;
-
-                // Add winning glow color to highest percent
-                homeFill.classList.remove("winning");
-                awayFill.classList.remove("winning");
-                drawFill.classList.remove("winning");
-
-                const max = Math.max(hp, ap, dp);
-                if (hp === max) homeFill.classList.add("winning");
-                else if (ap === max) awayFill.classList.add("winning");
-                else drawFill.classList.add("winning");
-
-                document.getElementById("poll-options").style.display = "none";
-                document.getElementById("poll-results").style.display = "flex";
-            }
-
-            // --- Custom Fan chat zone logic using SSE streaming ---
-            const chatMessages = document.getElementById("chat-messages");
-            const chatInput = document.getElementById("chat-input-field");
-            const chatSendBtn = document.getElementById("btn-chat-send");
-
-            // Connect to real-time chat SSE stream
-            function connectChat() {
-                const sseUrl = `${apiBase}/api/chat/stream`;
-                const es = new EventSource(sseUrl);
-
-                es.onmessage = (event) => {
-                    try {
-                        const payload = JSON.parse(event.data);
-                        if (payload.type === 'chatList') {
-                            renderChatMessages(payload.data);
-                        } else if (payload.type === 'chatMessage') {
-                            addChatBubble(payload.data);
-                        }
-                    } catch(e) {
-                        console.error("SSE parse error:", e.message);
-                    }
-                };
-
-                es.onerror = () => {
-                    console.log("Chat SSE stream failed. Reconnecting in 3s...");
-                    es.close();
-                    setTimeout(connectChat, 3000);
-                };
-            }
-
-            function renderChatMessages(messages) {
-                chatMessages.innerHTML = "";
-                messages.forEach(m => addChatBubble(m));
-            }
-
-            function addChatBubble(msg) {
-                const bubble = document.createElement("div");
-                bubble.className = "chat-bubble";
-                
-                const adminBadge = msg.isAdmin ? '<span class="chat-badge-admin">Mod</span>' : '';
-                const timeText = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                bubble.innerHTML = `
-                    <div class="chat-bubble-author" style="color: ${msg.color || '#a970ff'};">
-                        <span>${msg.username}</span>
-                        ${adminBadge}
-                        <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: normal; margin-left: auto;">${timeText}</span>
-                    </div>
-                    <div>${escapeHtml(msg.text)}</div>
-                `;
-                chatMessages.appendChild(bubble);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            function escapeHtml(text) {
-                return text
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
-            }
-
-            async function sendChatMessage() {
-                const text = chatInput.value.trim();
-                if (!text) return;
-
-                chatInput.value = "";
-                try {
-                    await fetch(`${apiBase}/api/chat/send`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            username: chatUsername,
-                            text: text,
-                            color: chatColor,
-                            isAdmin: false
-                        })
-                    });
-                } catch(e) {
-                    console.error("Send message error:", e.message);
-                }
-            }
-
-            chatSendBtn.addEventListener("click", () => {
-                sendChatMessage();
-            });
-
-            chatInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") sendChatMessage();
-            });
-
-            // Initialize app fetches
-            fetchLiveConfig();
-            fetchFixtures();
-            fetchStandings();
-            connectChat();
-
-            // Auto-refresh fixtures & standings lists every 30s
-            setInterval(() => {
-                fetchFixtures();
-                // Fetch score/timer updates for current match
-                fetch(`${apiBase}/api/live-config`)
-                    .then(r => r.json())
-                    .then(config => {
-                        if (config.fifa && config.fifa.raceData) {
-                            state.raceData = config.fifa.raceData;
-                            updateMatchDetails(state.raceData);
-                        }
-                    });
-            }, 30000);
-        });
-    </script>
+      </div>
+
+      <!-- Next match card -->
+      <div class="next-card" id="next-card" style="display:none;" aria-label="Next match">
+        <div class="next-card-label">Next Match</div>
+        <div class="next-card-match" id="next-name">—</div>
+        <div class="next-card-time" id="next-time">—</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── FIXTURES ── -->
+  <section class="section" aria-label="Fixtures">
+    <div class="section-head">
+      <h2 class="section-title">
+        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+        Fixtures
+      </h2>
+      <div class="tabs" id="fx-tabs" role="tablist">
+        <button class="tab active" data-tab="live" role="tab" aria-selected="true">Live</button>
+        <button class="tab" data-tab="upcoming" role="tab" aria-selected="false">Upcoming</button>
+        <button class="tab" data-tab="finished" role="tab" aria-selected="false">Finished</button>
+      </div>
+    </div>
+    <div class="fx-track" id="fx-track" role="list">
+      <div class="fx-empty">Loading fixtures...</div>
+    </div>
+  </section>
+
+  <!-- ── STANDINGS ── -->
+  <section class="section" aria-label="Group standings">
+    <div class="standings-wrap open" id="standings-wrap">
+      <div class="standings-head" id="standings-toggle" role="button" aria-expanded="true" tabindex="0">
+        <div class="standings-head-left">
+          <i class="fa-solid fa-table-list" aria-hidden="true"></i>
+          Group Standings
+        </div>
+        <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
+      </div>
+      <div class="standings-body" id="standings-body">
+        <div class="group-pills" id="group-pills"></div>
+        <div style="overflow-x:auto;">
+          <table class="st-table" aria-label="Standings table">
+            <thead>
+              <tr>
+                <th class="left" style="width:22px;">#</th>
+                <th class="left">Team</th>
+                <th title="Matches Played">MP</th>
+                <th title="Won">W</th>
+                <th title="Drawn">D</th>
+                <th title="Lost">L</th>
+                <th title="Goal Difference">GD</th>
+                <th title="Points" style="color:var(--text);">Pts</th>
+              </tr>
+            </thead>
+            <tbody id="st-rows">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:18px;font-size:0.8rem;">Loading standings...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- .page -->
+
+<!-- ════════════════════════════════
+     APP SCRIPT
+════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Config ── */
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const API     = isLocal ? 'http://localhost:3000' : '';
+
+  /* ── App State ── */
+  const S = {
+    streams:      [],
+    sourceIdx:    0,
+    raceData:     null,
+    fixtures:     [],
+    standings:    {},
+    activeTab:    'live',
+    activeGroup:  null,
+    prevHS:       null,
+    prevAS:       null,
+    loaderDone:   false,
+  };
+
+  /* ══════════════════════════
+     LOADER
+  ══════════════════════════ */
+  const loaderEl = document.getElementById('loader');
+
+  lottie.loadAnimation({
+    container:  document.getElementById('lottie-wrap'),
+    renderer:   'svg',
+    loop:       true,
+    autoplay:   true,
+    path:       'scene.json'
+  });
+
+  function hideLoader() {
+    if (S.loaderDone) return;
+    S.loaderDone = true;
+    loaderEl.classList.add('out');
+  }
+  setTimeout(hideLoader, 4500); // max wait
+
+  /* ══════════════════════════
+     PLAYER CONTROLS
+  ══════════════════════════ */
+  const playerFrame  = document.getElementById('player-frame');
+  const streamIframe = document.getElementById('stream-iframe');
+  const miniIframe   = document.getElementById('mini-iframe');
+
+  /* Theater mode */
+  document.getElementById('ctrl-theater').addEventListener('click', () => {
+    playerFrame.classList.toggle('theater');
+    const icon = document.querySelector('#ctrl-theater i');
+    icon.className = playerFrame.classList.contains('theater')
+      ? 'fa-solid fa-compress-wide'
+      : 'fa-solid fa-rectangle-wide';
+  });
+
+  /* Fullscreen */
+  document.getElementById('ctrl-fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      playerFrame.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  document.addEventListener('fullscreenchange', () => {
+    const icon = document.querySelector('#ctrl-fullscreen i');
+    icon.className = document.fullscreenElement ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+  });
+
+  /* Auto-failover */
+  document.getElementById('btn-failover').addEventListener('click', () => {
+    if (S.streams.length > 1) {
+      S.sourceIdx = (S.sourceIdx + 1) % S.streams.length;
+      activateSource(S.sourceIdx);
+    }
+  });
+
+  /* ══════════════════════════
+     SOURCES
+  ══════════════════════════ */
+  const QUALITY_HINTS = ['HD', '', 'Backup', 'Alt', 'Ultra', '', '', ''];
+
+  function activateSource(idx) {
+    const link = S.streams[idx];
+    if (!link?.url) return;
+    S.sourceIdx = idx;
+
+    streamIframe.src = link.url;
+    miniIframe.src   = link.url;
+
+    document.querySelectorAll('.src-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === idx);
+    });
+  }
+
+  function renderSources() {
+    const container = document.getElementById('source-list');
+    if (!S.streams.length) {
+      container.innerHTML = '<span style="font-size:0.78rem;color:var(--text-muted);">No feeds available</span>';
+      return;
+    }
+    container.innerHTML = S.streams.map((_, i) => {
+      const hint = QUALITY_HINTS[i] || '';
+      return `<button class="src-btn${i === S.sourceIdx ? ' active' : ''}" data-i="${i}">
+        Source ${i + 1}${hint ? `<span class="qtag">${hint}</span>` : ''}
+      </button>`;
+    }).join('');
+
+    container.querySelectorAll('.src-btn').forEach(btn => {
+      btn.addEventListener('click', () => activateSource(+btn.dataset.i));
+    });
+  }
+
+  /* ══════════════════════════
+     MATCH CARD
+  ══════════════════════════ */
+  function updateMatchCard(data) {
+    if (!data) return;
+    S.raceData = data;
+
+    const homeName = (data.name || '').split(' vs ')[0]?.trim() || 'Home';
+    const awayName = (data.name || '').split(' vs ')[1]?.trim() || 'Away';
+    const hs = data.homeScore ?? '—';
+    const as = data.awayScore ?? '—';
+
+    document.getElementById('mc-comp').textContent   = data.round || 'FIFA World Cup 2026';
+    document.getElementById('mc-home-name').textContent = homeName;
+    document.getElementById('mc-away-name').textContent = awayName;
+    document.getElementById('mc-stadium').textContent = data.circuit || data.location || '—';
+    document.getElementById('mc-date').textContent    = data.date || '—';
+
+    const hsEl = document.getElementById('mc-hs');
+    const asEl = document.getElementById('mc-as');
+
+    /* Flash on score change */
+    if (S.prevHS !== null && S.prevHS !== hs) flashEl(hsEl);
+    if (S.prevAS !== null && S.prevAS !== as) flashEl(asEl);
+    S.prevHS = hs; S.prevAS = as;
+
+    hsEl.textContent = hs;
+    asEl.textContent = as;
+
+    const statusEl  = document.getElementById('mc-status');
+    const badgeLive = document.getElementById('badge-live');
+    const timeLbl   = document.getElementById('mc-time-lbl');
+
+    if (data.isLive) {
+      statusEl.textContent  = data.matchTime ? `${data.matchTime}'` : 'LIVE';
+      statusEl.className    = 'status-tag live';
+      timeLbl.textContent   = data.matchTime ? `${data.matchTime}'` : 'LIVE';
+      badgeLive.style.display = 'inline-flex';
+    } else if (data.isFinished) {
+      statusEl.textContent  = 'FT';
+      statusEl.className    = 'status-tag finished';
+      timeLbl.textContent   = 'Full Time';
+      badgeLive.style.display = 'none';
+    } else {
+      statusEl.textContent  = 'Upcoming';
+      statusEl.className    = 'status-tag upcoming';
+      timeLbl.textContent   = data.date || 'Scheduled';
+      badgeLive.style.display = 'none';
+    }
+
+    /* Mini player info */
+    document.getElementById('mini-name').textContent  = data.name || 'Live Match';
+    document.getElementById('mini-score').textContent = (data.isLive || data.isFinished)
+      ? `${hs} — ${as}`
+      : 'Upcoming';
+  }
+
+  function flashEl(el) {
+    el.classList.remove('flashed');
+    void el.offsetWidth; // reflow
+    el.classList.add('flashed');
+  }
+
+  /* ══════════════════════════
+     FETCH: LIVE CONFIG
+  ══════════════════════════ */
+  async function fetchConfig() {
+    try {
+      const r   = await fetch(`${API}/api/live-config`);
+      if (!r.ok) throw new Error(r.status);
+      const cfg = await r.json();
+
+      if (cfg.fifa) {
+        const { raceData, streamLinks } = cfg.fifa;
+        if (raceData) updateMatchCard(raceData);
+
+        if (Array.isArray(streamLinks) && streamLinks.length) {
+          S.streams = streamLinks;
+          renderSources();
+          activateSource(0);
+        }
+      }
+    } catch (e) {
+      console.warn('[config]', e.message);
+      // Fallback: fetch streams directly
+      fetchStreams();
+    } finally {
+      hideLoader();
+    }
+  }
+
+  async function fetchStreams() {
+    try {
+      const r = await fetch(`${API}/api/fifa/streams`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d.streamLinks?.length) {
+        S.streams = d.streamLinks;
+        renderSources();
+        if (!streamIframe.src || streamIframe.src === location.href) activateSource(0);
+      }
+    } catch (e) {
+      console.warn('[streams]', e.message);
+    }
+  }
+
+  /* ══════════════════════════
+     FETCH: FIXTURES
+  ══════════════════════════ */
+  async function fetchFixtures() {
+    try {
+      const r = await fetch(`${API}/api/fifa/fixtures`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (Array.isArray(d)) {
+        S.fixtures = d;
+        renderFixtures();
+        updateNextCard();
+      }
+    } catch (e) { console.warn('[fixtures]', e.message); }
+  }
+
+  function updateNextCard() {
+    const upcoming = S.fixtures
+      .filter(f => f.status === 'notstarted' && !f.finished)
+      .sort((a, b) => (a.kickoffTs || 0) - (b.kickoffTs || 0));
+
+    const card = document.getElementById('next-card');
+    if (upcoming.length) {
+      const nx = upcoming[0];
+      document.getElementById('next-name').textContent = `${nx.homeTeam} vs ${nx.awayTeam}`;
+      document.getElementById('next-time').textContent = nx.localDate || '—';
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  }
+
+  /* Fixture Tabs */
+  document.getElementById('fx-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab');
+    if (!btn) return;
+    document.querySelectorAll('#fx-tabs .tab').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    S.activeTab = btn.dataset.tab;
+    renderFixtures();
+  });
+
+  function renderFixtures() {
+    const track = document.getElementById('fx-track');
+
+    const filtered = S.fixtures.filter(f => {
+      if (S.activeTab === 'live')     return f.status === 'inprogress' || f.status === 'live';
+      if (S.activeTab === 'upcoming') return f.status === 'notstarted' && !f.finished;
+      return f.finished || f.status === 'finished';
+    });
+
+    if (!filtered.length) {
+      track.innerHTML = `<div class="fx-empty">No ${S.activeTab} matches</div>`;
+      return;
+    }
+
+    const currentName = S.raceData?.name || '';
+
+    track.innerHTML = filtered.map(f => {
+      const isLive  = f.status === 'inprogress' || f.status === 'live';
+      const hasScore = isLive || f.finished;
+      const isCurrent = currentName && `${f.homeTeam} vs ${f.awayTeam}` === currentName;
+
+      const timeDisplay = isLive
+        ? (f.matchTime ? `${f.matchTime}'` : 'LIVE')
+        : (f.finished ? 'FT' : (f.localDate || '—'));
+
+      return `<div class="fx-card${isLive ? ' is-live' : ''}${isCurrent ? ' is-current' : ''}" data-id="${f.id}" role="listitem">
+        <div class="fx-top">
+          <span class="fx-round">${f.round || 'Group Stage'}</span>
+          ${isLive
+            ? `<span class="fx-live-tag">● ${f.matchTime ? f.matchTime + "'" : 'LIVE'}</span>`
+            : `<span class="fx-time">${timeDisplay}</span>`}
+        </div>
+        <div class="fx-teams">
+          <div class="fx-team-row">
+            <span class="fx-team-name">${escHtml(f.homeTeam || '—')}</span>
+            ${hasScore ? `<span class="fx-score">${f.homeScore ?? '0'}</span>` : ''}
+          </div>
+          <div class="fx-divider"></div>
+          <div class="fx-team-row">
+            <span class="fx-team-name">${escHtml(f.awayTeam || '—')}</span>
+            ${hasScore ? `<span class="fx-score">${f.awayScore ?? '0'}</span>` : ''}
+          </div>
+        </div>
+        <div class="fx-foot">
+          <i class="fa-solid fa-location-dot"></i>
+          ${escHtml(f.stadium || 'FIFA Venue')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ══════════════════════════
+     FETCH: STANDINGS
+  ══════════════════════════ */
+  async function fetchStandings() {
+    try {
+      const r = await fetch(`${API}/api/fifa/standings`);
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d?.groups && Object.keys(d.groups).length) {
+        S.standings = d.groups;
+        renderGroupPills();
+        const firstKey = Object.keys(d.groups)[0];
+        S.activeGroup = firstKey;
+        renderStandingsTable(d.groups[firstKey]);
+      }
+    } catch (e) { console.warn('[standings]', e.message); }
+  }
+
+  function renderGroupPills() {
+    const container = document.getElementById('group-pills');
+    const keys = Object.keys(S.standings);
+    container.innerHTML = keys.map((g, i) =>
+      `<button class="grp-pill${i === 0 ? ' active' : ''}" data-g="${g}">${g}</button>`
+    ).join('');
+    container.querySelectorAll('.grp-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.grp-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        S.activeGroup = btn.dataset.g;
+        renderStandingsTable(S.standings[S.activeGroup]);
+      });
+    });
+  }
+
+  function renderStandingsTable(teams) {
+    const tbody = document.getElementById('st-rows');
+    if (!teams?.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.78rem;">No data</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = teams.map((t, i) => {
+      const bar = i < 2
+        ? `<span class="q-bar up"></span>`
+        : (i >= teams.length - 1 ? `<span class="q-bar dn"></span>` : '');
+      const name = t.name || t.team || '—';
+      const mp   = t.mp   ?? t.played ?? '—';
+      const w    = t.w    ?? t.won    ?? '—';
+      const d    = t.d    ?? t.drawn  ?? '—';
+      const l    = t.l    ?? t.lost   ?? '—';
+      const gd   = t.gd   ?? ((t.gf || 0) - (t.ga || 0)) || '—';
+      const pts  = t.pts  ?? t.points ?? '—';
+      return `<tr>
+        <td class="td-pos">${i + 1}</td>
+        <td class="td-team">${bar}${escHtml(name)}</td>
+        <td>${mp}</td><td>${w}</td><td>${d}</td><td>${l}</td>
+        <td>${gd}</td>
+        <td class="td-pts">${pts}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* Standings toggle */
+  const standingsWrap = document.getElementById('standings-wrap');
+  document.getElementById('standings-toggle').addEventListener('click', () => {
+    standingsWrap.classList.toggle('open');
+    document.getElementById('standings-toggle')
+      .setAttribute('aria-expanded', standingsWrap.classList.contains('open'));
+  });
+  document.getElementById('standings-toggle').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); standingsWrap.classList.toggle('open'); }
+  });
+
+  /* ══════════════════════════
+     MOBILE MINI PLAYER
+  ══════════════════════════ */
+  const miniPlayer = document.getElementById('mini-player');
+
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(entries => {
+      const { isIntersecting } = entries[0];
+      miniPlayer.classList.toggle('show', !isIntersecting);
+    }, { threshold: 0.15 });
+    obs.observe(playerFrame);
+  }
+
+  document.getElementById('mini-back').addEventListener('click', () => {
+    playerFrame.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ══════════════════════════
+     POLLING
+  ══════════════════════════ */
+  /* Score refresh every 5s */
+  setInterval(async () => {
+    try {
+      const r = await fetch(`${API}/api/live-config`);
+      if (!r.ok) return;
+      const cfg = await r.json();
+      if (cfg.fifa?.raceData) updateMatchCard(cfg.fifa.raceData);
+    } catch (_) {}
+  }, 5000);
+
+  /* Fixtures + standings refresh every 30s */
+  setInterval(() => { fetchFixtures(); fetchStandings(); }, 30000);
+
+  /* ══════════════════════════
+     UTILITIES
+  ══════════════════════════ */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ══════════════════════════
+     INIT
+  ══════════════════════════ */
+  /* Collapse standings on mobile by default */
+  if (window.innerWidth < 768) {
+    standingsWrap.classList.remove('open');
+    document.getElementById('standings-toggle').setAttribute('aria-expanded', 'false');
+  }
+
+  fetchConfig();
+  fetchFixtures();
+  fetchStandings();
+
+})();
+</script>
+
 </body>
-
 </html>
