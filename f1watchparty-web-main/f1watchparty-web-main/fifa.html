@@ -3629,11 +3629,11 @@
             <div class="main-column">
                 <!-- Video player: shows stream when live, placeholder when not -->
                 <div class="video-wrapper">
-                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
+                    <div class="video-responsive" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && isStreamActive()">
                         <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
                             scrolling="no"></iframe>
                     </div>
-                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive)" style="
+                    <div ng-if="!(widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && isStreamActive())" style="
                         aspect-ratio: 16/9;
                         max-height: 56vw;
                         background: rgba(8, 8, 12, 0.85);
@@ -3652,7 +3652,7 @@
                         <i class="fa-solid fa-circle" style="font-size: 8px; color: #333;"></i> STREAM OFFLINE
                     </div>
                 </div>
-                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && raceData.isLive">
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive && streamLinks.length > 0 && isStreamActive()">
                     <span class="source-label"
                         style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px; flex-shrink: 0;">SOURCE:</span>
                     <div class="stream-buttons-scroll" style="display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-grow: 1; flex-shrink: 1; min-width: 0; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
@@ -4624,6 +4624,7 @@
                 const fifa = data.fifa || {};
                 $scope.raceData = fifa.raceData || {};
                 $scope.autoSyncDetails = fifa.autoSyncDetails !== false;
+                $scope.autoShowStreamBeforeKickoff = !!fifa.autoShowStreamBeforeKickoff;
 
                 // Trigger dynamic theming based on FIFA match location or theme override
                 if (!$scope.themeOverrideActive) {
@@ -4737,9 +4738,9 @@
                     if (targetTime && !isNaN(targetTime.getTime())) {
                         var dist = targetTime.getTime() - now;
                         if (dist > 0) {
-                            // Counting down — check if streams are ready (within 10 min pre-match window)
-                            var tenMinMs = 10 * 60 * 1000;
-                            if ($scope.streamLinks && $scope.streamLinks.length > 0 && dist <= tenMinMs) {
+                            // Counting down — check if streams are ready (within 10 or 30 min pre-match window)
+                            var preMatchWindowMs = ($scope.autoShowStreamBeforeKickoff) ? (30 * 60 * 1000) : (10 * 60 * 1000);
+                            if ($scope.streamLinks && $scope.streamLinks.length > 0 && dist <= preMatchWindowMs) {
                                 // Streams are live — let the player show even though kickoff hasn't happened yet
                                 $scope.customTimerCountdown = "STARTING SOON";
                                 $scope.customTimerActive = false;
@@ -5150,6 +5151,16 @@
                 if (!name) return ['TBD', 'TBD'];
                 var parts = name.split(/\s+(?:vs\.?|v|-)\s+/i);
                 return [parts[0] || 'TBD', parts[1] || 'TBD'];
+            };
+
+            $scope.isStreamActive = function() {
+                if (!$scope.raceData) return false;
+                if ($scope.raceData.isFinished) return false;
+                if ($scope.raceData.isLive) return true;
+                if ($scope.autoShowStreamBeforeKickoff && $scope.matchIsTimelyLive) {
+                    return true;
+                }
+                return false;
             };
 
             var _pollInterval = null;

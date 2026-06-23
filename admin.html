@@ -1273,6 +1273,10 @@
                             <input type="checkbox" ng-model="config.fifa.raceData.isFinished" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
                             <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;">Match is Finished <span style="font-size:9px; color:var(--text-muted); font-weight:normal;" ng-if="config.fifa.autoSyncDetails">(Auto)</span></label>
                         </div>
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.autoShowStreamBeforeKickoff" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;" title="Starts showing active streams 30 mins before scheduled kickoff time">Stream starts 30m before kickoff</label>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label style="color: #00ff55;">Active Theme (Override)</label>
