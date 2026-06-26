@@ -7,6 +7,7 @@
 const axios = require('axios');
 const supabaseDb = require('./_supabase').db;
 const cheerio = require('cheerio');
+const pushembdz = require('./providers/pushembdz');
 
 // Puppeteer-based helper to fetch JSON and bypass Cloudflare/DDoS blocks
 async function fetchJsonWithPuppeteer(url, timeoutMs = 25000) {
@@ -294,69 +295,84 @@ async function syncStreamsAutomatically(config, ref) {
       searchTokens = ["f1", location.toLowerCase(), sessionAbbr.toLowerCase()];
     }
 
-    if (searchTokens.length === 0) return;
+    if (searchTokens.length === 0) {
+      console.log('[sync] No search tokens derived — skipping stream fetch.');
+      return;
+    }
 
-    const { data } = await axios.get('https://api.pushembdz.store/v1/streams', { 
-      timeout: 8000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    });
+    const targetUrl = config.streamProxyUrl || pushembdz.API_URL;
+    console.log(`[sync] Fetching pushembdz stream list from: ${targetUrl} for tokens: ${searchTokens.join(', ')}`);
 
-    if (data && data.categories) {
-      let allStreams = [];
-      data.categories.forEach(cat => {
-        if (cat.streams) allStreams = allStreams.concat(cat.streams);
-      });
-
-      let matched = allStreams.filter(s => {
-        if (!s.title) return false;
-        let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-        return searchTokens.every(token => titleLower.includes(token));
-      });
-
-      // Fallback matching: if no strict match, try matching just the core tokens
-      if (matched.length === 0) {
-        let coreTokens = searchTokens.filter(token => {
-          const t = token.toLowerCase();
-          return !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t);
+    // ── Fetch with retry ────────────────────────────────────────────────────
+    let rawData = null;
+    let fetchError = null;
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY_MS = 1500;
+    for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
+      try {
+        const { data, status } = await axios.get(targetUrl, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+            'Accept': 'application/json, */*',
+            'Referer': 'https://pushembdz.store/',
+            'Origin': 'https://pushembdz.store',
+          },
+          validateStatus: () => true,
         });
-
-        if (coreTokens.length > 0) {
-          matched = allStreams.filter(s => {
-            if (!s.title) return false;
-            let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-            return coreTokens.every(token => titleLower.includes(token));
-          });
+        console.log(`[sync] API attempt ${attempt}: HTTP ${status}`);
+        if (status === 200) { rawData = data; break; }
+        if (attempt <= MAX_RETRIES && (status === 429 || status === 503)) {
+          console.log(`[sync] Rate-limited (${status}), retrying in ${RETRY_DELAY_MS}ms…`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        } else {
+          throw new Error(`pushembdz API returned HTTP ${status}`);
+        }
+      } catch (err) {
+        fetchError = err;
+        if (attempt <= MAX_RETRIES) {
+          console.warn(`[sync] Fetch attempt ${attempt} failed: ${err.message}. Retrying…`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
         }
       }
+    }
 
-      if (matched.length > 0) {
-        let newLinks = matched.map((s, index) => {
-          let parts = s.title.split(' - ');
-          let name = s.title;
-          if (parts.length > 1) {
-            let lastPart = parts[parts.length - 1].trim();
-            if (lastPart.length <= 10) {
-              name = parts[0].trim() + " - " + lastPart;
-            }
-          }
-          let url = s.link || "";
-          if (url.includes("api.pushembdz.store")) {
-            url = url.replace("api.pushembdz.store", "pushembdz.store");
-          }
-          return {
-            name: name,
-            id: "src_" + (Date.now() + index),
-            url: url
-          };
-        });
+    if (!rawData) {
+      throw new Error(`All fetch attempts failed for pushembdz API: ${fetchError ? fetchError.message : 'unknown error'}`);
+    }
 
-        await ref.update({ streamLinks: newLinks });
-        console.log(`[sync] Automatically updated ${newLinks.length} stream links in Firestore matching: ${searchTokens.join(' ')}`);
-      } else {
-        console.log(`[sync] No matching streams found for tokens: ${searchTokens.join(' ')}`);
+    // ── Parse + normalise (applies embed URL fix automatically) ─────────────
+    const { streams: allStreams, warnings } = pushembdz.parseResponse(rawData);
+    if (warnings.length) console.warn('[sync] pushembdz parse warnings:', warnings);
+    console.log(`[sync] pushembdz: ${allStreams.length} total streams parsed`);
+
+    // ── Match streams by search tokens ──────────────────────────────────────
+    let matched = allStreams.filter(s => pushembdz.scoreStream(s, searchTokens) === 100);
+
+    if (matched.length === 0) {
+      // Fallback: strip session-type tokens, keep sport+location
+      const coreTokens = searchTokens.filter(t =>
+        !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t)
+      );
+      if (coreTokens.length > 0) {
+        matched = allStreams.filter(s => pushembdz.scoreStream(s, coreTokens) === 100);
+        console.log(`[sync] Fallback match with core tokens [${coreTokens.join(', ')}]: ${matched.length} results`);
       }
+    }
+
+    if (matched.length > 0) {
+      const newLinks = matched.map((s, index) => ({
+        name: s.label,
+        id: `src_${Date.now()}_${index}`,
+        url: s.embedUrl,   // ← always the corrected, working pushembdz.store/embed/… URL
+      }));
+
+      await ref.update({ streamLinks: newLinks });
+      console.log(`[sync] ✅ Updated ${newLinks.length} stream link(s) for tokens: ${searchTokens.join(' ')}`);
+      newLinks.forEach((l, i) => console.log(`  [${i+1}] ${l.name} → ${l.url}`));
+    } else {
+      console.log(`[sync] ⚠  No streams matched tokens: ${searchTokens.join(', ')}`);
+      console.log(`[sync] Available stream titles: ${allStreams.map(s => s.title).join(' | ')}`);
     }
   } catch (err) {
     console.error('[sync] Stream auto-fetch error:', err.message);
@@ -1169,14 +1185,48 @@ module.exports = async (req, res) => {
   }
 
   // ── FETCH-STREAMS: proxy pushembdz.store stream list ──────────────────────
+  // Returns normalised streams with corrected embed URLs (api.→www subdomain fix).
   if (requestedType === 'fetchstreams') {
     try {
-      const { data } = await axios.get('https://api.pushembdz.store/v1/streams', {
-        timeout: 8000,
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+      const { data, status } = await axios.get(pushembdz.API_URL, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Accept': 'application/json, */*',
+          'Referer': 'https://pushembdz.store/',
+          'Origin': 'https://pushembdz.store',
+        },
+        validateStatus: () => true,
       });
-      return res.json(data);
+      if (status !== 200) {
+        return res.status(502).json({ error: `pushembdz API returned HTTP ${status}` });
+      }
+      const { streams, warnings } = pushembdz.parseResponse(data);
+      // Return the same shape the admin panel expects, but with corrected URLs
+      return res.json({
+        status: true,
+        count: streams.length,
+        warnings,
+        // Reconstruct categories shape for backward-compatibility with admin panel
+        categories: (data.categories || []).map(cat => ({
+          ...cat,
+          streams: (cat.streams || []).map(s => ({
+            ...s,
+            link: pushembdz.fixEmbedUrl(s.link),  // ← corrected URL
+          })),
+        })),
+        // Also expose flat normalised list for convenience
+        streams: streams.map(s => ({
+          id: s.id,
+          title: s.title,
+          label: s.label,
+          category: s.category,
+          method: s.method,
+          embedUrl: s.embedUrl,
+        })),
+      });
     } catch (e) {
+      console.error('[sync-standings fetchstreams] Error:', e.message);
       return res.status(500).json({ error: e.message });
     }
   }

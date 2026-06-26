@@ -14,6 +14,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" crossorigin="anonymous"></script>
 
     <style>
         :root {
@@ -808,6 +810,7 @@
             <button class="tab-btn" ng-class="{'active': currentView === 'scores'}" ng-click="currentView = 'scores'"><i class="fa-solid fa-list-ol" style="margin-right: 5px;"></i> Standings</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'chat'}" ng-click="currentView = 'chat'"><i class="fa-solid fa-comments" style="margin-right: 5px;"></i> Chat Mod</button>
             <button class="tab-btn" ng-class="{'active': currentView === 'logs'}" ng-click="currentView = 'logs'"><i class="fa-solid fa-chart-line" style="margin-right: 5px;"></i> Logs & Analytics</button>
+            <button class="tab-btn" ng-class="{'active': currentView === 'sync'}" ng-click="currentView = 'sync'"><i class="fa-solid fa-arrows-spin" style="margin-right: 5px;"></i> Sync Dashboard</button>
         </div>
 
         <div ng-show="currentView === 'live'">
@@ -1027,6 +1030,10 @@
                             <i class="fa-solid" ng-class="fetchingStreams ? 'fa-spinner fa-spin' : 'fa-download'"></i>
                             {{ fetchingStreams ? 'Fetching...' : 'Fetch & Import' }}
                         </button>
+                    </div>
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                        <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">CORS Proxy URL (Optional Cloudflare Worker)</label>
+                        <input type="text" ng-model="config.streamProxyUrl" placeholder="e.g. https://my-worker.workers.dev (leave blank to use default server proxy)" style="margin-bottom: 0;">
                     </div>
                     <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
                         <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
@@ -1516,6 +1523,134 @@
             </div>
         </div>
 
+        <!-- Sync Dashboard View -->
+        <div ng-show="currentView === 'sync'">
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3><i class="fa-solid fa-arrows-spin" style="color: #00ff55; margin-right: 10px;"></i> FIFA Stream Auto-Sync</h3>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 0;">Automatically discovers, validates, and syncs streams from streamed.st without manual intervention.</p>
+                    </div>
+                    <button class="primary-btn" ng-click="triggerManualSync()" ng-disabled="runningManualSync || syncStatus.running" style="background: linear-gradient(135deg, #00ff55 0%, #00aa33 100%); color: #000; border-color: #00ff88; box-shadow: 0 4px 15px rgba(0, 255, 85, 0.25);">
+                        <i class="fa-solid fa-arrows-spin" ng-class="{'fa-spin': runningManualSync || syncStatus.running}"></i>
+                        <span>{{ (runningManualSync || syncStatus.running) ? 'Syncing...' : 'Sync Streams Now' }}</span>
+                    </button>
+                </div>
+
+                <!-- Sync Status Grid -->
+                <div class="stat-grid">
+                    <div class="stat-card" style="border-top-color: #00ff55;">
+                        <h4>Sync Service Status</h4>
+                        <div class="stat-value" style="font-size: 24px; text-transform: uppercase; color: #00ff55; margin-top: 8px;">
+                            <i class="fa-solid fa-circle-nodes" ng-if="!syncStatus.running"></i>
+                            <i class="fa-solid fa-spinner fa-spin" ng-if="syncStatus.running"></i>
+                            {{ syncStatus.running ? 'Running' : 'Active' }}
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-top-color: #ffc107;">
+                        <h4>Pending Review</h4>
+                        <div class="stat-value" style="color: #ffc107;">{{ reviewQueue.length || 0 }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Last Sync Time</h4>
+                        <div class="stat-value" style="font-size: 18px; margin-top: 15px;">
+                            {{ syncStatus.lastSync ? (syncStatus.lastSync | date:'h:mm:ss a') : 'Never' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 8px; padding: 15px; font-size: 13px;">
+                    <i class="fa-solid fa-circle-info" style="color: #00ff55; margin-right: 5px;"></i>
+                    <strong>Latest Sync Info:</strong> {{ syncStatus.lastMessage || 'Waiting for first sync cycle.' }}
+                </div>
+            </div>
+
+            <!-- Review Queue -->
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-clipboard-question" style="color: #ffc107; margin-right: 10px;"></i> Match Stream Review Queue</h3>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">
+                    Matches with confidence scores between <strong>60% and 84%</strong> require admin approval. 
+                    Approved streams are written instantly to the database.
+                </p>
+
+                <div ng-if="reviewQueue.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 8px; background: rgba(0,0,0,0.1);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 32px; color: #00ff55; margin-bottom: 12px; display: block;"></i>
+                    No matches pending review. All streams auto-assigned successfully!
+                </div>
+
+                <div ng-if="reviewQueue.length > 0" style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted); text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: 1px;">
+                                <th style="padding: 12px 10px;">Fixture (World Cup)</th>
+                                <th style="padding: 12px 10px;">Discovered Stream Match</th>
+                                <th style="padding: 12px 10px; text-align: center;">Score</th>
+                                <th style="padding: 12px 10px; text-align: center;">Sources</th>
+                                <th style="padding: 12px 10px; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in reviewQueue" style="border-bottom: 1px solid rgba(255,255,255,0.03); background: rgba(24, 24, 32, 0.25);">
+                                <td style="padding: 15px 10px; font-weight: 700; color: #fff;">
+                                    {{ item.fixtureTitle }}
+                                    <span style="display: block; font-size: 11px; color: var(--text-muted); font-weight: normal; margin-top: 3px;">{{ item.round }}</span>
+                                </td>
+                                <td style="padding: 15px 10px; color: #ddd;">
+                                    {{ item.streamTitle }}
+                                </td>
+                                <td style="padding: 15px 10px; text-align: center;">
+                                    <span style="padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 12px;" ng-style="{'background': item.score >= 75 ? 'rgba(0, 255, 85, 0.1)' : 'rgba(255, 193, 7, 0.1)', 'color': item.score >= 75 ? '#00ff55' : '#ffc107', 'border': item.score >= 75 ? '1px solid rgba(0, 255, 85, 0.25)' : '1px solid rgba(255, 193, 7, 0.25)'}">
+                                        {{ item.score }}%
+                                    </span>
+                                </td>
+                                <td style="padding: 15px 10px; text-align: center; color: var(--text-muted);">
+                                    {{ item.sourceCount || 0 }}
+                                </td>
+                                <td style="padding: 15px 10px; text-align: center;">
+                                    <div style="display: inline-flex; gap: 8px;">
+                                        <button class="action-btn" ng-click="approveMatch(item.fixtureId)" style="background: rgba(0, 255, 85, 0.1); color: #00ff55; border-color: rgba(0, 255, 85, 0.3); padding: 6px 14px; font-size: 10px;">
+                                            <i class="fa-solid fa-circle-check"></i> Approve
+                                        </button>
+                                        <button class="danger-btn" ng-click="ignoreMatch(item.fixtureId)" style="padding: 6px 14px; font-size: 10px;">
+                                            <i class="fa-solid fa-circle-xmark"></i> Ignore
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sync Logs -->
+            <div class="admin-section">
+                <h3><i class="fa-solid fa-list-check" style="color: #00ff55; margin-right: 10px;"></i> Sync Execution History</h3>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Execution logs from automated background syncing worker (last 100 entries).</p>
+
+                <div class="log-box" style="max-height: 400px;">
+                    <div ng-if="syncLogs.length === 0" style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">
+                        No execution history found.
+                    </div>
+                    <div ng-repeat="log in syncLogs" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding: 12px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span style="font-weight: 700;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}">
+                                <i class="fa-solid fa-circle-check" style="margin-right:5px;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}" ng-if="log.status === 'success'"></i>
+                                <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}" ng-if="log.status === 'failed'"></i>
+                                {{ log.status === 'success' ? 'SYNC SUCCESSFUL' : 'SYNC FAILED' }}
+                            </span>
+                            <span class="time">{{ log.timestamp | date:'MMM d, h:mm:ss a' }}</span>
+                        </div>
+                        <div style="color: #ddd; padding-left: 20px;">{{ log.message }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); padding-left: 20px;" ng-if="log.status === 'success'">
+                            Active Fixtures: <strong>{{ log.matches_found }}</strong> | 
+                            Feeds Scanned: <strong>{{ log.streams_found }}</strong> | 
+                            Auto-Assigned: <strong style="color: #00ff55;">{{ log.assigned }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -1540,12 +1675,12 @@
                 if (window.location.protocol === 'file:') {
                     var urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.get('local') === 'true') {
-                        return 'http://localhost:3000' + path;
+                        return 'http://localhost:3001' + path;
                     }
-                    return 'https://f1watchparty-web-seven.vercel.app' + path;
+                    return 'https://watchfifa-api.up.railway.app' + path;
                 }
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    return 'http://localhost:3000' + path;
+                    return 'http://localhost:3001' + path;
                 }
                 return window.location.origin + path;
             }
@@ -1562,6 +1697,121 @@
             $scope.analytics = { activeViewers: 0, totalViews: 0, adminVisits: 0, logs: [] };
             $scope.savingLive = false;
             $scope.fetchingWeather = false;
+
+            // --- AUTO-SYNC DASHBOARD & SOCKET.IO CONFIG ---
+            $scope.syncStatus = { running: false, lastSync: null, lastStatus: 'idle', reviewCount: 0 };
+            $scope.reviewQueue = [];
+            $scope.syncLogs = [];
+            $scope.runningManualSync = false;
+
+            let socket = null;
+            try {
+                if (typeof io !== 'undefined') {
+                    socket = io(apiUrl(''));
+                    socket.on('connect', () => {
+                        console.log('[Socket] Connected to backend');
+                        if ($scope.isLoggedIn) {
+                            socket.emit('admin:join');
+                        }
+                    });
+                    socket.on('sync:status', (data) => {
+                        $timeout(() => {
+                            $scope.syncStatus = {
+                                running: data.running,
+                                lastSync: data.timestamp,
+                                lastStatus: data.stats ? 'success' : 'running',
+                                lastMessage: data.stats ? `Sync finished. Assigned: ${data.stats.assigned}, Review: ${data.stats.reviewAdded}` : 'Syncing in progress...',
+                                reviewCount: data.reviewCount || 0
+                            };
+                            if (data.stats) {
+                                $scope.loadSyncDashboard(); // Reload full dashboard when sync finishes
+                            }
+                        });
+                    });
+                    socket.on('admin:review-queue', (data) => {
+                        $timeout(() => {
+                            $scope.reviewQueue = data;
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('[Socket] Connection failed:', e.message);
+            }
+
+            $scope.$watch('isLoggedIn', function(newVal) {
+                if (newVal && socket && socket.connected) {
+                    socket.emit('admin:join');
+                }
+            });
+
+            $scope.loadSyncDashboard = function() {
+                $http.get(apiUrl('/api/admin/sync-status')).then(res => {
+                    if (res.data && res.data.ok) {
+                        $scope.syncStatus.lastSync = res.data.lastSync;
+                        $scope.syncStatus.lastStatus = res.data.lastStatus;
+                        $scope.syncStatus.lastMessage = res.data.lastMessage;
+                        $scope.syncStatus.reviewCount = res.data.reviewCount;
+                    }
+                });
+                $http.get(apiUrl('/api/admin/review-queue')).then(res => {
+                    $scope.reviewQueue = res.data;
+                });
+                $http.get(apiUrl('/api/admin/logs')).then(res => {
+                    $scope.syncLogs = res.data;
+                });
+            };
+
+            $scope.triggerManualSync = function() {
+                if ($scope.runningManualSync) return;
+                $scope.runningManualSync = true;
+                $scope.showToast("Manual sync request sent to background worker...", "info");
+                $http.post(apiUrl('/api/admin/sync-now'))
+                    .then(() => {
+                        $timeout(() => {
+                            $scope.runningManualSync = false;
+                            $scope.showToast("Background sync started!", "success");
+                        });
+                    })
+                    .catch(err => {
+                        $timeout(() => {
+                            $scope.runningManualSync = false;
+                            $scope.showToast("Sync trigger failed: " + (err.data?.error || err.message), "error");
+                        });
+                    });
+            };
+
+            $scope.approveMatch = function(matchId) {
+                $scope.showConfirm("Are you sure you want to approve this match assignment?", function() {
+                    $scope.showToast("Approving match and fetching streams...", "info");
+                    $http.post(apiUrl('/api/admin/approve/' + matchId))
+                        .then(res => {
+                            $scope.showToast(res.data.message || "Match approved!", "success");
+                            $scope.loadSyncDashboard();
+                        })
+                        .catch(err => {
+                            $scope.showToast("Approval failed: " + (err.data?.error || err.message), "error");
+                        });
+                }, "Approve Match Assignment");
+            };
+
+            $scope.ignoreMatch = function(matchId) {
+                $scope.showConfirm("Are you sure you want to ignore this stream candidate?", function() {
+                    $http.post(apiUrl('/api/admin/ignore/' + matchId))
+                        .then(res => {
+                            $scope.showToast("Match candidate ignored.", "success");
+                            $scope.loadSyncDashboard();
+                        })
+                        .catch(err => {
+                            $scope.showToast("Ignore request failed: " + (err.data?.error || err.message), "error");
+                        });
+                }, "Ignore Candidate");
+            };
+
+            $scope.$watch('currentView', function(newView) {
+                if (newView === 'sync' && $scope.isLoggedIn) {
+                    $scope.loadSyncDashboard();
+                }
+            });
 
             // --- TOAST LOGIC ---
             $scope.toasts = [];
@@ -2458,6 +2708,10 @@
                 if (newVal) $scope.updateFetchQuerySuggestion();
             }, true);
 
+            // ── F1 AUTO-FETCH STREAMS ──────────────────────────────────────────────
+            // Routes through the local server proxy (avoids CORS on pushembdz API),
+            // matches streams by keyword, and saves the result straight to Firebase.
+            // ─────────────────────────────────────────────────────────────────────
             $scope.autoFetchStreams = function() {
                 if ($scope.fetchingStreams) return;
                 $scope.fetchingStreams = true;
@@ -2470,143 +2724,118 @@
                 }
 
                 // Tokenize query: split by whitespace, ignore punctuation (dashes, commas, etc)
-                let queryTokens = rawQuery
+                const queryTokens = rawQuery
                     .replace(/[^a-z0-9\s]/g, ' ')
                     .split(/\s+/)
                     .filter(t => t.length > 0);
 
-                let primaryUrl = '/api/sync-standings?type=fetchstreams';
-                let fallbackUrl = window.location.origin + '/api/sync-standings?type=fetchstreams';
-                let targetUrl = apiUrl(primaryUrl);
+                // Session-type tokens to strip for fallback matching
+                const SESSION_TOKENS = ['fp1','fp2','fp3','practice','qualifying','qualy','qual','sprint','race'];
 
-                function parseAndMatchStreams(res) {
-                    let data = res.data;
-                    if (typeof data === 'string') {
-                        try {
-                            data = JSON.parse(data);
-                        } catch (e) {
-                            throw new Error("Invalid response format");
-                        }
+                // Fix embed URLs: api.pushembdz.store/embed/… → pushembdz.store/embed/…
+                function fixEmbedUrl(link) {
+                    return (link || '').replace(/^https?:\/\/api\.pushembdz\.store/, 'https://pushembdz.store');
+                }
+
+                // Score a stream title against tokens (0–100)
+                function scoreTitle(title, tokens) {
+                    if (!title || !tokens.length) return 0;
+                    const norm = title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+                    const matched = tokens.filter(t => norm.includes(t)).length;
+                    return Math.round((matched / tokens.length) * 100);
+                }
+
+                // The pushembdz API blocks direct browser requests (CORS).
+                // Use a custom proxy (e.g. Cloudflare Worker) if configured in Firebase Firestore,
+                // otherwise route through the server proxy.
+                const proxyUrl = $scope.config.streamProxyUrl || apiUrl('/api/sync-standings?type=fetchstreams');
+                console.log('[autoFetchStreams] Fetching via proxy:', proxyUrl);
+
+                fetch(proxyUrl)
+                .then(res => {
+                    console.log('[autoFetchStreams] HTTP', res.status);
+                    if (!res.ok) throw new Error('Proxy returned HTTP ' + res.status + '. Is the local server running on port 3001?');
+                    return res.json();
+                })
+                .then(data => {
+                    // The proxy returns: { ok, status, categories[], streams[], count }
+                    const categories = data.categories || [];
+                    if (!categories.length && !(data.ok || data.status)) {
+                        throw new Error('Unexpected response from proxy (missing categories)');
                     }
 
-                    // Check if response lacks categories
-                    if (!data || !data.categories) {
-                        throw new Error("Invalid response format");
-                    }
-
+                    // Flatten all streams across categories
+                    // Note: proxy already returns corrected embed URLs in the link field
                     let allStreams = [];
-                    data.categories.forEach(cat => {
-                        if (cat.streams) {
-                            allStreams = allStreams.concat(cat.streams);
-                        }
-                    });
-
-                    // Token-based matching: title must contain all query tokens
-                    let matched = allStreams.filter(s => {
-                        if (!s.title) return false;
-                        let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-                        return queryTokens.every(token => titleLower.includes(token));
-                    });
-
-                    // Fallback matching: if no strict match, try matching just the core tokens
-                    if (matched.length === 0) {
-                        let coreTokens = queryTokens.filter(token => {
-                            const t = token.toLowerCase();
-                            return !['fp1', 'fp2', 'fp3', 'practice', 'qualifying', 'qualy', 'qual', 'sprint', 'race'].includes(t);
+                    categories.forEach(cat => {
+                        (cat.streams || []).forEach(s => {
+                            allStreams.push({ ...s, _category: cat.category });
                         });
+                    });
+                    console.log('[autoFetchStreams] Total streams from API:', allStreams.length);
+                    console.log('[autoFetchStreams] Titles:', allStreams.map(s => s.title).join(' | '));
 
+                    // Primary match: all tokens must match
+                    let matched = allStreams.filter(s => scoreTitle(s.title, queryTokens) === 100);
+
+                    // Fallback: drop session-type tokens, match on sport + location only
+                    if (matched.length === 0) {
+                        const coreTokens = queryTokens.filter(t => !SESSION_TOKENS.includes(t));
                         if (coreTokens.length > 0) {
-                            matched = allStreams.filter(s => {
-                                if (!s.title) return false;
-                                let titleLower = s.title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-                                return coreTokens.every(token => titleLower.includes(token));
-                            });
+                            matched = allStreams.filter(s => scoreTitle(s.title, coreTokens) === 100);
+                            console.log('[autoFetchStreams] Fallback match with [' + coreTokens.join(', ') + ']:', matched.length, 'result(s)');
                         }
                     }
 
                     if (matched.length === 0) {
-                        $scope.showToast("No matching streams found for '" + $scope.config.streamKeyword + "'", "error");
+                        $scope.$apply(() => {
+                            $scope.fetchingStreams = false;
+                            $scope.showToast("No streams found matching '" + rawQuery + "'. Available: " + allStreams.map(s => s.title).join(', '), "error");
+                        });
                         return;
                     }
 
-                    let newLinks = matched.map((s, index) => {
-                        let parts = s.title.split(' - ');
+                    // Build the streamLinks array with corrected embed URLs
+                    const newLinks = matched.map((s, index) => {
+                        const parts = (s.title || '').split(' - ');
                         let name = s.title;
                         if (parts.length > 1) {
-                            let lastPart = parts[parts.length - 1].trim();
-                            if (lastPart.length <= 10) {
-                                name = parts[0].trim() + " - " + lastPart;
-                            }
-                        }
-                        let url = s.link || "";
-                        if (url.includes("api.pushembdz.store")) {
-                            url = url.replace("api.pushembdz.store", "pushembdz.store");
+                            const suffix = parts[parts.length - 1].trim();
+                            if (suffix.length <= 10) name = parts[0].trim() + ' - ' + suffix;
                         }
                         return {
                             name: name,
-                            id: "src_" + (Date.now() + index),
-                            url: url
+                            id: 'src_' + (Date.now() + index),
+                            url: fixEmbedUrl(s.link)
                         };
                     });
 
-                    $scope.config.streamLinks = newLinks;
-                    $scope.showToast("Imported " + newLinks.length + " streams matching query!", "success");
-                    $scope.addLog("Auto-imported " + newLinks.length + " streams matching '" + $scope.config.streamKeyword + "'");
-                }
+                    console.log('[autoFetchStreams] Saving', newLinks.length, 'stream(s) to Firebase…');
+                    newLinks.forEach((l, i) => console.log('  [' + (i+1) + ']', l.name, '→', l.url));
 
-                $http.get(targetUrl)
-                    .then(res => {
-                        try {
-                            $scope.fetchingStreams = false;
-                            parseAndMatchStreams(res);
-                        } catch (e) {
-                            // If primary URL failed format check and we haven't tried fallback, try fallback
-                            if (targetUrl === primaryUrl) {
-                                console.log("Local API returned invalid response, trying fallback production API...");
-                                $scope.fetchingStreams = true; // reset loading flag for fallback request
-                                $http.get(fallbackUrl)
-                                    .then(fallbackRes => {
-                                        $scope.fetchingStreams = false;
-                                        try {
-                                            parseAndMatchStreams(fallbackRes);
-                                        } catch (fallbackErr) {
-                                            $scope.showToast("No streams found on the server.", "error");
-                                        }
-                                    })
-                                    .catch(fallbackErr => {
-                                        $scope.fetchingStreams = false;
-                                        $scope.showToast("Error fetching streams from production: " + (fallbackErr.data?.error || fallbackErr.statusText || fallbackErr.message || "Unknown error"), "error");
-                                    });
-                            } else {
-                                $scope.showToast("No streams found on the server.", "error");
-                            }
-                        }
-                    })
-                    .catch(err => {
-                        // If primary URL failed to connect and we haven't tried fallback, try fallback
-                        if (targetUrl === primaryUrl) {
-                            console.log("Local API request failed, trying fallback production API...");
-                            $http.get(fallbackUrl)
-                                .then(fallbackRes => {
-                                    $scope.fetchingStreams = false;
-                                    try {
-                                        parseAndMatchStreams(fallbackRes);
-                                    } catch (fallbackErr) {
-                                        $scope.showToast("No streams found on the server.", "error");
-                                    }
-                                })
-                                .catch(fallbackErr => {
-                                    $scope.fetchingStreams = false;
-                                    $scope.showToast("Error fetching streams: " + (fallbackErr.data?.error || fallbackErr.statusText || fallbackErr.message || "Unknown error"), "error");
-                                });
-                        } else {
-                            $scope.fetchingStreams = false;
-                            $scope.showToast("Error fetching streams: " + (err.data?.error || err.statusText || err.message || "Unknown error"), "error");
-                        }
+                    // Save directly to Firebase Firestore — no backend required
+                    return db.collection("app_data").doc("live_config")
+                        .update({ streamLinks: newLinks })
+                        .then(() => {
+                            $scope.$apply(() => {
+                                $scope.fetchingStreams = false;
+                                $scope.config.streamLinks = newLinks;
+                                $scope.showToast("✅ Imported " + newLinks.length + " stream(s) matching '" + rawQuery + "'!", "success");
+                                $scope.addLog("Auto-fetched " + newLinks.length + " F1 stream(s) for '" + rawQuery + "' and saved to Firebase");
+                            });
+                        });
+                })
+                .catch(err => {
+                    console.error('[autoFetchStreams] Error:', err);
+                    $scope.$apply(() => {
+                        $scope.fetchingStreams = false;
+                        $scope.showToast("Error fetching streams: " + (err.message || "Unknown error"), "error");
                     });
+                });
             };
 
             // --- LIVE SCHEDULE LOGIC ---
+
             function checkLiveStatus() {
                 if(!$scope.config.schedule) return;
                 var now = new Date().getTime();
