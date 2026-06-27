@@ -1,4 +1,1 @@
-/admin /admin.html 200
-/f1 /f1.html 200
-/fifa /fifa.html 200
 /api/* https://f1watchparty-web-seven.vercel.app/api/:splat 200
