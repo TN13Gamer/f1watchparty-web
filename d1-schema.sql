@@ -39,3 +39,51 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     color TEXT,
     isAdmin INTEGER DEFAULT 0
 );
+
+-- Table for automated Matches from FotMob
+CREATE TABLE IF NOT EXISTS matches (
+    id TEXT PRIMARY KEY,
+    homeTeam TEXT NOT NULL,
+    awayTeam TEXT NOT NULL,
+    homeLogo TEXT,
+    awayLogo TEXT,
+    homeFlag TEXT,
+    awayFlag TEXT,
+    kickoff INTEGER NOT NULL, -- Timestamp
+    status TEXT DEFAULT 'notstarted', -- 'notstarted', 'live', 'finished'
+    score TEXT DEFAULT '0 - 0',
+    venue TEXT,
+    groupName TEXT,
+    stage TEXT,
+    competition TEXT DEFAULT 'FIFA World Cup'
+);
+
+-- Table for automated Streams from streamed.pk
+CREATE TABLE IF NOT EXISTS streams (
+    matchId TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    quality TEXT DEFAULT '720P',
+    embedUrl TEXT NOT NULL PRIMARY KEY,
+    mirror INTEGER DEFAULT 0,
+    lastChecked TEXT DEFAULT (datetime('now')),
+    working INTEGER DEFAULT 1,
+    FOREIGN KEY (matchId) REFERENCES matches(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_streams_matchId ON streams(matchId);
+
+-- Table for automated Standings from FotMob
+CREATE TABLE IF NOT EXISTS standings (
+    team TEXT NOT NULL,
+    played INTEGER DEFAULT 0,
+    wins INTEGER DEFAULT 0,
+    draws INTEGER DEFAULT 0,
+    losses INTEGER DEFAULT 0,
+    goalsFor INTEGER DEFAULT 0,
+    goalsAgainst INTEGER DEFAULT 0,
+    goalDifference INTEGER DEFAULT 0,
+    points INTEGER DEFAULT 0,
+    groupName TEXT NOT NULL,
+    flag TEXT,
+    PRIMARY KEY (team, groupName)
+);

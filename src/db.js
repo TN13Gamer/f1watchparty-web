@@ -182,4 +182,184 @@ export class D1Database {
       .run();
     return true;
   }
+
+  // --- AUTOMATED MATCHES ---
+  async getMatches(status = null) {
+    try {
+      let query = "SELECT * FROM matches ORDER BY kickoff ASC";
+      let bindParams = [];
+      if (status) {
+        query = "SELECT * FROM matches WHERE status = ? ORDER BY kickoff ASC";
+        bindParams = [status];
+      }
+      const { results } = await this.d1.prepare(query).bind(...bindParams).all();
+      return results || [];
+    } catch (err) {
+      console.error("[D1 getMatches] Error:", err.message);
+      return [];
+    }
+  }
+
+  async getMatch(id) {
+    try {
+      return await this.d1.prepare("SELECT * FROM matches WHERE id = ?").bind(id).first();
+    } catch (err) {
+      console.error("[D1 getMatch] Error:", err.message);
+      return null;
+    }
+  }
+
+  async saveMatch(match) {
+    try {
+      await this.d1
+        .prepare(`
+          INSERT INTO matches (id, homeTeam, awayTeam, homeLogo, awayLogo, homeFlag, awayFlag, kickoff, status, score, venue, groupName, stage, competition)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            homeTeam = excluded.homeTeam,
+            awayTeam = excluded.awayTeam,
+            homeLogo = excluded.homeLogo,
+            awayLogo = excluded.awayLogo,
+            homeFlag = excluded.homeFlag,
+            awayFlag = excluded.awayFlag,
+            kickoff = excluded.kickoff,
+            status = excluded.status,
+            score = excluded.score,
+            venue = excluded.venue,
+            groupName = excluded.groupName,
+            stage = excluded.stage,
+            competition = excluded.competition
+        `)
+        .bind(
+          match.id,
+          match.homeTeam,
+          match.awayTeam,
+          match.homeLogo,
+          match.awayLogo,
+          match.homeFlag,
+          match.awayFlag,
+          match.kickoff,
+          match.status,
+          match.score,
+          match.venue,
+          match.groupName,
+          match.stage,
+          match.competition || "FIFA World Cup"
+        )
+        .run();
+    } catch (err) {
+      console.error("[D1 saveMatch] Error:", err.message);
+    }
+  }
+
+  // --- AUTOMATED STREAMS ---
+  async getStreams(matchId) {
+    try {
+      const { results } = await this.d1
+        .prepare("SELECT * FROM streams WHERE matchId = ? AND working = 1 ORDER BY mirror ASC, quality DESC")
+        .bind(matchId)
+        .all();
+      return results || [];
+    } catch (err) {
+      console.error("[D1 getStreams] Error:", err.message);
+      return [];
+    }
+  }
+
+  async saveStream(stream) {
+    try {
+      await this.d1
+        .prepare(`
+          INSERT INTO streams (matchId, provider, quality, embedUrl, mirror, lastChecked, working)
+          VALUES (?, ?, ?, ?, ?, datetime('now'), 1)
+          ON CONFLICT(embedUrl) DO UPDATE SET
+            quality = excluded.quality,
+            mirror = excluded.mirror,
+            lastChecked = excluded.lastChecked,
+            working = 1
+        `)
+        .bind(
+          stream.matchId,
+          stream.provider,
+          stream.quality || "720P",
+          stream.embedUrl,
+          stream.mirror || 0
+        )
+        .run();
+    } catch (err) {
+      console.error("[D1 saveStream] Error:", err.message);
+    }
+  }
+
+  async clearStreamsForMatch(matchId) {
+    try {
+      await this.d1.prepare("DELETE FROM streams WHERE matchId = ?").bind(matchId).run();
+    } catch (err) {
+      console.error("[D1 clearStreamsForMatch] Error:", err.message);
+    }
+  }
+
+  // --- STANDINGS ---
+  async getStandings() {
+    try {
+      const { results } = await this.d1
+        .prepare("SELECT * FROM standings ORDER BY groupName ASC, points DESC, goalDifference DESC")
+        .all();
+      return results || [];
+    } catch (err) {
+      console.error("[D1 getStandings] Error:", err.message);
+      return [];
+    }
+  }
+
+  async saveStanding(row) {
+    try {
+      await this.d1
+        .prepare(`
+          INSERT INTO standings (team, played, wins, draws, losses, goalsFor, goalsAgainst, goalDifference, points, groupName, flag)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(team, groupName) DO UPDATE SET
+            played = excluded.played,
+            wins = excluded.wins,
+            draws = excluded.draws,
+            losses = excluded.losses,
+            goalsFor = excluded.goalsFor,
+            goalsAgainst = excluded.goalsAgainst,
+            goalDifference = excluded.goalDifference,
+            points = excluded.points,
+            flag = excluded.flag
+        `)
+        .bind(
+          row.team,
+          row.played || 0,
+          row.wins || 0,
+          row.draws || 0,
+          row.losses || 0,
+          row.goalsFor || 0,
+          row.goalsAgainst || 0,
+          row.goalDifference || 0,
+          row.points || 0,
+          row.groupName,
+          row.flag || ""
+        )
+        .run();
+    } catch (err) {
+      console.error("[D1 saveStanding] Error:", err.message);
+    }
+  }
+
+  async cleanExpiredMatchesAndStreams() {
+    try {
+      const now = Date.now();
+      // Remove streams of matches that finished more than 4 hours ago
+      const expiredTime = now - (4 * 60 * 60 * 1000);
+      await this.d1
+        .prepare("DELETE FROM streams WHERE matchId IN (SELECT id FROM matches WHERE status = 'finished' AND kickoff < ?)")
+        .bind(expiredTime)
+        .run();
+    } catch (err) {
+      console.error("[D1 cleanExpired] Error:", err.message);
+    }
+  }
 }
+
