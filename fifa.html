@@ -1,1650 +1,3055 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="f1App">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>watchfifa.live — Live Football Streaming</title>
-  <meta name="description" content="Watch FIFA World Cup 2026 live. Free HD football streaming with multiple broadcast sources and auto-failover.">
-  <meta name="theme-color" content="#05060f">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
-
-  <!-- Lottie -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js" crossorigin="anonymous"></script>
-
-  <style>
-    /* ═══════════════════════════════════════
-       DESIGN TOKENS
-    ═══════════════════════════════════════ */
-    :root {
-      --bg:           #05060f;
-      --surface:      #0b0e1a;
-      --elevated:     #10141f;
-      --border:       rgba(255,255,255,0.06);
-      --border-hi:    rgba(255,255,255,0.11);
-      --border-green: rgba(0,224,84,0.28);
-      --green:        #00e054;
-      --green-dim:    rgba(0,224,84,0.10);
-      --green-glow:   rgba(0,224,84,0.20);
-      --red:          #f02060;
-      --red-dim:      rgba(240,32,96,0.12);
-      --text:         #eef0f8;
-      --text-dim:     #8492b4;
-      --text-muted:   #4b5880;
-      --nav-h:        64px;
-      --r-sm:         6px;
-      --r-md:         12px;
-      --r-lg:         18px;
-      --r-xl:         24px;
-      --ease:         cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* ═══════════════════════════════════════
-       RESET & BASE
-    ═══════════════════════════════════════ */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-    * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent; }
-
-    a { text-decoration: none; color: inherit; }
-    button { font-family: inherit; cursor: pointer; }
-    img { display: block; }
-
-    /* Subtle ambient background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 70% 35% at 50% -5%, rgba(0,224,84,0.055) 0%, transparent 65%),
-        radial-gradient(ellipse 45% 30% at 90% 110%, rgba(0,80,255,0.04) 0%, transparent 55%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ═══════════════════════════════════════
-       FULLSCREEN LOADER
-    ═══════════════════════════════════════ */
-    #loader {
-      position: fixed;
-      inset: 0;
-      background: var(--bg);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.7s var(--ease), visibility 0.7s;
-    }
-    #loader.out {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    #lottie-wrap { width: 210px; height: 210px; }
-    .loader-text {
-      margin-top: 18px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      animation: txt-breathe 2.2s ease-in-out infinite;
-    }
-    @keyframes txt-breathe {
-      0%, 100% { opacity: 0.25; }
-      50%       { opacity: 0.9; }
-    }
-
-    /* ═══════════════════════════════════════
-       NAVIGATION BAR
-    ═══════════════════════════════════════ */
-    .nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: var(--nav-h);
-      background: rgba(5,6,15,0.88);
-      backdrop-filter: blur(28px) saturate(160%);
-      -webkit-backdrop-filter: blur(28px) saturate(160%);
-      border-bottom: 1px solid var(--border);
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      gap: 16px;
-    }
-
-    /* Brand */
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      flex-shrink: 0;
-    }
-    .live-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 0 0 var(--green-glow);
-      animation: dot-pulse 2.2s ease infinite;
-      flex-shrink: 0;
-    }
-    @keyframes dot-pulse {
-      0%   { box-shadow: 0 0 0 0 var(--green-glow); }
-      65%  { box-shadow: 0 0 0 8px rgba(0,224,84,0); }
-      100% { box-shadow: 0 0 0 0 rgba(0,224,84,0); }
-    }
-    .brand-wordmark {
-      font-size: 1.25rem;
-      font-weight: 900;
-      letter-spacing: -0.5px;
-      color: var(--text);
-    }
-    .brand-wordmark em {
-      color: var(--green);
-      font-style: normal;
-    }
-
-    /* Pill tabs */
-    .nav-tabs {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 4px;
-    }
-    .nav-tab {
-      padding: 7px 20px;
-      border-radius: 100px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      color: var(--text-dim);
-      transition: all 0.2s var(--ease);
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      white-space: nowrap;
-    }
-    .nav-tab i { font-size: 0.75rem; }
-    .nav-tab:hover { color: var(--text); }
-    .nav-tab.active {
-      background: var(--green);
-      color: #020c05;
-    }
-
-    /* Nav actions */
-    .nav-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .nav-btn {
-      width: 34px; height: 34px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: var(--r-md);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 0.85rem;
-      transition: all 0.2s var(--ease);
-    }
-    .nav-btn:hover {
-      background: rgba(255,255,255,0.08);
-      color: var(--text);
-    }
-
-    /* ═══════════════════════════════════════
-       PAGE WRAPPER
-    ═══════════════════════════════════════ */
-    .page {
-      position: relative;
-      z-index: 1;
-      max-width: 1840px;
-      margin: 0 auto;
-      padding: calc(var(--nav-h) + 20px) 24px 64px;
-    }
-
-    /* ═══════════════════════════════════════
-       HERO GRID  (player 75% | sidebar 25%)
-    ═══════════════════════════════════════ */
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 288px;
-      gap: 18px;
-      align-items: start;
-    }
-
-    /* ── LEFT: Player Column ── */
-    .player-col { display: flex; flex-direction: column; gap: 12px; }
-
-    .player-frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: var(--r-lg);
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 64px rgba(0,0,0,0.65);
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    .player-frame:hover {
-      border-color: var(--border-green);
-      box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 0 0 1px var(--border-green);
-    }
-
-    #stream-iframe {
-      width: 100%; height: 100%;
-      border: none;
-      display: block;
-    }
-
-    /* Player overlay – visible on hover */
-    .player-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to top,
-        rgba(5,6,15,0.9) 0%,
-        rgba(5,6,15,0.2) 35%,
-        transparent 55%
-      );
-      opacity: 0;
-      transition: opacity 0.28s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 14px 16px;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .player-frame:hover .player-overlay {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .ov-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .ov-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .badge-live {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--red);
-      color: #fff;
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 4px 9px;
-      border-radius: 4px;
-    }
-    .badge-live-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.9);
-      animation: li-blink 1.1s ease infinite;
-    }
-    @keyframes li-blink {
-      0%, 100% { opacity: 0.25; }
-      50%       { opacity: 1; }
-    }
-
-    .signal-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(0,0,0,0.58);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 100px;
-      padding: 4px 11px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--green);
-    }
-    .signal-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--green);
-    }
-
-    .ctrl {
-      width: 36px; height: 36px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: var(--r-sm);
-      background: rgba(0,0,0,0.62);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #fff;
-      font-size: 0.88rem;
-      transition: all 0.2s var(--ease);
-    }
-    .ctrl:hover {
-      background: var(--green-dim);
-      border-color: var(--green);
-      color: var(--green);
-      transform: scale(1.06);
-    }
-
-    /* ── SOURCE BAR ── */
-    .source-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 10px 14px;
-      flex-wrap: wrap;
-    }
-    .source-label {
-      font-size: 0.72rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-    .source-list {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      flex: 1;
-    }
-    .src-btn {
-      padding: 5px 13px;
-      border-radius: 100px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 0.78rem;
-      font-weight: 700;
-      transition: all 0.18s var(--ease);
-      white-space: nowrap;
-    }
-    .src-btn:hover { border-color: var(--border-hi); color: var(--text); }
-    .src-btn.active {
-      background: var(--green);
-      border-color: var(--green);
-      color: #020c05;
-    }
-    .src-btn .qtag {
-      font-size: 0.62rem;
-      opacity: 0.7;
-      margin-left: 3px;
-      font-weight: 600;
-    }
-
-    .failover-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 13px;
-      border-radius: 100px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 0.76rem;
-      font-weight: 700;
-      margin-left: auto;
-      transition: all 0.18s var(--ease);
-      white-space: nowrap;
-    }
-    .failover-btn:hover { border-color: var(--red); color: var(--red); }
-    .failover-btn i { font-size: 0.72rem; }
-
-    /* ── RIGHT: Match Sidebar ── */
-    .match-sidebar {
-      position: sticky;
-      top: calc(var(--nav-h) + 16px);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    /* Match Info Card */
-    .match-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      overflow: hidden;
-    }
-
-    .match-card-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 15px;
-      background: var(--elevated);
-      border-bottom: 1px solid var(--border);
-    }
-    .comp-name {
-      font-size: 0.68rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--green);
-    }
-
-    .status-tag {
-      font-size: 0.67rem;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 3px;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-    }
-    .status-tag.live     { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,32,96,0.22); }
-    .status-tag.upcoming { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
-    .status-tag.finished { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
-
-    /* Scoreboard */
-    .scoreboard {
-      padding: 18px 14px 14px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 8px;
-      align-items: center;
-    }
-    .team-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-    }
-    .team-flag {
-      width: 46px; height: 46px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid rgba(255,255,255,0.08);
-      background: var(--elevated);
-    }
-    .team-name-text {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text);
-      text-align: center;
-      line-height: 1.2;
-      max-width: 95px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .score-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-    }
-    .score-nums {
-      display: flex;
-      align-items: baseline;
-      gap: 1px;
-    }
-    .score-n {
-      font-size: 2.4rem;
-      font-weight: 900;
-      letter-spacing: -3px;
-      color: var(--text);
-      line-height: 1;
-    }
-    .score-sep {
-      font-size: 1.6rem;
-      color: var(--text-muted);
-      font-weight: 300;
-      line-height: 1;
-      margin: 0 3px;
-      letter-spacing: 0;
-    }
-    .score-info {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-
-    .match-card-foot {
-      padding: 10px 15px 14px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .foot-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.74rem;
-      color: var(--text-dim);
-      font-weight: 500;
-    }
-    .foot-row i {
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      width: 12px;
-      text-align: center;
-    }
-    .foot-row span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Next Match mini card */
-    .next-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 12px 14px;
-    }
-    .next-card-label {
-      font-size: 0.64rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 7px;
-    }
-    .next-card-match {
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .next-card-time {
-      font-size: 0.74rem;
-      font-weight: 600;
-      color: var(--green);
-    }
-
-    /* ═══════════════════════════════════════
-       FIXTURES SECTION
-    ═══════════════════════════════════════ */
-    .section { margin-top: 30px; }
-
-    .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title i { color: var(--green); font-size: 0.85rem; }
-
-    .tabs {
-      display: flex;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 3px;
-      gap: 2px;
-    }
-    .tab {
-      padding: 5px 14px;
-      border-radius: 100px;
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 0.74rem;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      transition: all 0.18s var(--ease);
-    }
-    .tab:hover { color: var(--text); }
-    .tab.active { background: var(--green); color: #020c05; }
-
-    /* Horizontal scroll track */
-    .fx-track {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 6px;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Individual fixture card */
-    .fx-card {
-      min-width: 215px;
-      width: 215px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      padding: 13px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      flex-shrink: 0;
-      scroll-snap-align: start;
-      cursor: pointer;
-      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
-    }
-    .fx-card:hover {
-      border-color: var(--border-hi);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    }
-    .fx-card.is-live {
-      border-color: rgba(240,32,96,0.22);
-      background: rgba(240,32,96,0.035);
-    }
-    .fx-card.is-current {
-      border-color: var(--border-green);
-      background: var(--green-dim);
-    }
-
-    .fx-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .fx-round {
-      font-size: 0.64rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: var(--text-muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 120px;
-    }
-    .fx-live-tag {
-      font-size: 0.6rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--red);
-      background: var(--red-dim);
-      border: 1px solid rgba(240,32,96,0.18);
-      border-radius: 3px;
-      padding: 2px 6px;
-    }
-    .fx-time {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
-    .fx-teams { display: flex; flex-direction: column; gap: 5px; }
-    .fx-team-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .fx-team-name {
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-    }
-    .fx-score {
-      font-size: 0.88rem;
-      font-weight: 800;
-      color: var(--text);
-      min-width: 14px;
-      text-align: right;
-    }
-    .fx-divider { height: 1px; background: var(--border); margin: 1px 0; }
-
-    .fx-foot {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .fx-foot i { font-size: 0.58rem; }
-
-    .fx-empty {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 90px;
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      font-weight: 600;
-      flex: 1;
-    }
-
-    /* ═══════════════════════════════════════
-       STANDINGS — COLLAPSIBLE
-    ═══════════════════════════════════════ */
-    .standings-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      overflow: hidden;
-    }
-
-    .standings-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.15s;
-    }
-    .standings-head:hover { background: rgba(255,255,255,0.02); }
-    .standings-head-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.93rem;
-      font-weight: 800;
-    }
-    .standings-head-left i { color: var(--green); font-size: 0.85rem; }
-    .chevron {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      transition: transform 0.28s var(--ease);
-    }
-    .standings-wrap.open .chevron { transform: rotate(180deg); }
-
-    .standings-body {
-      display: none;
-      padding: 0 18px 18px;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .standings-wrap.open .standings-body { display: flex; }
-
-    .group-pills {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      padding-top: 2px;
-    }
-    .grp-pill {
-      padding: 4px 10px;
-      border-radius: 4px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .grp-pill:hover { color: var(--text); border-color: var(--border-hi); }
-    .grp-pill.active { background: var(--green); border-color: var(--green); color: #020c05; }
-
-    .st-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-    .st-table th {
-      padding: 6px 7px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      border-bottom: 1px solid var(--border);
-    }
-    .st-table th.left { text-align: left; padding-left: 0; }
-    .st-table td {
-      padding: 7px 7px;
-      text-align: center;
-      color: var(--text-dim);
-      font-weight: 600;
-      border-bottom: 1px solid rgba(255,255,255,0.025);
-    }
-    .st-table tr:last-child td { border-bottom: none; }
-    .st-table .td-pos { color: var(--text-muted); font-size: 0.73rem; width: 22px; }
-    .st-table .td-team { text-align: left; padding-left: 0; color: var(--text); font-weight: 700; white-space: nowrap; }
-    .st-table .td-pts { color: var(--text); font-weight: 800; }
-    .q-bar { display: inline-block; width: 3px; height: 13px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
-    .q-bar.up { background: var(--green); }
-    .q-bar.dn { background: var(--red); }
-
-    /* ═══════════════════════════════════════
-       MOBILE MINI PLAYER (sticky)
-    ═══════════════════════════════════════ */
-    .mini-player {
-      display: none; /* shown only on mobile via media query */
-      position: fixed;
-      top: var(--nav-h);
-      left: 0;
-      right: 0;
-      height: 58px;
-      background: rgba(5,6,15,0.96);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      z-index: 499;
-      align-items: center;
-      padding: 0 14px;
-      gap: 10px;
-      transform: translateY(-120%);
-      transition: transform 0.32s var(--ease);
-    }
-    .mini-player.show { transform: translateY(0); }
-
-    .mini-thumb {
-      width: 82px; height: 46px;
-      border-radius: var(--r-sm);
-      overflow: hidden;
-      background: #000;
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .mini-thumb iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
-
-    .mini-info { flex: 1; overflow: hidden; }
-    .mini-name {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .mini-score {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--green);
-      margin-top: 2px;
-    }
-
-    .mini-back {
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: var(--r-sm);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 0.75rem;
-      flex-shrink: 0;
-    }
-
-    /* ═══════════════════════════════════════
-       SCORE FLASH ANIMATION
-    ═══════════════════════════════════════ */
-    @keyframes score-flash {
-      0%   { color: var(--green); text-shadow: 0 0 14px var(--green); }
-      100% { color: var(--text); text-shadow: none; }
-    }
-    .score-n.flashed { animation: score-flash 1.8s var(--ease); }
-
-    /* ═══════════════════════════════════════
-       RESPONSIVE BREAKPOINTS
-    ═══════════════════════════════════════ */
-
-    /* Tablet */
-    @media (max-width: 1100px) {
-      .hero-grid {
-        grid-template-columns: 1fr 260px;
-        gap: 14px;
-      }
-    }
-
-    @media (max-width: 900px) {
-      .hero-grid { grid-template-columns: 1fr; }
-      .match-sidebar {
-        position: static;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      .match-card { grid-column: 1 / -1; }
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      :root { --nav-h: 56px; }
-      .nav { padding: 0 14px; }
-      .brand-wordmark { font-size: 1.1rem; }
-      .nav-tabs { display: none; }
-
-      .page { padding-left: 12px; padding-right: 12px; }
-
-      .match-sidebar { grid-template-columns: 1fr; }
-      .next-card { display: none; }
-
-      .mini-player { display: flex; }
-
-      .source-label { display: none; }
-      .source-bar { gap: 7px; }
-
-      /* Standings collapsed on mobile */
-      .standings-wrap.open { /* unchanged — user controls it */ }
-
-      .section { margin-top: 22px; }
-      .fx-card { min-width: 190px; width: 190px; }
-    }
-
-    @media (max-width: 480px) {
-      .nav-btn { display: none; }
-      .fx-card { min-width: 175px; width: 175px; }
-      .page { padding-left: 10px; padding-right: 10px; }
-    }
-
-    @media (max-width: 360px) {
-      .fx-card { min-width: 162px; width: 162px; }
-    }
-  </style>
-</head>
-<body>
-
-<!-- ════════════════════════════════
-     LOADER
-════════════════════════════════ -->
-<div id="loader">
-  <div id="lottie-wrap"></div>
-  <div class="loader-text">Loading watchfifa.live</div>
-</div>
-
-<!-- ════════════════════════════════
-     MINI PLAYER (Mobile sticky)
-════════════════════════════════ -->
-<div class="mini-player" id="mini-player">
-  <div class="mini-thumb">
-    <iframe id="mini-iframe" src="" allow="autoplay" scrolling="no"></iframe>
-  </div>
-  <div class="mini-info">
-    <div class="mini-name" id="mini-name">Loading match...</div>
-    <div class="mini-score" id="mini-score">—</div>
-  </div>
-  <button class="mini-back" id="mini-back" title="Scroll to stream">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
-</div>
-
-<!-- ════════════════════════════════
-     NAVIGATION
-════════════════════════════════ -->
-<nav class="nav" role="navigation" aria-label="Main navigation">
-  <a href="/fifa" class="nav-brand" aria-label="watchfifa.live home">
-    <div class="live-dot" aria-hidden="true"></div>
-    <span class="brand-wordmark">watchfifa<em>.live</em></span>
-  </a>
-
-  <div class="nav-tabs">
-    <a href="/f1" class="nav-tab">
-      <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>F1 Party
-    </a>
-    <a href="/fifa" class="nav-tab active" aria-current="page">
-      <i class="fa-solid fa-futbol" aria-hidden="true"></i>FIFA Party
-    </a>
-  </div>
-
-  <div class="nav-actions">
-    <button class="nav-btn" id="btn-search" aria-label="Search">
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-    </button>
-  </div>
-</nav>
-
-<!-- ════════════════════════════════
-     MAIN PAGE
-════════════════════════════════ -->
-<div class="page">
-
-  <!-- ── HERO: PLAYER + SIDEBAR ── -->
-  <section class="hero-grid" aria-label="Live stream">
-
-    <!-- Left: Player -->
-    <div class="player-col">
-
-      <!-- Stream Frame -->
-      <div class="player-frame" id="player-frame">
-        <iframe
-          id="stream-iframe"
-          src=""
-          allowfullscreen
-          scrolling="no"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          title="Live match stream"
-        ></iframe>
-
-        <!-- Hover Overlay -->
-        <div class="player-overlay" aria-hidden="true">
-          <div class="ov-top">
-            <div class="badge-live" id="badge-live" style="display:none;" aria-label="Live">
-              <div class="badge-live-dot"></div>LIVE
-            </div>
-            <div class="signal-pill" id="signal-pill">
-              <div class="signal-dot"></div>
-              <span>Good Signal</span>
-            </div>
-          </div>
-          <div class="ov-bottom">
-            <button class="ctrl" id="ctrl-theater" title="Theater mode">
-              <i class="fa-solid fa-rectangle-wide" aria-hidden="true"></i>
-            </button>
-            <button class="ctrl" id="ctrl-fullscreen" title="Fullscreen">
-              <i class="fa-solid fa-expand" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Source Bar -->
-      <div class="source-bar" id="source-bar" aria-label="Stream sources">
-        <span class="source-label">Feed</span>
-        <div class="source-list" id="source-list">
-          <span style="font-size:0.78rem;color:var(--text-muted);">Fetching streams...</span>
-        </div>
-        <button class="failover-btn" id="btn-failover" aria-label="Auto switch feed">
-          <i class="fa-solid fa-rotate" aria-hidden="true"></i>Auto Switch
-        </button>
-      </div>
-
-    </div>
-
-    <!-- Right: Match Sidebar -->
-    <div class="match-sidebar" id="match-sidebar">
-
-      <!-- Current match card -->
-      <div class="match-card" id="match-card">
-        <div class="match-card-head">
-          <span class="comp-name" id="mc-comp">FIFA World Cup 2026</span>
-          <span class="status-tag upcoming" id="mc-status">—</span>
-        </div>
-
-        <div class="scoreboard">
-          <div class="team-col">
-            <img class="team-flag" id="mc-home-flag"
-              src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA=="
-              alt="Home team">
-            <span class="team-name-text" id="mc-home-name">Home</span>
-          </div>
-
-          <div class="score-col">
-            <div class="score-nums">
-              <span class="score-n" id="mc-hs">—</span>
-              <span class="score-sep">:</span>
-              <span class="score-n" id="mc-as">—</span>
-            </div>
-            <span class="score-info" id="mc-time-lbl">—</span>
-          </div>
-
-          <div class="team-col">
-            <img class="team-flag" id="mc-away-flag"
-              src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACAA=="
-              alt="Away team">
-            <span class="team-name-text" id="mc-away-name">Away</span>
-          </div>
-        </div>
-
-        <div class="match-card-foot">
-          <div class="foot-row">
-            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-            <span id="mc-stadium">—</span>
-          </div>
-          <div class="foot-row">
-            <i class="fa-solid fa-calendar-alt" aria-hidden="true"></i>
-            <span id="mc-date">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Next match card -->
-      <div class="next-card" id="next-card" style="display:none;" aria-label="Next match">
-        <div class="next-card-label">Next Match</div>
-        <div class="next-card-match" id="next-name">—</div>
-        <div class="next-card-time" id="next-time">—</div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ── FIXTURES ── -->
-  <section class="section" aria-label="Fixtures">
-    <div class="section-head">
-      <h2 class="section-title">
-        <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-        Fixtures
-      </h2>
-      <div class="tabs" id="fx-tabs" role="tablist">
-        <button class="tab active" data-tab="live" role="tab" aria-selected="true">Live</button>
-        <button class="tab" data-tab="upcoming" role="tab" aria-selected="false">Upcoming</button>
-        <button class="tab" data-tab="finished" role="tab" aria-selected="false">Finished</button>
-      </div>
-    </div>
-    <div class="fx-track" id="fx-track" role="list">
-      <div class="fx-empty">Loading fixtures...</div>
-    </div>
-  </section>
-
-  <!-- ── STANDINGS ── -->
-  <section class="section" aria-label="Group standings">
-    <div class="standings-wrap open" id="standings-wrap">
-      <div class="standings-head" id="standings-toggle" role="button" aria-expanded="true" tabindex="0">
-        <div class="standings-head-left">
-          <i class="fa-solid fa-table-list" aria-hidden="true"></i>
-          Group Standings
-        </div>
-        <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
-      </div>
-      <div class="standings-body" id="standings-body">
-        <div class="group-pills" id="group-pills"></div>
-        <div style="overflow-x:auto;">
-          <table class="st-table" aria-label="Standings table">
-            <thead>
-              <tr>
-                <th class="left" style="width:22px;">#</th>
-                <th class="left">Team</th>
-                <th title="Matches Played">MP</th>
-                <th title="Won">W</th>
-                <th title="Drawn">D</th>
-                <th title="Lost">L</th>
-                <th title="Goal Difference">GD</th>
-                <th title="Points" style="color:var(--text);">Pts</th>
-              </tr>
-            </thead>
-            <tbody id="st-rows">
-              <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:18px;font-size:0.8rem;">Loading standings...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-</div><!-- .page -->
-
-<!-- ════════════════════════════════
-     APP SCRIPT
-════════════════════════════════ -->
-<script>
-(function () {
-  'use strict';
-
-  /* ── Config ── */
-  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  const API     = isLocal ? 'http://localhost:3000' : '';
-
-  /* ── App State ── */
-  const S = {
-    streams:      [],
-    sourceIdx:    0,
-    raceData:     null,
-    fixtures:     [],
-    standings:    {},
-    activeTab:    'live',
-    activeGroup:  null,
-    prevHS:       null,
-    prevAS:       null,
-    loaderDone:   false,
-  };
-
-  /* ══════════════════════════
-     LOADER
-  ══════════════════════════ */
-  const loaderEl = document.getElementById('loader');
-
-  lottie.loadAnimation({
-    container:  document.getElementById('lottie-wrap'),
-    renderer:   'svg',
-    loop:       true,
-    autoplay:   true,
-    path:       'scene.json'
-  });
-
-  function hideLoader() {
-    if (S.loaderDone) return;
-    S.loaderDone = true;
-    loaderEl.classList.add('out');
-  }
-  setTimeout(hideLoader, 4500); // max wait
-
-  /* ══════════════════════════
-     PLAYER CONTROLS
-  ══════════════════════════ */
-  const playerFrame  = document.getElementById('player-frame');
-  const streamIframe = document.getElementById('stream-iframe');
-  const miniIframe   = document.getElementById('mini-iframe');
-
-  /* Theater mode */
-  document.getElementById('ctrl-theater').addEventListener('click', () => {
-    playerFrame.classList.toggle('theater');
-    const icon = document.querySelector('#ctrl-theater i');
-    icon.className = playerFrame.classList.contains('theater')
-      ? 'fa-solid fa-compress-wide'
-      : 'fa-solid fa-rectangle-wide';
-  });
-
-  /* Fullscreen */
-  document.getElementById('ctrl-fullscreen').addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      playerFrame.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen();
-    }
-  });
-
-  document.addEventListener('fullscreenchange', () => {
-    const icon = document.querySelector('#ctrl-fullscreen i');
-    icon.className = document.fullscreenElement ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
-  });
-
-  /* Auto-failover */
-  document.getElementById('btn-failover').addEventListener('click', () => {
-    if (S.streams.length > 1) {
-      S.sourceIdx = (S.sourceIdx + 1) % S.streams.length;
-      activateSource(S.sourceIdx);
-    }
-  });
-
-  /* ══════════════════════════
-     SOURCES
-  ══════════════════════════ */
-  const QUALITY_HINTS = ['HD', '', 'Backup', 'Alt', 'Ultra', '', '', ''];
-
-  function activateSource(idx) {
-    const link = S.streams[idx];
-    if (!link?.url) return;
-    S.sourceIdx = idx;
-
-    streamIframe.src = link.url;
-    miniIframe.src   = link.url;
-
-    document.querySelectorAll('.src-btn').forEach((btn, i) => {
-      btn.classList.toggle('active', i === idx);
-    });
-  }
-
-  function renderSources() {
-    const container = document.getElementById('source-list');
-    if (!S.streams.length) {
-      container.innerHTML = '<span style="font-size:0.78rem;color:var(--text-muted);">No feeds available</span>';
-      return;
-    }
-    container.innerHTML = S.streams.map((_, i) => {
-      const hint = QUALITY_HINTS[i] || '';
-      return `<button class="src-btn${i === S.sourceIdx ? ' active' : ''}" data-i="${i}">
-        Source ${i + 1}${hint ? `<span class="qtag">${hint}</span>` : ''}
-      </button>`;
-    }).join('');
-
-    container.querySelectorAll('.src-btn').forEach(btn => {
-      btn.addEventListener('click', () => activateSource(+btn.dataset.i));
-    });
-  }
-
-  /* ══════════════════════════
-     MATCH CARD
-  ══════════════════════════ */
-  function updateMatchCard(data) {
-    if (!data) return;
-    S.raceData = data;
-
-    const homeName = (data.name || '').split(' vs ')[0]?.trim() || 'Home';
-    const awayName = (data.name || '').split(' vs ')[1]?.trim() || 'Away';
-    const hs = data.homeScore ?? '—';
-    const as = data.awayScore ?? '—';
-
-    document.getElementById('mc-comp').textContent   = data.round || 'FIFA World Cup 2026';
-    document.getElementById('mc-home-name').textContent = homeName;
-    document.getElementById('mc-away-name').textContent = awayName;
-    document.getElementById('mc-stadium').textContent = data.circuit || data.location || '—';
-    document.getElementById('mc-date').textContent    = data.date || '—';
-
-    const hsEl = document.getElementById('mc-hs');
-    const asEl = document.getElementById('mc-as');
-
-    /* Flash on score change */
-    if (S.prevHS !== null && S.prevHS !== hs) flashEl(hsEl);
-    if (S.prevAS !== null && S.prevAS !== as) flashEl(asEl);
-    S.prevHS = hs; S.prevAS = as;
-
-    hsEl.textContent = hs;
-    asEl.textContent = as;
-
-    const statusEl  = document.getElementById('mc-status');
-    const badgeLive = document.getElementById('badge-live');
-    const timeLbl   = document.getElementById('mc-time-lbl');
-
-    if (data.isLive) {
-      statusEl.textContent  = data.matchTime ? `${data.matchTime}'` : 'LIVE';
-      statusEl.className    = 'status-tag live';
-      timeLbl.textContent   = data.matchTime ? `${data.matchTime}'` : 'LIVE';
-      badgeLive.style.display = 'inline-flex';
-    } else if (data.isFinished) {
-      statusEl.textContent  = 'FT';
-      statusEl.className    = 'status-tag finished';
-      timeLbl.textContent   = 'Full Time';
-      badgeLive.style.display = 'none';
-    } else {
-      statusEl.textContent  = 'Upcoming';
-      statusEl.className    = 'status-tag upcoming';
-      timeLbl.textContent   = data.date || 'Scheduled';
-      badgeLive.style.display = 'none';
-    }
-
-    /* Mini player info */
-    document.getElementById('mini-name').textContent  = data.name || 'Live Match';
-    document.getElementById('mini-score').textContent = (data.isLive || data.isFinished)
-      ? `${hs} — ${as}`
-      : 'Upcoming';
-  }
-
-  function flashEl(el) {
-    el.classList.remove('flashed');
-    void el.offsetWidth; // reflow
-    el.classList.add('flashed');
-  }
-
-  /* ══════════════════════════
-     FETCH: LIVE CONFIG
-  ══════════════════════════ */
-  async function fetchConfig() {
-    try {
-      const r   = await fetch(`${API}/api/live-config`);
-      if (!r.ok) throw new Error(r.status);
-      const cfg = await r.json();
-
-      if (cfg.fifa) {
-        const { raceData, streamLinks } = cfg.fifa;
-        if (raceData) updateMatchCard(raceData);
-
-        if (Array.isArray(streamLinks) && streamLinks.length) {
-          S.streams = streamLinks;
-          renderSources();
-          activateSource(0);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>watchfifa.live | Live Football Streaming</title>
+
+    <script>
+        (function() {
+            function removeSandbox() {
+                var iframes = document.getElementsByTagName('iframe');
+                for (var i = 0; i < iframes.length; i++) {
+                    if (iframes[i].hasAttribute('sandbox')) {
+                        iframes[i].removeAttribute('sandbox');
+                        console.log('Web: Removed sandbox from iframe:', iframes[i].src);
+                    }
+                }
+            }
+            try {
+                var originalSetAttr = HTMLIFrameElement.prototype.setAttribute;
+                HTMLIFrameElement.prototype.setAttribute = function(name, val) {
+                    if (name.toLowerCase() === 'sandbox') {
+                        console.log('Web: Intercepted and blocked setAttribute(sandbox)');
+                        this.removeAttribute('sandbox');
+                        return;
+                    }
+                    originalSetAttr.call(this, name, val);
+                };
+                
+                Object.defineProperty(HTMLIFrameElement.prototype, 'sandbox', {
+                    get: function() {
+                        return this.getAttribute('sandbox') || '';
+                    },
+                    set: function(val) {
+                        console.log('Web: Intercepted and blocked sandbox property setter');
+                        this.removeAttribute('sandbox');
+                    },
+                    configurable: true,
+                    enumerable: true
+                });
+            } catch(e) { console.error('Web: error setting up sandbox overrides', e); }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                removeSandbox();
+                var observer = new MutationObserver(function(mutations) {
+                    removeSandbox();
+                });
+                observer.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+            });
+        })();
+
+        (function () {
+            const savedLoc = localStorage.getItem('f1_theme_loc') || 'default';
+            const savedOverride = localStorage.getItem('f1_theme_override') || '';
+            let key = (savedOverride !== '') ? savedOverride : savedLoc;
+            const loc = key.toLowerCase();
+            let primary = '#e60000';
+            let glow = 'rgba(230, 0, 0, 0.15)';
+            if (loc.includes('monaco') || loc.includes('monte carlo')) {
+                primary = '#e2001a'; glow = 'rgba(226, 0, 26, 0.15)';
+            } else if (loc.includes('monza') || loc.includes('imola') || loc.includes('ital')) {
+                primary = '#ff1801'; glow = 'rgba(255, 24, 1, 0.15)';
+            } else if (loc.includes('silverstone') || loc.includes('british') || loc.includes('london')) {
+                primary = '#00cc7a'; glow = 'rgba(0, 204, 122, 0.15)';
+            } else if (loc.includes('zandvoort') || loc.includes('nether') || loc.includes('austria') || loc.includes('spielberg')) {
+                primary = '#ff7700'; glow = 'rgba(255, 119, 0, 0.15)';
+            } else if (loc.includes('las vegas') || loc.includes('vegas')) {
+                primary = '#b500ff'; glow = 'rgba(181, 0, 255, 0.2)';
+            } else if (loc.includes('singapore') || loc.includes('miami') || loc.includes('austin') || loc.includes('texas')) {
+                primary = '#00ffcc'; glow = 'rgba(0, 255, 204, 0.2)';
+            } else if (loc.includes('abu dhabi') || loc.includes('abudhabi') || loc.includes('yas marina') || loc.includes('bahrain') || loc.includes('sakhir') || loc.includes('qatar') || loc.includes('lusail') || loc.includes('saudi') || loc.includes('jeddah') || loc.includes('baku') || loc.includes('azerbaijan')) {
+                primary = '#00e5ff'; glow = 'rgba(0, 229, 255, 0.2)';
+            } else if (loc.includes('spa') || loc.includes('belgium')) {
+                primary = '#ffb700'; glow = 'rgba(255, 183, 0, 0.15)';
+            } else if (loc.includes('suzuka') || loc.includes('japan')) {
+                primary = '#ff66a3'; glow = 'rgba(255, 102, 163, 0.2)';
+            } else if (loc.includes('melbourne') || loc.includes('australia') || loc.includes('albert park')) {
+                primary = '#ffcc00'; glow = 'rgba(255, 204, 0, 0.15)';
+            } else if (loc.includes('canada') || loc.includes('montreal')) {
+                primary = '#ff3333'; glow = 'rgba(255, 51, 51, 0.15)';
+            } else if (loc.includes('china') || loc.includes('shanghai')) {
+                primary = '#ff2200'; glow = 'rgba(255, 34, 0, 0.15)';
+            } else if (loc.includes('brazil') || loc.includes('interlagos') || loc.includes('sao paulo')) {
+                primary = '#00ff33'; glow = 'rgba(0, 255, 51, 0.15)';
+            } else if (loc.includes('hungar') || loc.includes('budapest')) {
+                primary = '#ff007f'; glow = 'rgba(255, 0, 127, 0.2)';
+            } else if (loc.includes('mexic')) {
+                primary = '#00875a'; glow = 'rgba(0, 135, 90, 0.15)';
+            }
+            document.documentElement.style.setProperty('--f1-red', primary);
+            document.documentElement.style.setProperty('--glow-color', glow);
+        })();
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- 3D Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+
+    <!-- Lottie light for F1 loader animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
+
+    <style>
+        [ng-cloak],
+        .ng-cloak {
+            display: none !important;
         }
-      }
-    } catch (e) {
-      console.warn('[config]', e.message);
-      // Fallback: fetch streams directly
-      fetchStreams();
-    } finally {
-      hideLoader();
-    }
-  }
 
-  async function fetchStreams() {
-    try {
-      const r = await fetch(`${API}/api/fifa/streams`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d.streamLinks?.length) {
-        S.streams = d.streamLinks;
-        renderSources();
-        if (!streamIframe.src || streamIframe.src === location.href) activateSource(0);
-      }
-    } catch (e) {
-      console.warn('[streams]', e.message);
-    }
-  }
+        :root {
+            --f1-red: #00ff55;
+            --f1-carbon: #101010;
+            --f1-silver: #d1d1d1;
+            --f1-green: #e60000; /* Inverted for F1 to soccer swap */
+            --bg-dark: #050505;
+            --glass-bg: rgba(10, 10, 10, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --text-white: #ffffff;
+            --text-gray: #999999;
+            --glow-color: rgba(0, 255, 85, 0.15);
+            --border: #24242e;
+            --tech-blue: #00e5ff;
+        }
 
-  /* ══════════════════════════
-     FETCH: FIXTURES
-  ══════════════════════════ */
-  async function fetchFixtures() {
-    try {
-      const r = await fetch(`${API}/api/fifa/fixtures`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (Array.isArray(d)) {
-        S.fixtures = d;
-        renderFixtures();
-        updateNextCard();
-      }
-    } catch (e) { console.warn('[fixtures]', e.message); }
-  }
+        * {
+            box-sizing: border-box;
+        }
 
-  function updateNextCard() {
-    const upcoming = S.fixtures
-      .filter(f => f.status === 'notstarted' && !f.finished)
-      .sort((a, b) => (a.kickoffTs || 0) - (b.kickoffTs || 0));
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 16px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-color: #050505;
+            /* Fallback */
+        }
 
-    const card = document.getElementById('next-card');
-    if (upcoming.length) {
-      const nx = upcoming[0];
-      document.getElementById('next-name').textContent = `${nx.homeTeam} vs ${nx.awayTeam}`;
-      document.getElementById('next-time').textContent = nx.localDate || '—';
-      card.style.display = 'block';
-    } else {
-      card.style.display = 'none';
-    }
-  }
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -3;
+        }
 
-  /* Fixture Tabs */
-  document.getElementById('fx-tabs').addEventListener('click', e => {
-    const btn = e.target.closest('.tab');
-    if (!btn) return;
-    document.querySelectorAll('#fx-tabs .tab').forEach(b => {
-      b.classList.remove('active');
-      b.setAttribute('aria-selected', 'false');
-    });
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-    S.activeTab = btn.dataset.tab;
-    renderFixtures();
-  });
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(5, 5, 5, 0.6), rgba(5, 5, 5, 0.9));
+            /* Gradient overlay */
+            z-index: -2;
+        }
 
-  function renderFixtures() {
-    const track = document.getElementById('fx-track');
+        #vanta-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
+        }
 
-    const filtered = S.fixtures.filter(f => {
-      if (S.activeTab === 'live')     return f.status === 'inprogress' || f.status === 'live';
-      if (S.activeTab === 'upcoming') return f.status === 'notstarted' && !f.finished;
-      return f.finished || f.status === 'finished';
-    });
+        @media (max-width: 768px) {
+            #vanta-overlay {
+                display: none !important;
+            }
+        }
 
-    if (!filtered.length) {
-      track.innerHTML = `<div class="fx-empty">No ${S.activeTab} matches</div>`;
-      return;
-    }
+        /* 3D Depth Utilities */
+        .glass-card,
+        .video-wrapper {
+            transform-style: preserve-3d;
+        }
 
-    const currentName = S.raceData?.name || '';
+        .glass-card>*,
+        .video-responsive {
+            transform: translateZ(30px);
+        }
 
-    track.innerHTML = filtered.map(f => {
-      const isLive  = f.status === 'inprogress' || f.status === 'live';
-      const hasScore = isLive || f.finished;
-      const isCurrent = currentName && `${f.homeTeam} vs ${f.awayTeam}` === currentName;
+        header {
+            background-color: #111;
+            background-image:
+                linear-gradient(90deg, rgba(5, 5, 5, 0.85) 0%, rgba(5, 5, 5, 0.4) 50%, rgba(5, 5, 5, 0.85) 100%),
+                repeating-linear-gradient(45deg, #181818 25%, transparent 25%, transparent 75%, #181818 75%, #181818),
+                repeating-linear-gradient(45deg, #181818 25%, #0a0a0a 25%, #0a0a0a 75%, #181818 75%, #181818);
+            background-position: 0 0, 0 0, 5px 5px;
+            background-size: 100% 100%, 10px 10px, 10px 10px;
 
-      const timeDisplay = isLive
-        ? (f.matchTime ? `${f.matchTime}'` : 'LIVE')
-        : (f.finished ? 'FT' : (f.localDate || '—'));
+            border-bottom: 2px solid var(--f1-red);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 75px;
+            transition: all 0.3s ease;
+        }
 
-      return `<div class="fx-card${isLive ? ' is-live' : ''}${isCurrent ? ' is-current' : ''}" data-id="${f.id}" role="listitem">
-        <div class="fx-top">
-          <span class="fx-round">${f.round || 'Group Stage'}</span>
-          ${isLive
-            ? `<span class="fx-live-tag">● ${f.matchTime ? f.matchTime + "'" : 'LIVE'}</span>`
-            : `<span class="fx-time">${timeDisplay}</span>`}
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-marquee-container {
+            flex: 1;
+            overflow: hidden;
+            margin: 0 30px;
+            white-space: nowrap;
+            background: var(--glow-color);
+            border: 1px solid var(--f1-red);
+            border-radius: 20px;
+            padding: 6px 15px;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .header-marquee-text {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding-left: 100%;
+            animation: scroll-left 18s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .header-marquee-text span {
+            color: #fff;
+        }
+
+        .status-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weather-pill {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-right: 5px;
+            backdrop-filter: blur(5px);
+        }
+
+        .w-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .w-icon {
+            font-size: 14px;
+            margin-right: 2px;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        }
+
+        /* --- LIVE TRACK MAP --- */
+        .track-map-section {
+            max-width: 1400px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+        }
+
+        .track-map-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .track-map-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .track-map-title {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-gray);
+        }
+
+        .live-dot {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--f1-red);
+        }
+
+        .live-dot span {
+            width: 7px;
+            height: 7px;
+            background: var(--f1-red);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px var(--f1-red);
+            }
+
+            50% {
+                opacity: 0.5;
+                box-shadow: 0 0 3px var(--f1-red);
+            }
+        }
+
+
+
+        .fl-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #b100e1;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px #b100e1;
+            z-index: 5;
+        }
+
+        .fastest-lap-row {
+            border-left: 3px solid #b100e1 !important;
+            background: rgba(177, 0, 225, 0.05) !important;
+        }
+
+        .gap-text {
+            font-size: 9px;
+            font-family: monospace;
+            color: var(--tech-blue);
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+
+        .map-sector-line {
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-dasharray: 5, 5;
+            stroke-width: 1;
+        }
+
+        .map-sector-label {
+            fill: rgba(255, 255, 255, 0.4);
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .f1-popup-overlay {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .f1-popup-content {
+            background: rgba(10, 10, 15, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .f1-popup-content.active {
+            transform: translateX(0);
+        }
+
+        .f1-popup-icon {
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+
+        .f1-popup-title {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            color: var(--text-gray);
+        }
+
+        .f1-popup-msg {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-content {
+            border-left: 4px solid #b100e1;
+        }
+
+        .f1-popup-overlay.fastest-lap .f1-popup-icon {
+            color: #b100e1;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-content {
+            border-left: 4px solid #fff;
+        }
+
+        .f1-popup-overlay.checkered-flag .f1-popup-icon {
+            color: #fff;
+        }
+
+        .live-indicator-mini {
+            background: rgba(255, 24, 1, 0.1);
+            color: var(--f1-red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            border: 1px solid rgba(255, 24, 1, 0.2);
+        }
+
+        .live-pulse {
+            width: 5px;
+            height: 5px;
+            background: var(--f1-red);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .w-label {
+            color: var(--text-gray);
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 2px;
+        }
+
+        .w-val {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .w-divider {
+            width: 1px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .timer-pill {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+        }
+
+        .status-pill {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.countdown {
+            background: rgba(255, 180, 0, 0.08);
+            color: #ffb400;
+            border: 1px solid rgba(255, 180, 0, 0.35);
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill.countdown i {
+            color: #ffb400;
+        }
+
+        .status-pill.live {
+            background: #e60000 !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.6) !important;
+            font-weight: 800;
+            animation: pulse 2s infinite;
+        }
+
+        .status-pill.offline {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: #888 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        /* Countdown Page Styling */
+        .countdown-page-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: calc(100vh - 120px);
+            padding: 80px 20px 40px 20px; /* adjusted top padding to accommodate marquee */
+            box-sizing: border-box;
+            z-index: 10;
+            position: relative;
+        }
+
+        .landing-marquee {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.65);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-bottom: 2px solid var(--f1-red);
+            box-shadow: 0 4px 20px var(--glow-color);
+            padding: 10px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        .landing-marquee-text {
+            display: inline-block;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ddd;
+            animation: scroll-left-landing 22s linear infinite;
+            padding-left: 100%;
+        }
+
+        .landing-marquee-text span {
+            color: #fff;
+        }
+
+        @keyframes scroll-left-landing {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .countdown-brand {
+            font-size: 56px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 25px var(--glow-color);
+        }
+
+        .countdown-brand span {
+            color: var(--f1-red);
+            text-shadow: 0 0 30px var(--f1-red);
+        }
+
+        .countdown-gp-info {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-gray);
+            margin-bottom: 40px;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .countdown-gp-info span {
+            color: #fff;
+            margin-left: 8px;
+        }
+
+        .countdown-timer-box {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 45px 60px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 100%;
+            box-sizing: border-box;
+            backdrop-filter: blur(25px);
+            position: relative;
+        }
+
+        .countdown-timer-box::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(135deg, var(--f1-red), transparent, var(--f1-red));
+            border-radius: 26px;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .countdown-session-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--f1-red);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .countdown-digits {
+            font-size: 56px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            font-family: 'Titillium Web', sans-serif;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+        }
+
+        .countdown-offline {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .countdown-offline-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #888;
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            padding: 15px 35px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .countdown-offline-text {
+            font-size: 12px;
+            color: var(--text-gray);
+            letter-spacing: 1px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .countdown-page-container { min-height: calc(100vh - 80px); }
+            .countdown-brand { font-size: 36px; }
+            .countdown-gp-info { font-size: 11px; padding: 10px 20px; }
+            .countdown-timer-box { padding: 30px 20px; }
+            .countdown-digits { font-size: 38px; }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: minmax(0, 3.5fr) minmax(0, 1.2fr);
+            gap: 30px;
+            flex: 1;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 1100px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-wrapper {
+            background: #000;
+            border-radius: 24px 24px 0 0;
+            overflow: hidden;
+            border: 1px solid #222;
+            border-bottom: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .video-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: var(--f1-red);
+            filter: blur(50px);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .video-responsive {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            width: 100%;
+            background: #0a0a0a;
+        }
+
+        .video-responsive iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .video-toolbar {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-top: none;
+            border-radius: 0 0 24px 24px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .stream-controls {
+            margin-top: 0px;
+            transition: all 0.3s ease;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .event-title {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .event-round {
+            font-size: 14px;
+            color: var(--f1-red);
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            font-size: 15px;
+            color: var(--text-gray);
+        }
+
+        .meta-item strong {
+            display: block;
+            color: #fff;
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .stream-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: auto;
+            letter-spacing: 0.5px;
+        }
+
+        .stream-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .stream-btn.active {
+            background: #e60000 !important;
+            color: white !important;
+            border-color: #e60000 !important;
+            box-shadow: 0 0 15px rgba(230, 0, 0, 0.4) !important;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--f1-red);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .carbon-schedule-card {
+            position: relative;
+            overflow: visible;
+            background-color: #0c0c0f !important;
+            background-image:
+                linear-gradient(90deg, rgba(10, 10, 12, 0.85) 0%, rgba(10, 10, 12, 0.4) 50%, rgba(10, 10, 12, 0.85) 100%),
+                repeating-linear-gradient(45deg, #16161b 25%, transparent 25%, transparent 75%, #16161b 75%, #16161b),
+                repeating-linear-gradient(45deg, #16161b 25%, #08080a 25%, #08080a 75%, #16161b 75%, #16161b) !important;
+            background-position: 0 0, 0 0, 4px 4px !important;
+            background-size: 100% 100%, 8px 8px, 8px 8px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .carbon-schedule-card .card-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0.18;
+            pointer-events: none;
+            border-radius: inherit;
+            clip-path: inset(0 round 24px);
+        }
+
+        .carbon-schedule-card>*:not(.card-video-bg) {
+            position: relative;
+            z-index: 2;
+        }
+
+        .is-current-card {
+            border: 1px solid var(--f1-red) !important;
+            box-shadow: 0 0 12px rgba(0, 255, 85, 0.15) !important;
+            background: rgba(0, 255, 85, 0.02) !important;
+        }
+
+        .schedule-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .schedule-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .schedule-row.live {
+            background: linear-gradient(90deg, var(--glow-color), rgba(255, 255, 255, 0.01));
+            border-color: var(--glow-color);
+            border-left: 3px solid var(--f1-red);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .schedule-row.upcoming {
+            background: rgba(255, 255, 255, 0.01);
+            border-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .schedule-row.ended {
+            opacity: 0.4;
+        }
+
+        /* --- FIXTURE HIGHLIGHT CARD --- */
+        .fixture-highlight {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid var(--f1-red);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 0 20px var(--glow-color), inset 0 1px 1px rgba(255,255,255,0.07);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fixture-highlight::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--f1-red), transparent);
+            opacity: 0.6;
+        }
+
+        .fixture-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--f1-red);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fixture-label .fixture-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--f1-red);
+            box-shadow: 0 0 8px var(--f1-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        .fixture-label.upcoming-label {
+            color: #ffb400;
+        }
+
+        .fixture-label.upcoming-label .fixture-dot {
+            background: #ffb400;
+            box-shadow: 0 0 8px #ffb400;
+            animation: none;
+        }
+
+        .fixture-session-name {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            line-height: 1.1;
+        }
+
+        .fixture-time-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .fixture-time {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--f1-red);
+        }
+
+        .fixture-day {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        .fixture-countdown {
+            margin-top: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fixture-countdown i {
+            color: #ffb400;
+            font-size: 11px;
+        }
+
+        .fixture-live-pulse {
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--f1-green);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        .fixture-no-upcoming {
+            text-align: center;
+            padding: 14px 10px;
+            color: var(--text-gray);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 1px dashed rgba(255,255,255,0.07);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .schedule-row.ended {
+            opacity: 0.38;
+        }
+
+        .sess-name {
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .sess-status {
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sess-time {
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .sess-day {
+            font-size: 13px;
+            color: var(--text-gray);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-gray);
+            padding: 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background: var(--f1-red);
+            color: white;
+            border-color: var(--f1-red);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .standings-list {
+            transition: all 0.4s ease;
+            max-height: auto;
+        }
+
+        .standings-list.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .standings-list.expanded::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .standings-list.expanded::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .standings-list.expanded::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .standing-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .standing-row:last-child {
+            border-bottom: none;
+        }
+
+        .st-pos {
+            font-family: 'Titillium Web', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            margin-right: 15px;
+            color: var(--text-gray);
+            width: 20px;
+            text-align: center;
+        }
+
+        .st-pos.p1 {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .st-pos.p2 {
+            color: #c0c0c0;
+        }
+
+        .st-pos.p3 {
+            color: #cd7f32;
+        }
+
+        .st-img-wrapper {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #222;
+            margin-right: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .st-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        .st-info {
+            flex: 1;
+        }
+
+        .st-name {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .st-team {
+            font-size: 13px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .st-pts {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .view-more-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            color: var(--text-gray);
+            padding: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        .view-more-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 13px;
+            border-top: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+        }
+
+        footer p:first-child {
+            font-size: 11px;
+            line-height: 1.4;
+            opacity: 0.55;
+            max-width: 600px;
+            margin: 0 auto 8px auto;
+        }
+
+        body.theater-active header {
+            height: 40px;
+            padding: 0 20px;
+            background: #000;
+            border-bottom: 1px solid #111;
+            background-image: none;
+        }
+
+        body.theater-active .logo-text {
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        body.theater-active .status-pill {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .timer-pill {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .weather-pill {
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 10px;
+        }
+
+        body.theater-active .header-marquee-container {
+            display: none;
+        }
+
+        body.theater-active footer,
+        body.theater-active .sidebar {
+            display: none !important;
+        }
+
+        body.theater-active {
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+
+        body.theater-active .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.theater-active .main-column {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.theater-active .video-wrapper {
+            flex: 1;
+            border-radius: 0;
+            border: none;
+            display: flex;
+            align-items: center;
+        }
+
+        body.theater-active .video-wrapper::before {
+            display: none;
+        }
+
+        body.theater-active .video-responsive {
+            height: 100%;
+            padding-bottom: 0;
+        }
+
+        body.theater-active .video-toolbar {
+            margin-bottom: 0;
+            border-radius: 0;
+            border: none;
+            border-top: 1px solid #111;
+            background: #000;
+            padding: 5px 15px;
+            height: 40px;
+        }
+
+        body.theater-active .stream-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+
+        body.theater-active .source-label {
+            font-size: 11px !important;
+        }
+
+        body.theater-active .stream-controls {
+            display: none;
+        }
+
+        /* ── Loading Screen ── */
+
+        /* WatchF1.live Loading Animation */
+        /* ── Loading Screen ── */
+        .loader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: #000;
+            overflow: hidden;
+            z-index: 9999;
+            display: block;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+
+
+        .loader lottie-player, #f1-lottie-loader {
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width:  min(100vw, 133.33dvh);
+            height: min(100dvh, 75vw);
+        }
+
+        /* Chat Sidebar Drawer (Twitch brand themed) */
+        .chat-sidebar {
+            position: fixed;
+            top: 0;
+            right: -340px;
+            width: 340px;
+            height: 100vh;
+            background: #0f0f12;
+            border-left: 2px solid #9146ff;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 100000;
+            transform: translate3d(0, 0, 10000px);
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-sidebar.open {
+            right: 0;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #16161b;
+            border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #a970ff;
+            text-transform: uppercase;
+        }
+
+        .chat-close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-close-btn:hover {
+            color: #a970ff;
+        }
+
+        .chat-status {
+            padding: 8px 15px;
+            background: rgba(145, 70, 255, 0.05);
+            font-size: 10px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(145, 70, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Twitch iframe fills the remaining chat space */
+        .chat-twitch-iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            min-height: 0;
+            background: #0e0e10;
+        }
+
+        /* Pinned Message Banner style */
+        .chat-pinned-message {
+            background: rgba(145, 70, 255, 0.12);
+            border-bottom: 2px solid #9146ff;
+            padding: 10px 15px;
+            font-size: 12px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .pinned-header {
+            font-size: 9px;
+            color: #a970ff;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pinned-header i {
+            transform: rotate(45deg);
+        }
+
+        .pinned-body {
+            font-weight: 600;
+            line-height: 1.4;
+            color: #fff;
+            word-wrap: break-word;
+        }
+
+        /* Highlighted Chat Button Style */
+        .chat-btn {
+            color: #a970ff !important;
+            border-color: rgba(145, 70, 255, 0.4) !important;
+            background: rgba(145, 70, 255, 0.05) !important;
+        }
+
+        .chat-btn:hover {
+            background: rgba(145, 70, 255, 0.15) !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 10px rgba(145, 70, 255, 0.3) !important;
+        }
+
+        .chat-btn.active {
+            background: #9146ff !important;
+            color: #fff !important;
+            border-color: #9146ff !important;
+            box-shadow: 0 0 15px rgba(145, 70, 255, 0.6) !important;
+        }
+
+
+
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 15px;
+                height: auto;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 10px;
+                background-size: 100% 100%, 6px 6px, 6px 6px;
+            }
+
+            .header-left {
+                gap: 10px;
+            }
+
+            .logo-text {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+
+            .header-marquee-container {
+                width: 100%;
+                margin: 0;
+                order: 3;
+                flex: none;
+                border-radius: 12px;
+            }
+
+            .container {
+                margin: 15px auto;
+                padding: 0 12px;
+                gap: 16px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .main-column,
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .video-wrapper {
+                border-radius: 16px 16px 0 0;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
+            }
+
+            .video-toolbar {
+                border-radius: 0 0 16px 16px;
+                padding: 10px 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                overflow-x: auto;
+                white-space: nowrap;
+                flex-wrap: nowrap !important;
+                justify-content: flex-start !important;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: none;
+                /* IE and Edge */
+                scrollbar-width: none;
+                /* Firefox */
+            }
+
+            .video-toolbar::-webkit-scrollbar {
+                display: none;
+                /* Hide scrollbar for Chrome, Safari and Opera */
+            }
+
+            .glass-card {
+                border-radius: 16px;
+                padding: 20px;
+                /* Reset 3D tilt transforms on mobile */
+                transform: none !important;
+            }
+
+            .spacer {
+                display: none;
+            }
+
+            .stream-btn {
+                flex: 0 0 auto !important;
+                text-align: center;
+                font-size: 12px;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+
+            /* Theater/Chat buttons: icon-only on mobile to save toolbar space */
+            .control-btn {
+                padding: 8px 10px !important;
+                min-width: 34px;
+            }
+            .control-btn .btn-label {
+                display: none;
+            }
+            .control-btn i {
+                margin-right: 0 !important;
+            }
+
+            /* Hide SOURCE: label on very narrow screens */
+            @media (max-width: 480px) {
+                .source-label { display: none !important; }
+            }
+
+            .tab-btn {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+
+            .view-more-btn {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .event-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .event-title {
+                font-size: 22px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .schedule-row {
+                padding: 8px 12px;
+            }
+
+            .sess-name {
+                font-size: 14px;
+            }
+
+            .sess-time {
+                font-size: 14px;
+            }
+
+            body.theater-active header {
+                display: none;
+            }
+
+            body.theater-active .container {
+                height: 100vh;
+            }
+
+            body.theater-active .video-toolbar {
+                overflow-x: scroll;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                border-radius: 0;
+            }
+
+            /* ── Sport toggle: icon-only on mobile ── */
+            .sport-toggle-container {
+                margin-left: 6px;
+                padding: 2px;
+                border-radius: 15px;
+            }
+
+            .sport-toggle-btn {
+                padding: 4px 6px;
+                gap: 0;
+                min-width: 26px;
+                min-height: 26px;
+                justify-content: center;
+                border-radius: 12px;
+            }
+
+            .sport-toggle-btn .toggle-label {
+                display: none;
+            }
+
+            /* ── iOS safe-area insets ── */
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .container {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+
+            footer {
+                padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+
+            /* Smooth momentum scroll on iOS */
+            .video-toolbar,
+            .standings-list.expanded {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .status-area {
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .weather-pill .w-label {
+                display: none;
+            }
+
+            .weather-pill {
+                padding: 4px 10px;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .timer-pill {
+                font-size: 11px;
+                padding: 4px 10px;
+                flex-shrink: 0;
+            }
+
+            .status-pill {
+                font-size: 11px;
+                padding: 4px 12px;
+                flex-shrink: 0;
+            }
+
+            .chat-sidebar {
+                width: 100%;
+                right: -100%;
+            }
+
+            .chat-sidebar.open {
+                right: 0;
+            }
+
+            /* ── Countdown card timer fix: override inline aspect-ratio + padding ── */
+            .countdown-card {
+                aspect-ratio: unset !important;
+                padding: 28px 20px !important;
+                border-radius: 16px !important;
+                min-height: 180px;
+            }
+
+            /* Hide long description on mobile to make room for the timer */
+            .countdown-card > p {
+                display: none !important;
+            }
+
+            /* Shrink race name on mobile */
+            .countdown-card > h2 {
+                font-size: 18px !important;
+                margin-bottom: 8px !important;
+            }
+        }
+
+        /* Premium Sliding Sport Toggle */
+        .sport-toggle-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 3px;
+            border-radius: 20px;
+            position: relative;
+            margin-left: 20px;
+            backdrop-filter: blur(5px);
+            user-select: none;
+        }
+
+        .sport-toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-gray);
+            padding: 4px 12px;
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2;
+        }
+
+        .sport-toggle-btn.active {
+            background: var(--f1-red);
+            color: #fff;
+            box-shadow: 0 0 12px var(--glow-color);
+        }
+
+        .sport-toggle-btn:hover:not(.active) {
+            color: #fff;
+        }
+
+        /* Floating Back Button on Landing Page */
+        .back-to-home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-gray);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        .back-to-home-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-3px);
+        }
+
+        /* Mobile-app optimizations and Native look & feel */
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            user-select: none !important;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
+            padding-bottom: 85px !important;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 72px;
+            background: rgba(13, 14, 21, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 9999;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            width: 30%;
+            height: 100%;
+            transition: color 0.25s ease;
+            gap: 4px;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 1.3rem;
+            padding: 4px 16px;
+            border-radius: 16px;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .bottom-nav .nav-item.active {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        body.page-f1 .bottom-nav .nav-item.active i {
+            background-color: rgba(230, 0, 0, 0.15);
+            color: #e60000;
+        }
+        
+        /* Mobile Chat Sidebar Overlay Adjustment */
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                width: 85% !important;
+                right: -85% !important;
+                background: rgba(13, 14, 21, 0.88) !important;
+                backdrop-filter: blur(25px) !important;
+                -webkit-backdrop-filter: blur(25px) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+                z-index: 10000 !important; /* Ensure above bottom nav when active */
+            }
+            .chat-sidebar.open {
+                transform: translateX(-100%) !important;
+            }
+        }
+    </style>
+</head>
+
+<body ng-controller="MainController" ng-class="{'theater-active': isTheater, 'chat-open': isChatOpen}" class="page-f1"
+    oncontextmenu="return false;">
+    <div class="video-overlay"></div>
+    <div id="vanta-overlay"></div>
+
+    <!-- Loading Animation (Lottie FIFA animation) -->
+    <div class="loader" ng-class="{'hide': dataLoaded}">
+        <div id="f1-lottie-loader"></div>
+    </div>
+    <script>
+        (function () {
+            var loaderEl = document.querySelector('.loader');
+            var lottieEl = document.getElementById('f1-lottie-loader');
+            var loaderAnim = null;
+
+            if (typeof lottie !== 'undefined') {
+                try {
+                    loaderAnim = lottie.loadAnimation({
+                        container: lottieEl,
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: 'fifa-loader.json?v=' + Date.now(),
+                        rendererSettings: { progressiveLoad: true, hideOnInvisible: true }
+                    });
+                } catch (e) {
+                    console.warn('FIFA Lottie loader failed to initialize:', e);
+                }
+            }
+
+            if (loaderEl) {
+                loaderEl.addEventListener('transitionend', function (e) {
+                    if (loaderEl.classList.contains('hide') && e.propertyName === 'opacity') {
+                        if (loaderAnim) loaderAnim.destroy();
+                        loaderEl.style.display = 'none';
+                    }
+                });
+            }
+        })();
+    </script>
+
+    <!-- Main Dashboard View -->
+    <div ng-if="dataLoaded && siteMode === 'main'" class="animate-in">
+        <header>
+            <div class="header-left">
+                <span class="logo-text">WatchFIFA<span style="color: var(--f1-red);">.Live</span></span>
+                <div class="sport-toggle-container">
+                    <button class="sport-toggle-btn" ng-click="goBack($event)">
+                        <i class="fa-solid fa-car-side"></i><span class="toggle-label"> F1 Party</span>
+                    </button>
+                    <button class="sport-toggle-btn active">
+                        <i class="fa-solid fa-futbol"></i><span class="toggle-label"> FIFA Party</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="header-marquee-container" ng-if="nextRace && nextRace.isVisible">
+                <div class="header-marquee-text">
+                    <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                    UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+                </div>
+            </div>
+
+            <div class="status-area">
+                <div class="weather-pill" ng-if="widgets.weather && weather && weather.air">
+                    <span class="w-icon" title="{{weather.condition}}">{{getWeatherIcon(weather.condition)}}</span>
+                    <div class="w-group"><span class="w-label">AIR</span><span class="w-val">{{weather.air}}°C</span></div>
+                    <div class="w-divider"></div>
+                    <div class="w-group"><span class="w-label">TRACK</span><span class="w-val">{{weather.track}}°C</span>
+                    </div>
+                </div>
+                <!-- Pill: always driven by Weekend Schedule only -->
+                <div class="status-pill live" ng-if="activeSession">
+                    <i class="fa-solid fa-circle" style="color: var(--f1-red); font-size: 8px; margin-right: 4px; animation: pulse 1s infinite;"></i>
+                    LIVE: {{activeSession.name || raceData.name || 'STREAM'}}
+                </div>
+                <div class="status-pill countdown" ng-if="!activeSession && nextUp">
+                    <i class="fa-regular fa-clock"></i> {{nextUp.name}} IN {{nextUp.timerStr}}
+                </div>
+                <div class="status-pill offline" ng-if="!activeSession && !nextUp">
+                    <i class="fa-solid fa-circle" style="color: #666; font-size: 8px;"></i> OFFLINE
+                </div>
+            </div>
+        </header>
+
+        <!-- NOTIFICATION TOASTS (Now on the side) -->
+        <div class="f1-popup-overlay" ng-class="activePopup.type">
+            <div class="f1-popup-content" ng-class="{'active': activePopup}">
+                <div class="f1-popup-icon"><i class="fa-solid" ng-class="activePopup.icon"></i></div>
+                <div>
+                    <div class="f1-popup-title">{{activePopup.title}}</div>
+                    <div class="f1-popup-msg">{{activePopup.msg}}</div>
+                </div>
+            </div>
         </div>
-        <div class="fx-teams">
-          <div class="fx-team-row">
-            <span class="fx-team-name">${escHtml(f.homeTeam || '—')}</span>
-            ${hasScore ? `<span class="fx-score">${f.homeScore ?? '0'}</span>` : ''}
-          </div>
-          <div class="fx-divider"></div>
-          <div class="fx-team-row">
-            <span class="fx-team-name">${escHtml(f.awayTeam || '—')}</span>
-            ${hasScore ? `<span class="fx-score">${f.awayScore ?? '0'}</span>` : ''}
-          </div>
+
+        <div class="container">
+            <div class="main-column">
+                <div class="video-wrapper" ng-if="widgets.videoPlayer && !customTimerActive">
+                    <div class="video-responsive" ng-if="streamLinks.length > 0">
+                        <iframe ng-src="{{trustSrc(currentStream.url)}}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen
+                            scrolling="no"></iframe>
+                    </div>
+                    <div ng-if="streamLinks.length === 0" style="
+                        aspect-ratio: 16/9;
+                        background: rgba(10, 10, 15, 0.45);
+                        backdrop-filter: blur(20px);
+                        border-radius: 12px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                        padding: 40px;
+                        color: #fff;
+                    ">
+                        <i class="fa-solid fa-video-slash" style="font-size: 48px; color: var(--f1-red); margin-bottom: 15px; opacity: 0.8;"></i>
+                        <h3 style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">No Stream Sources Configured</h3>
+                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">The administrator has not added any live stream links for this session yet. Please check back shortly.</p>
+                    </div>
+                </div>
+                <div class="video-wrapper countdown-card" ng-if="!widgets.videoPlayer || customTimerActive" style="
+                    aspect-ratio: 16/9;
+                    background: rgba(10, 10, 15, 0.65);
+                    backdrop-filter: blur(25px);
+                    -webkit-backdrop-filter: blur(25px);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 40px;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                ">
+                    <div style="
+                        position: absolute;
+                        width: 250px;
+                        height: 250px;
+                        background: var(--f1-red);
+                        filter: blur(100px);
+                        opacity: 0.15;
+                        top: -50px;
+                        left: -50px;
+                        pointer-events: none;
+                    "></div>
+                    
+                    <div style="font-size: 11px; font-weight: 800; letter-spacing: 2.5px; color: var(--f1-red); text-transform: uppercase; margin-bottom: 15px;">
+                        <i class="fa-regular fa-clock" style="margin-right: 6px;"></i> STREAM STATUS: OFFLINE
+                    </div>
+                    
+                    <h2 style="font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 12px; font-family: 'Titillium Web', sans-serif;">
+                        {{raceData.name || 'Formula 1 Stream'}}
+                    </h2>
+                    
+                    <p style="font-size: 14px; color: #8a8a98; max-width: 450px; margin-bottom: 30px; line-height: 1.6; font-weight: 400;">
+                        The live watch party stream is not active right now. The action will begin shortly.
+                    </p>
+
+                    <div ng-if="customTimerActive" style="margin-top: 10px;">
+                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
+                            {{customTimer.label || 'STREAM STARTS IN'}}
+                        </div>
+                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
+                            {{customTimerCountdown}}
+                        </div>
+                    </div>
+                    
+                    <div ng-if="!customTimerActive && nextUp" style="margin-top: 10px;">
+                        <div style="font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px;">
+                            NEXT SESSION: {{nextUp.name}} IN
+                        </div>
+                        <div style="font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.12);">
+                            {{nextUp.timerStr || nextUp.countdown}}
+                        </div>
+                    </div>
+
+                    <div ng-if="!customTimerActive && !nextUp" style="margin-top: 10px; color: #444; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        No upcoming session timers scheduled.
+                    </div>
+                </div>
+                <div class="video-toolbar" ng-if="widgets.videoPlayer && !customTimerActive">
+                    <span class="source-label"
+                        style="font-size:12px; font-weight:800; color:#666; letter-spacing:1px; margin-right:5px;">SOURCE:</span>
+                    <button ng-repeat="link in streamLinks" class="stream-btn" ng-click="changeStream(link)"
+                        ng-class="{'active': (currentStream.id && currentStream.id === link.id) || currentStream.url === link.url}">{{link.name}}</button>
+                    <span ng-if="streamLinks.length === 0" style="color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 12px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.05); border-radius: 6px;">No streams available</span>
+                    <div class="spacer"></div>
+                    <button class="stream-btn control-btn" ng-click="toggleTheater()" title="Theater Mode">
+                        <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"
+                            style="margin-right: 5px;"></i>
+                        <span class="btn-label">{{ isTheater ? 'Exit Theater' : 'Theater Mode' }}</span>
+                    </button>
+                    <button class="stream-btn chat-btn control-btn" ng-class="{'active': isChatOpen}" ng-click="toggleChat()" title="Chat">
+                        <i class="fa-solid fa-comments" style="margin-right: 5px;"></i>
+                        <span class="btn-label">Chat</span>
+                    </button>
+                </div>
+                <div class="glass-card stream-controls" ng-if="widgets.eventDetails" data-tilt data-tilt-mobile="false" data-tilt-max="3"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
+                    <div class="event-header">
+                        <div>
+                            <span class="event-round">{{raceData.round || 'FIFA World Cup 2026'}}</span>
+                            <div class="event-title">{{raceData.name || 'No Active Match'}}</div>
+                        </div>
+                        <div style="font-size:14px; color:white; display:flex; align-items:center; gap:8px;">
+                            <span ng-if="raceData.isLive"
+                                style="width:10px; height:10px; background:var(--f1-red); border-radius:50%; box-shadow: 0 0 10px var(--f1-red);"></span>
+                            <span style="opacity:0.7;">FEED:</span> <span
+                                style="font-weight: 600;">{{currentStream.name || '—'}}</span>
+                        </div>
+                    </div>
+                    <div class="meta-grid">
+                        <div class="meta-item"><strong>Location</strong>{{raceData.location || '—'}}</div>
+                        <div class="meta-item"><strong>Stadium</strong>{{raceData.circuit || '—'}}</div>
+                        <div class="meta-item"><strong>Kickoff</strong>{{raceData.date || '—'}}</div>
+                        <div class="meta-item" ng-if="raceData.homeScore !== undefined">
+                            <strong>Live Score</strong>
+                            <span style="font-weight: bold; color: var(--f1-red);">
+                                {{raceData.homeScore}} - {{raceData.awayScore}}
+                                <span ng-if="raceData.matchTime" style="font-size: 11px; font-weight: normal; opacity: 0.8; margin-left: 4px;">({{raceData.matchTime}}')</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- FIFA Match Fixtures Card -->
+                <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000" style="padding-bottom: 12px;">
+                    <div class="card-title">
+                        <i class="fa-solid fa-futbol" style="font-size:11px;"></i>
+                        Match Fixtures
+                    </div>
+                    
+                    <div class="tabs" style="margin-top: 12px; margin-bottom: 12px;">
+                        <button class="tab-btn" ng-class="{'active': activeTab === 'live'}"
+                            ng-click="setActiveTab('live')">Live</button>
+                        <button class="tab-btn" ng-class="{'active': activeTab === 'upcoming'}"
+                            ng-click="setActiveTab('upcoming')">Upcoming</button>
+                        <button class="tab-btn" ng-class="{'active': activeTab === 'finished'}"
+                            ng-click="setActiveTab('finished')">Finished</button>
+                    </div>
+
+                    <div style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                        <!-- Loader / empty state -->
+                        <div ng-if="(fixtures | filter:fixtureFilter).length === 0" style="text-align: center; color: var(--text-gray); padding: 20px; font-size: 12px;">
+                            No {{activeTab}} matches
+                        </div>
+
+                        <!-- Match card repeater -->
+                        <div ng-repeat="f in fixtures | filter:fixtureFilter" 
+                             class="glass-card" 
+                             style="padding: 10px; border: 1px solid rgba(255,255,255,0.03); background: rgba(255,255,255,0.01); border-radius: 8px; font-size: 13px; transition: all 0.2s;"
+                             ng-style="f.status === 'inprogress' || f.status === 'live' ? {'border-color': 'rgba(0, 255, 85, 0.25)', 'box-shadow': '0 0 10px rgba(0, 255, 85, 0.05)'} : {}"
+                             ng-class="{'is-current-card': raceData.name === f.homeTeam + ' vs ' + f.awayTeam}">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; opacity: 0.8; font-size: 10px;">
+                                <span style="font-weight: bold; text-transform: uppercase; color: var(--text-gray);">{{f.round || 'Group Stage'}}</span>
+                                <span ng-if="f.status === 'inprogress' || f.status === 'live'" style="color: #ff3333; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                                    <span style="display: inline-block; width: 6px; height: 6px; background: #ff3333; border-radius: 50%;"></span>
+                                    {{f.matchTime ? f.matchTime + "'" : 'LIVE'}}
+                                </span>
+                                <span ng-if="f.status !== 'inprogress' && f.status !== 'live'" style="color: var(--text-gray);">
+                                    {{f.finished || f.status === 'finished' ? 'FT' : (f.localDate || '—')}}
+                                </span>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 500;">{{f.homeTeam || '—'}}</span>
+                                    <span ng-if="hasScore(f)" style="font-weight: 700; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">{{f.homeScore ?? '0'}}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 500;">{{f.awayTeam || '—'}}</span>
+                                    <span ng-if="hasScore(f)" style="font-weight: 700; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">{{f.awayScore ?? '0'}}</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 6px; font-size: 10px; color: var(--text-gray); display: flex; align-items: center; gap: 4px; opacity: 0.7;">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>{{f.stadium || 'FIFA Venue'}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIFA Group Standings Card -->
+                <div class="glass-card" style="padding-bottom: 15px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                    data-tilt-speed="400" data-tilt-perspective="1000">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px;">
+                        <div class="card-title" style="margin-bottom:0;">
+                            <i class="fa-solid fa-table-list" style="font-size:11px; margin-right: 4px;"></i>
+                            <span>Group Standings</span>
+                        </div>
+                    </div>
+
+                    <!-- Group Pills -->
+                    <div style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 0; margin-bottom: 12px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                        <button class="tab-btn" 
+                                ng-repeat="(groupName, teams) in standings" 
+                                ng-class="{'active': activeGroup === groupName}" 
+                                ng-click="setActiveGroup(groupName)" 
+                                style="padding: 4px 10px; font-size: 11px; flex-shrink: 0;">
+                            {{groupName}}
+                        </button>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); height: 26px; color: var(--text-gray);">
+                                    <th style="width: 22px;">#</th>
+                                    <th>Team</th>
+                                    <th style="width: 28px; text-align: center;" title="Matches Played">MP</th>
+                                    <th style="width: 28px; text-align: center;" title="Goal Difference">GD</th>
+                                    <th style="width: 32px; text-align: center; color: var(--text-white);" title="Points">Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-if="!standings[activeGroup] || standings[activeGroup].length === 0">
+                                    <td colspan="5" style="text-align: center; color: var(--text-gray); padding: 14px;">No standings data</td>
+                                </tr>
+                                <tr ng-repeat="t in standings[activeGroup]" 
+                                    style="border-bottom: 1px solid rgba(255,255,255,0.03); height: 32px;">
+                                    <td style="opacity: 0.5;">{{$index + 1}}</td>
+                                    <td style="font-weight: 600; display: flex; align-items: center; gap: 6px; height: 32px;">
+                                        <span ng-if="$index < 2" style="display: inline-block; width: 3px; height: 14px; background: var(--f1-red); border-radius: 2px;"></span>
+                                        <span ng-if="$index >= 2" style="display: inline-block; width: 3px; height: 14px; background: transparent;"></span>
+                                        <span>{{t.name || t.team}}</span>
+                                    </td>
+                                    <td style="text-align: center; opacity: 0.8;">{{t.mp ?? t.played ?? '0'}}</td>
+                                    <td style="text-align: center; opacity: 0.8;">{{t.gd ?? (t.gf - t.ga) ?? '0'}}</td>
+                                    <td style="text-align: center; font-weight: 700; color: var(--f1-red);">{{t.pts ?? t.points ?? '0'}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="fx-foot">
-          <i class="fa-solid fa-location-dot"></i>
-          ${escHtml(f.stadium || 'FIFA Venue')}
+
+        <!-- Collapsible Custom Chat Sidebar Drawer -->
+        <div class="chat-sidebar" ng-class="{'open': isChatOpen}">
+            <div class="chat-header">
+                <span>Chat</span>
+                <button class="chat-close-btn" ng-click="toggleChat()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Pinned Message Area -->
+            <div class="chat-pinned-message" ng-if="pinnedMessage">
+                <div class="pinned-header">
+                    <i class="fa-solid fa-thumbtack"></i> PINNED MESSAGE
+                </div>
+                <div class="pinned-body">
+                    <span class="chat-author" style="color: {{pinnedMessage.color || '#a970ff'}};">{{pinnedMessage.username}}</span>:
+                    <span class="chat-text">{{pinnedMessage.text}}</span>
+                </div>
+            </div>
+
+            <!-- Twitch Chat Iframe -->
+            <iframe class="chat-twitch-iframe"
+                ng-src="{{twitchChatUrl}}"
+                allowfullscreen>
+            </iframe>
         </div>
-      </div>`;
-    }).join('');
-  }
 
-  /* ══════════════════════════
-     FETCH: STANDINGS
-  ══════════════════════════ */
-  async function fetchStandings() {
-    try {
-      const r = await fetch(`${API}/api/fifa/standings`);
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d?.groups && Object.keys(d.groups).length) {
-        S.standings = d.groups;
-        renderGroupPills();
-        const firstKey = Object.keys(d.groups)[0];
-        S.activeGroup = firstKey;
-        renderStandingsTable(d.groups[firstKey]);
-      }
-    } catch (e) { console.warn('[standings]', e.message); }
-  }
+        <footer>
+            <p>This website does not create, host, or share any video content. All video streams are from external websites
+                that are freely available online.</p>
+            <p style="opacity: 0.5;font-size: 13px;">· Engineered with Gemini · Backed by Firebase ·</p>
+        </footer>
+    </div>
 
-  function renderGroupPills() {
-    const container = document.getElementById('group-pills');
-    const keys = Object.keys(S.standings);
-    container.innerHTML = keys.map((g, i) =>
-      `<button class="grp-pill${i === 0 ? ' active' : ''}" data-g="${g}">${g}</button>`
-    ).join('');
-    container.querySelectorAll('.grp-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        container.querySelectorAll('.grp-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        S.activeGroup = btn.dataset.g;
-        renderStandingsTable(S.standings[S.activeGroup]);
-      });
-    });
-  }
+    <!-- Countdown Landing Page Mode -->
+    <div class="countdown-page-container ng-cloak animate-in" ng-if="dataLoaded && siteMode === 'countdown'">
+        <!-- Back Button -->
+        <a href="index.html" class="back-to-home-btn" ng-click="goBack($event)">
+            <i class="fa-solid fa-arrow-left"></i> Back to Selection
+        </a>
 
-  function renderStandingsTable(teams) {
-    const tbody = document.getElementById('st-rows');
-    if (!teams?.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.78rem;">No data</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = teams.map((t, i) => {
-      const bar = i < 2
-        ? `<span class="q-bar up"></span>`
-        : (i >= teams.length - 1 ? `<span class="q-bar dn"></span>` : '');
-      const name = t.name || t.team || '—';
-      const mp   = t.mp   ?? t.played ?? '—';
-      const w    = t.w    ?? t.won    ?? '—';
-      const d    = t.d    ?? t.drawn  ?? '—';
-      const l    = t.l    ?? t.lost   ?? '—';
-      const gd   = t.gd   ?? ((t.gf || 0) - (t.ga || 0)) || '—';
-      const pts  = t.pts  ?? t.points ?? '—';
-      return `<tr>
-        <td class="td-pos">${i + 1}</td>
-        <td class="td-team">${bar}${escHtml(name)}</td>
-        <td>${mp}</td><td>${w}</td><td>${d}</td><td>${l}</td>
-        <td>${gd}</td>
-        <td class="td-pts">${pts}</td>
-      </tr>`;
-    }).join('');
-  }
+        <!-- Sport Switch Toggle -->
+        <div class="sport-toggle-container" style="margin-bottom: 25px;">
+            <button class="sport-toggle-btn" ng-click="goBack($event)">
+                <i class="fa-solid fa-car-side"></i> F1 Party
+            </button>
+            <button class="sport-toggle-btn active">
+                <i class="fa-solid fa-futbol"></i> FIFA Party
+            </button>
+        </div>
 
-  /* Standings toggle */
-  const standingsWrap = document.getElementById('standings-wrap');
-  document.getElementById('standings-toggle').addEventListener('click', () => {
-    standingsWrap.classList.toggle('open');
-    document.getElementById('standings-toggle')
-      .setAttribute('aria-expanded', standingsWrap.classList.contains('open'));
-  });
-  document.getElementById('standings-toggle').addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); standingsWrap.classList.toggle('open'); }
-  });
+        <!-- Up Next Marquee Banner at the very top -->
+        <div class="landing-marquee" ng-if="nextRace && nextRace.isVisible">
+            <div class="landing-marquee-text">
+                <i class="fa-solid fa-flag-checkered" style="color: var(--f1-red); margin-right: 8px;"></i>
+                UP NEXT: <span>{{nextRace.name}}</span> • {{nextRace.circuit}} • <span>{{nextRace.date}}</span>
+            </div>
+        </div>
 
-  /* ══════════════════════════
-     MOBILE MINI PLAYER
-  ══════════════════════════ */
-  const miniPlayer = document.getElementById('mini-player');
+        <div class="countdown-brand">
+            WatchFIFA<span>.Live</span>
+        </div>
 
-  if ('IntersectionObserver' in window) {
-    const obs = new IntersectionObserver(entries => {
-      const { isIntersecting } = entries[0];
-      miniPlayer.classList.toggle('show', !isIntersecting);
-    }, { threshold: 0.15 });
-    obs.observe(playerFrame);
-  }
+        <div class="countdown-gp-info" ng-if="raceData.name">
+            Round {{raceData.round || 'N/A'}} <span>• {{raceData.name}}</span>
+        </div>
 
-  document.getElementById('mini-back').addEventListener('click', () => {
-    playerFrame.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+        <!-- Timer Card -->
+        <div class="countdown-timer-box">
+            <!-- 0. Custom Countdown Timer (if enabled & active) -->
+            <div ng-if="customTimerActive">
+                <div class="countdown-session-title">
+                    <i class="fa-regular fa-clock"></i> {{customTimer.label || 'STREAM STARTS'}}
+                </div>
+                <div class="countdown-digits">
+                    {{customTimerCountdown || '00:00:00'}}
+                </div>
+            </div>
 
-  /* ══════════════════════════
-     POLLING
-  ══════════════════════════ */
-  /* Score refresh every 5s */
-  setInterval(async () => {
-    try {
-      const r = await fetch(`${API}/api/live-config`);
-      if (!r.ok) return;
-      const cfg = await r.json();
-      if (cfg.fifa?.raceData) updateMatchCard(cfg.fifa.raceData);
-    } catch (_) {}
-  }, 5000);
+            <!-- 1. Live Session -->
+            <div ng-if="!customTimerActive && activeSession">
+                <div class="countdown-session-title" style="color: var(--f1-green);">
+                    <i class="fa-solid fa-circle fa-beat" style="font-size: 10px; color: var(--f1-green);"></i> Track Live Now
+                </div>
+                <div class="countdown-digits" style="color: var(--f1-green);">
+                    {{activeSession.name}}
+                </div>
+            </div>
 
-  /* Fixtures + standings refresh every 30s */
-  setInterval(() => { fetchFixtures(); fetchStandings(); }, 30000);
+            <!-- 2. Upcoming Session Countdown -->
+            <div ng-if="!customTimerActive && !activeSession && nextUp">
+                <div class="countdown-session-title">
+                    <i class="fa-regular fa-clock"></i> Up Next: {{nextUp.name}}
+                </div>
+                <div class="countdown-digits">
+                    {{nextUp.timerStr || nextUp.countdown || '00:00:00'}}
+                </div>
+            </div>
 
-  /* ══════════════════════════
-     UTILITIES
-  ══════════════════════════ */
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+            <!-- 3. Offline State -->
+            <div class="countdown-offline" ng-if="!customTimerActive && !activeSession && !nextUp">
+                <div class="countdown-offline-badge">
+                    <i class="fa-solid fa-circle" style="color: #444; font-size: 10px;"></i> Offline
+                </div>
+                <div class="countdown-offline-text">
+                    Watch Party is currently offline. Timers will start with the next weekend session.
+                </div>
+            </div>
+        </div>
+    </div>
 
-  /* ══════════════════════════
-     INIT
-  ══════════════════════════ */
-  /* Collapse standings on mobile by default */
-  if (window.innerWidth < 768) {
-    standingsWrap.classList.remove('open');
-    document.getElementById('standings-toggle').setAttribute('aria-expanded', 'false');
-  }
+    <script>
+        // Anti-inspection
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function (e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74) || (e.ctrlKey && e.keyCode === 85)) {
+                return false;
+            }
+        };
 
-  fetchConfig();
-  fetchFixtures();
-  fetchStandings();
+        document.addEventListener('mousemove', e => {
+            requestAnimationFrame(() => {
+                const x = e.clientX; const y = e.clientY;
+                document.body.style.setProperty('--mouse-x', x + 'px');
+                document.body.style.setProperty('--mouse-y', y + 'px');
+                const normX = (x / window.innerWidth) * 2 - 1;
+                const normY = (y / window.innerHeight) * 2 - 1;
+                document.body.style.setProperty('--mouse-norm-x', normX);
+                document.body.style.setProperty('--mouse-norm-y', normY);
+            });
+        });
 
-})();
-</script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDddLbKsv7BCiXQeFy9jzuFrmuWv8qt3DM",
+            authDomain: "f1-stream-live.firebaseapp.com",
+            projectId: "f1-stream-live",
+            storageBucket: "f1-stream-live.firebasestorage.app",
+            messagingSenderId: "426806288804",
+            appId: "1:426806288804:web:f8ee225776596ebc39e131",
+            measurementId: "G-50FMFWY32X"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        var app = angular.module('fifaApp', []);
+        app.directive('tilt', function ($timeout) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    $timeout(function () {
+                        if (typeof VanillaTilt !== 'undefined' && !element[0].vanillaTilt) {
+                            VanillaTilt.init(element[0], {
+                                max: attrs.tiltMax !== undefined ? parseInt(attrs.tiltMax) : 15,
+                                speed: attrs.tiltSpeed !== undefined ? parseInt(attrs.tiltSpeed) : 300,
+                                glare: attrs.tiltGlare !== undefined,
+                                "max-glare": attrs.tiltMaxGlare !== undefined ? parseFloat(attrs.tiltMaxGlare) : 1.0,
+                                perspective: attrs.tiltPerspective !== undefined ? parseInt(attrs.tiltPerspective) : 1000,
+                                mobile: attrs.tiltMobile === 'true'
+                            });
+                        }
+                    }, 50);
+                }
+            };
+        });
+        app.config(function ($sceDelegateProvider) { $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://**']); });
+
+        app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
+            function apiUrl(path) {
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    var urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('local') === 'true' || true) {
+                        return 'http://localhost:3000' + path;
+                    }
+                }
+                return 'https://f1watchparty-web-seven.vercel.app' + path;
+            }
+            $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
+            $scope.isChatOpen = false;
+            $scope.toggleChat = function () { $scope.isChatOpen = !$scope.isChatOpen; };
+            $scope.twitchChannel = 'watchf1olive';
+            $scope.chatList = [];
+            let chatEventSource = null;
+
+            // Get or set guest nickname
+            let storedNick = localStorage.getItem('f1_chat_nickname');
+            if (!storedNick) {
+                storedNick = 'Guest_' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('f1_chat_nickname', storedNick);
+            }
+
+            // Curated premium night-friendly colors
+            const chatColors = ['#a970ff', '#ff1e15', '#00ffcc', '#ff7700', '#ffb700', '#00e5ff', '#ff66a3', '#00ff33', '#ffcc00'];
+            let storedColor = localStorage.getItem('f1_chat_color');
+            if (!storedColor) {
+                storedColor = chatColors[Math.floor(Math.random() * chatColors.length)];
+                localStorage.setItem('f1_chat_color', storedColor);
+            }
+            $scope.chatUserColor = storedColor;
+
+            $scope.chatState = {
+                username: storedNick,
+                tempNickname: storedNick,
+                editingNickname: false,
+                chatInput: ''
+            };
+
+            $scope.startEditNickname = function() {
+                $scope.chatState.tempNickname = $scope.chatState.username;
+                $scope.chatState.editingNickname = true;
+            };
+
+            $scope.saveNickname = function() {
+                const nick = $scope.chatState.tempNickname ? $scope.chatState.tempNickname.trim().replace(/[^a-zA-Z0-9_]/g, '') : '';
+                if (nick && nick.length >= 2) {
+                    $scope.chatState.username = nick;
+                    localStorage.setItem('f1_chat_nickname', nick);
+                    $scope.chatState.editingNickname = false;
+                } else {
+                    alert('Nickname must be alphanumeric, between 2 and 15 characters.');
+                }
+            };
+
+            $scope.cancelEditNickname = function() {
+                $scope.chatState.editingNickname = false;
+            };
+
+            $scope.goBack = function ($event) {
+                if ($event) $event.preventDefault();
+                var isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'appassets.androidplatform.net';
+                window.location.href = isLocal ? 'index.html' : '/';
+            };
+
+            $scope.dataLoaded = false;
+            $scope.streamLinks = [];
+            $scope.currentStream = {};
+            $scope.raceData = {};
+            $scope.nextRace = {};
+            $scope.weather = null;
+
+            // FIFA Fixtures & Standings State
+            $scope.fixtures = [];
+            $scope.standings = {};
+            $scope.activeTab = 'live'; // 'live', 'upcoming', 'finished'
+            $scope.activeGroup = '';
+
+            $scope.setActiveTab = function(tab) {
+                $scope.activeTab = tab;
+            };
+
+            $scope.setActiveGroup = function(group) {
+                $scope.activeGroup = group;
+            };
+
+            $scope.fixtureFilter = function(f) {
+                if ($scope.activeTab === 'live') return f.status === 'inprogress' || f.status === 'live';
+                if ($scope.activeTab === 'upcoming') return f.status === 'notstarted' && !f.finished;
+                return f.finished || f.status === 'finished';
+            };
+
+            $scope.hasScore = function(f) {
+                return f.status === 'inprogress' || f.status === 'live' || f.finished || f.status === 'finished';
+            };
+
+            function fetchFixtures() {
+                $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
+                    $scope.fixtures = res.data || [];
+                }).catch(function(err) {
+                    console.warn('[fixtures fetch failed]', err);
+                });
+            }
+
+            function fetchStandings() {
+                $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
+                    const d = res.data;
+                    let groups = {};
+                    if (d?.groups && typeof d.groups === 'object' && !Array.isArray(d.groups)) {
+                        groups = d.groups;
+                    } else if (Array.isArray(d) && d.length) {
+                        d.forEach(g => { if (g.name && Array.isArray(g.teams)) groups[g.name] = g.teams; });
+                    } else if (Array.isArray(d?.groups)) {
+                        d.groups.forEach(g => { if (g.name && Array.isArray(g.teams)) groups[g.name] = g.teams; });
+                    }
+                    $scope.standings = groups;
+                    const keys = Object.keys(groups);
+                    if (keys.length && !$scope.activeGroup) {
+                        $scope.activeGroup = keys[0];
+                    }
+                }).catch(function(err) {
+                    console.warn('[standings fetch failed]', err);
+                });
+            }
+
+            fetchFixtures();
+            fetchStandings();
+
+            $interval(function() {
+                fetchFixtures();
+                fetchStandings();
+            }, 30000);
+
+            // ── LocalStorage instant pre-render ──
+            try {
+                var _cachedFixtures = localStorage.getItem('fifa_cached_fixtures');
+                if (_cachedFixtures) { $scope.fixtures = JSON.parse(_cachedFixtures); }
+                var _cachedStandings = localStorage.getItem('fifa_cached_standings');
+                if (_cachedStandings) {
+                    $scope.standings = JSON.parse(_cachedStandings);
+                    const keys = Object.keys($scope.standings);
+                    if (keys.length) $scope.activeGroup = keys[0];
+                }
+            } catch(e) {}
+
+            $scope.trustSrc = function (src) { if (!src) return ""; return $sce.trustAsResourceUrl(src); };
+            $scope.changeStream = function (stream) { if (stream && stream.url) $scope.currentStream = stream; };
+
+            $scope.activeThemeName = '';
+
+            function applyDynamicTheme(location, themeOverride) {
+                let key = (themeOverride && themeOverride !== '') ? themeOverride : (location || 'default');
+                localStorage.setItem('fifa_theme_loc', location || '');
+                localStorage.setItem('fifa_theme_override', themeOverride || '');
+                const loc = key.toLowerCase();
+                let theme = {
+                    primary: '#00ff55',      // FIFA Soccer Green
+                    glow: 'rgba(0, 255, 85, 0.15)',
+                    name: 'FIFA 2026 Theme'
+                };
+
+                // Apply variables to document root
+                const root = document.documentElement;
+                root.style.setProperty('--f1-red', theme.primary);
+                root.style.setProperty('--glow-color', theme.glow);
+                $scope.activeThemeName = theme.name;
+
+                // Dynamic Vanta points color update if initialized
+                if (window.vantaInstance && typeof window.vantaInstance.setOptions === 'function') {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.vantaInstance.setOptions({ color: vantaColor });
+                } else {
+                    const vantaColor = parseInt(theme.primary.replace('#', '0x'), 16);
+                    window.pendingVantaColor = vantaColor;
+                }
+            }
+
+            function safeDate(val) {
+                if (!val) return null;
+                if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
+                if (typeof val === 'string') {
+                    var m = val.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+                    if (m) {
+                        return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], m[6] ? +m[6] : 0);
+                    }
+                }
+                return new Date(val);
+            }
+
+            const startTime = Date.now();
+            let localFallbackTimer = null;
+
+            function fetchLocalFallback() {
+                $http.get(apiUrl('/api/sync-standings?type=liveconfig')).then(function(res) {
+                    if (res.data && Object.keys(res.data).length > 0) {
+                        console.log('🔄 [fallback] Loaded config from local API');
+                        processData(res.data);
+                        $scope.dataLoaded = true;
+                    }
+                }, function(err) {
+                    console.error('Failed to fetch local config fallback:', err);
+                });
+            }
+
+            const unsubscribeLiveConfig = db.collection("app_data").doc("live_config").onSnapshot((doc) => {
+                if (doc.exists) {
+                    if (localFallbackTimer) {
+                        $interval.cancel(localFallbackTimer);
+                        localFallbackTimer = null;
+                    }
+                    const data = doc.data();
+                    const elapsed = Date.now() - startTime;
+                    const minDuration = 2500; // Enforce minimum 2.5s for Lottie animation to complete
+                    const delay = Math.max(0, minDuration - elapsed);
+
+                    $timeout(function () {
+                        processData(data);
+                        $scope.dataLoaded = true;
+                    }, delay);
+                }
+            }, (error) => {
+                console.warn("Firestore snapshot listener failed, using local API fallback:", error);
+                fetchLocalFallback();
+                if (!localFallbackTimer) {
+                    localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                }
+            });
+
+            $timeout(function () {
+                if (!$scope.dataLoaded) {
+                    console.warn("Firebase snapshot took too long; attempting local API fallback.");
+                    fetchLocalFallback();
+                    if (!localFallbackTimer) {
+                        localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                    }
+                }
+            }, 4000);
+
+            $scope.$on('$destroy', function() {
+                if (localFallbackTimer) {
+                    $interval.cancel(localFallbackTimer);
+                }
+            });
+
+            function processData(data) {
+                var fifaData = data.fifa || {};
+                
+                $scope.raceData = fifaData.raceData || {};
+                $scope.twitchChannel = fifaData.twitchChannel || 'watchf1olive';
+                $scope.pinnedMessage = fifaData.pinnedMessage || null;
+
+                $scope.siteMode = fifaData.siteMode || 'main';
+                var urlParams = new URLSearchParams($window.location.search);
+                if (urlParams.has('siteMode')) {
+                    $scope.siteMode = urlParams.get('siteMode');
+                }
+
+                $scope.activeSport = fifaData.activeSport || 'fifa';
+                $scope.customTimer = fifaData.customTimer || { enabled: false, label: '', target: '' };
+
+                $scope.widgets = fifaData.widgets || {
+                    videoPlayer: true,
+                    eventDetails: true,
+                    weather: false,
+                    schedule: true,
+                    standings: true
+                };
+                if ($scope.widgets.videoPlayer === undefined) $scope.widgets.videoPlayer = true;
+                if ($scope.widgets.eventDetails === undefined) $scope.widgets.eventDetails = true;
+                if ($scope.widgets.weather === undefined) $scope.widgets.weather = false;
+                if ($scope.widgets.schedule === undefined) $scope.widgets.schedule = true;
+                if ($scope.widgets.standings === undefined) $scope.widgets.standings = true;
+
+                var parent = $window.location.hostname || 'localhost';
+                var chatUrl = 'https://www.twitch.tv/embed/' + $scope.twitchChannel + '/chat?parent=' + parent + '&darkpopout';
+                $scope.twitchChatUrl = $sce.trustAsResourceUrl(chatUrl);
+
+                if (!$scope.themeOverrideActive) {
+                    applyDynamicTheme($scope.raceData.location, $scope.raceData.theme);
+                }
+
+                $scope.nextRace = fifaData.nextRace || {};
+                $scope.streamLinks = fifaData.streamLinks || [];
+                $scope.weather = fifaData.weather || null;
+
+                if (Object.keys($scope.standings).length) {
+                    try {
+                        localStorage.setItem('fifa_cached_standings', JSON.stringify($scope.standings));
+                    } catch(e) {}
+                }
+                if ($scope.fixtures.length) {
+                    try {
+                        localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures));
+                    } catch(e) {}
+                }
+
+                if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
+                    $scope.currentStream = $scope.streamLinks[0];
+                }
+                $scope.lastSyncTime = new Date().toLocaleTimeString();
+                console.log("⚽ FIFA Data Sync:", $scope.lastSyncTime, data);
+                updateTimers();
+
+                if (fifaData.autoSyncDetails !== false) {
+                    var nowTime = Date.now();
+                    var lastSync = fifaData.lastDetailsSync ? new Date(fifaData.lastDetailsSync).getTime() : 0;
+                    var lastStreamsSync = fifaData.lastStreamsSync ? new Date(fifaData.lastStreamsSync).getTime() : 0;
+                    
+                    var isLive = $scope.raceData && $scope.raceData.isLive;
+                    var detailsThreshold = isLive ? 1 * 60 * 1000 : 10 * 60 * 1000;
+                    var streamsThreshold = isLive ? 2 * 60 * 1000 : 15 * 60 * 1000;
+                    
+                    if (nowTime - lastSync > detailsThreshold) {
+                        console.log("⚽ FIFA Details stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=fifadetails')).catch(function(err) {
+                            console.error("FIFA details auto-sync failed:", err);
+                        });
+                    }
+                    
+                    if (fifaData.autoSyncStreams !== false && (nowTime - lastStreamsSync > streamsThreshold)) {
+                        console.log("⚽ FIFA streams stale. Triggering background sync...");
+                        $http.get(apiUrl('/api/sync-standings?type=fifastreams')).catch(function(err) {
+                            console.error("FIFA streams auto-sync failed:", err);
+                        });
+                    }
+                }
+            }
+
+            function updateTimers() {
+                var now = new Date().getTime();
+
+                if ($scope.customTimer && $scope.customTimer.enabled && $scope.customTimer.target) {
+                    var targetTime = safeDate($scope.customTimer.target);
+                    if (targetTime && !isNaN(targetTime.getTime())) {
+                        var dist = targetTime.getTime() - now;
+                        if (dist > 0) {
+                            var d = Math.floor(dist / (1000 * 60 * 60 * 24));
+                            var h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            var m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                            var s = Math.floor((dist % (1000 * 60)) / 1000);
+                            $scope.customTimerCountdown = (d > 0 ? d + "d " : "") + pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
+                            $scope.customTimerActive = true;
+                        } else {
+                            $scope.customTimerCountdown = "LIVE NOW";
+                            $scope.customTimerActive = false;
+                        }
+                    } else {
+                        $scope.customTimerCountdown = "";
+                        $scope.customTimerActive = false;
+                    }
+                } else {
+                    $scope.customTimerCountdown = "";
+                    $scope.customTimerActive = false;
+                }
+            }
+
+            $interval(updateTimers, 1000);
+
+            function pad(num) { return num < 10 ? '0' + num : num; }
+
+            $scope.formatTime12 = function (t) {
+                if (!t) return "";
+                var p = t.split(':');
+                var h = parseInt(p[0]); var m = p[1];
+                var a = h >= 12 ? 'PM' : 'AM';
+                h = h % 12; h = h ? h : 12;
+                return h + ':' + m + ' ' + a;
+            };
+
+            $scope.getWeatherIcon = function (c) {
+                if (!c) return '☀️';
+                c = c.toLowerCase();
+                if (c.includes('storm') || c.includes('thunder')) return '🌩️';
+                if (c.includes('rain') || c.includes('shower')) return '🌧️';
+                if (c.includes('cloud')) return '☁️';
+                if (c.includes('night')) return '🌙';
+                return '☀️';
+            };
+        });
+
+        // Vanta Net Background Manager (initialized on desktop, completely disabled on mobile/tablets for performance)
+        const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             ('ontouchstart' in window) || 
+                             (navigator.maxTouchPoints > 0);
+
+        function initVanta() {
+            if (typeof VANTA !== 'undefined' && !isMobileDevice && window.innerWidth > 768 && !window.vantaInstance) {
+                const initialColor = window.pendingVantaColor || 0xe60000;
+                window.vantaInstance = VANTA.NET({
+                    el: "#vanta-overlay",
+                    mouseControls: true,
+                    touchControls: false,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    color: initialColor,
+                    backgroundColor: 0x0,
+                    backgroundAlpha: 0.0,
+                    points: 15.00,
+                    maxDistance: 24.00,
+                    spacing: 16.00
+                });
+            }
+        }
+
+        function destroyVanta() {
+            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
+                window.vantaInstance.destroy();
+                window.vantaInstance = null;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initVanta();
+        });
+
+        window.addEventListener("resize", function () {
+            if (isMobileDevice) return;
+            if (window.innerWidth <= 768) {
+                destroyVanta();
+            } else {
+                initVanta();
+            }
+        });
+
+
+
+    </script>
+    <!-- Floating Theme Test Control Panel -->
+    <div class="theme-test-panel animate-in ng-cloak" ng-if="isTestMode" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(10, 10, 14, 0.9);
+        backdrop-filter: blur(12px);
+        border: 2px solid var(--f1-red);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 15px var(--glow-color);
+        z-index: 9999;
+        width: 280px;
+        max-height: 400px;
+        overflow-y: auto;
+        color: #fff;
+        font-family: 'Titillium Web', sans-serif;
+    ">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px; margin-bottom: 10px;">
+            <div
+                style="font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--f1-red);">
+                <i class="fa-solid fa-palette" style="margin-right: 5px;"></i> Theme Test Mode
+            </div>
+            <button ng-if="themeOverrideActive" ng-click="resetThemeTest()" style="
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.15);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 8px;
+                cursor: pointer;
+                text-transform: uppercase;
+                color: #fff;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            ">Reset</button>
+        </div>
+        <div style="font-size: 10px; color: #8a8a9c; margin-bottom: 12px; line-height: 1.4;">
+            Select a location theme to test how the site styling and background telemetry net color adapt.
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <button ng-repeat="t in testThemesList" ng-click="selectTestTheme(t.loc)"
+                ng-style="{'border-left-color': currentOverrideLoc === t.loc ? 'var(--f1-red)' : 'transparent', 'background': currentOverrideLoc === t.loc ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'}"
+                style="
+                background: rgba(255,255,255,0.02);
+                border: 1px solid rgba(255,255,255,0.05);
+                border-left: 3px solid transparent;
+                text-align: left;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                color: #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-transform: none;
+                letter-spacing: 0.5px;
+            ">
+                <span>{{t.name}}</span>
+                <i class="fa-solid fa-chevron-right" style="font-size: 8px; opacity: 0.5;"></i>
+            </button>
+        </div>
+        <div style="margin-top: 10px; font-size: 8px; text-align: center; color: #6a6a7c;">
+            Active Theme: <span style="color: var(--f1-red); font-weight: bold;">{{activeThemeName || 'None'}}</span>
+        </div>
+    </div>
 
 </body>
+
 </html>

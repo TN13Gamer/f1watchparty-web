@@ -48,27 +48,27 @@
   "isLiveRaceActive": true,
   "activeSport": "f1",
   "siteMode": "main",
-  "lastStandingsSync": "2026-06-21T09:38:38.099Z",
+  "lastStandingsSync": "2026-06-23T19:04:07.757Z",
   "fifa": {
     "twitchChannel": "watchf1olive",
-    "lastDetailsSync": "2026-06-23T17:56:59.026Z",
+    "lastDetailsSync": "2026-06-26T10:54:30.173Z",
     "customTimer": {
       "enabled": true,
-      "label": "LIVE NOW",
-      "target": "2026-06-23T17:00:00.000Z",
+      "label": "MATCH KICKS OFF",
+      "target": "2026-06-26T19:00:00.000Z",
       "isManual": false
     },
     "raceData": {
-      "round": "Group K",
-      "isLive": true,
-      "name": "Portugal vs Uzbekistan",
+      "round": "Group I",
+      "isLive": false,
+      "name": "Senegal vs Iraq",
       "isFinished": false,
-      "matchTime": "HT",
-      "date": "23 Jun 22:30",
+      "matchTime": "",
+      "date": "27 Jun 00:30",
       "theme": "",
-      "homeScore": "3",
-      "location": "Houston, United States",
-      "circuit": "NRG Stadium",
+      "homeScore": "0",
+      "location": "Toronto, Canada",
+      "circuit": "BMO Field",
       "laps": "",
       "awayScore": "0"
     },
@@ -85,143 +85,158 @@
     "streamLinks": [
       {
         "name": "ADMIN English - TSN (HD)",
-        "id": "src_fifa_1782236264794_fcca",
+        "id": "src_fifa_1782240362588_24cd",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/1"
       },
       {
         "name": "ADMIN English - TSN",
-        "id": "src_fifa_1782236264794_0mmv",
+        "id": "src_fifa_1782240362588_c9bb",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/2"
       },
       {
         "name": "ADMIN English - FOX (HD)",
-        "id": "src_fifa_1782236264794_l9yf",
+        "id": "src_fifa_1782240362588_k1ml",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/3"
       },
       {
         "name": "ADMIN English - FOX",
-        "id": "src_fifa_1782236264794_zazi",
+        "id": "src_fifa_1782240362588_3z55",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/4"
       },
       {
         "name": "ADMIN English - ITV1 (HD)",
-        "id": "src_fifa_1782236264794_svsn",
+        "id": "src_fifa_1782240362588_zvav",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/5"
       },
       {
         "name": "ADMIN English - ITV1",
-        "id": "src_fifa_1782236264794_mkgh",
+        "id": "src_fifa_1782240362588_0ont",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/6"
       },
       {
         "name": "ADMIN Arabic - beIN Sports (HD)",
-        "id": "src_fifa_1782236264794_75wy",
+        "id": "src_fifa_1782240362588_l5gf",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/7"
       },
       {
         "name": "ADMIN Arabic - beIN Sports",
-        "id": "src_fifa_1782236264794_yzj8",
+        "id": "src_fifa_1782240362588_4u2t",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/8"
       },
       {
         "name": "ADMIN Spanish - DAZN Spain (HD)",
-        "id": "src_fifa_1782236264794_39o1",
+        "id": "src_fifa_1782240362588_q6hf",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/9"
       },
       {
         "name": "ADMIN Spanish - DAZN Spain",
-        "id": "src_fifa_1782236264794_2235",
+        "id": "src_fifa_1782240362588_mn95",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/10"
       },
       {
         "name": "ADMIN Spanish - Telemundo (HD)",
-        "id": "src_fifa_1782236264794_5xj8",
+        "id": "src_fifa_1782240362588_3zfz",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/11"
       },
       {
         "name": "ADMIN Spanish - Telemundo",
-        "id": "src_fifa_1782236264794_nji1",
+        "id": "src_fifa_1782240362588_y2dm",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/12"
       },
       {
         "name": "ADMIN German - Das Erste (HD)",
-        "id": "src_fifa_1782236264794_ry1u",
+        "id": "src_fifa_1782240362588_v44d",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/13"
       },
       {
         "name": "ADMIN German - Das Erste",
-        "id": "src_fifa_1782236264794_k30r",
+        "id": "src_fifa_1782240362588_a00p",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/14"
       },
       {
         "name": "ADMIN German - Servus TV (HD)",
-        "id": "src_fifa_1782236264794_mj14",
+        "id": "src_fifa_1782240362588_ece1",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/15"
       },
       {
         "name": "ADMIN German - Servus TV",
-        "id": "src_fifa_1782236264794_3r6k",
+        "id": "src_fifa_1782240362588_65kw",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/16"
       },
       {
         "name": "ADMIN English - FIFA Direct (No Commentary) (HD)",
-        "id": "src_fifa_1782236264794_7kqt",
+        "id": "src_fifa_1782240362588_qayh",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/17"
       },
       {
         "name": "ADMIN English - FIFA Direct (No Commentary)",
-        "id": "src_fifa_1782236264794_0x5f",
+        "id": "src_fifa_1782240362588_86nu",
         "url": "https://embed.st/embed/admin/ppv-portugal-vs-uzbekistan/18"
       },
       {
         "name": "DELTA English (HD)",
-        "id": "src_fifa_1782236265075_iubn",
+        "id": "src_fifa_1782240362630_ijli",
         "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/1"
       },
       {
         "name": "DELTA English (HD)",
-        "id": "src_fifa_1782236265075_0hc4",
+        "id": "src_fifa_1782240362630_agbw",
         "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/2"
       },
       {
         "name": "DELTA English (HD)",
-        "id": "src_fifa_1782236265075_9rqj",
+        "id": "src_fifa_1782240362630_59sp",
         "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/3"
       },
       {
+        "name": "DELTA English (HD)",
+        "id": "src_fifa_1782240362630_wjo3",
+        "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/4"
+      },
+      {
+        "name": "DELTA English (HD)",
+        "id": "src_fifa_1782240362630_eevl",
+        "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/5"
+      },
+      {
+        "name": "DELTA English (HD)",
+        "id": "src_fifa_1782240362630_s5so",
+        "url": "https://embed.st/embed/delta/live_world-championship-gr-k_portugal-uzbekistan-live-streaming-1243793961/6"
+      },
+      {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_s6au",
+        "id": "src_fifa_1782240362659_b9y1",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/1"
       },
       {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_uzyv",
+        "id": "src_fifa_1782240362659_3i04",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/2"
       },
       {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_m9bx",
+        "id": "src_fifa_1782240362659_kfoy",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/3"
       },
       {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_emwz",
+        "id": "src_fifa_1782240362659_y1k1",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/4"
       },
       {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_hpx5",
+        "id": "src_fifa_1782240362659_6fqd",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/5"
       },
       {
         "name": "ECHO EN (HD)",
-        "id": "src_fifa_1782236265200_wvzb",
+        "id": "src_fifa_1782240362659_p375",
         "url": "https://embed.st/embed/echo/portugal-vs-uzbekistan-football-1489404/6"
       }
     ],
-    "lastStreamsSync": "2026-06-23T17:37:45.200Z"
+    "lastStreamsSync": "2026-06-23T18:46:02.659Z"
   },
-  "lastAutoSync": 1782237416463,
+  "lastAutoSync": 1782471267525,
   "nextRace": {
     "name": "Austrian GP",
     "date": "26-28 Jun",
@@ -231,8 +246,8 @@
   "streamKeyword": "F1 - - FP1",
   "weather": {
     "air": 28,
-    "condition": "sunny",
-    "track": 36
+    "track": 39,
+    "condition": "sunny"
   },
   "customTimer": {
     "target": "2026-06-26 17:00",
@@ -431,5 +446,6 @@
     "laps": "71",
     "name": "Austrian GP",
     "circuit": "Red Bull Ring"
-  }
+  },
+  "lastF1LiveSync": "2026-06-23T19:04:07.014Z"
 }
