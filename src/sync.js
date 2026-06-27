@@ -718,14 +718,19 @@ export async function syncMatchDetails(db) {
   try {
     const allMatches = await db.getMatches();
     const now = Date.now();
-    // Prioritize: live matches, then upcoming within 48h, then recently finished without details yet
-    const needsDetails = allMatches.filter(m => {
+    // Prioritize: live matches, upcoming within 48h, recently finished.
+    // Fall back to batching up to 12 unfetched historical matches so the DB fully populates over time.
+    let needsDetails = allMatches.filter(m => {
       if (!m.fotmobPageUrl) return false;
-      if (m.detailsFetched === 1) return false; // Skip already fetched
+      if (m.detailsFetched === 1) return false;
       const hoursFromNow = (m.kickoff - now) / (60 * 60 * 1000);
       const hoursSinceKickoff = (now - m.kickoff) / (60 * 60 * 1000);
       return m.status === 'live' || hoursFromNow < 48 || (hoursSinceKickoff < 6 && m.status === 'finished');
     });
+
+    if (needsDetails.length === 0) {
+      needsDetails = allMatches.filter(m => m.fotmobPageUrl && m.detailsFetched !== 1).slice(0, 12);
+    }
 
     console.log(`[syncMatchDetails] Fetching details for ${needsDetails.length} matches...`);
     for (const match of needsDetails) {
