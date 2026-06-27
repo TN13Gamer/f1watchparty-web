@@ -2653,15 +2653,12 @@
                     rawLocation = $scope.config.raceData.name;
                 }
                 
-                // Clean location: extract city (second to last part if comma separated) or fallback to last part
+                // Clean location: extract country (last part if comma separated)
                 let location = "";
                 if (rawLocation) {
                     let parts = rawLocation.split(',');
-                    if (parts.length >= 2) {
-                        location = parts[parts.length - 2].trim().replace(/[0-9]/g, '').trim();
-                    } else {
-                        location = parts[parts.length - 1].trim().replace(/[0-9]/g, '').trim();
-                    }
+                    let lastPart = parts[parts.length - 1].trim();
+                    location = lastPart.replace(/[0-9]/g, '').trim();
                 }
                 
                 let sessionAbbr = "FP1"; // Fallback

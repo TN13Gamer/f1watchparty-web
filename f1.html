@@ -1153,43 +1153,6 @@
             margin-bottom: 12px;
         }
 
-        /* Past sessions toggle btn */
-        .past-sessions-toggle {
-            width: 100%;
-            background: transparent;
-            border: 1px dashed rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: var(--text-gray);
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 9px 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s;
-            margin-top: 4px;
-        }
-
-        .past-sessions-toggle:hover {
-            background: rgba(255,255,255,0.04);
-            color: #fff;
-            border-color: rgba(255,255,255,0.2);
-        }
-
-        .past-sessions-list {
-            overflow: hidden;
-            transition: max-height 0.35s ease;
-            max-height: 0;
-        }
-
-        .past-sessions-list.open {
-            max-height: 500px;
-        }
-
         .schedule-row.ended {
             opacity: 0.38;
         }
@@ -2353,28 +2316,6 @@
                         </div>
                     </div>
 
-                    <!-- Past sessions toggle -->
-                    <button class="past-sessions-toggle" ng-if="hasPastSessions()" ng-click="showPast = !showPast">
-                        <i class="fa-solid" ng-class="showPast ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        {{ showPast ? 'Hide Past Sessions' : 'View Past Sessions' }}
-                        <span style="opacity:0.5;">({{pastSessionCount()}})</span>
-                    </button>
-
-                    <!-- Past sessions list -->
-                    <div class="past-sessions-list" ng-class="{'open': showPast}">
-                        <div style="height:8px;"></div>
-                        <div class="schedule-row ended" ng-repeat="session in schedule" ng-if="session.status === 'ended'">
-                            <div class="sess-info">
-                                <span class="sess-name">{{session.name}}</span>
-                                <span class="sess-status" style="color: #555;">ENDED</span>
-                            </div>
-                            <div class="sess-time-box">
-                                <div class="sess-time">{{formatTime12(session.time)}}</div>
-                                <div class="sess-day">{{session.day}}</div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
                 <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
@@ -3147,18 +3088,6 @@
             $interval(updateTimers, 1000);
 
             function pad(num) { return num < 10 ? '0' + num : num; }
-
-            $scope.showPast = false;
-
-            $scope.hasPastSessions = function() {
-                if (!$scope.schedule) return false;
-                return $scope.schedule.some(function(s) { return s.status === 'ended'; });
-            };
-
-            $scope.pastSessionCount = function() {
-                if (!$scope.schedule) return 0;
-                return $scope.schedule.filter(function(s) { return s.status === 'ended'; }).length;
-            };
 
             $scope.formatTime12 = function (t) {
                 if (!t) return "";

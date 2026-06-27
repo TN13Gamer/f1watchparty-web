@@ -233,11 +233,8 @@ async function syncStreamsAutomatically(config, ref) {
       let location = "";
       if (rawLocation) {
         let parts = rawLocation.split(',');
-        if (parts.length >= 2) {
-          location = parts[parts.length - 2].trim().replace(/[0-9]/g, '').trim();
-        } else {
-          location = parts[parts.length - 1].trim().replace(/[0-9]/g, '').trim();
-        }
+        let lastPart = parts[parts.length - 1].trim();
+        location = lastPart.replace(/[0-9]/g, '').trim();
       }
 
       if (!location) return;
