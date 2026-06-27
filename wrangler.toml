@@ -2,6 +2,9 @@ name = "watchparty-backend"
 main = "src/index.js"
 compatibility_date = "2024-06-26"
 
+[build]
+command = "node scripts/embed-html.mjs"
+
 [vars]
 FIREBASE_PROJECT_ID = "f1-stream-live"
 
@@ -16,3 +19,6 @@ database_id = "778d7804-93f8-424d-b8c0-e5da23ff5e43"
 
 [triggers]
 crons = ["*/10 * * * *"]
+
+[limits]
+subrequest = 200

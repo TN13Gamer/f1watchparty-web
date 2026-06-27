@@ -213,8 +213,8 @@ export class D1Database {
     try {
       await this.d1
         .prepare(`
-          INSERT INTO matches (id, homeTeam, awayTeam, homeLogo, awayLogo, homeFlag, awayFlag, kickoff, status, score, venue, groupName, stage, competition)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO matches (id, homeTeam, awayTeam, homeLogo, awayLogo, homeFlag, awayFlag, kickoff, status, score, venue, city, country, groupName, stage, competition, matchday, referee, attendance, weather, broadcasters, description, thumbnail, banner, fotmobPageUrl, detailsFetched, lastSynced)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
           ON CONFLICT(id) DO UPDATE SET
             homeTeam = excluded.homeTeam,
             awayTeam = excluded.awayTeam,
@@ -225,32 +225,58 @@ export class D1Database {
             kickoff = excluded.kickoff,
             status = excluded.status,
             score = excluded.score,
-            venue = excluded.venue,
+            venue = CASE WHEN excluded.venue IS NOT NULL AND excluded.venue != '' THEN excluded.venue ELSE matches.venue END,
+            city = CASE WHEN excluded.city IS NOT NULL THEN excluded.city ELSE matches.city END,
+            country = CASE WHEN excluded.country IS NOT NULL THEN excluded.country ELSE matches.country END,
             groupName = excluded.groupName,
             stage = excluded.stage,
-            competition = excluded.competition
+            competition = excluded.competition,
+            matchday = excluded.matchday,
+            referee = CASE WHEN excluded.referee IS NOT NULL THEN excluded.referee ELSE matches.referee END,
+            attendance = CASE WHEN excluded.attendance IS NOT NULL THEN excluded.attendance ELSE matches.attendance END,
+            weather = CASE WHEN excluded.weather IS NOT NULL THEN excluded.weather ELSE matches.weather END,
+            broadcasters = excluded.broadcasters,
+            description = excluded.description,
+            thumbnail = excluded.thumbnail,
+            banner = excluded.banner,
+            fotmobPageUrl = excluded.fotmobPageUrl,
+            detailsFetched = excluded.detailsFetched,
+            lastSynced = datetime('now')
         `)
         .bind(
           match.id,
           match.homeTeam,
           match.awayTeam,
-          match.homeLogo,
-          match.awayLogo,
-          match.homeFlag,
-          match.awayFlag,
+          match.homeLogo || null,
+          match.awayLogo || null,
+          match.homeFlag || null,
+          match.awayFlag || null,
           match.kickoff,
-          match.status,
-          match.score,
-          match.venue,
-          match.groupName,
-          match.stage,
-          match.competition || "FIFA World Cup"
+          match.status || 'notstarted',
+          match.score || '0 - 0',
+          match.venue || 'Venue to be confirmed',
+          match.city || null,
+          match.country || null,
+          match.groupName || null,
+          match.stage || null,
+          match.competition || "FIFA World Cup",
+          match.matchday || null,
+          match.referee || null,
+          match.attendance || null,
+          match.weather || null,
+          match.broadcasters || null,
+          match.description || null,
+          match.thumbnail || null,
+          match.banner || null,
+          match.fotmobPageUrl || null,
+          match.detailsFetched ? 1 : 0
         )
         .run();
     } catch (err) {
       console.error("[D1 saveMatch] Error:", err.message);
     }
   }
+
 
   // --- AUTOMATED STREAMS ---
   async getStreams(matchId) {
@@ -270,26 +296,33 @@ export class D1Database {
     try {
       await this.d1
         .prepare(`
-          INSERT INTO streams (matchId, provider, quality, embedUrl, mirror, lastChecked, working)
-          VALUES (?, ?, ?, ?, ?, datetime('now'), 1)
+          INSERT INTO streams (matchId, provider, quality, embedUrl, mirror, lastChecked, working, status, isPrimary, priority, language)
+          VALUES (?, ?, ?, ?, ?, datetime('now'), 1, 1, ?, ?, ?)
           ON CONFLICT(embedUrl) DO UPDATE SET
             quality = excluded.quality,
             mirror = excluded.mirror,
             lastChecked = excluded.lastChecked,
-            working = 1
+            working = 1,
+            isPrimary = excluded.isPrimary,
+            priority = excluded.priority,
+            language = excluded.language
         `)
         .bind(
           stream.matchId,
           stream.provider,
           stream.quality || "720P",
           stream.embedUrl,
-          stream.mirror || 0
+          stream.mirror || 0,
+          stream.isPrimary || 0,
+          stream.priority || 0,
+          stream.language || "EN"
         )
         .run();
     } catch (err) {
       console.error("[D1 saveStream] Error:", err.message);
     }
   }
+
 
   async clearStreamsForMatch(matchId) {
     try {
@@ -359,6 +392,136 @@ export class D1Database {
         .run();
     } catch (err) {
       console.error("[D1 cleanExpired] Error:", err.message);
+    }
+  }
+
+  async deleteStream(embedUrl) {
+    try {
+
+      await this.d1.prepare("DELETE FROM streams WHERE embedUrl = ?").bind(embedUrl).run();
+      return true;
+    } catch (err) {
+      console.error("[D1 deleteStream] Error:", err.message);
+      return false;
+    }
+  }
+
+  async updateStreamStatus(embedUrl, status) {
+    try {
+      await this.d1.prepare("UPDATE streams SET status = ? WHERE embedUrl = ?").bind(status, embedUrl).run();
+      return true;
+    } catch (err) {
+      console.error("[D1 updateStreamStatus] Error:", err.message);
+      return false;
+    }
+  }
+
+  async setStreamPrimary(matchId, embedUrl) {
+    try {
+      const reset = this.d1.prepare("UPDATE streams SET isPrimary = 0 WHERE matchId = ?").bind(matchId);
+      const set = this.d1.prepare("UPDATE streams SET isPrimary = 1 WHERE embedUrl = ?").bind(embedUrl);
+      await this.d1.batch([reset, set]);
+      return true;
+    } catch (err) {
+      console.error("[D1 setStreamPrimary] Error:", err.message);
+      return false;
+    }
+  }
+
+  async updateMatchDetails(id, fields) {
+    try {
+      await this.d1
+        .prepare(`
+          UPDATE matches 
+          SET 
+            venue = ?,
+            city = ?,
+            country = ?,
+            kickoff = ?, 
+            groupName = ?, 
+            stage = ?,
+            referee = ?,
+            attendance = ?,
+            weather = ?,
+            broadcasters = ?, 
+            description = ?, 
+            thumbnail = ?, 
+            banner = ?,
+            detailsFetched = 1,
+            lastSynced = datetime('now')
+          WHERE id = ?
+        `)
+        .bind(
+          fields.venue || 'Venue to be confirmed',
+          fields.city || null,
+          fields.country || null,
+          fields.kickoff,
+          fields.groupName || null,
+          fields.stage || null,
+          fields.referee || null,
+          fields.attendance || null,
+          fields.weather || null,
+          fields.broadcasters || null,
+          fields.description || null,
+          fields.thumbnail || null,
+          fields.banner || null,
+          id
+        )
+        .run();
+      return true;
+    } catch (err) {
+      console.error("[D1 updateMatchDetails] Error:", err.message);
+      return false;
+    }
+  }
+
+  // Get all streams for a match including disabled ones (for admin panel)
+  async getAllStreams(matchId) {
+    try {
+      const { results } = await this.d1
+        .prepare("SELECT *, datetime(lastChecked) as lastCheckedFormatted FROM streams WHERE matchId = ? ORDER BY priority DESC, isPrimary DESC, mirror ASC")
+        .bind(matchId)
+        .all();
+      return results || [];
+    } catch (err) {
+      console.error("[D1 getAllStreams] Error:", err.message);
+      return [];
+    }
+  }
+
+  // Admin: manually save a stream (bypasses auto-sync)
+  async adminSaveStream(stream) {
+    try {
+      await this.d1
+        .prepare(`
+          INSERT INTO streams (matchId, provider, quality, embedUrl, mirror, lastChecked, working, status, isPrimary, priority, language)
+          VALUES (?, ?, ?, ?, ?, datetime('now'), 1, 1, ?, ?, ?)
+          ON CONFLICT(embedUrl) DO UPDATE SET
+            provider = excluded.provider,
+            quality = excluded.quality,
+            mirror = excluded.mirror,
+            lastChecked = datetime('now'),
+            working = 1,
+            status = 1,
+            isPrimary = excluded.isPrimary,
+            priority = excluded.priority,
+            language = excluded.language
+        `)
+        .bind(
+          stream.matchId,
+          stream.provider || 'Custom',
+          stream.quality || '720P',
+          stream.embedUrl,
+          stream.mirror || 0,
+          stream.isPrimary || 0,
+          stream.priority || 0,
+          stream.language || 'EN'
+        )
+        .run();
+      return true;
+    } catch (err) {
+      console.error("[D1 adminSaveStream] Error:", err.message);
+      return false;
     }
   }
 }

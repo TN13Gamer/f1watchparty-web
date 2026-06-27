@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 
 -- Table for automated Matches from FotMob
-CREATE TABLE IF NOT EXISTS matches (
+DROP TABLE IF EXISTS matches;
+CREATE TABLE matches (
     id TEXT PRIMARY KEY,
     homeTeam TEXT NOT NULL,
     awayTeam TEXT NOT NULL,
@@ -52,14 +53,28 @@ CREATE TABLE IF NOT EXISTS matches (
     kickoff INTEGER NOT NULL, -- Timestamp
     status TEXT DEFAULT 'notstarted', -- 'notstarted', 'live', 'finished'
     score TEXT DEFAULT '0 - 0',
-    venue TEXT,
+    venue TEXT DEFAULT 'Venue to be confirmed',
+    city TEXT,
+    country TEXT,
     groupName TEXT,
     stage TEXT,
-    competition TEXT DEFAULT 'FIFA World Cup'
+    competition TEXT DEFAULT 'FIFA World Cup',
+    matchday TEXT,
+    referee TEXT,
+    attendance INTEGER,
+    weather TEXT,
+    broadcasters TEXT,
+    description TEXT,
+    thumbnail TEXT,
+    banner TEXT,
+    fotmobPageUrl TEXT,
+    detailsFetched INTEGER DEFAULT 0,
+    lastSynced TEXT DEFAULT (datetime('now'))
 );
 
 -- Table for automated Streams from streamed.pk
-CREATE TABLE IF NOT EXISTS streams (
+DROP TABLE IF EXISTS streams;
+CREATE TABLE streams (
     matchId TEXT NOT NULL,
     provider TEXT NOT NULL,
     quality TEXT DEFAULT '720P',
@@ -67,13 +82,18 @@ CREATE TABLE IF NOT EXISTS streams (
     mirror INTEGER DEFAULT 0,
     lastChecked TEXT DEFAULT (datetime('now')),
     working INTEGER DEFAULT 1,
+    status INTEGER DEFAULT 1, -- 1 = active, 0 = disabled
+    isPrimary INTEGER DEFAULT 0,
+    priority INTEGER DEFAULT 0,
+    language TEXT DEFAULT 'EN',
     FOREIGN KEY (matchId) REFERENCES matches(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_streams_matchId ON streams(matchId);
 
 -- Table for automated Standings from FotMob
-CREATE TABLE IF NOT EXISTS standings (
+DROP TABLE IF EXISTS standings;
+CREATE TABLE standings (
     team TEXT NOT NULL,
     played INTEGER DEFAULT 0,
     wins INTEGER DEFAULT 0,
@@ -87,3 +107,15 @@ CREATE TABLE IF NOT EXISTS standings (
     flag TEXT,
     PRIMARY KEY (team, groupName)
 );
+
+-- Table for Team Data (automatically stored metadata)
+DROP TABLE IF EXISTS teams;
+CREATE TABLE teams (
+    country TEXT PRIMARY KEY,
+    flag TEXT,
+    fifaCode TEXT,
+    groupName TEXT,
+    coach TEXT,
+    logo TEXT
+);
+

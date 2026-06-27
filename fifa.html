@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#050505">
-    <title>WatchFIFA.live | EA SPORTS FC 26 Watch Party</title>
+    <title>WatchFIFA.live | FIFA World Cup 2026 Watch Party</title>
 
     <!-- Fonts & Styling -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -890,116 +890,150 @@
             box-shadow: 0 0 8px var(--neon-green);
         }
 
-        /* --- TOURNAMENT KNOCKOUT BRACKET --- */
-        .bracket-scroll-container {
-            width: 100%;
-            overflow-x: auto;
-            padding: 20px 0;
-            cursor: grab;
-        }
-
-        .bracket-scroll-container:active {
-            cursor: grabbing;
-        }
-
-        .bracket-zoom-wrapper {
+        /* --- MATCH & STREAM SELECTION OVERLAYS --- */
+        .selection-overlay-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 5, 5, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 11000;
             display: flex;
             align-items: center;
-            gap: 20px;
-            min-width: 1100px;
-            justify-content: space-between;
-            padding: 10px 40px;
-            transform-origin: left center;
-            transition: transform 0.2s ease;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
-
-        .bracket-round-column {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            height: 520px;
-            flex: 1;
-            gap: 15px;
-        }
-
-        .bracket-round-title {
-            font-family: var(--font-display);
-            font-size: 12px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            text-align: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 8px;
-        }
-
-        .bracket-match-node {
-            background: var(--bg-card);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 10px 14px;
-            width: 220px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .bracket-team-line {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .bracket-team-flag-name {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .bracket-score {
-            font-family: var(--font-display);
-            font-weight: 900;
-            opacity: 0.8;
-        }
-
-        .bracket-team-line.winner {
-            color: var(--neon-green);
-        }
-
-        .bracket-team-line.winner .bracket-score {
+        .selection-overlay-modal.active {
             opacity: 1;
+            visibility: visible;
         }
-
-        .zoom-controls {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-bottom: 15px;
+        .selection-overlay-card {
+            background: rgba(20, 20, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 3px solid var(--neon-green);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 550px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
         }
-
-        .zoom-btn {
+        .selection-overlay-modal.active .selection-overlay-card {
+            transform: scale(1);
+        }
+        .overlay-close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
-            color: var(--text-white);
-            width: 32px; height: 32px;
+            color: #fff;
+            width: 36px; height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 12px;
             transition: all 0.2s;
         }
-
-        .zoom-btn:hover {
-            border-color: var(--neon-green);
-            color: var(--neon-green);
+        .overlay-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg);
         }
+        .overlay-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        .overlay-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .overlay-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .overlay-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .match-select-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .match-select-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--neon-green);
+        }
+        .match-select-teams {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .stream-select-btn {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            text-align: left;
+        }
+        .stream-select-btn:hover {
+            background: rgba(0, 255, 102, 0.08);
+            border-color: var(--neon-green);
+            transform: translateY(-2px);
+        }
+        .stream-provider-name {
+            font-weight: 800;
+            font-size: 14px;
+        }
+        .stream-meta-badges {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .stream-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.05);
+            text-transform: uppercase;
+        }
+        .stream-badge.quality {
+            color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.05);
+            border-color: rgba(0, 255, 102, 0.1);
+        }
+
 
         /* --- LIVE MATCHES SIDEBAR / DRAWER --- */
         .live-sidebar-card {
@@ -1062,6 +1096,31 @@
             background: rgba(255,255,255,0.05);
             padding: 2px 6px;
             border-radius: 4px;
+        }
+
+        .today-score.live-score {
+            color: var(--neon-green);
+            text-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+        }
+
+        .today-card .today-score {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 18px;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .today-card .today-team-flag-name img {
+            width: 24px;
+            height: 16px;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+
+        .today-card.live-active {
+            border-color: rgba(255,59,48,0.4);
+            box-shadow: 0 0 20px rgba(255,59,48,0.1);
         }
 
         /* --- THEATER MODE FULLSCREEN --- */
@@ -1275,9 +1334,10 @@
 
     <!-- --- LOADING SCREEN --- -->
     <div class="loader-wrapper" id="loader-screen">
-        <div id="lottie-loader"></div>
-        <div class="loader-text">EA SPORTS FC 26</div>
+        <div class="loader-spinner"></div>
+        <div class="loader-text">FIFA WORLD CUP 2026</div>
     </div>
+
 
     <!-- --- STICKY NAVIGATION --- -->
     <header>
@@ -1288,7 +1348,6 @@
             <a href="#watch" class="nav-link active">Watch</a>
             <a href="#fixtures" class="nav-link">Fixtures</a>
             <a href="#standings" class="nav-link">Standings</a>
-            <a href="#bracket" class="nav-link">Bracket</a>
             <button class="nav-btn" ng-click="toggleMobileDrawer()">
                 <i class="fa-solid fa-signal"></i> Live Matches
             </button>
@@ -1349,6 +1408,9 @@
                         <div style="font-family: var(--font-display); font-size: 42px; font-weight: 900; color: #fff; letter-spacing: 1px;">
                             {{customTimerCountdown}}
                         </div>
+                        <button class="action-btn" ng-click="triggerWatchFlow()" style="margin-top: 25px; padding: 12px 30px; font-weight: 800; border-radius: 30px; background: var(--neon-green); color: #000; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border: none; cursor: pointer; box-shadow: 0 0 15px var(--glow-green); transition: all 0.2s;">
+                            Watch Now
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1418,7 +1480,10 @@
                 <div class="match-header-grid">
                     <!-- Home -->
                     <div class="header-team">
-                        <span class="header-team-flag">{{getMatchFlags(raceData.name).home}}</span>
+                        <span class="header-team-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 40px; overflow: hidden; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: rgba(255,255,255,0.02);">
+                            <img ng-if="getMatchFlagsUrls(raceData.name).home" ng-src="{{getMatchFlagsUrls(raceData.name).home}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getMatchFlagsUrls(raceData.name).home" style="font-size: 24px;">⚽</span>
+                        </span>
                         <span class="header-team-name">{{getTeamNames(raceData.name).home}}</span>
                     </div>
 
@@ -1437,7 +1502,10 @@
 
                     <!-- Away -->
                     <div class="header-team">
-                        <span class="header-team-flag">{{getMatchFlags(raceData.name).away}}</span>
+                        <span class="header-team-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 40px; overflow: hidden; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: rgba(255,255,255,0.02);">
+                            <img ng-if="getMatchFlagsUrls(raceData.name).away" ng-src="{{getMatchFlagsUrls(raceData.name).away}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getMatchFlagsUrls(raceData.name).away" style="font-size: 24px;">⚽</span>
+                        </span>
                         <span class="header-team-name">{{getTeamNames(raceData.name).away}}</span>
                     </div>
                 </div>
@@ -1471,7 +1539,7 @@
                     <div ng-repeat="f in fixtures | filter:{status: 'live'}" 
                          class="live-sidebar-card"
                          ng-class="{'active': raceData.name === f.homeTeam + ' vs ' + f.awayTeam}"
-                         ng-click="goBack($event)">
+                         ng-click="openMatchStreamsFlow(f)">
                          
                          <div class="live-sidebar-top">
                              <span style="color: var(--text-muted);">{{f.round || 'World Cup'}}</span>
@@ -1501,7 +1569,14 @@
             <span><i class="fa-solid fa-futbol"></i></span> Today's Matches
         </h2>
         <div class="today-grid">
-            <div ng-if="(fixtures | filter:todayFilter).length === 0" style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px;">
+            <div ng-if="fixturesLoading && fixtures.length === 0" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <div class="loader-spinner" style="margin: 0 auto 15px auto; width: 30px; height: 30px; border-width: 3px;"></div>
+                <div style="font-size: 12px; color: var(--text-muted);">Loading fixtures...</div>
+            </div>
+            <div ng-if="fixturesError" style="grid-column: 1/-1; text-align: center; color: #ff6b6b; padding: 20px; font-size: 12px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> {{fixturesError}}
+            </div>
+            <div ng-if="!fixturesLoading && (fixtures | filter:todayFilter).length === 0 && !fixturesError" style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px;">
                 No matches scheduled for today.
             </div>
 
@@ -1515,31 +1590,46 @@
                      <span ng-if="f.status === 'live'" class="player-live-badge" style="position: static; padding: 2px 6px;">
                          <span></span> {{f.matchTime || 'LIVE'}}
                      </span>
+                     <span ng-if="f.status === 'finished'" style="color: var(--text-muted); font-size: 10px;">FT</span>
                  </div>
 
                  <div class="today-teams">
-                     <div class="today-team-row">
-                         <div class="today-team-flag-name">
-                             <span class="today-team-flag">{{f.homeFlag || '⚽'}}</span>
-                             <span class="today-team-name">{{f.homeTeam}}</span>
-                         </div>
-                         <span class="today-score" ng-if="f.status === 'live' || f.finished">{{f.homeScore != null ? f.homeScore : '0'}}</span>
-                     </div>
-                     <div class="today-team-row">
-                         <div class="today-team-flag-name">
-                             <span class="today-team-flag">{{f.awayFlag || '⚽'}}</span>
-                             <span class="today-team-name">{{f.awayTeam}}</span>
-                         </div>
-                         <span class="today-score" ng-if="f.status === 'live' || f.finished">{{f.awayScore != null ? f.awayScore : '0'}}</span>
-                     </div>
+                      <div class="today-team-row">
+                          <div class="today-team-flag-name">
+                              <span class="today-team-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin-right: 8px;">
+                                  <img ng-if="getCountryFlagUrl(f.homeTeam)" ng-src="{{getCountryFlagUrl(f.homeTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                                  <span ng-if="!getCountryFlagUrl(f.homeTeam)" style="font-size: 11px;">⚽</span>
+                              </span>
+                              <span class="today-team-name">{{f.homeTeam}}</span>
+                          </div>
+                          <span class="today-score" ng-class="{'live-score': f.status === 'live'}">{{f.homeScore != null ? f.homeScore : '-'}}</span>
+                      </div>
+                      <div class="today-team-row">
+                          <div class="today-team-flag-name">
+                              <span class="today-team-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin-right: 8px;">
+                                  <img ng-if="getCountryFlagUrl(f.awayTeam)" ng-src="{{getCountryFlagUrl(f.awayTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                                  <span ng-if="!getCountryFlagUrl(f.awayTeam)" style="font-size: 11px;">⚽</span>
+                              </span>
+                              <span class="today-team-name">{{f.awayTeam}}</span>
+                          </div>
+                          <span class="today-score" ng-class="{'live-score': f.status === 'live'}">{{f.awayScore != null ? f.awayScore : '-'}}</span>
+                      </div>
+                 </div>
+
+                 <div ng-if="f.stadium && f.stadium !== 'Venue to be confirmed' && f.status !== 'finished'" style="padding: 6px 14px 2px; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                     <i class="fa-solid fa-location-dot" style="color: var(--neon-green); font-size: 10px;"></i>
+                     <span>{{f.stadium}}</span>
+                     <span ng-if="f.city">, {{f.city}}</span>
                  </div>
 
                  <div class="today-bottom">
                      <div class="today-time">
-                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{f.finished ? 'FT' : f.localDate}}
+                         <i class="fa-regular fa-clock" style="margin-right: 5px;"></i>
+                         <span ng-if="f.status === 'live' && f.matchTime" style="color: #ff3b30;">{{f.matchTime}}</span>
+                         <span ng-if="f.status !== 'live' || !f.matchTime">{{f.finished ? 'Full Time' : f.localDate}}</span>
                      </div>
-                     <button class="today-watch-btn" ng-click="goBack($event)">
-                         WATCH NOW
+                     <button class="today-watch-btn" ng-click="openMatchStreamsFlow(f)">
+                         <i class="fa-solid fa-play" style="margin-right: 5px;"></i> WATCH NOW
                      </button>
                  </div>
             </div>
@@ -1557,29 +1647,39 @@
             <!-- Tomorrow -->
             <div class="timeline-group">
                 <div class="timeline-header">Tomorrow</div>
-                <div ng-if="(fixtures | filter:tomorrowFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
+                <div ng-if="fixturesLoading && (fixtures | filter:tomorrowFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
+                    Loading...
+                </div>
+                <div ng-if="!fixturesLoading && (fixtures | filter:tomorrowFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
                     No matches scheduled for tomorrow.
                 </div>
                 
                 <div ng-repeat="f in fixtures | filter:tomorrowFilter" class="upcoming-card">
                     <div class="upcoming-left">
-                        <span class="upcoming-flag">{{f.homeFlag || '⚽'}}</span>
+                        <span class="upcoming-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin: 0 5px;">
+                            <img ng-if="getCountryFlagUrl(f.homeTeam)" ng-src="{{getCountryFlagUrl(f.homeTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.homeTeam)" style="font-size: 11px;">⚽</span>
+                        </span>
                         <div class="upcoming-match-names">
                             <span class="upcoming-team-name">{{f.homeTeam}}</span>
                             <span class="upcoming-vs">VS</span>
                             <span class="upcoming-team-name">{{f.awayTeam}}</span>
                         </div>
-                        <span class="upcoming-flag">{{f.awayFlag || '⚽'}}</span>
+                        <span class="upcoming-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin: 0 5px;">
+                            <img ng-if="getCountryFlagUrl(f.awayTeam)" ng-src="{{getCountryFlagUrl(f.awayTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.awayTeam)" style="font-size: 11px;">⚽</span>
+                        </span>
                     </div>
 
                     <div class="upcoming-center">
                         <div>{{f.round || 'Group Stage'}}</div>
-                        <div><i class="fa-solid fa-location-dot"></i> {{f.stadium || 'FIFA Stadium'}}</div>
+                        <div><i class="fa-solid fa-location-dot"></i> {{f.stadium || 'Venue to be confirmed'}}</div>
+                        <div ng-if="f.city" style="font-size: 11px; color: var(--text-muted);">{{f.city}}{{f.country ? ', ' + f.country : ''}}</div>
                     </div>
 
                     <div class="upcoming-right">
                         <span class="upcoming-countdown">{{f.localDate}}</span>
-                        <button class="upcoming-watch-btn" ng-click="goBack($event)">Watch</button>
+                        <button class="upcoming-watch-btn" ng-click="openMatchStreamsFlow(f)"><i class="fa-solid fa-play" style="margin-right: 4px;"></i> Watch</button>
                     </div>
                 </div>
             </div>
@@ -1587,29 +1687,39 @@
             <!-- This Week -->
             <div class="timeline-group">
                 <div class="timeline-header">Later This Week</div>
-                <div ng-if="(fixtures | filter:weekFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
+                <div ng-if="fixturesLoading && (fixtures | filter:weekFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
+                    Loading...
+                </div>
+                <div ng-if="!fixturesLoading && (fixtures | filter:weekFilter).length === 0" style="color: var(--text-muted); font-size: 13px; padding-left: 15px;">
                     No matches scheduled for later this week.
                 </div>
 
                 <div ng-repeat="f in fixtures | filter:weekFilter" class="upcoming-card">
                     <div class="upcoming-left">
-                        <span class="upcoming-flag">{{f.homeFlag || '⚽'}}</span>
+                        <span class="upcoming-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin: 0 5px;">
+                            <img ng-if="getCountryFlagUrl(f.homeTeam)" ng-src="{{getCountryFlagUrl(f.homeTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.homeTeam)" style="font-size: 11px;">⚽</span>
+                        </span>
                         <div class="upcoming-match-names">
                             <span class="upcoming-team-name">{{f.homeTeam}}</span>
                             <span class="upcoming-vs">VS</span>
                             <span class="upcoming-team-name">{{f.awayTeam}}</span>
                         </div>
-                        <span class="upcoming-flag">{{f.awayFlag || '⚽'}}</span>
+                        <span class="upcoming-flag" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 16px; overflow: hidden; border-radius: 2px; background: rgba(255,255,255,0.05); margin: 0 5px;">
+                            <img ng-if="getCountryFlagUrl(f.awayTeam)" ng-src="{{getCountryFlagUrl(f.awayTeam)}}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.awayTeam)" style="font-size: 11px;">⚽</span>
+                        </span>
                     </div>
 
                     <div class="upcoming-center">
                         <div>{{f.round || 'Group Stage'}}</div>
-                        <div><i class="fa-solid fa-location-dot"></i> {{f.stadium || 'FIFA Stadium'}}</div>
+                        <div><i class="fa-solid fa-location-dot"></i> {{f.stadium || 'Venue to be confirmed'}}</div>
+                        <div ng-if="f.city" style="font-size: 11px; color: var(--text-muted);">{{f.city}}{{f.country ? ', ' + f.country : ''}}</div>
                     </div>
 
                     <div class="upcoming-right">
                         <span class="upcoming-countdown">{{f.localDate}}</span>
-                        <button class="upcoming-watch-btn" ng-click="goBack($event)">Watch</button>
+                        <button class="upcoming-watch-btn" ng-click="openMatchStreamsFlow(f)"><i class="fa-solid fa-play" style="margin-right: 4px;"></i> Watch</button>
                     </div>
                 </div>
             </div>
@@ -1648,7 +1758,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-if="!standings[activeGroup] || standings[activeGroup].length === 0">
+                        <tr ng-if="standingsLoading && (!standings[activeGroup] || standings[activeGroup].length === 0)">
+                            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                                <div class="loader-spinner" style="margin: 0 auto 10px auto; width: 24px; height: 24px; border-width: 2px;"></div>
+                                Loading standings...
+                            </td>
+                        </tr>
+                        <tr ng-if="standingsError && (!standings[activeGroup] || standings[activeGroup].length === 0)">
+                            <td colspan="8" style="text-align: center; color: #ff6b6b; padding: 40px 0;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> {{standingsError}}
+                            </td>
+                        </tr>
+                        <tr ng-if="!standingsLoading && !standingsError && (!standings[activeGroup] || standings[activeGroup].length === 0)">
                             <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No standings data available.</td>
                         </tr>
                         <tr ng-repeat="t in standings[activeGroup]">
@@ -1657,8 +1778,9 @@
                                 <div class="team-name-cell">
                                     <div class="qualification-bar" ng-if="$index < 2"></div>
                                     <span class="team-flag" style="font-size: 15px;">
-                                        <img ng-if="t.flag.indexOf('http') === 0" ng-src="{{t.flag}}" style="width: 20px; height: 14px; border-radius: 2px; vertical-align: middle; margin-right: 4px; object-fit: cover;">
-                                        <span ng-if="t.flag.indexOf('http') !== 0">{{t.flag || '⚽'}}</span>
+                                        <img ng-if="t.flag && t.flag.indexOf('http') === 0" ng-src="{{t.flag}}" style="width: 20px; height: 14px; border-radius: 2px; vertical-align: middle; margin-right: 4px; object-fit: cover;">
+                                        <img ng-if="(!t.flag || t.flag.indexOf('http') !== 0) && getCountryFlagUrl(t.name)" ng-src="{{getCountryFlagUrl(t.name)}}" style="width: 20px; height: 14px; border-radius: 2px; vertical-align: middle; margin-right: 4px; object-fit: cover;">
+                                        <span ng-if="(!t.flag || t.flag.indexOf('http') !== 0) && !getCountryFlagUrl(t.name)">⚽</span>
                                     </span>
                                     <span>{{t.name}}</span>
 
@@ -1677,109 +1799,173 @@
         </div>
     </section>
 
-    <!-- --- INTERACTIVE TOURNAMENT BRACKET --- -->
-    <section class="content-section" id="bracket">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 class="section-title" style="margin-bottom: 0;">
-                <span><i class="fa-solid fa-sitemap"></i></span> Knockout Bracket
-            </h2>
-            <div class="zoom-controls">
-                <button class="zoom-btn" ng-click="adjustZoom(-0.1)" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
-                <button class="zoom-btn" ng-click="adjustZoom(0.1)" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
-                <button class="zoom-btn" ng-click="resetZoom()" title="Reset"><i class="fa-solid fa-arrows-rotate"></i></button>
+    <!-- --- LIVE MATCH SELECTION OVERLAY --- -->
+    <div class="selection-overlay-modal" ng-class="{'active': showLiveSelector}">
+        <div class="selection-overlay-card">
+            <button class="overlay-close-btn" ng-click="closeOverlays()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="overlay-title">Live FIFA Matches</div>
+            <div class="overlay-list">
+                <div ng-repeat="f in liveMatchesList" class="match-select-item" ng-click="openMatchStreamsFlow(f)">
+                    <div class="match-select-teams">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img ng-if="getCountryFlagUrl(f.homeTeam)" ng-src="{{getCountryFlagUrl(f.homeTeam)}}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.homeTeam)">⚽</span>
+                            {{f.homeTeam}}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                            <img ng-if="getCountryFlagUrl(f.awayTeam)" ng-src="{{getCountryFlagUrl(f.awayTeam)}}" alt="" style="width: 20px; height: 14px; border-radius: 2px; object-fit: cover;">
+                            <span ng-if="!getCountryFlagUrl(f.awayTeam)">⚽</span>
+                            {{f.awayTeam}}
+                        </div>
+                    </div>
+                    <span class="player-live-badge" style="position: static; padding: 4px 8px;">
+                        <span></span> {{f.homeScore != null ? f.homeScore : '0'}} - {{f.awayScore != null ? f.awayScore : '0'}}
+                    </span>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="glass-card bracket-scroll-container" id="bracket-container">
-            <div class="bracket-zoom-wrapper" ng-style="{'transform': 'scale(' + zoomLevel + ')'}">
-                
-                <!-- Round of 16 -->
-                <div class="bracket-round-column">
-                    <div class="bracket-round-title">Round of 16</div>
-                    <div ng-repeat="node in bracketData.r16" class="bracket-match-node">
-                        <div class="bracket-team-line" ng-class="{'winner': node.homeScore > node.awayScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.homeFlag}}</span>
-                                <span>{{node.homeTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.homeScore}}</span>
+    <!-- --- MATCH STREAM SELECTION OVERLAY --- -->
+    <div class="selection-overlay-modal" ng-class="{'active': showStreamSelector}">
+        <div class="selection-overlay-card">
+            <button class="overlay-close-btn" ng-click="closeOverlays()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="overlay-title">Select Stream Mirror</div>
+            
+            <!-- Match Banner Info -->
+            <div style="text-align: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 14px;">
+                <!-- Score Display (for live/finished) -->
+                <div ng-if="selectedMatch.status === 'live' || selectedMatch.status === 'finished'" style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 8px;">
+                    <div style="text-align: center;">
+                        <img ng-if="getCountryFlagUrl(selectedMatch.homeTeam)" ng-src="{{getCountryFlagUrl(selectedMatch.homeTeam)}}" alt="" style="width: 32px; height: 22px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: block; margin: 0 auto 4px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #fff;">{{selectedMatch.homeTeam}}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 36px; font-weight: 900; color: #fff; line-height: 1;">
+                            {{selectedMatch.homeScore != null ? selectedMatch.homeScore : '-'}} : {{selectedMatch.awayScore != null ? selectedMatch.awayScore : '-'}}
                         </div>
-                        <div class="bracket-team-line" ng-class="{'winner': node.awayScore > node.homeScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.awayFlag}}</span>
-                                <span>{{node.awayTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.awayScore}}</span>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+                            <span ng-if="selectedMatch.status === 'live'" style="color: #ff3b30;">● {{selectedMatch.matchTime || 'LIVE'}}</span>
+                            <span ng-if="selectedMatch.status === 'finished'" style="color: #aeaeb2;">Full Time</span>
                         </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <img ng-if="getCountryFlagUrl(selectedMatch.awayTeam)" ng-src="{{getCountryFlagUrl(selectedMatch.awayTeam)}}" alt="" style="width: 32px; height: 22px; border-radius: 3px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: block; margin: 0 auto 4px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #fff;">{{selectedMatch.awayTeam}}</div>
                     </div>
                 </div>
 
-                <!-- Quarter Finals -->
-                <div class="bracket-round-column">
-                    <div class="bracket-round-title">Quarter Finals</div>
-                    <div ng-repeat="node in bracketData.qf" class="bracket-match-node">
-                        <div class="bracket-team-line" ng-class="{'winner': node.homeScore > node.awayScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.homeFlag}}</span>
-                                <span>{{node.homeTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.homeScore}}</span>
-                        </div>
-                        <div class="bracket-team-line" ng-class="{'winner': node.awayScore > node.homeScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.awayFlag}}</span>
-                                <span>{{node.awayTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.awayScore}}</span>
-                        </div>
-                    </div>
+                <!-- Teams display for upcoming -->
+                <div ng-if="selectedMatch.status !== 'live' && selectedMatch.status !== 'finished'" style="font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <img ng-if="getCountryFlagUrl(selectedMatch.homeTeam)" ng-src="{{getCountryFlagUrl(selectedMatch.homeTeam)}}" alt="" style="width: 24px; height: 17px; border-radius: 2px; object-fit: cover; box-shadow: 0 1px 4px rgba(0,0,0,0.4);">
+                    <span>{{selectedMatch.homeTeam}}</span>
+                    <span style="color: var(--neon-green); font-size: 10px; letter-spacing: 2px;">VS</span>
+                    <img ng-if="getCountryFlagUrl(selectedMatch.awayTeam)" ng-src="{{getCountryFlagUrl(selectedMatch.awayTeam)}}" alt="" style="width: 24px; height: 17px; border-radius: 2px; object-fit: cover; box-shadow: 0 1px 4px rgba(0,0,0,0.4);">
+                    <span>{{selectedMatch.awayTeam}}</span>
                 </div>
 
-                <!-- Semi Finals -->
-                <div class="bracket-round-column">
-                    <div class="bracket-round-title">Semi Finals</div>
-                    <div ng-repeat="node in bracketData.sf" class="bracket-match-node">
-                        <div class="bracket-team-line" ng-class="{'winner': node.homeScore > node.awayScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.homeFlag}}</span>
-                                <span>{{node.homeTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.homeScore}}</span>
-                        </div>
-                        <div class="bracket-team-line" ng-class="{'winner': node.awayScore > node.homeScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.awayFlag}}</span>
-                                <span>{{node.awayTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.awayScore}}</span>
-                        </div>
-                    </div>
+                <!-- Match Status Badge -->
+                <div style="margin-bottom: 8px;">
+                    <span ng-if="selectedMatch.status === 'live'" style="display: inline-block; background: rgba(255,59,48,0.15); color: #ff3b30; border: 1px solid rgba(255,59,48,0.3); border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 800; letter-spacing: 2px;">● LIVE</span>
+                    <span ng-if="selectedMatch.status === 'notstarted'" style="display: inline-block; background: rgba(255,204,0,0.12); color: #ffcc00; border: 1px solid rgba(255,204,0,0.3); border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 800; letter-spacing: 2px;">⏱ UPCOMING</span>
+                    <span ng-if="selectedMatch.status === 'finished'" style="display: inline-block; background: rgba(174,174,178,0.12); color: #aeaeb2; border: 1px solid rgba(174,174,178,0.2); border-radius: 20px; padding: 2px 10px; font-size: 10px; font-weight: 800; letter-spacing: 2px;">✓ FINISHED</span>
                 </div>
 
-                <!-- Final -->
-                <div class="bracket-round-column">
-                    <div class="bracket-round-title">Final</div>
-                    <div ng-repeat="node in bracketData.final" class="bracket-match-node" style="border-color: var(--neon-green); box-shadow: 0 0 15px var(--glow-green);">
-                        <div class="bracket-team-line" ng-class="{'winner': node.homeScore > node.awayScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.homeFlag}}</span>
-                                <span>{{node.homeTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.homeScore}}</span>
-                        </div>
-                        <div class="bracket-team-line" ng-class="{'winner': node.awayScore > node.homeScore}">
-                            <div class="bracket-team-flag-name">
-                                <span class="source-flag">{{node.awayFlag}}</span>
-                                <span>{{node.awayTeam}}</span>
-                            </div>
-                            <span class="bracket-score">{{node.awayScore}}</span>
-                        </div>
-                    </div>
+                <!-- Stadium Image (if available) -->
+                <div ng-if="selectedMatch.stadiumImage" style="margin: 8px auto; max-width: 320px; border-radius: 8px; overflow: hidden;">
+                    <img ng-src="{{selectedMatch.stadiumImage}}" alt="{{selectedMatch.venue}}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
                 </div>
 
+                <!-- Match Detail Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; text-align: left; font-size: 11px; color: var(--text-muted); max-width: 360px; margin: 0 auto;">
+                    <div ng-if="selectedMatch.venue" style="grid-column: span 2;">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">🏟 STADIUM</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.venue}}</span>
+                        <span ng-if="selectedMatch.stadiumCapacity" style="color: var(--text-muted); font-size: 10px; margin-left: 6px;">({{selectedMatch.stadiumCapacity | number}} capacity)</span>
+                    </div>
+                    <div ng-if="selectedMatch.city || selectedMatch.country">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">📍 LOCATION</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.city}}{{selectedMatch.country ? ', ' + selectedMatch.country : ''}}</span>
+                    </div>
+                    <div>
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">📅 DATE</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.localDate || 'TBA'}}</span>
+                    </div>
+                    <div ng-if="selectedMatch.stadiumLat && selectedMatch.stadiumLng">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">🗺 MAP</span>
+                        <a ng-href="https://www.google.com/maps?q={{selectedMatch.stadiumLat}},{{selectedMatch.stadiumLng}}" target="_blank" rel="noopener" style="color: #00d9ff; font-weight: 600; text-decoration: none;">View on Maps →</a>
+                    </div>
+                    <div>
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">⚽ COMPETITION</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.competition || 'FIFA World Cup 2026'}}</span>
+                    </div>
+                    <div ng-if="selectedMatch.stage">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">🏆 STAGE</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.stage}}</span>
+                    </div>
+                    <div ng-if="selectedMatch.referee">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">🧑‍⚖️ REFEREE</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.referee}}</span>
+                    </div>
+                    <div ng-if="selectedMatch.attendance">
+                        <span style="color: rgba(255,255,255,0.4); font-size: 9px; letter-spacing: 1px; display: block;">👥 ATTENDANCE</span>
+                        <span style="color: #fff; font-weight: 600;">{{selectedMatch.attendance | number}}</span>
+                    </div>
+                </div>
+                <div ng-if="selectedMatch.liveScoreSource && selectedMatch.liveScoreSource !== 'D1'" style="margin-top: 6px; font-size: 9px; color: var(--text-muted);">
+                    Scores: {{selectedMatch.liveScoreSource}}
+                </div>
+            </div>
+
+            <!-- Loader within overlay -->
+            <div ng-if="streamSelectorLoading" style="text-align: center; padding: 40px 0;">
+                <div class="loader-spinner" style="margin: 0 auto 15px auto; width: 40px; height: 40px; border-width: 3px;"></div>
+                <div style="font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--neon-green);">CONNECTING MIRRORS...</div>
+            </div>
+
+            <!-- List of streams -->
+            <div ng-if="!streamSelectorLoading && !streamSelectorNoStreams" class="overlay-list">
+                <div ng-repeat="s in selectedMatchStreams" class="stream-select-btn" ng-click="selectStream(s)">
+                    <div>
+                        <div class="stream-provider-name">▶ Mirror #{{$index + 1}} ({{s.provider}})</div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">{{s.language || 'EN'}} · {{s.quality || '720P'}} · Mirror {{s.mirror}}</div>
+                    </div>
+                    <div class="stream-meta-badges">
+                        <span class="stream-badge quality">{{s.quality || '720P'}}</span>
+                        <span class="stream-badge" style="color: var(--neon-green); border-color: rgba(0,255,102,0.1);">ONLINE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No streams message -->
+            <div ng-if="!streamSelectorLoading && streamSelectorNoStreams" style="text-align: center; padding: 30px 10px;">
+                <i class="fa-regular fa-clock" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
+                <div style="font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 5px;">Streams will be available before kick-off</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Please check back 10-15 minutes prior to the scheduled kickoff time.</p>
+                <div ng-if="selectedMatch.apiStreamResponseStatus === 'Error'" style="margin-top: 8px; font-size: 10px; color: #ff6b6b;">
+                    API Error: Could not reach stream backend. Admin may need to sync or assign streams.
+                </div>
+            </div>
+
+            <!-- Debug Info Panel (Admin/Dev mode) -->
+            <div ng-if="debugMode && selectedMatch" style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.4);">
+                <div style="color: rgba(255,204,0,0.8); font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">⚙ DEBUG INFORMATION</div>
+                <div><b>Match ID:</b> {{selectedMatch.id}}</div>
+                <div><b>Fixture ID:</b> {{selectedMatch.id || 'N/A'}}</div>
+                <div><b>Data Source URL:</b> worldcup26.ir/get/games (primary), fallback_games.json (local backup)</div>
+                <div><b>Stadium Source:</b> worldcup26.ir/game → stadium_id → STADIUM_MAP_SERVER lookup → {{selectedMatch.venue || 'Venue to be confirmed'}}</div>
+                <div><b>Details Source:</b> worldcup26.ir/get/games (kickoff, scores, round, home/away teams)</div>
+                <div><b>Stream Source:</b> Cloudflare Worker → Railway /api/admin/streams/{{selectedMatch.id}} → PostgreSQL streams table</div>
+                <div><b>Stream URL:</b> <span ng-if="selectedMatchStreams.length > 0">{{selectedMatchStreams[0].embedUrl || selectedMatchStreams[0].url}}</span><span ng-if="selectedMatchStreams.length === 0">N/A</span></div>
+                <div><b>Last Sync Time:</b> {{raceData.lastDetailsSync || 'Unknown'}}</div>
+                <div><b>Cache Status:</b> server.js 30s fixture cache + 15min standings cache + Firestore live config listener</div>
+                <div><b>API Response Status:</b> {{selectedMatch.apiStreamResponseStatus || 'Pending'}}</div>
+                <div><b>Streams Count:</b> {{selectedMatchStreams.length}} total</div>
             </div>
         </div>
-    </section>
+    </div>
+
+
 
     <!-- --- MOBILE LIVE MATCHES DRAWER --- -->
     <div class="mobile-bottom-drawer" ng-class="{'open': isDrawerOpen}">
@@ -1795,7 +1981,7 @@
             <div ng-repeat="f in fixtures | filter:{status: 'live'}" 
                  class="live-sidebar-card"
                  ng-class="{'active': raceData.name === f.homeTeam + ' vs ' + f.awayTeam}"
-                 ng-click="goBack($event); toggleMobileDrawer()">
+                 ng-click="openMatchStreamsFlow(f); toggleMobileDrawer()">
                  
                  <div class="live-sidebar-top">
                      <span style="color: var(--text-muted);">{{f.round || 'World Cup'}}</span>
@@ -1827,7 +2013,6 @@
                     <a href="#watch" class="footer-link">Watch</a>
                     <a href="#fixtures" class="footer-link">Fixtures</a>
                     <a href="#standings" class="footer-link">Standings</a>
-                    <a href="#bracket" class="footer-link">Bracket</a>
                 </div>
             </div>
 
@@ -1865,7 +2050,7 @@
         app.controller('MainController', function ($scope, $sce, $interval, $window, $http, $timeout) {
             
             function apiUrl(path) {
-                return 'https://watchparty-backend.thejasnirmal944.workers.dev' + path;
+                return (window.location.origin || 'https://watchparty-backend.thejasnirmal944.workers.dev') + path;
             }
 
             $scope.isTheater = false;
@@ -1876,52 +2061,257 @@
 
             $scope.dataLoaded = false;
             $scope.isSwitchingStream = false;
-            $scope.zoomLevel = 1.0;
-            
+            $scope.fixturesLoading = false;
+            $scope.fixturesError = null;
+            $scope.standingsLoading = false;
+            $scope.standingsError = null;
             $scope.streamLinks = [];
             $scope.currentStream = {};
             $scope.raceData = {};
             $scope.customTimer = { enabled: false, label: '', target: '' };
-
             $scope.fixtures = [];
             $scope.standings = {};
             $scope.activeGroup = '';
+            $scope.setActiveGroup = function(g) { $scope.activeGroup = g; };
+            // Overlays & Match Selector Flow State
+            $scope.liveMatchesList = [];
+            $scope.selectedMatch = null;
+            $scope.selectedMatchStreams = [];
+            $scope.showLiveSelector = false;
+            $scope.showStreamSelector = false;
+            $scope.streamSelectorLoading = false;
+            $scope.streamSelectorNoStreams = false;
 
-            $scope.setActiveGroup = function(g) {
-                $scope.activeGroup = g;
+            // Debug mode - toggle with URL param ?debug=1 or via admin
+            $scope.debugMode = (window.location.search.indexOf('debug=1') > -1) ||
+                               (localStorage.getItem('fifa_debug') === 'true');
+            $scope.toggleDebug = function() {
+                $scope.debugMode = !$scope.debugMode;
+                localStorage.setItem('fifa_debug', $scope.debugMode ? 'true' : 'false');
             };
 
 
-            // Zoom handlers
-            $scope.adjustZoom = function(amount) {
-                $scope.zoomLevel = Math.max(0.6, Math.min(1.4, $scope.zoomLevel + amount));
-            };
-            $scope.resetZoom = function() {
-                $scope.zoomLevel = 1.0;
+            // Maps country names to ISO-2 codes for FlagCDN
+            const countryToIso = {
+                'germany': 'de',
+                'france': 'fr',
+                'spain': 'es',
+                'italy': 'it',
+                'england': 'gb',
+                'argentina': 'ar',
+                'brazil': 'br',
+                'portugal': 'pt',
+                'netherlands': 'nl',
+                'belgium': 'be',
+                'croatia': 'hr',
+                'uruguay': 'uy',
+                'mexico': 'mx',
+                'usa': 'us',
+                'united states': 'us',
+                'canada': 'ca',
+                'morocco': 'ma',
+                'japan': 'jp',
+                'korea': 'kr',
+                'south korea': 'kr',
+                'denmark': 'dk',
+                'switzerland': 'ch',
+                'saudi': 'sa',
+                'saudi arabia': 'sa',
+                'senegal': 'sn',
+                'ecuador': 'ec',
+                'qatar': 'qa',
+                'iran': 'ir',
+                'wales': 'gb-wls',
+                'tunisia': 'tn',
+                'australia': 'au',
+                'costa rica': 'cr',
+                'poland': 'pl',
+                'serbia': 'rs',
+                'sweden': 'se',
+                'ghana': 'gh',
+                'cameroon': 'cm',
+                'norway': 'no',
+                'iraq': 'iq',
+                'cape verde': 'cv',
+                'new zealand': 'nz',
+                'egypt': 'eg',
+                'south africa': 'za',
+                'czechia': 'cz',
+                'czech republic': 'cz',
+                'bosnia': 'ba',
+                'paraguay': 'py',
+                'austria': 'at',
+                'jordan': 'jo',
+                'scotland': 'gb-sct',
+                'panama': 'pa',
+                'algeria': 'dz',
+                'colombia': 'co',
+                'ivory coast': 'ci',
+                "côte d'ivoire": 'ci',
+                'turkiye': 'tr',
+                'turkey': 'tr',
+                'uzbekistan': 'uz',
+                'haiti': 'ht',
+                'peru': 'pe',
+                'slovenia': 'si',
+                'congo': 'cd',
+                'dr congo': 'cd',
+                'curacao': 'cw'
             };
 
-            // Drag to scroll bracket handler
-            const slider = document.getElementById('bracket-container');
-            let isDown = false;
-            let startX;
-            let scrollLeft;
+            $scope.getCountryFlagUrl = function(name) {
+                if (!name) return null;
+                const lower = name.toLowerCase().trim();
+                for (let key in countryToIso) {
+                    if (lower.includes(key)) {
+                        return 'https://flagcdn.com/w80/' + countryToIso[key] + '.png';
+                    }
+                }
+                return null;
+            };
 
-            if (slider) {
-                slider.addEventListener('mousedown', (e) => {
-                    isDown = true;
-                    startX = e.pageX - slider.offsetLeft;
-                    scrollLeft = slider.scrollLeft;
+            $scope.getMatchFlagsUrls = function(title) {
+                const names = $scope.getTeamNames(title);
+                return {
+                    home: $scope.getCountryFlagUrl(names.home),
+                    away: $scope.getCountryFlagUrl(names.away)
+                };
+            };
+
+            $scope.getCountryFlag = function(name) {
+                if (!name) return '⚽';
+                const lower = name.toLowerCase();
+                if (lower.includes('germany')) return '🇩🇪';
+                if (lower.includes('france')) return '🇫🇷';
+                if (lower.includes('spain')) return '🇪🇸';
+                if (lower.includes('italy')) return '🇮🇹';
+                if (lower.includes('england')) return '🇬🇧';
+                if (lower.includes('argentina')) return '🇦🇷';
+                if (lower.includes('brazil')) return '🇧🇷';
+                if (lower.includes('portugal')) return '🇵🇹';
+                if (lower.includes('netherlands') || lower.includes('dutch')) return '🇳🇱';
+                if (lower.includes('belgium')) return '🇧🇪';
+                if (lower.includes('croatia')) return '🇭🇷';
+                if (lower.includes('uruguay')) return '🇺🇾';
+                if (lower.includes('mexico')) return '🇲🇽';
+                if (lower.includes('usa') || lower.includes('united states') || lower.includes('u.s.a.')) return '🇺🇸';
+                if (lower.includes('canada')) return '🇨🇦';
+                if (lower.includes('morocco')) return '🇲🇦';
+                if (lower.includes('japan')) return '🇯🇵';
+                if (lower.includes('korea')) return '🇰🇷';
+                if (lower.includes('denmark')) return '🇩🇰';
+                if (lower.includes('switzerland')) return '🇨🇭';
+                if (lower.includes('saudi')) return '🇸🇦';
+                if (lower.includes('senegal')) return '🇸🇳';
+                if (lower.includes('ecuador')) return '🇪🇨';
+                if (lower.includes('qatar')) return '🇶🇦';
+                if (lower.includes('iran')) return '🇮🇷';
+                if (lower.includes('wales')) return '🏴󠁧󠁢󠁷󠁬󠁳󠁿';
+                if (lower.includes('tunisia')) return '🇹🇳';
+                if (lower.includes('australia')) return '🇦🇺';
+                if (lower.includes('costa rica')) return '🇨🇷';
+                if (lower.includes('poland')) return '🇵🇱';
+                if (lower.includes('serbia')) return '🇷🇸';
+                if (lower.includes('sweden')) return '🇸🇪';
+                if (lower.includes('ghana')) return '🇬🇭';
+                if (lower.includes('cameroon')) return '🇨🇲';
+                return '⚽';
+            };
+
+            $scope.triggerWatchFlow = function() {
+                const liveMatches = $scope.fixtures.filter(f => f.status === 'live');
+                if (liveMatches.length > 1) {
+                    $scope.liveMatchesList = liveMatches;
+                    $scope.showLiveSelector = true;
+                } else if (liveMatches.length === 1) {
+                    $scope.openMatchStreamsFlow(liveMatches[0]);
+                } else {
+                    const upcoming = $scope.fixtures.filter(f => f.status === 'notstarted');
+                    if (upcoming.length > 0) {
+                        $scope.openMatchStreamsFlow(upcoming[0]);
+                    } else if ($scope.fixtures.length > 0) {
+                        $scope.openMatchStreamsFlow($scope.fixtures[0]);
+                    }
+                }
+            };
+
+            $scope.openMatchStreamsFlow = function(match) {
+                $scope.showLiveSelector = false;
+                $scope.selectedMatch = angular.copy(match);
+                $scope.selectedMatch.venue = match.stadium || match.venue || 'Venue to be confirmed';
+                $scope.selectedMatch.city = match.city || '';
+                $scope.selectedMatch.country = match.country || '';
+                $scope.selectedMatch.competition = match.competition || 'FIFA World Cup 2026';
+                $scope.selectedMatch.stage = match.round || match.stage || 'Group Stage';
+                $scope.selectedMatchStreams = [];
+                $scope.showStreamSelector = true;
+                $scope.streamSelectorLoading = true;
+                $scope.streamSelectorNoStreams = false;
+
+                $http.get(apiUrl('/api/streams/' + match.id)).then(function(res) {
+                    $scope.streamSelectorLoading = false;
+                    const streams = res.data && res.data.streams ? res.data.streams : (res.data || []);
+                    $scope.selectedMatch.apiStreamResponseStatus = streams.length > 0 ? 'OK' : 'No streams';
+                    if (streams.length === 0) {
+                        $scope.streamSelectorNoStreams = true;
+                    } else if (streams.length === 1) {
+                        $scope.streamSelectorLoading = true;
+                        $timeout(function() {
+                            $scope.selectStream(streams[0]);
+                        }, 1500);
+                    } else {
+                        $scope.selectedMatchStreams = streams;
+                    }
+                }).catch(function(err) {
+                    $scope.streamSelectorLoading = false;
+                    $scope.streamSelectorNoStreams = true;
+                    $scope.selectedMatch.apiStreamResponseStatus = 'Error: ' + (err.status || err.message);
                 });
-                slider.addEventListener('mouseleave', () => { isDown = false; });
-                slider.addEventListener('mouseup', () => { isDown = false; });
-                slider.addEventListener('mousemove', (e) => {
-                    if(!isDown) return;
-                    e.preventDefault();
-                    const x = e.pageX - slider.offsetLeft;
-                    const walk = (x - startX) * 2;
-                    slider.scrollLeft = scrollLeft - walk;
-                });
-            }
+            };
+
+            $scope.selectStream = function(stream) {
+                $scope.showStreamSelector = false;
+                $scope.isSwitchingStream = true;
+                
+                $scope.raceData = {
+                    name: $scope.selectedMatch.homeTeam + ' vs ' + $scope.selectedMatch.awayTeam,
+                    round: $scope.selectedMatch.round || $scope.selectedMatch.stage || "World Cup 2026",
+                    circuit: $scope.selectedMatch.stadium || $scope.selectedMatch.venue || "Venue to be confirmed",
+                    location: ($scope.selectedMatch.city ? $scope.selectedMatch.city + ', ' : '') + ($scope.selectedMatch.country || ''),
+                    date: $scope.selectedMatch.localDate,
+                    homeScore: $scope.selectedMatch.homeScore != null ? $scope.selectedMatch.homeScore : "0",
+                    awayScore: $scope.selectedMatch.awayScore != null ? $scope.selectedMatch.awayScore : "0",
+                    isLive: $scope.selectedMatch.status === 'live',
+                    isFinished: $scope.selectedMatch.status === 'finished',
+                    matchTime: $scope.selectedMatch.status === 'live' ? ($scope.selectedMatch.matchTime || 'LIVE') : ($scope.selectedMatch.status === 'finished' ? "FT" : "0'")
+                };
+                
+                $scope.currentStream = {
+                    name: stream.provider + ' ' + (stream.language || 'EN') + ' ' + (stream.quality || '720P'),
+                    url: stream.embedUrl,
+                    id: 'sel_' + stream.mirror
+                };
+
+                $scope.streamLinks = $scope.selectedMatchStreams.map((s, idx) => ({
+                    name: s.provider + ' ' + (s.language || 'EN') + ' ' + (s.quality || '720P'),
+                    url: s.embedUrl,
+                    id: 'sel_' + s.mirror
+                }));
+
+                $scope.customTimerActive = false;
+
+                $timeout(function() {
+                    $scope.isSwitchingStream = false;
+                    const playerEl = document.getElementById('watch');
+                    if (playerEl) playerEl.scrollIntoView({ behavior: 'smooth' });
+                }, 1000);
+            };
+
+            $scope.closeOverlays = function() {
+                $scope.showLiveSelector = false;
+                $scope.showStreamSelector = false;
+            };
+
 
             // Client-side parser for stream name
             $scope.parseStreamDetails = function(name) {
@@ -1998,8 +2388,8 @@
             $scope.getMatchFlags = function(title) {
                 const names = $scope.getTeamNames(title);
                 return {
-                    home: getFlagByName(names.home),
-                    away: getFlagByName(names.away)
+                    home: $scope.getCountryFlag(names.home),
+                    away: $scope.getCountryFlag(names.away)
                 };
             };
 
@@ -2012,68 +2402,70 @@
                 };
             };
 
-            function getFlagByName(name) {
-                if (!name) return '⚽';
-                const lower = name.toLowerCase();
-                if (lower.includes('germany')) return '🇩🇪';
-                if (lower.includes('france')) return '🇫🇷';
-                if (lower.includes('spain')) return '🇪🇸';
-                if (lower.includes('italy')) return '🇮🇹';
-                if (lower.includes('england')) return '🇬🇧';
-                if (lower.includes('argentina')) return '🇦🇷';
-                if (lower.includes('brazil')) return '🇧🇷';
-                if (lower.includes('portuguel') || lower.includes('portug')) return '🇵🇹';
-                if (lower.includes('netherland') || lower.includes('dutch')) return '🇳🇱';
-                if (lower.includes('belgium')) return '🇧🇪';
-                if (lower.includes('croatia')) return '🇭🇷';
-                if (lower.includes('uruguay')) return '🇺🇾';
-                if (lower.includes('mexico')) return '🇲🇽';
-                if (lower.includes('usa') || lower.includes('united states')) return '🇺🇸';
-                if (lower.includes('canada')) return '🇨🇦';
-                if (lower.includes('morocco')) return '🇲🇦';
-                if (lower.includes('japan')) return '🇯🇵';
-                if (lower.includes('korea')) return '🇰🇷';
-                return '⚽';
-            }
 
-            // Interactive Knockout Bracket Structure
-            $scope.bracketData = {
-                r16: [
-                    { homeTeam: 'Germany', homeFlag: '🇩🇪', homeScore: 2, awayTeam: 'Denmark', awayFlag: '🇩🇰', awayScore: 0 },
-                    { homeTeam: 'Spain', homeFlag: '🇪🇸', homeScore: 4, awayTeam: 'Georgia', awayFlag: '🇬🇪', awayScore: 1 },
-                    { homeTeam: 'France', homeFlag: '🇫🇷', homeScore: 1, awayTeam: 'Belgium', awayFlag: '🇧🇪', awayScore: 0 },
-                    { homeTeam: 'Portugal', homeFlag: '🇵🇹', homeScore: 0, awayTeam: 'Slovenia', awayFlag: '🇸🇮', awayScore: 0 }, // Portugal won on pens
-                    { homeTeam: 'Netherlands', homeFlag: '🇳🇱', homeScore: 3, awayTeam: 'Romania', awayFlag: '🇷🇴', awayScore: 0 },
-                    { homeTeam: 'Austria', homeFlag: '🇦🇹', homeScore: 1, awayTeam: 'Turkey', awayFlag: '🇹🇷', awayScore: 2 },
-                    { homeTeam: 'England', homeFlag: '🇬🇧', homeScore: 2, awayTeam: 'Slovakia', awayFlag: '🇸🇰', awayScore: 1 },
-                    { homeTeam: 'Switzerland', homeFlag: '🇨🇭', homeScore: 2, awayTeam: 'Italy', awayFlag: '🇮🇹', awayScore: 0 }
-                ],
-                qf: [
-                    { homeTeam: 'Spain', homeFlag: '🇪🇸', homeScore: 2, awayTeam: 'Germany', awayFlag: '🇩🇪', awayScore: 1 },
-                    { homeTeam: 'Portugal', homeFlag: '🇵🇹', homeScore: 0, awayTeam: 'France', awayFlag: '🇫🇷', awayScore: 0 }, // France won on pens
-                    { homeTeam: 'Netherlands', homeFlag: '🇳🇱', homeScore: 2, awayTeam: 'Turkey', awayFlag: '🇹🇷', awayScore: 1 },
-                    { homeTeam: 'England', homeFlag: '🇬🇧', homeScore: 1, awayTeam: 'Switzerland', awayFlag: '🇨🇭', awayScore: 1 } // England won on pens
-                ],
-                sf: [
-                    { homeTeam: 'Spain', homeFlag: '🇪🇸', homeScore: 2, awayTeam: 'France', awayFlag: '🇫🇷', awayScore: 1 },
-                    { homeTeam: 'Netherlands', homeFlag: '🇳🇱', homeScore: 1, awayTeam: 'England', awayFlag: '🇬🇧', awayScore: 2 }
-                ],
-                final: [
-                    { homeTeam: 'Spain', homeFlag: '🇪🇸', homeScore: 2, awayTeam: 'England', awayFlag: '🇬🇧', awayScore: 1 }
-                ]
-            };
+
+            $scope.liveScoreSource = 'D1';
+            $scope.liveScoresRefreshTimer = null;
 
             // Fetch Fixtures & Standings
             function fetchFixtures() {
+                $scope.fixturesLoading = true;
+                $scope.fixturesError = null;
                 $http.get(apiUrl('/api/fifa/fixtures')).then(function(res) {
-                    $scope.fixtures = res.data || [];
+                    const data = res.data || [];
+                    $scope.fixtures = data;
+                    mergeLiveScoresIntoFixtures();
                     try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                 }).catch(function(err) {
                     console.warn('[fixtures fetch failed]', err);
+                    $scope.fixturesError = 'Failed to load fixtures. Using cached data.';
+                }).finally(function() {
+                    $scope.fixturesLoading = false;
+                });
+            }
+
+            function mergeLiveScoresIntoFixtures() {
+                if (!$scope.liveScores || !$scope.liveScores.merged) return;
+                const mergedMap = {};
+                $scope.liveScores.merged.forEach(function(m) {
+                    if (m.id) mergedMap[m.id] = m;
+                });
+                $scope.fixtures.forEach(function(f, idx) {
+                    const live = mergedMap[f.id];
+                    if (live) {
+                        $scope.fixtures[idx].homeScore = live.homeScore;
+                        $scope.fixtures[idx].awayScore = live.awayScore;
+                        $scope.fixtures[idx].status = live.status || f.status;
+                        $scope.fixtures[idx].matchTime = live.matchTime || f.matchTime;
+                        $scope.fixtures[idx].stadium = live.venue || f.stadium || f.venue;
+                        $scope.fixtures[idx].city = live.city || f.city;
+                        $scope.fixtures[idx].country = live.country || f.country;
+                        $scope.fixtures[idx].stadiumImage = live.stadiumImage || f.stadiumImage;
+                        $scope.fixtures[idx].stadiumCapacity = live.stadiumCapacity || f.stadiumCapacity;
+                        $scope.fixtures[idx].liveScoreSource = $scope.liveScoreSource;
+                    }
+                });
+            }
+
+            function fetchLiveScores() {
+                $http.get(apiUrl('/api/fifa/live-scores')).then(function(res) {
+                    if (res.data && res.data.success) {
+                        $scope.liveScores = res.data;
+                        $scope.liveScoreSource = res.data.source || 'D1';
+                        $scope.liveScoreErrors = res.data.errors || [];
+                        if ($scope.fixtures && $scope.fixtures.length > 0) {
+                            mergeLiveScoresIntoFixtures();
+                        }
+                        try { localStorage.setItem('fifa_live_scores', JSON.stringify(res.data)); } catch(e) {}
+                    }
+                }).catch(function(err) {
+                    console.warn('[live scores fetch failed]', err);
                 });
             }
 
             function fetchStandings() {
+                $scope.standingsLoading = true;
+                $scope.standingsError = null;
                 $http.get(apiUrl('/api/fifa/standings')).then(function(res) {
                     const d = res.data;
                     let groups = {};
@@ -2088,6 +2480,9 @@
                     try { localStorage.setItem('fifa_cached_standings', JSON.stringify($scope.standings)); } catch(e) {}
                 }).catch(function(err) {
                     console.warn('[standings fetch failed]', err);
+                    $scope.standingsError = 'Failed to load standings. Using cached data.';
+                }).finally(function() {
+                    $scope.standingsLoading = false;
                 });
             }
 
@@ -2102,16 +2497,38 @@
                     const keys = Object.keys($scope.standings);
                     if (keys.length) $scope.activeGroup = keys[0];
                 }
+                const _cachedScores = localStorage.getItem('fifa_live_scores');
+                if (_cachedScores) {
+                    $scope.liveScores = JSON.parse(_cachedScores);
+                    $scope.liveScoreSource = $scope.liveScores.source || 'D1';
+                }
             } catch(e) {}
 
             fetchFixtures();
             fetchStandings();
+            fetchLiveScores();
 
             // Refresh loops
-            $interval(function() {
+            var refreshInterval = 60000;
+            $scope.liveScoresRefreshTimer = $interval(function() {
                 fetchFixtures();
                 fetchStandings();
+                fetchLiveScores();
             }, 30000);
+
+            // For live matches, poll every 30s for live scores
+            $scope.$watch('fixtures', function(newVal) {
+                if (!newVal || newVal.length === 0) return;
+                var hasLive = newVal.some(function(f) { return f.status === 'live'; });
+                if (hasLive && $scope.liveScoresRefreshTimer) {
+                    $interval.cancel($scope.liveScoresRefreshTimer);
+                }
+                $scope.liveScoresRefreshTimer = $interval(function() {
+                    fetchFixtures();
+                    if (hasLive) { fetchLiveScores(); }
+                    fetchStandings();
+                }, hasLive ? 30000 : 60000);
+            }, true);
 
             // Sync with D1 REST endpoint as fallback
             function fetchLocalFallback() {
@@ -2225,16 +2642,7 @@
             }
         }
 
-        // Initialize loader Lottie animation
-        document.addEventListener("DOMContentLoaded", function () {
-            lottie.loadAnimation({
-                container: document.getElementById('lottie-loader'),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'fifa-loader.json'
-            });
-        });
+
     </script>
 
     <!-- Vanta Net Background Manager (highly optimized, runs at 60 FPS, disables on mobile) -->
