@@ -22,7 +22,7 @@ files.forEach(file => {
   
   if (stat.isFile()) {
     const ext = path.extname(file).toLowerCase();
-    if (allowedExts.includes(ext) && !excludedFiles.includes(file)) {
+    if ((allowedExts.includes(ext) || file === '_redirects') && !excludedFiles.includes(file)) {
       const destPath = path.join(distDir, file);
       fs.copyFileSync(filePath, destPath);
       console.log(`Copied: ${file}`);
