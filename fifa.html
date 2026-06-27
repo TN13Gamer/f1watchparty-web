@@ -1511,11 +1511,11 @@
                 </div>
 
                 <div class="match-header-meta">
-                    <div>
-                        <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i> {{raceData.location || 'FIFA Arena'}}
+                    <div ng-if="raceData.location && raceData.location !== 'Stadium'">
+                        <i class="fa-solid fa-location-dot" style="margin-right: 5px;"></i> {{raceData.location || 'Venue to be confirmed'}}
                     </div>
-                    <div>
-                        <i class="fa-solid fa-circle-info" style="margin-right: 5px;"></i> Stadium: {{raceData.circuit || 'FIFA Venue'}}
+                    <div ng-if="raceData.circuit && raceData.circuit !== 'Stadium' && raceData.circuit !== raceData.location">
+                        <i class="fa-solid fa-circle-info" style="margin-right: 5px;"></i> Stadium: {{raceData.circuit}}
                     </div>
                     <div>
                         <i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Kickoff: {{raceData.date || 'Scheduled'}}
