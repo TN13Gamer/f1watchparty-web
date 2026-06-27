@@ -1119,323 +1119,237 @@
                 </button>
             </div>
 
-            <!-- F1 Diagnostics Section -->
-            <div class="admin-section" ng-if="adminSportView === 'f1'">
-                <h3><i class="fa-solid fa-microchip" style="color: #00e5ff; margin-right: 10px;"></i> F1 Stream & Schedule Diagnostics</h3>
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">
-                    Real-time status of the F1 stream fetcher and schedule sync engine.
-                </p>
-
-                <div class="stat-grid">
-                    <div class="stat-card" style="border-top-color: #e10600;">
-                        <h4>Stream Source</h4>
-                        <div class="stat-value" style="font-size: 14px; margin-top: 10px; word-break: break-all;">
-                            api.pushembdz.store/v1/streams
-                        </div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #00e5ff;">
-                        <h4>F1 Streams Accepted</h4>
-                        <div class="stat-value" style="color: #00e5ff;">{{f1Diagnostics.streamsAccepted || 0}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #ff6b6b;">
-                        <h4>F1 Streams Rejected</h4>
-                        <div class="stat-value" style="color: #ff6b6b;">{{f1Diagnostics.streamsRejected || 0}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #ffc107;">
-                        <h4>Total Detected</h4>
-                        <div class="stat-value" style="color: #ffc107;">{{f1Diagnostics.streamsDetected || 0}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #8b5cf6;">
-                        <h4>Session Groups</h4>
-                        <div class="stat-value" style="color: #8b5cf6;">{{f1Diagnostics.streamGroups || 0}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #00ff55;">
-                        <h4>Weekend Schedule</h4>
-                        <div class="stat-value" style="font-size: 14px;">
-                            {{f1Diagnostics.scheduleRace || 'Unknown'}}
-                            <span style="display:block;font-size:11px;color:var(--text-muted);">
-                                {{f1Diagnostics.scheduleCount || 0}} sessions
-                                <span ng-if="f1Diagnostics.scheduleSprint === 'yes'" style="color:#ffc107;">(Sprint)</span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #a970ff;">
-                        <h4>Last Stream Sync</h4>
-                        <div class="stat-value" style="font-size: 13px;">
-                            {{f1Diagnostics.lastStreamSync || 'Never'}}
-                        </div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #00e676;">
-                        <h4>Last Schedule Sync</h4>
-                        <div class="stat-value" style="font-size: 13px;">
-                            {{f1Diagnostics.lastScheduleSync || 'Never'}}
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px;">
-                    <button class="primary-btn" ng-click="triggerF1StreamSync()" ng-disabled="f1SyncingStreams" style="background: linear-gradient(135deg, #e10600 0%, #ff1e15 100%); color: #fff; border-color: #ff3333;">
-                        <i class="fa-solid fa-arrows-spin" ng-class="{'fa-spin': f1SyncingStreams}"></i>
-                        <span>{{ f1SyncingStreams ? 'Syncing...' : 'Sync Streams' }}</span>
-                    </button>
-                    <button class="primary-btn" ng-click="triggerF1ScheduleSync()" ng-disabled="f1SyncingSchedule" style="background: linear-gradient(135deg, #00e5ff 0%, #0099cc 100%); color: #000; border-color: #00e5ff;">
-                        <i class="fa-solid fa-calendar-day" ng-class="{'fa-spin': f1SyncingSchedule}"></i>
-                        <span>{{ f1SyncingSchedule ? 'Syncing...' : 'Sync Weekend Schedule' }}</span>
-                    </button>
-                </div>
-
-                <!-- F1 Stream Logs -->
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #aaa; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
-                        <i class="fa-solid fa-list"></i> Last Stream Fetcher Logs
-                    </h4>
-                    <div class="log-box" style="max-height: 200px; font-size: 11px;">
-                        <div ng-if="!f1Diagnostics.lastLogs || f1Diagnostics.lastLogs.length === 0" style="color: var(--text-muted); text-align: center; padding: 20px;">
-                            No logs available. Run a sync to see results.
-                        </div>
-                        <div ng-repeat="logLine in f1Diagnostics.lastLogs track by $index" style="border-bottom: 1px solid rgba(255,255,255,0.02); padding: 4px 8px; font-family: monospace; font-size: 10px; color: #ccc;">
-                            {{logLine}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FIFA Diagnostics Section -->
-            <div class="admin-section" ng-if="adminSportView === 'fifa'">
-                <h3><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Data Source Diagnostics</h3>
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">
-                    Live score source, stadium matching, and sync status.
-                </p>
-                <div class="stat-grid">
-                    <div class="stat-card" style="border-top-color: #00ff55;">
-                        <h4>Live Score Source</h4>
-                        <div class="stat-value" style="font-size: 14px; margin-top: 10px;">{{fifaDiagnostics.liveScoreSource || 'D1 Database'}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #8b5cf6;">
-                        <h4>Stadium Source</h4>
-                        <div class="stat-value" style="font-size: 14px;">{{fifaDiagnostics.stadiumCount || 0}} Unique</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #ffc107;">
-                        <h4>Matches Synced</h4>
-                        <div class="stat-value">{{fifaDiagnostics.matchesSynced || fifaStats.totalMatches || 0}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #e10600;">
-                        <h4>Failed Stadiums</h4>
-                        <div class="stat-value" style="color: {{fifaDiagnostics.failedStadiums > 0 ? '#ff6b6b' : '#00ff55'}};">{{fifaDiagnostics.failedStadiums || 0}}</div>
-                        <div ng-if="fifaDiagnostics.matchesWithoutVenue && fifaDiagnostics.matchesWithoutVenue.length > 0" style="font-size: 10px; color: #ff6b6b; margin-top: 4px;">
-                            <div ng-repeat="mv in fifaDiagnostics.matchesWithoutVenue">{{mv.homeTeam}} vs {{mv.awayTeam}}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #00e5ff;">
-                        <h4>Last Sync</h4>
-                        <div class="stat-value" style="font-size: 13px;">{{fifaStats.lastSync || 'Never'}}</div>
-                    </div>
-                    <div class="stat-card" style="border-top-color: #00ff55;">
-                        <h4>Sync Status</h4>
-                        <div class="stat-value" style="font-size: 14px; color: {{fifaStats.syncStatus === 'OK' ? '#00ff55' : '#ffc107'}};">{{fifaStats.syncStatus || 'Idle'}}</div>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px;">
-                    <button class="primary-btn" ng-click="triggerFifaSyncScores()" ng-disabled="fifaSyncingScores" style="background: linear-gradient(135deg, #00ff55 0%, #00aa33 100%); color: #000; border-color: #00ff88;">
-                        <i class="fa-solid fa-arrows-spin" ng-class="{'fa-spin': fifaSyncingScores}"></i>
-                        <span>{{ fifaSyncingScores ? 'Syncing...' : 'Sync Live Scores' }}</span>
-                    </button>
-                    <button class="primary-btn" ng-click="triggerFifaSyncFixtures()" ng-disabled="fifaSyncingFixtures" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #fff; border-color: #a78bfa;">
-                        <i class="fa-solid fa-cloud-arrow-down" ng-class="{'fa-spin': fifaSyncingFixtures}"></i>
-                        <span>{{ fifaSyncingFixtures ? 'Syncing...' : 'Sync Fixtures' }}</span>
-                    </button>
-                    <button class="primary-btn" ng-click="triggerFifaSyncAll()" ng-disabled="fifaSyncingAll" style="background: linear-gradient(135deg, #00e5ff 0%, #0099cc 100%); color: #000; border-color: #00e5ff;">
-                        <i class="fa-solid fa-rotate" ng-class="{'fa-spin': fifaSyncingAll}"></i>
-                        <span>{{ fifaSyncingAll ? 'Syncing...' : 'Sync All' }}</span>
-                    </button>
-                </div>
-            </div>
-
             <!-- FIFA Settings View -->
             <div ng-show="adminSportView === 'fifa'">
-                <!-- Statistics Dashboard Cards -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px;">
-                    <div class="admin-section animate-in" style="margin-bottom: 0; padding: 20px; text-align: center;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px;">Total Matches</div>
-                        <div style="font-size: 32px; font-weight: 900; margin: 10px 0; color: #00ff55;">{{fifaStats.totalMatches || 0}}</div>
-                        <div style="font-size: 10px; color: var(--text-muted);">Loaded from FotMob</div>
-                    </div>
-                    <div class="admin-section animate-in" style="margin-bottom: 0; padding: 20px; text-align: center;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px;">Live Matches</div>
-                        <div style="font-size: 32px; font-weight: 900; margin: 10px 0; color: #ff3333; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span ng-if="fifaStats.liveMatches > 0" class="pulse-dot" style="width: 10px; height: 10px; background: #ff3333; border-radius: 50%;"></span>
-                            {{fifaStats.liveMatches || 0}}
-                        </div>
-                        <div style="font-size: 10px; color: var(--text-muted);">Active streaming feeds</div>
-                    </div>
-                    <div class="admin-section animate-in" style="margin-bottom: 0; padding: 20px; text-align: center;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px;">Streams Active</div>
-                        <div style="font-size: 32px; font-weight: 900; margin: 10px 0; color: #00e676;">{{fifaStats.streamsAvailable || 0}}</div>
-                        <div style="font-size: 10px; color: var(--text-muted);">{{fifaStats.streamsMissing || 0}} matches missing links</div>
-                    </div>
-                    <div class="admin-section animate-in" style="margin-bottom: 0; padding: 20px; text-align: center;">
-                        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px;">Last Sync Status</div>
-                        <div style="font-size: 14px; font-weight: bold; margin: 20px 0 15px 0; color: #fff;">{{fifaStats.syncStatus || 'Idle'}}</div>
-                        <div style="font-size: 9px; color: var(--text-muted);">Last run: {{fifaStats.lastSync}}</div>
-                    </div>
-                </div>
-
-                <!-- Action Toolbar -->
-                <div class="admin-section animate-in" style="margin-bottom: 25px; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <div>
-                        <h4 style="margin: 0; font-size: 14px; color: #fff;">Auto-Sync Schedule Control</h4>
-                        <p style="margin: 5px 0 0 0; font-size: 11px; color: var(--text-muted);">Cron schedule fetches matches and stream mirrors automatically every 10 minutes.</p>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="action-btn" ng-click="triggerManualResync()" ng-disabled="isSyncing" style="background-color: #00ff55; color: #000; border-color: #00ff88; font-weight: 700; height: 38px; padding: 0 20px;">
-                            <i class="fa-solid" ng-class="isSyncing ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i> Force Resync Now
+                <!-- FIFA Active Site View Mode Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-sliders" style="color: #00ff55; margin-right: 10px;"></i> FIFA Active Site View Mode</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Switch the FIFA website homepage between a landing countdown page and the full streaming dashboard.</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="tab-btn" ng-style="{'background': config.fifa.siteMode === 'countdown' ? '#00ff55' : 'rgba(255,255,255,0.02)', 'color': config.fifa.siteMode === 'countdown' ? '#000' : 'var(--text-muted)', 'border-color': config.fifa.siteMode === 'countdown' ? '#00ff88' : 'var(--border)'}" ng-click="config.fifa.siteMode = 'countdown'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
+                            <i class="fa-solid fa-clock" style="margin-right: 8px;"></i> Countdown Landing Page
+                        </button>
+                        <button class="tab-btn" ng-style="{'background': config.fifa.siteMode === 'main' ? '#00ff55' : 'rgba(255,255,255,0.02)', 'color': config.fifa.siteMode === 'main' ? '#000' : 'var(--text-muted)', 'border-color': config.fifa.siteMode === 'main' ? '#00ff88' : 'var(--border)'}" ng-click="config.fifa.siteMode = 'main'; saveLiveConfig(true)" style="flex: 1; min-width: 200px; height: 50px; font-size: 13px;">
+                            <i class="fa-solid fa-video" style="margin-right: 8px;"></i> Main Stream Dashboard
                         </button>
                     </div>
                 </div>
 
-                <!-- Match List & Stream Assign Panel -->
+                <!-- FIFA Custom Countdown Timer Panel -->
                 <div class="admin-section animate-in" style="margin-bottom: 25px;">
-                    <h3><span><i class="fa-solid fa-list-check" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match & Stream Manager</span></h3>
+                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the match schedule countdown with a custom target kickoff time.</p>
                     
-                    <div style="margin-bottom: 15px;">
-                        <input type="text" ng-model="matchSearchText" placeholder="Search by team names, group, or stadium..." style="border-left-color: #00ff55; padding: 10px 15px; font-size: 13px;">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;">
+                            <input type="checkbox" ng-model="config.fifa.customTimer.enabled" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <span>Enable Custom Timer</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: #eee; font-weight: bold; letter-spacing: normal;" ng-if="config.fifa.customTimer.enabled">
+                            <input type="checkbox" ng-model="config.fifa.customTimer.isManual" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <span>Manual Kickoff Override (Prevents auto-sync overwrites)</span>
+                        </label>
                     </div>
 
-                    <div style="overflow-x: auto; width: 100%;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid var(--border); color: var(--text-muted); text-transform: uppercase;">
-                                    <th style="padding: 12px 10px;">Match ID / Stage</th>
-                                    <th style="padding: 12px 10px;">Match details</th>
-                                    <th style="padding: 12px 10px;">Status</th>
-                                    <th style="padding: 12px 10px;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="m in adminMatches | filter:matchSearchText" style="border-bottom: 1px solid var(--border);">
-                                    <td style="padding: 15px 10px;">
-                                        <div style="font-weight: bold; color: #fff;">{{m.id}}</div>
-                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">{{m.stage}} &bull; {{m.groupName}}</div>
-                                    </td>
-                                    <td style="padding: 15px 10px;">
-                                        <div style="font-size: 13px; font-weight: bold; color: #fff;">
-                                            {{m.homeTeam}} vs {{m.awayTeam}}
-                                        </div>
-                                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">
-                                            <i class="fa-solid fa-location-dot"></i> {{m.venue || 'TBD Stadium'}} &bull; {{m.kickoff | date:'medium'}}
-                                        </div>
-                                    </td>
-                                    <td style="padding: 15px 10px;">
-                                        <span ng-if="m.status === 'live'" style="background: rgba(255, 51, 51, 0.1); color: #ff3333; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(255,51,51,0.2);">LIVE</span>
-                                        <span ng-if="m.status === 'finished'" style="background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 3px 8px; border-radius: 4px;">FINISHED</span>
-                                        <span ng-if="m.status === 'notstarted'" style="background: rgba(0, 255, 102, 0.05); color: var(--live-green); padding: 3px 8px; border-radius: 4px;">UPCOMING</span>
-                                    </td>
-                                    <td style="padding: 15px 10px;">
-                                        <div style="display: flex; gap: 8px;">
-                                            <button class="tab-btn" ng-click="openEditMatch(m)" style="font-size: 10px; padding: 5px 10px; border-color: rgba(255,255,255,0.1);"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                            <button class="tab-btn" ng-click="openManageStreams(m)" style="font-size: 10px; padding: 5px 10px; border-color: #00ff55; color: #00ff55;"><i class="fa-solid fa-circle-play"></i> Streams</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="grid-row" ng-if="config.fifa.customTimer.enabled">
+                        <div class="input-group">
+                            <label>Timer Label / Title</label>
+                            <input type="text" ng-model="config.fifa.customTimer.label" placeholder="e.g. MATCH KICKS OFF" ng-change="saveLiveConfig(true)" style="border-left-color: #00ff55;">
+                        </div>
+                        <div class="input-group">
+                            <label>Target Date-Time (Format: YYYY-MM-DDTHH:MM:SSZ)</label>
+                            <input type="text" ng-model="config.fifa.customTimer.target" placeholder="e.g. 2026-06-19T01:00:00Z" ng-change="saveLiveConfig(true)" style="border-left-color: #00ff55;">
+                        </div>
+                    </div>
+
+                    <!-- Sync from Google Match URL Widget -->
+                    <div ng-if="config.fifa.customTimer.enabled" style="margin-top: 15px; background: rgba(0, 255, 85, 0.03); border: 1px dashed rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-link" style="margin-right: 5px;"></i> Sync Kickoff from Google Match URL
+                        </h4>
+                        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                            Paste a Google match search URL to automatically extract the precise UTC kickoff time and enable manual override.
+                        </p>
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <input type="text" ng-model="fifaGoogleUrl" placeholder="Paste Google search match URL here" style="margin-bottom: 0; border-left-color: #00ff55;">
+                            </div>
+                            <button type="button" class="action-btn" ng-click="syncFifaTimeFromGoogleUrl()" style="height: 44px; padding: 0 20px; background-color: #00ff55; color: #000; border-color: #00ff88; font-size: 12px; font-weight: 700;">
+                                <i class="fa-solid fa-arrows-spin"></i> Sync Time
+                            </button>
+                            <button type="button" class="dashed-btn" ng-click="resetFifaTimerToAuto()" style="height: 44px; padding: 0 15px; font-size: 12px;" title="Reset to auto-sync from worldcup26.ir">
+                                <i class="fa-solid fa-rotate-left"></i> Reset to Auto
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Match Editing Drawer/Modal (Inline) -->
-                <div class="admin-section animate-in" ng-if="editingMatch" style="margin-bottom: 25px; border-left: 4px solid #00ff55;">
-                    <h3><span><i class="fa-solid fa-pen" style="color: #00ff55; margin-right: 10px;"></i> Edit Match #{{editingMatch.id}}</span></h3>
-                    <div class="grid-row">
-                        <div class="input-group"><label>Venue / Stadium</label><input type="text" ng-model="editingMatch.venue"></div>
-                        <div class="input-group"><label>Kickoff (ISO string)</label><input type="text" ng-model="editingMatch.kickoffStr"></div>
-                    </div>
-                    <div class="grid-row">
-                        <div class="input-group"><label>Group Stage</label><input type="text" ng-model="editingMatch.groupName"></div>
-                        <div class="input-group"><label>Competition Round</label><input type="text" ng-model="editingMatch.stage"></div>
-                    </div>
-                    <div class="grid-row">
-                        <div class="input-group"><label>Broadcasters</label><input type="text" ng-model="editingMatch.broadcasters"></div>
-                        <div class="input-group"><label>Description</label><input type="text" ng-model="editingMatch.description"></div>
-                    </div>
-                    <div class="grid-row">
-                        <div class="input-group"><label>Thumbnail URL</label><input type="text" ng-model="editingMatch.thumbnail"></div>
-                        <div class="input-group"><label>Banner URL</label><input type="text" ng-model="editingMatch.banner"></div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="primary-btn" ng-click="saveEditedMatch()" style="background: #00ff55; color: #000; border-color: #00ff88; font-weight: bold; width: auto; padding: 10px 25px;">Save Match</button>
-                        <button class="dashed-btn" ng-click="cancelEditMatch()">Cancel</button>
+                <!-- FIFA Widget Visibility Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-toggle-on" style="color: #00ff55; margin-right: 10px;"></i> FIFA Widget Visibility Controls</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Toggle visibility of individual widgets on the FIFA site in real-time.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                        <div class="switch-container">
+                            <span class="switch-label"><i class="fa-solid fa-video"></i> Video Player</span>
+                            <label class="switch">
+                                <input type="checkbox" ng-model="config.fifa.widgets.videoPlayer">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="switch-container">
+                            <span class="switch-label"><i class="fa-solid fa-calendar-day"></i> Match Details</span>
+                            <label class="switch">
+                                <input type="checkbox" ng-model="config.fifa.widgets.eventDetails">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Streams Manager Inline Drawer -->
-                <div class="admin-section animate-in" ng-if="managingStreamsMatch" style="margin-bottom: 25px; border-left: 4px solid #00e676;">
-                    <h3><span><i class="fa-solid fa-video" style="color: #00e676; margin-right: 10px;"></i> Manage Streams for {{managingStreamsMatch.homeTeam}} vs {{managingStreamsMatch.awayTeam}}</span></h3>
-                    
-                    <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #00ff55;">Add Stream Mirror</h4>
-                        <div class="grid-row">
-                            <div class="input-group"><label>Provider / Source Name</label><input type="text" ng-model="newStream.provider" placeholder="e.g. TSN HD"></div>
-                            <div class="input-group"><label>Embed Link / Stream URL</label><input type="text" ng-model="newStream.embedUrl" placeholder="https://..."></div>
-                        </div>
-                        <div class="grid-row">
-                            <div class="input-group"><label>Quality</label><input type="text" ng-model="newStream.quality" placeholder="e.g. 1080P or HD"></div>
-                            <div class="input-group"><label>Language</label><input type="text" ng-model="newStream.language" placeholder="e.g. EN or ES"></div>
-                        </div>
-                        <div class="grid-row">
-                            <div class="input-group"><label>Priority (Lower = Higher sort)</label><input type="number" ng-model="newStream.priority"></div>
-                            <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px; padding-top: 25px;">
-                                <input type="checkbox" ng-model="newStream.isPrimary" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
-                                <label style="margin: 0; cursor: pointer; font-size: 11px; font-weight: bold;">Set as Primary Stream</label>
-                            </div>
-                        </div>
-                        <button class="primary-btn" ng-click="addStreamToMatch()" style="background: #00e676; color: #000; border-color: #00ff88; font-weight: bold; width: auto; padding: 8px 20px; margin-top: 15px;">Add Stream Source</button>
-                    </div>
-
-                    <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #fff; text-transform: uppercase;">All Stream Mirrors <span style="color: var(--text-muted); font-weight: normal;">({{matchStreams.length}} total)</span></h4>
-                    <div ng-if="matchStreams.length === 0" style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px 0;">
-                        <i class="fa-solid fa-satellite-dish" style="font-size: 24px; opacity: 0.3; display: block; margin-bottom: 8px;"></i>
-                        No streams assigned. Add one above.
-                    </div>
-                    
-                    <div ng-repeat="s in matchStreams" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-left: 3px solid {{s.isPrimary ? '#00ff55' : (s.status ? '#00e676' : '#ff3333')}}; padding: 12px 15px; border-radius: 8px; margin-bottom: 10px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                            <div>
-                                <span style="font-weight: bold; font-size: 13px; color: #fff;">{{s.provider || 'Custom'}}</span>
-                                <span ng-if="s.isPrimary" style="margin-left: 6px; background: rgba(0,255,85,0.15); color: #00ff55; border: 1px solid rgba(0,255,85,0.3); border-radius: 4px; padding: 1px 5px; font-size: 9px; font-weight: bold;">PRIMARY</span>
-                                <span ng-if="!s.status" style="margin-left: 6px; background: rgba(255,51,51,0.15); color: #ff3333; border: 1px solid rgba(255,51,51,0.3); border-radius: 4px; padding: 1px 5px; font-size: 9px; font-weight: bold;">DISABLED</span>
-                            </div>
-                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                <button class="tab-btn" ng-style="{'background': s.isPrimary ? '#00ff55' : 'transparent', 'color': s.isPrimary ? '#000' : 'var(--text-muted)'}" ng-click="toggleStreamPrimary(s)" style="font-size: 9px; padding: 4px 8px;">★ Primary</button>
-                                <button class="tab-btn" ng-style="{'background': s.status ? '#00e676' : '#ff3333', 'color': '#000'}" ng-click="toggleStreamStatus(s)" style="font-size: 9px; padding: 4px 8px;">{{s.status ? 'Active' : 'Disabled'}}</button>
-                                <button class="tab-btn" ng-click="previewStreamUrl(s)" style="font-size: 9px; padding: 4px 8px; border-color: #00ffff; color: #00ffff;"><i class="fa-solid fa-eye"></i></button>
-                                <button class="tab-btn" ng-click="deleteMatchStream(s)" style="font-size: 9px; padding: 4px 8px; border-color: #ff3333; color: #ff3333;"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <!-- Stream URL -->
-                        <div style="font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.5); word-break: break-all; background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 4px; margin-bottom: 8px;">{{s.embedUrl}}</div>
-                        <!-- Stream Meta -->
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 10px; color: var(--text-muted);">
-                            <span><b>Quality:</b> <span style="color: #fff;">{{s.quality || '720P'}}</span></span>
-                            <span><b>Language:</b> <span style="color: #fff;">{{s.language || 'EN'}}</span></span>
-                            <span><b>Mirror #:</b> <span style="color: #fff;">{{s.mirror}}</span></span>
-                            <span><b>Priority:</b> <span style="color: #fff;">{{s.priority}}</span></span>
-                            <span><b>Last Updated:</b> <span style="color: #fff;">{{s.lastChecked || 'Unknown'}}</span></span>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                        <button class="dashed-btn" ng-click="closeManageStreams()">Close Streams Panel</button>
+                <!-- FIFA Twitch Channel Settings -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-brands fa-twitch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Twitch Chat Channel</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Set the Twitch channel username to embed the chat stream next to the player.</p>
+                    <div class="input-group">
+                        <label>Twitch Channel Name</label>
+                        <input type="text" ng-model="config.fifa.twitchChannel" placeholder="e.g. watchf1olive" style="border-left-color: #00ff55;">
                     </div>
                 </div>
 
-                <!-- Stream Preview Iframe Panel -->
-                <div class="admin-section animate-in" ng-if="previewStream" style="margin-bottom: 25px; border-left: 4px solid #00ffff;">
-                    <h3><span><i class="fa-solid fa-eye" style="color: #00ffff; margin-right: 10px;"></i> Preview Mirror - {{previewStream.provider}}</span></h3>
-                    <div style="position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px;">
-                        <iframe ng-src="{{trustSrc(previewStream.embedUrl)}}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+                <!-- FIFA Match Details -->
+                <div class="admin-section">
+                    <h3><span><i class="fa-solid fa-futbol" style="color: #00ff55; margin-right: 10px;"></i> FIFA Match Details</span></h3>
+
+                    <!-- Auto-Sync Details Toggle & Button -->
+                    <div style="background: rgba(0, 255, 85, 0.05); border: 1px solid rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-arrows-rotate" style="margin-right: 5px;"></i> Match Details Sync
+                        </h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" ng-model="config.fifa.autoSyncDetails" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                                <label style="margin: 0; font-size: 12px; font-weight: 600; color: #eee; cursor: pointer;">
+                                    Auto-Sync Match Details (Scores, Status, Venue) from worldcup26.ir API
+                                </label>
+                            </div>
+                            <button type="button" class="action-btn" ng-click="autoFetchFifaDetails()" ng-disabled="fetchingFifaDetails" style="height: 34px; padding: 0 15px; background-color: #00ff55; color: #000; border-color: #00ff88; font-size: 11px; font-weight: 700; border-radius: 4px;">
+                                <i class="fa-solid" ng-class="fetchingFifaDetails ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'"></i> Sync Now
+                            </button>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 5px;" ng-if="lastFifaDetailsSync">
+                            Last synced: {{lastFifaDetailsSync}}
+                        </div>
                     </div>
-                    <button class="dashed-btn" ng-click="closePreviewStream()">Close Preview</button>
+
+                    <div class="grid-row">
+                        <div class="input-group"><label>Match / Tournament Round</label><input type="text" ng-model="config.fifa.raceData.round" placeholder="e.g. Group A / Final"></div>
+                        <div class="input-group"><label>Match Title (Teams)</label><input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Argentina vs France"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Stadium / Venue</label><input type="text" ng-model="config.fifa.raceData.circuit" placeholder="e.g. Lusail Stadium"></div>
+                        <div class="input-group"><label>Location / Country</label><input type="text" ng-model="config.fifa.raceData.location" placeholder="e.g. Qatar"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><label>Date & Time String</label><input type="text" ng-model="config.fifa.raceData.date" placeholder="e.g. 18 Dec 2022, 18:00 UTC" style="border-left-color: #00ff55;"></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group">
+                            <label>Home Team Score <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-synced)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.homeScore" placeholder="e.g. 0" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;">
+                        </div>
+                        <div class="input-group">
+                            <label>Away Team Score <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-synced)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.awayScore" placeholder="e.g. 0" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;">
+                        </div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group">
+                            <label>Match Timing / Minute <span style="font-size:9px; color:var(--text-muted);" ng-if="config.fifa.autoSyncDetails">(Auto-calculated)</span></label>
+                            <input type="text" ng-model="config.fifa.raceData.matchTime" placeholder="e.g. 45' or HT or FT" ng-disabled="config.fifa.autoSyncDetails" style="border-left-color: #00ff55;" title="Auto-calculated when live. Shows e.g. 45', HT, 67', 90+', FT">
+                            <div style="font-size:10px; color:var(--text-muted); margin-top:3px;" ng-if="config.fifa.raceData.matchTime">
+                                Current: <strong style="color:#00ff55;">{{config.fifa.raceData.matchTime}}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-row" style="margin-top: 10px; margin-bottom: 15px;">
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.raceData.isLive" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;">Match is LIVE <span style="font-size:9px; color:var(--text-muted); font-weight:normal;" ng-if="config.fifa.autoSyncDetails">(Auto)</span></label>
+                        </div>
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.raceData.isFinished" ng-disabled="config.fifa.autoSyncDetails" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;">Match is Finished <span style="font-size:9px; color:var(--text-muted); font-weight:normal;" ng-if="config.fifa.autoSyncDetails">(Auto)</span></label>
+                        </div>
+                        <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                            <input type="checkbox" ng-model="config.fifa.autoShowStreamBeforeKickoff" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                            <label style="margin: 0; cursor: pointer; font-size: 12px; font-weight: 600;" title="Starts showing active streams 30 mins before scheduled kickoff time">Stream starts 30m before kickoff</label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label style="color: #00ff55;">Active Theme (Override)</label>
+                        <select ng-model="config.fifa.raceData.theme" style="border-left-color: #00ff55;">
+                            <option value="">Auto-Detect (Based on Location)</option>
+                            <option value="monaco">Monaco Theme (Red & White)</option>
+                            <option value="monza">Italian Theme (Scarlet Red)</option>
+                            <option value="silverstone">British Theme (Racing Green)</option>
+                            <option value="zandvoort">Dutch Theme (Orange)</option>
+                            <option value="las vegas">Las Vegas Theme (Neon Violet)</option>
+                            <option value="singapore">Night GP Theme (Cyber Neon Teal)</option>
+                            <option value="abu dhabi">Desert GP Theme (Electric Blue)</option>
+                            <option value="spa">Belgian Theme (Gold)</option>
+                            <option value="suzuka">Japanese Theme (Sakura Pink)</option>
+                            <option value="melbourne">Australian Theme (Aussie Gold)</option>
+                            <option value="canada">Canadian Theme (Maple Red)</option>
+                            <option value="china">Chinese Theme (Dragon Red)</option>
+                            <option value="brazil">Brazilian Theme (Senna Green)</option>
+                            <option value="hungary">Hungarian Theme (Fuchsia)</option>
+                            <option value="mexico">Mexican Theme (Emerald Green)</option>
+                            <option value="default">Default FIFA Theme (Green)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- FIFA Stream Sources -->
+                <div class="admin-section">
+                    <h3><i class="fa-solid fa-video" style="color: #00ff55; margin-right: 10px;"></i> FIFA Stream Sources</h3>
+
+                    <!-- Auto-Fetch Stream Widget (FIFA) -->
+                    <div style="background: rgba(0, 255, 85, 0.05); border: 1px solid rgba(0, 255, 85, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; color: #00ff55; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 5px;"></i> Auto-Fetch Streams
+                        </h4>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; margin-top: 0;">
+                            Fetch football embed links automatically from streamed.st based on the match name.
+                        </p>
+                        <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Search Keyword</label>
+                                <input type="text" ng-model="config.fifa.raceData.name" placeholder="e.g. Canada VS Bosnia and Herzegovina" style="margin-bottom: 0; border-left-color: #00ff55;">
+                            </div>
+                            <button type="button" class="action-btn" ng-click="autoFetchFifaStreams()" ng-disabled="fetchingFifaStreams" style="height: 44px; padding: 0 20px; background-color: #00ff55; color: #000; border-color: #00ff88;">
+                                <i class="fa-solid" ng-class="fetchingFifaStreams ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                                {{ fetchingFifaStreams ? 'Fetching...' : 'Fetch & Import' }}
+                            </button>
+                        </div>
+                        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; display: flex; gap: 15px; flex-wrap: wrap;">
+                            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; font-size: 12px; color: var(--text-main); font-weight: normal; letter-spacing: normal;">
+                                <input type="checkbox" ng-model="config.fifa.autoSyncStreams" ng-change="saveLiveConfig(true)" style="width: auto; height: auto; margin: 0; accent-color: #00ff55;">
+                                <span>Enable Auto-Sync Streams (Automatically updates links every 60s via backend cron)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div ng-repeat="link in config.fifa.streamLinks" style="background: rgba(0,0,0,0.5); padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div class="grid-row" style="margin-bottom: 10px;">
+                            <input type="text" ng-model="link.name" placeholder="Name (e.g. English Stream)">
+                            <input type="text" ng-model="link.id" readonly style="color: #666; font-family: monospace;">
+                        </div>
+                        <input type="text" ng-model="link.url" placeholder="Embed URL">
+                        <button ng-click="removeFifaStream($index)" class="icon-btn delete-btn" style="width: auto; height: auto; border-radius: 8px; font-size:10px; padding:8px 15px; margin-top: 10px; border: 1px solid #444;">
+                            <i class="fa-solid fa-trash" style="margin-right:5px;"></i> Remove FIFA Stream
+                        </button>
+                    </div>
+                    <button class="dashed-btn" ng-click="addFifaStream()" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;"><i class="fa-solid fa-plus"></i> Add New FIFA Source</button>
                 </div>
             </div>
         </div>
@@ -1649,40 +1563,6 @@
                     <i class="fa-solid fa-circle-info" style="color: #00ff55; margin-right: 5px;"></i>
                     <strong>Latest Sync Info:</strong> {{ syncStatus.lastMessage || 'Waiting for first sync cycle.' }}
                 </div>
-
-                <!-- Sync Execution Details Panel -->
-                <div ng-if="syncExecDetail" style="background: rgba(0, 255, 85, 0.04); border: 1px solid rgba(0, 255, 85, 0.15); border-radius: 8px; margin-top: 15px; padding: 15px; font-size: 13px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                        <div><i class="fa-solid fa-chart-simple" style="color: #00ff55; margin-right: 8px;"></i><strong>Last Sync Execution</strong></div>
-                        <span style="font-size: 11px; color: var(--text-muted);">{{ syncExecDetail.timestamp | date:'MMM d, h:mm:ss a' }} &middot; {{ syncExecDetail.elapsed }}s</span>
-                    </div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;">
-                        <span ng-style="{'color': syncExecDetail.status === 'success' ? '#00ff55' : '#ff4444'}">
-                            <i class="fa-solid" ng-class="syncExecDetail.status === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
-                            {{ syncExecDetail.status === 'success' ? 'Success' : 'Failed' }}
-                        </span>
-                        <span style="color: var(--text-muted);">Streams in DB: <strong>{{ syncExecDetail.updated }}</strong></span>
-                        <span ng-if="syncExecDetail.error" style="color: #ff4444;">Error: {{ syncExecDetail.error }}</span>
-                    </div>
-                    <div ng-if="syncExecDetail.steps && syncExecDetail.steps.length">
-                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Pipeline Steps</div>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <span ng-repeat="step in syncExecDetail.steps" style="padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;"
-                                  ng-style="step.indexOf(':ok') > -1 ? {'background': 'rgba(0,255,85,0.1)', 'color': '#00ff55', 'border': '1px solid rgba(0,255,85,0.25)'} : {'background': 'rgba(255,68,68,0.1)', 'color': '#ff4444', 'border': '1px solid rgba(255,68,68,0.25)'}">
-                                <i class="fa-solid" ng-class="step.indexOf(':ok') > -1 ? 'fa-check' : 'fa-xmark'"></i>
-                                {{ step.split(':')[0] }}
-                            </span>
-                        </div>
-                    </div>
-                    <div ng-if="syncExecDetail.logs && syncExecDetail.logs.length" style="margin-top: 10px;">
-                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Logs</div>
-                        <div class="log-box" style="max-height: 200px; font-size: 11px;">
-                            <div ng-repeat="l in syncExecDetail.logs" style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #ccc;">
-                                {{ l }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Review Queue -->
@@ -1742,43 +1622,32 @@
                 </div>
             </div>
 
-            <!-- Sync Execution History -->
+            <!-- Sync Logs -->
             <div class="admin-section">
                 <h3><i class="fa-solid fa-list-check" style="color: #00ff55; margin-right: 10px;"></i> Sync Execution History</h3>
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Execution logs from automated background syncing worker (last 20 runs).</p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">Execution logs from automated background syncing worker (last 100 entries).</p>
 
-                <div class="log-box" style="max-height: 500px;">
+                <div class="log-box" style="max-height: 400px;">
                     <div ng-if="syncLogs.length === 0" style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">
                         No execution history found.
                     </div>
-                    <div ng-repeat="run in syncLogs" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 4px;">
+                    <div ng-repeat="log in syncLogs" style="border-bottom: 1px solid rgba(255,255,255,0.03); padding: 12px 10px; font-size: 13px; display: flex; flex-direction: column; gap: 5px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                            <span style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;" ng-style="{'color': run.status === 'success' ? '#00ff55' : '#ff4444'}">
-                                <i class="fa-solid" ng-class="run.status === 'success' ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
-                                {{ run.status === 'success' ? 'Success' : 'Failed' }}
+                            <span style="font-weight: 700;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}">
+                                <i class="fa-solid fa-circle-check" style="margin-right:5px;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}" ng-if="log.status === 'success'"></i>
+                                <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px;" ng-style="{'color': log.status === 'success' ? 'var(--live-green)' : 'var(--primary)'}" ng-if="log.status === 'failed'"></i>
+                                {{ log.status === 'success' ? 'SYNC SUCCESSFUL' : 'SYNC FAILED' }}
                             </span>
-                            <div>
-                                <span class="time">{{ run.timestamp | date:'MMM d, h:mm:ss a' }}</span>
-                                <span style="color: var(--text-muted); margin-left: 8px;">{{ run.elapsed }}s</span>
-                            </div>
+                            <span class="time">{{ log.timestamp | date:'MMM d, h:mm:ss a' }}</span>
                         </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <span ng-repeat="step in run.steps" style="font-size: 10px; padding: 2px 8px; border-radius: 3px; font-weight: 600;"
-                                  ng-style="step.indexOf(':ok') > -1 ? {'background': 'rgba(0,255,85,0.08)', 'color': '#00ff55', 'border': '1px solid rgba(0,255,85,0.15)'} : {'background': 'rgba(255,68,68,0.08)', 'color': '#ff4444', 'border': '1px solid rgba(255,68,68,0.15)'}">
-                                {{ step }}
-                            </span>
+                        <div style="color: #ddd; padding-left: 20px;">{{ log.message }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); padding-left: 20px;" ng-if="log.status === 'success'">
+                            Active Fixtures: <strong>{{ log.matches_found }}</strong> | 
+                            Feeds Scanned: <strong>{{ log.streams_found }}</strong> | 
+                            Auto-Assigned: <strong style="color: #00ff55;">{{ log.assigned }}</strong>
                         </div>
-                        <div ng-if="run.error" style="color: #ff4444; font-size: 11px;">{{ run.error }}</div>
-                        <div ng-if="!run.error" style="color: var(--text-muted); font-size: 11px;">Streams in DB: <strong>{{ run.updated }}</strong></div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Worker Info -->
-            <div style="margin-top: 15px; padding: 10px; font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px;">
-                <i class="fa-solid fa-cloud" style="margin-right: 6px;"></i>
-                Worker: <strong>{{ syncWorkerInfo.name || 'watchparty-backend' }}</strong> |
-                Version: <code style="font-size: 10px;">{{ syncWorkerInfo.version || 'unknown' }}</code>
             </div>
         </div>
 
@@ -1808,7 +1677,7 @@
                     if (urlParams.get('local') === 'true') {
                         return 'http://localhost:3001' + path;
                     }
-                    return 'https://watchparty-backend.thejasnirmal944.workers.dev' + path;
+                    return 'https://watchfifa-api.up.railway.app' + path;
                 }
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3001' + path;
@@ -1833,41 +1702,40 @@
             $scope.syncStatus = { running: false, lastSync: null, lastStatus: 'idle', reviewCount: 0 };
             $scope.reviewQueue = [];
             $scope.syncLogs = [];
-            $scope.syncExecDetail = null;
             $scope.runningManualSync = false;
-            $scope.syncRetryCount = 0;
-            $scope.syncWorkerInfo = {};
 
             let socket = null;
             try {
                 if (typeof io !== 'undefined') {
-                    var socketUrl = apiUrl('').replace(/\/+$/, '');
-                    socket = io(socketUrl, { transports: ['polling'], timeout: 5000 });
-                    socket.on('connect', function() {
-                        console.log('[Socket] Connected to', socketUrl);
-                        if ($scope.isLoggedIn) { socket.emit('admin:join'); }
+                    socket = io(apiUrl(''));
+                    socket.on('connect', () => {
+                        console.log('[Socket] Connected to backend');
+                        if ($scope.isLoggedIn) {
+                            socket.emit('admin:join');
+                        }
                     });
-                    socket.on('connect_error', function(e) {
-                        console.warn('[Socket] Connection error:', e.message);
-                    });
-                    socket.on('sync:status', function(data) {
-                        $timeout(function() {
+                    socket.on('sync:status', (data) => {
+                        $timeout(() => {
                             $scope.syncStatus = {
                                 running: data.running,
                                 lastSync: data.timestamp,
                                 lastStatus: data.stats ? 'success' : 'running',
-                                lastMessage: data.stats ? 'Sync finished.' : 'Syncing in progress...',
+                                lastMessage: data.stats ? `Sync finished. Assigned: ${data.stats.assigned}, Review: ${data.stats.reviewAdded}` : 'Syncing in progress...',
                                 reviewCount: data.reviewCount || 0
                             };
-                            if (data.stats) { $scope.loadSyncDashboard(); }
+                            if (data.stats) {
+                                $scope.loadSyncDashboard(); // Reload full dashboard when sync finishes
+                            }
                         });
                     });
-                    socket.on('admin:review-queue', function(data) {
-                        $timeout(function() { $scope.reviewQueue = data; });
+                    socket.on('admin:review-queue', (data) => {
+                        $timeout(() => {
+                            $scope.reviewQueue = data;
+                        });
                     });
                 }
             } catch (e) {
-                console.warn('[Socket] Not available:', e.message);
+                console.warn('[Socket] Connection failed:', e.message);
             }
 
             $scope.$watch('isLoggedIn', function(newVal) {
@@ -1877,83 +1745,39 @@
             });
 
             $scope.loadSyncDashboard = function() {
-                $http.get(apiUrl('/api/admin/sync-status')).then(function(res) {
-                    if (res.data && res.data.success) {
+                $http.get(apiUrl('/api/admin/sync-status')).then(res => {
+                    if (res.data && res.data.ok) {
                         $scope.syncStatus.lastSync = res.data.lastSync;
                         $scope.syncStatus.lastStatus = res.data.lastStatus;
-                        $scope.syncExecDetail = res.data.lastDetail || null;
-                        $scope.syncStatus.lastMessage = res.data.lastDetail ? (res.data.lastDetail.logs || []).slice(-1)[0] : null;
+                        $scope.syncStatus.lastMessage = res.data.lastMessage;
+                        $scope.syncStatus.reviewCount = res.data.reviewCount;
                     }
-                }).catch(function(err) {
-                    $scope.syncStatus.lastStatus = 'error';
-                    var statusText = "Unable to reach Cloudflare Worker.";
-                    if (err.status === 0) { statusText = "Cloudflare Worker unreachable (CORS or network error)."; }
-                    else if (err.data && err.data.error) { statusText = err.data.error; }
-                    else if (err.statusText) { statusText = "HTTP " + err.status + " " + err.statusText; }
-                    $scope.syncStatus.lastMessage = statusText;
                 });
-                $http.get(apiUrl('/api/admin/review-queue')).then(function(res) {
-                    $scope.reviewQueue = Array.isArray(res.data) ? res.data : [];
-                }).catch(function(err) {
-                    $scope.reviewQueue = [];
+                $http.get(apiUrl('/api/admin/review-queue')).then(res => {
+                    $scope.reviewQueue = res.data;
                 });
-                $http.get(apiUrl('/api/admin/logs')).then(function(res) {
-                    var d = res.data || {};
-                    $scope.syncLogs = Array.isArray(d.logs) ? d.logs : [];
-                    $scope.syncWorkerInfo = { name: d.worker || "watchparty-backend", version: d.version || "unknown", ts: d.timestamp };
-                    if (d.lastDetail) {
-                        $scope.syncExecDetail = d.lastDetail;
-                    }
-                }).catch(function(err) {
-                    $scope.syncLogs = [];
+                $http.get(apiUrl('/api/admin/logs')).then(res => {
+                    $scope.syncLogs = res.data;
                 });
             };
-
-            function doSyncRequest(attempt, maxRetries) {
-                var retryDelay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
-                $scope.syncRetryCount = attempt;
-                $scope.showToast("Sync attempt " + attempt + (maxRetries > 1 ? "/" + maxRetries : "") + "...", attempt > 1 ? "warning" : "info");
-                return $http.post(apiUrl('/api/admin/sync')).then(function(res) {
-                    $scope.runningManualSync = false;
-                    $scope.syncRetryCount = 0;
-                    var data = res.data || {};
-                    var msg = data.message || "Sync completed successfully.";
-                    $scope.showToast(msg, "success");
-                    $scope.loadSyncDashboard();
-                    return { success: true, message: msg, data: data };
-                }).catch(function(err) {
-                    if (attempt < maxRetries) {
-                        $scope.showToast("Attempt " + attempt + " failed. Retrying in " + (retryDelay / 1000) + "s...", "warning");
-                        return $timeout(function() {
-                            return doSyncRequest(attempt + 1, maxRetries);
-                        }, retryDelay);
-                    } else {
-                        $scope.runningManualSync = false;
-                        $scope.syncRetryCount = 0;
-                        var errorMsg = "";
-                        if (err.status === 0) {
-                            errorMsg = "Unable to reach Cloudflare Worker (ensure it is deployed and CORS is configured).";
-                        } else if (err.data && typeof err.data === 'object') {
-                            errorMsg = err.data.error || JSON.stringify(err.data);
-                        } else if (err.data) {
-                            errorMsg = String(err.data);
-                        } else if (err.statusText) {
-                            errorMsg = "HTTP " + err.status + " " + err.statusText;
-                        } else if (err.message) {
-                            errorMsg = err.message;
-                        } else {
-                            errorMsg = "Unknown error (no error details available)";
-                        }
-                        $scope.showToast("Sync failed after " + maxRetries + " attempts: " + errorMsg, "error");
-                        return { success: false, error: errorMsg, status: err.status };
-                    }
-                });
-            }
 
             $scope.triggerManualSync = function() {
                 if ($scope.runningManualSync) return;
                 $scope.runningManualSync = true;
-                doSyncRequest(1, 3);
+                $scope.showToast("Manual sync request sent to background worker...", "info");
+                $http.post(apiUrl('/api/admin/sync-now'))
+                    .then(() => {
+                        $timeout(() => {
+                            $scope.runningManualSync = false;
+                            $scope.showToast("Background sync started!", "success");
+                        });
+                    })
+                    .catch(err => {
+                        $timeout(() => {
+                            $scope.runningManualSync = false;
+                            $scope.showToast("Sync trigger failed: " + (err.data?.error || err.message), "error");
+                        });
+                    });
             };
 
             $scope.approveMatch = function(matchId) {
@@ -2731,200 +2555,91 @@
                 }, "Delete Stream");
             };
 
-            // --- UPGRADED FIFA ADMIN DASHBOARD LOGIC ---
-            $scope.fifaStats = {};
-            $scope.adminMatches = [];
-            $scope.editingMatch = null;
-            $scope.managingStreamsMatch = null;
-            $scope.matchStreams = [];
-            $scope.previewStream = null;
-            $scope.isSyncing = false;
-            $scope.newStream = { provider: "", embedUrl: "", quality: "1080P", language: "EN", priority: 0, isPrimary: false };
-
-            $scope.fetchFifaStats = function() {
-                $http.get(apiUrl('/api/admin/stats')).then(function(res) {
-                    $scope.fifaStats = res.data;
-                }).catch(function(err) {
-                    $scope.showToast("Failed to fetch stats", "error");
-                });
+            $scope.addFifaStream = () => {
+                $scope.config.fifa.streamLinks.push({ name: "", id: "src_fifa_"+Date.now(), url: "" });
+                $scope.addLog("Added new FIFA Stream link row");
             };
-
-            $scope.fetchAdminMatches = function() {
-                const upcomingReq = $http.get(apiUrl('/api/matches/upcoming'));
-                const liveReq = $http.get(apiUrl('/api/matches/live'));
-                const finishedReq = $http.get(apiUrl('/api/matches/completed'));
-
-                Promise.all([upcomingReq, liveReq, finishedReq]).then(function(responses) {
-                    $timeout(function() {
-                        const merged = [
-                            ...(responses[1].data || []), // Live first
-                            ...(responses[0].data || []), // Upcoming
-                            ...(responses[2].data || [])  // Finished
-                        ];
-                        $scope.adminMatches = merged;
+            $scope.removeFifaStream = (i) => { 
+                $scope.showConfirm("Delete FIFA Stream?", function() {
+                    $timeout(() => {
+                        $scope.config.fifa.streamLinks.splice(i, 1); 
+                        $scope.addLog("Deleted FIFA Stream link");
                     });
-                }).catch(function(err) {
-                    $scope.showToast("Failed to load FIFA matches list", "error");
-                });
+                }, "Delete FIFA Stream");
             };
 
-            $scope.triggerManualResync = function() {
-                if ($scope.isSyncing) return;
-                $scope.isSyncing = true;
-                $scope.showToast("Forcing backend sync engine...", "info");
-                $http.post(apiUrl('/admin/resync')).then(function(res) {
-                    $scope.isSyncing = false;
-                    var msg = (res.data && res.data.message) || "Sync completed successfully!";
-                    $scope.showToast(msg, "success");
-                    $scope.fetchFifaStats();
-                    $scope.fetchAdminMatches();
-                }).catch(function(err) {
-                    $scope.isSyncing = false;
-                    var errorMsg = "Sync failed: ";
-                    if (err.status === 0) {
-                        errorMsg += "Unable to reach Cloudflare Worker.";
-                    } else if (err.data && err.data.error) {
-                        errorMsg += err.data.error;
-                    } else {
-                        errorMsg += err.statusText || err.message || "Unknown error";
-                    }
-                    $scope.showToast(errorMsg, "error");
-                });
-            };
+            $scope.fetchingFifaStreams = false;
+            $scope.autoFetchFifaStreams = function() {
+                if ($scope.fetchingFifaStreams) return;
+                $scope.fetchingFifaStreams = true;
+                $scope.showToast("Fetching FIFA streams from streamed.st...", "info");
 
-            // Edit match details
-            $scope.openEditMatch = function(match) {
-                $scope.editingMatch = angular.copy(match);
-                $scope.editingMatch.kickoffStr = new Date(match.kickoff).toISOString();
-            };
-            $scope.saveEditedMatch = function() {
-                $scope.showToast("Saving match details...", "info");
-                $http.post(apiUrl('/api/admin/match/edit'), {
-                    id: $scope.editingMatch.id,
-                    venue: $scope.editingMatch.venue,
-                    kickoff: $scope.editingMatch.kickoffStr,
-                    groupName: $scope.editingMatch.groupName,
-                    stage: $scope.editingMatch.stage,
-                    broadcasters: $scope.editingMatch.broadcasters,
-                    description: $scope.editingMatch.description,
-                    thumbnail: $scope.editingMatch.thumbnail,
-                    banner: $scope.editingMatch.banner
-                }).then(function(res) {
-                    $scope.showToast("Match details updated!", "success");
-                    $scope.editingMatch = null;
-                    $scope.fetchAdminMatches();
-                }).catch(function(err) {
-                    $scope.showToast("Failed to edit match details", "error");
-                });
-            };
-            $scope.cancelEditMatch = function() {
-                $scope.editingMatch = null;
-            };
+                // Get current match name for better stream matching
+                var matchName = ($scope.config && $scope.config.fifa && $scope.config.fifa.raceData && $scope.config.fifa.raceData.name) || '';
 
-            // Manage match streams
-            $scope.openManageStreams = function(match) {
-                $scope.managingStreamsMatch = match;
-                $scope.newStream = { provider: "", embedUrl: "", quality: "1080P", language: "EN", priority: 0, isPrimary: false, matchId: match.id };
-                $scope.fetchMatchStreams(match.id);
-            };
-            $scope.fetchMatchStreams = function(matchId) {
-                // Use admin endpoint to get ALL streams (including disabled)
-                $http.get(apiUrl('/api/admin/streams/' + matchId)).then(function(res) {
-                    $scope.matchStreams = res.data.streams || [];
-                }).catch(function(err) {
-                    // Fallback to public endpoint
-                    $http.get(apiUrl('/api/streams/' + matchId)).then(function(res) {
-                        $scope.matchStreams = res.data.streams || res.data || [];
+                // Call the dedicated fast streams endpoint (uses official streamed.st API)
+                var streamsUrl = '/api/fifa/streams?save=true' + (matchName ? '&match=' + encodeURIComponent(matchName) : '');
+                $http.get(apiUrl(streamsUrl), { timeout: 30000 })
+                    .then(function(res) {
+                        $timeout(function() {
+                            $scope.fetchingFifaStreams = false;
+                            var data = res.data;
+                            if (data && data.ok && data.streamLinks && data.streamLinks.length > 0) {
+                                $scope.config.fifa = $scope.config.fifa || {};
+                                $scope.config.fifa.streamLinks = data.streamLinks;
+                                $scope.showToast("FIFA streams fetched! " + data.count + " links for \"" + (data.matchTitle || matchName || 'match') + "\"", "success");
+                                $scope.addLog("Auto-fetched " + data.count + " FIFA stream links from streamed.st: " + (data.matchTitle || ''));
+                            } else {
+                                var errMsg = (data && data.error) || 'No streams found';
+                                $scope.showToast("FIFA streams: " + errMsg, "error");
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        $timeout(function() {
+                            $scope.fetchingFifaStreams = false;
+                            var status = err.status ? ' (HTTP ' + err.status + ')' : '';
+                            var errMsg = (err.data && (err.data.error || err.data.message)) || err.statusText || err.message || (err.status === -1 ? 'Request timed out or network error' : 'Unknown error');
+                            $scope.showToast("Fetch streams failed" + status + ": " + errMsg, "error");
+                        });
                     });
-                });
             };
-            // Poll streams every 15s while managing streams panel is open
-            var streamListPoll = null;
-            $scope.$watch('managingStreamsMatch', function(match) {
-                if (streamListPoll) { $interval.cancel(streamListPoll); streamListPoll = null; }
-                if (match && match.id) {
-                    streamListPoll = $interval(function() { $scope.fetchMatchStreams(match.id); }, 15000);
-                }
-            });
-            $scope.addStreamToMatch = function() {
-                if (!$scope.newStream.provider || !$scope.newStream.embedUrl) {
-                    $scope.showToast("Provider and Embed URL are required!", "error");
-                    return;
-                }
-                $http.post(apiUrl('/api/admin/stream/add'), $scope.newStream).then(function(res) {
-                    $scope.showToast("Stream mirror added!", "success");
-                    // Response now includes updated streams list for instant refresh
-                    if (res.data.streams) {
-                        $scope.matchStreams = res.data.streams;
-                    } else {
-                        $scope.fetchMatchStreams($scope.managingStreamsMatch.id);
-                    }
-                    $scope.newStream.provider = "";
-                    $scope.newStream.embedUrl = "";
-                    $scope.fetchFifaStats();
-                }).catch(function(err) {
-                    $scope.showToast("Failed to add stream mirror", "error");
-                });
-            };
-            $scope.toggleStreamPrimary = function(stream) {
-                $http.post(apiUrl('/api/admin/stream/edit'), {
-                    embedUrl: stream.embedUrl,
-                    matchId: stream.matchId,
-                    quality: stream.quality,
-                    language: stream.language,
-                    priority: stream.priority,
-                    status: stream.status,
-                    isPrimary: true
-                }).then(function() {
-                    $scope.showToast("Set as primary mirror!", "success");
-                    $scope.fetchMatchStreams($scope.managingStreamsMatch.id);
-                });
-            };
-            $scope.toggleStreamStatus = function(stream) {
-                const nextStatus = stream.status ? 0 : 1;
-                $http.post(apiUrl('/api/admin/stream/edit'), {
-                    embedUrl: stream.embedUrl,
-                    matchId: stream.matchId,
-                    quality: stream.quality,
-                    language: stream.language,
-                    priority: stream.priority,
-                    status: nextStatus,
-                    isPrimary: stream.isPrimary
-                }).then(function() {
-                    $scope.showToast(nextStatus ? "Mirror enabled!" : "Mirror disabled!", "success");
-                    $scope.fetchMatchStreams($scope.managingStreamsMatch.id);
-                    $scope.fetchFifaStats();
-                });
-            };
-            $scope.deleteMatchStream = function(stream) {
-                $scope.showConfirm("Delete this stream mirror?", function() {
-                    $http.post(apiUrl('/api/admin/stream/delete'), { embedUrl: stream.embedUrl }).then(function() {
-                        $scope.showToast("Stream mirror deleted", "success");
-                        $scope.fetchMatchStreams($scope.managingStreamsMatch.id);
-                        $scope.fetchFifaStats();
+
+            $scope.fetchingFifaDetails = false;
+            $scope.lastFifaDetailsSync = null;
+            $scope.autoFetchFifaDetails = function() {
+                if ($scope.fetchingFifaDetails) return;
+                $scope.fetchingFifaDetails = true;
+                $scope.showToast("Detecting next match from streamed.st...", "info");
+
+                // Call the dedicated fast details endpoint (uses official streamed.st + FotMob APIs)
+                $http.get(apiUrl('/api/fifa/details?save=true'), { timeout: 30000 })
+                    .then(function(res) {
+                        $timeout(function() {
+                            $scope.fetchingFifaDetails = false;
+                            var data = res.data;
+                            if (data && data.ok && data.raceData) {
+                                $scope.config.fifa = $scope.config.fifa || {};
+                                $scope.config.fifa.raceData = data.raceData;
+                                if (data.customTimer) $scope.config.fifa.customTimer = data.customTimer;
+                                $scope.lastFifaDetailsSync = new Date().toLocaleTimeString();
+                                $scope.showToast("Match details updated: " + (data.matchTitle || data.raceData.name || "?"), "success");
+                                $scope.addLog("Auto-fetched FIFA match details: " + (data.matchTitle || ''));
+                            } else {
+                                var errMsg = (data && data.error) || 'No match data returned';
+                                $scope.showToast("FIFA details warning: " + errMsg, "error");
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        $timeout(function() {
+                            $scope.fetchingFifaDetails = false;
+                            var status = err.status ? ' (HTTP ' + err.status + ')' : '';
+                            var errMsg = (err.data && (err.data.error || err.data.message)) || err.statusText || err.message || (err.status === -1 ? 'Request timed out or network error' : 'Unknown error');
+                            $scope.showToast("FIFA details sync failed" + status + ": " + errMsg, "error");
+                        });
                     });
-                });
             };
-            $scope.closeManageStreams = function() {
-                $scope.managingStreamsMatch = null;
-                $scope.matchStreams = [];
-            };
-
-            // Stream previewing
-            $scope.previewStreamUrl = function(stream) {
-                $scope.previewStream = stream;
-            };
-            $scope.closePreviewStream = function() {
-                $scope.previewStream = null;
-            };
-
-            // Initial dashboard load on view switch
-            $scope.$watch('adminSportView', function(newVal) {
-                if (newVal === 'fifa') {
-                    $scope.fetchFifaStats();
-                    $scope.fetchAdminMatches();
-                }
-            });
 
             // --- STREAM AUTOFETCH LOGIC ---
             $scope.fetchingStreams = false;
@@ -3115,176 +2830,6 @@
                     });
                 });
             };
-
-            // --- F1 DIAGNOSTICS ---
-            $scope.f1Diagnostics = {
-                streamsAccepted: 0,
-                streamsRejected: 0,
-                streamsDetected: 0,
-                streamGroups: 0,
-                scheduleRace: 'Unknown',
-                scheduleCount: 0,
-                scheduleSprint: 'no',
-                lastStreamSync: 'Never',
-                lastScheduleSync: 'Never',
-                lastLogs: []
-            };
-            $scope.f1SyncingStreams = false;
-            $scope.f1SyncingSchedule = false;
-
-            $scope.triggerF1StreamSync = function() {
-                if ($scope.f1SyncingStreams) return;
-                $scope.f1SyncingStreams = true;
-                $scope.showToast("Syncing F1 streams from pushembdz...", "info");
-                $http.post(apiUrl('/api/f1/sync-streams')).then(function(res) {
-                    $scope.f1SyncingStreams = false;
-                    var data = res.data || {};
-                    if (data.success) {
-                        $scope.showToast("F1 sync complete: " + (data.accepted || 0) + " accepted, " + (data.rejected || 0) + " rejected", "success");
-                    } else {
-                        $scope.showToast("F1 sync completed with issues: " + (data.error || "unknown"), "warning");
-                    }
-                    $scope.fetchF1Diagnostics();
-                }).catch(function(err) {
-                    $scope.f1SyncingStreams = false;
-                    var msg = "F1 sync failed: ";
-                    if (err.status === 0) msg += "Cannot reach Cloudflare Worker.";
-                    else msg += (err.data && err.data.error) || err.statusText || "Unknown error";
-                    $scope.showToast(msg, "error");
-                });
-            };
-
-            $scope.triggerF1ScheduleSync = function() {
-                if ($scope.f1SyncingSchedule) return;
-                $scope.f1SyncingSchedule = true;
-                $scope.showToast("Syncing F1 weekend schedule...", "info");
-                $http.post(apiUrl('/api/f1/sync-schedule')).then(function(res) {
-                    $scope.f1SyncingSchedule = false;
-                    var data = res.data || {};
-                    if (data.success) {
-                        $scope.showToast("Schedule synced: " + (data.sessions || 0) + " sessions for " + (data.race || "current GP"), "success");
-                    } else {
-                        $scope.showToast("Schedule sync had issues: " + (data.error || "unknown"), "warning");
-                    }
-                    $scope.fetchF1Diagnostics();
-                }).catch(function(err) {
-                    $scope.f1SyncingSchedule = false;
-                    var msg = "Schedule sync failed: ";
-                    if (err.status === 0) msg += "Cannot reach Cloudflare Worker.";
-                    else msg += (err.data && err.data.error) || err.statusText || "Unknown error";
-                    $scope.showToast(msg, "error");
-                });
-            };
-
-            $scope.fetchF1Diagnostics = function() {
-                $http.get(apiUrl('/api/f1/status')).then(function(res) {
-                    var data = res.data || {};
-                    if (data.success) {
-                        var streams = data.streams || {};
-                        var schedule = data.schedule || {};
-                        $scope.f1Diagnostics.streamsAccepted = streams.lastAccepted || 0;
-                        $scope.f1Diagnostics.streamsRejected = streams.lastRejected || 0;
-                        $scope.f1Diagnostics.streamsDetected = (streams.lastResult && streams.lastResult.detected) || streams.count || 0;
-                        $scope.f1Diagnostics.streamGroups = (streams.lastResult && streams.lastResult.groups) || 0;
-                        $scope.f1Diagnostics.scheduleRace = schedule.race || 'Unknown';
-                        $scope.f1Diagnostics.scheduleCount = schedule.count || 0;
-                        $scope.f1Diagnostics.scheduleSprint = schedule.sprint || 'no';
-                        $scope.f1Diagnostics.lastScheduleSync = schedule.lastSync || 'Never';
-                        $scope.f1Diagnostics.lastStreamSync = (streams.lastResult && streams.lastResult.timestamp) || 'Never';
-                        $scope.f1Diagnostics.lastLogs = streams.logs || [];
-                    }
-                }).catch(function(err) {
-                    console.warn("[F1 Diagnostics] Failed to fetch:", err);
-                });
-            };
-
-            // Poll F1 diagnostics every 30 seconds
-            $interval($scope.fetchF1Diagnostics, 30000);
-            // Fetch immediately on page load
-            $timeout($scope.fetchF1Diagnostics, 500);
-
-            // --- FIFA DIAGNOSTICS ---
-            $scope.fifaDiagnostics = {
-                liveScoreSource: 'D1',
-                stadiumCount: 0,
-                matchesSynced: 0,
-                failedStadiums: 0,
-                matchesWithoutVenue: []
-            };
-            $scope.fifaSyncingScores = false;
-            $scope.fifaSyncingFixtures = false;
-            $scope.fifaSyncingAll = false;
-
-            $scope.triggerFifaSyncScores = function() {
-                if ($scope.fifaSyncingScores) return;
-                $scope.fifaSyncingScores = true;
-                $scope.showToast("Syncing live scores from Google Sports...", "info");
-                $http.post(apiUrl('/api/fifa/live-scores/sync')).then(function(res) {
-                    $scope.fifaSyncingScores = false;
-                    var data = res.data || {};
-                    $scope.showToast("Score sync: " + (data.synced || 0) + " matches from " + (data.source || "N/A"), data.errors && data.errors.length > 0 ? "warning" : "success");
-                    $scope.loadFifaStats();
-                }).catch(function(err) {
-                    $scope.fifaSyncingScores = false;
-                    var msg = "Score sync failed: ";
-                    if (err.status === 0) msg += "Cannot reach Cloudflare Worker.";
-                    else msg += (err.data && err.data.error) || err.statusText || "Unknown error";
-                    $scope.showToast(msg, "error");
-                });
-            };
-
-            $scope.triggerFifaSyncFixtures = function() {
-                if ($scope.fifaSyncingFixtures) return;
-                $scope.fifaSyncingFixtures = true;
-                $scope.showToast("Syncing FIFA fixtures from FotMob...", "info");
-                $http.post(apiUrl('/api/fifa/sync-fixtures')).then(function(res) {
-                    $scope.fifaSyncingFixtures = false;
-                    $scope.showToast("Fixtures synced from FotMob", "success");
-                    $scope.loadFifaStats();
-                }).catch(function(err) {
-                    $scope.fifaSyncingFixtures = false;
-                    var msg = "Fixture sync failed: ";
-                    if (err.status === 0) msg += "Cannot reach Cloudflare Worker.";
-                    else msg += (err.data && err.data.error) || err.statusText || "Unknown error";
-                    $scope.showToast(msg, "error");
-                });
-            };
-
-            $scope.triggerFifaSyncAll = function() {
-                if ($scope.fifaSyncingAll) return;
-                $scope.fifaSyncingAll = true;
-                $scope.showToast("Running full FIFA sync pipeline...", "info");
-                $http.post(apiUrl('/api/fifa/sync-all')).then(function(res) {
-                    $scope.fifaSyncingAll = false;
-                    var data = res.data || {};
-                    var statusText = data.status === 'success' ? 'success' : 'warning';
-                    $scope.showToast("Full sync complete: " + (data.steps ? data.steps.join(", ") : "done"), statusText);
-                    $scope.loadFifaStats();
-                }).catch(function(err) {
-                    $scope.fifaSyncingAll = false;
-                    var msg = "Full sync failed: ";
-                    if (err.status === 0) msg += "Cannot reach Cloudflare Worker.";
-                    else msg += (err.data && err.data.error) || err.statusText || "Unknown error";
-                    $scope.showToast(msg, "error");
-                });
-            };
-
-            $scope.loadFifaStats = function() {
-                $http.get(apiUrl('/api/admin/stats')).then(function(res) {
-                    if (res.data) {
-                        $scope.fifaStats = res.data;
-                        $scope.fifaDiagnostics.liveScoreSource = res.data.lastLiveScoreSource || 'D1';
-                        $scope.fifaDiagnostics.stadiumCount = res.data.stadiumCount || 0;
-                        $scope.fifaDiagnostics.matchesSynced = res.data.totalMatches || 0;
-                        $scope.fifaDiagnostics.failedStadiums = res.data.failedStadiums || 0;
-                        $scope.fifaDiagnostics.matchesWithoutVenue = res.data.matchesWithoutVenue || [];
-                    }
-                }).catch(function(err) {
-                    console.warn("[FIFA Stats] Failed to fetch:", err);
-                });
-            };
-
-            $timeout($scope.loadFifaStats, 1000);
 
             // --- LIVE SCHEDULE LOGIC ---
 

@@ -45,30 +45,30 @@
       "points": 0
     }
   ],
-  "isLiveRaceActive": true,
+  "isLiveRaceActive": false,
   "activeSport": "f1",
   "siteMode": "main",
   "lastStandingsSync": "2026-06-23T19:04:07.757Z",
   "fifa": {
     "twitchChannel": "watchf1olive",
-    "lastDetailsSync": "2026-06-26T10:54:30.173Z",
+    "lastDetailsSync": "2026-06-27T05:33:05.336Z",
     "customTimer": {
       "enabled": true,
       "label": "MATCH KICKS OFF",
-      "target": "2026-06-26T19:00:00.000Z",
+      "target": "2026-06-27T21:00:00.000Z",
       "isManual": false
     },
     "raceData": {
-      "round": "Group I",
+      "round": "Group L",
       "isLive": false,
-      "name": "Senegal vs Iraq",
+      "name": "Panama vs England",
       "isFinished": false,
       "matchTime": "",
-      "date": "27 Jun 00:30",
+      "date": "28 Jun 02:30",
       "theme": "",
       "homeScore": "0",
-      "location": "Toronto, Canada",
-      "circuit": "BMO Field",
+      "location": "New York/New Jersey, United States",
+      "circuit": "MetLife Stadium",
       "laps": "",
       "awayScore": "0"
     },
@@ -236,7 +236,7 @@
     ],
     "lastStreamsSync": "2026-06-23T18:46:02.659Z"
   },
-  "lastAutoSync": 1782471267525,
+  "lastAutoSync": 1782538381649,
   "nextRace": {
     "name": "Austrian GP",
     "date": "26-28 Jun",
@@ -245,8 +245,8 @@
   },
   "streamKeyword": "F1 - - FP1",
   "weather": {
-    "air": 28,
-    "track": 39,
+    "air": 0,
+    "track": 0,
     "condition": "sunny"
   },
   "customTimer": {

@@ -1171,6 +1171,21 @@
             letter-spacing: 1px;
         }
 
+        .sess-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+        .schedule-row .sess-badge {
+            margin-top: 0;
+            margin-left: 8px;
+        }
+
         .sess-time {
             font-weight: 700;
             font-size: 16px;
@@ -2149,8 +2164,8 @@
                         color: #fff;
                     ">
                         <i class="fa-solid fa-video-slash" style="font-size: 48px; color: var(--f1-red); margin-bottom: 15px; opacity: 0.8;"></i>
-                        <h3 style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">No Stream Sources Configured</h3>
-                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">The administrator has not added any live stream links for this session yet. Please check back shortly.</p>
+                        <h3 style="font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">No Formula 1 Stream Available</h3>
+                        <p style="font-size: 13px; color: #8a8a98; max-width: 380px; margin: 0; line-height: 1.5;">No Formula 1 stream is currently available. The broadcast will begin when the session goes live.</p>
                     </div>
                 </div>
                 <div class="video-wrapper countdown-card" ng-if="!widgets.videoPlayer || customTimerActive" style="
@@ -2257,66 +2272,72 @@
             </div>
 
             <div class="sidebar">
-                <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
-                    data-tilt-speed="400" data-tilt-perspective="1000">
-                    <video autoplay loop muted playsinline class="card-video-bg">
-                        <source src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/racing.mp4" type="video/mp4">
-                    </video>
-                    <div class="card-title">
-                        <i class="fa-solid fa-calendar-day" style="font-size:11px;"></i>
-                        Weekend Schedule
-                    </div>
+                    <div class="glass-card carbon-schedule-card" ng-if="widgets.schedule" data-tilt data-tilt-mobile="false" data-tilt-max="4"
+                        data-tilt-speed="400" data-tilt-perspective="1000">
+                        <video autoplay loop muted playsinline class="card-video-bg">
+                            <source src="https://raw.githubusercontent.com/TN13Gamer/f1watchparty-web/main/racing.mp4" type="video/mp4">
+                        </video>
+                        <div class="card-title">
+                            <i class="fa-solid fa-calendar-day" style="font-size:11px;"></i>
+                            Weekend Schedule
+                            <span style="font-size:10px; color:#666; font-weight:400; margin-left:8px;">
+                                {{userTimezone}}
+                            </span>
+                        </div>
 
-                    <!-- CURRENT FIXTURE: Live session -->
-                    <div class="fixture-highlight" ng-if="activeSession">
-                        <div class="fixture-label">
-                            <span class="fixture-dot"></span> LIVE NOW
+                        <!-- CURRENT FIXTURE: Live session -->
+                        <div class="fixture-highlight" ng-if="activeSession">
+                            <div class="fixture-label">
+                                <span class="fixture-dot"></span> LIVE NOW
+                            </div>
+                            <div class="fixture-session-name">{{activeSession.name}}</div>
+                            <div class="fixture-time-row">
+                                <span class="fixture-time">{{formatTime12(activeSession.time)}}</span>
+                                <span class="fixture-day">{{activeSession.day}} {{activeSession.date}}</span>
+                            </div>
+                            <div class="fixture-live-pulse">
+                                <i class="fa-solid fa-circle fa-beat" style="font-size:9px;"></i> Track is LIVE
+                            </div>
                         </div>
-                        <div class="fixture-session-name">{{activeSession.name}}</div>
-                        <div class="fixture-time-row">
-                            <span class="fixture-time">{{formatTime12(activeSession.time)}}</span>
-                            <span class="fixture-day">{{activeSession.day}}</span>
-                        </div>
-                        <div class="fixture-live-pulse">
-                            <i class="fa-solid fa-circle fa-beat" style="font-size:9px;"></i> Track is LIVE
-                        </div>
-                    </div>
 
-                    <!-- CURRENT FIXTURE: Next upcoming session -->
-                    <div class="fixture-highlight" ng-if="!activeSession && nextUp">
-                        <div class="fixture-label upcoming-label">
-                            <span class="fixture-dot"></span> UP NEXT
+                        <!-- CURRENT FIXTURE: Next upcoming session -->
+                        <div class="fixture-highlight" ng-if="!activeSession && nextUp">
+                            <div class="fixture-label upcoming-label">
+                                <span class="fixture-dot"></span> UP NEXT
+                            </div>
+                            <div class="fixture-session-name">{{nextUp.name}}</div>
+                            <div class="fixture-time-row">
+                                <span class="fixture-time" style="color: #ffb400;">{{formatTime12(nextUp.time)}}</span>
+                                <span class="fixture-day">{{nextUp.day}} {{nextUp.date}}</span>
+                            </div>
+                            <div class="fixture-countdown">
+                                <i class="fa-regular fa-clock"></i>
+                                Starts in {{nextUp.timerStr}}
+                            </div>
                         </div>
-                        <div class="fixture-session-name">{{nextUp.name}}</div>
-                        <div class="fixture-time-row">
-                            <span class="fixture-time" style="color: #ffb400;">{{formatTime12(nextUp.time)}}</span>
-                            <span class="fixture-day">{{nextUp.day}}</span>
-                        </div>
-                        <div class="fixture-countdown">
-                            <i class="fa-regular fa-clock"></i>
-                            Starts in {{nextUp.timerStr}}
-                        </div>
-                    </div>
 
-                    <!-- No upcoming sessions this weekend -->
-                    <div class="fixture-no-upcoming" ng-if="!activeSession && !nextUp && schedule.length > 0">
-                        <i class="fa-solid fa-flag-checkered" style="margin-right:6px; opacity:0.5;"></i>
-                        Weekend Complete
-                    </div>
-
-                    <!-- Upcoming sessions (non-live, non-ended) other than nextUp -->
-                    <div ng-repeat="session in schedule" ng-if="session.status === 'upcoming' && session !== nextUp" class="schedule-row upcoming">
-                        <div class="sess-info">
-                            <span class="sess-name">{{session.name}}</span>
-                            <span class="sess-status" style="color: #666;">UPCOMING</span>
+                        <!-- No upcoming sessions this weekend -->
+                        <div class="fixture-no-upcoming" ng-if="!activeSession && !nextUp && schedule.length > 0">
+                            <i class="fa-solid fa-flag-checkered" style="margin-right:6px; opacity:0.5;"></i>
+                            Weekend Complete
                         </div>
-                        <div class="sess-time-box">
-                            <div class="sess-time">{{formatTime12(session.time)}}</div>
-                            <div class="sess-day">{{session.day}}</div>
-                        </div>
-                    </div>
 
-                </div>
+                        <!-- All schedule rows: ended, live (non-active), upcoming (non-nextUp), also show finished -->
+                        <div ng-repeat="session in schedule" ng-if="session !== activeSession && session !== nextUp" 
+                             class="schedule-row" ng-class="{'ended': session.status === 'ended', 'upcoming': session.status === 'upcoming', 'live': session.status === 'live'}">
+                            <div class="sess-info">
+                                <span class="sess-name">{{session.name}}</span>
+                                <span class="sess-badge" ng-if="session.status === 'ended'" style="color:#666;font-size:10px;">FINISHED</span>
+                                <span class="sess-badge" ng-if="session.status === 'live'" style="color:var(--f1-red);font-size:10px;">LIVE</span>
+                                <span class="sess-badge" ng-if="session.status === 'upcoming'" style="color:#666;font-size:10px;">UPCOMING</span>
+                            </div>
+                            <div class="sess-time-box">
+                                <div class="sess-time">{{formatTime12(session.time)}}</div>
+                                <div class="sess-day">{{session.day}} {{session.date}}</div>
+                            </div>
+                        </div>
+
+                    </div>
 
                 <div class="glass-card" style="padding-bottom: 10px;" ng-if="widgets.standings" data-tilt data-tilt-mobile="false" data-tilt-max="4"
                     data-tilt-speed="400" data-tilt-perspective="1000">
@@ -2622,6 +2643,7 @@
             $scope.currentStream = {};
             $scope.raceData = {};
             $scope.nextRace = {};
+            $scope.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
 
             $scope.standings = [];
             $scope.constructors = [];
@@ -2977,7 +2999,8 @@
                 $scope.activeSession = null;
                 if (data.schedule) {
                     $scope.schedule = data.schedule.map(function (s) {
-                        var startDate = safeDate(s.timer);
+                        var timerVal = s.timer || s.startTime;
+                        var startDate = safeDate(timerVal);
                         var startTime = startDate ? startDate.getTime() : NaN;
                         var endTime = startTime + (2 * 60 * 60 * 1000);
                         if (s.endTime && s.endTime.includes(':') && !isNaN(startTime)) {

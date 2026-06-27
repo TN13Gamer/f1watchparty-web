@@ -476,8 +476,9 @@ async function syncFifaMatchDetailsLocal(config, ref) {
         const roundMap = { group: `Group ${chosen.group}`, r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Final', sf: 'Semi-Final', third: '3rd Place Play-off', final: 'Final' };
         const round = roundMap[chosen.type] || chosen.group || 'World Cup 2026';
 
-        const stadium = STADIUM_MAP_SERVER[chosen.stadium_id] || { name: 'Stadium', city: '', country: '' };
-        const location = `${stadium.city}, ${stadium.country}`;
+        const stadium = STADIUM_MAP_SERVER[chosen.stadium_id] || { name: 'Venue to be confirmed', city: '', country: '' };
+        console.log(`[fifa-detailsync] Stadium from STADIUM_MAP_SERVER[${chosen.stadium_id}]: "${stadium.name}", ${stadium.city}, ${stadium.country}`);
+        const location = `${stadium.city}${stadium.city && stadium.country ? ', ' : ''}${stadium.country || ''}`;
 
         const [datePart, timePart] = (chosen.local_date || '').split(' ');
         const [mm, dd, yyyy] = (datePart || '').split('/');
@@ -857,11 +858,18 @@ app.get('/api/fetch-streams', async (req, res) => {
     }
 });
 
-// Cache variables for FIFA APIs
+// Cache variables for FIFA APIs with TTL tracking
+const CACHE_TTL = {
+  fixtures: 30000,     // 30 seconds
+  standings: 900000,   // 15 minutes
+  details: 60000,      // 1 minute
+};
 let cacheFixtures = null;
 let cacheFixturesTime = 0;
 let cacheStandings = null;
 let cacheStandingsTime = 0;
+let apiCallCounts = { fixtures: 0, standings: 0, streams: 0, details: 0 };
+let apiErrorCounts = { fixtures: 0, standings: 0, streams: 0, details: 0 };
 
 // Hardcoded country name -> flag URL for fixture flags
 const COUNTRY_FLAG_MAP_SERVER = {
@@ -1093,16 +1101,24 @@ if (!process.env.VERCEL) {
 
 // --- API: Fetch FIFA Fixtures ---
 app.get('/api/fifa/fixtures', async (req, res) => {
+    apiCallCounts.fixtures++;
+    const cacheAge = Date.now() - cacheFixturesTime;
+    if (cacheFixtures && cacheAge < CACHE_TTL.fixtures) {
+        console.log(`[fifa/fixtures] Serving from cache (age: ${Math.round(cacheAge/1000)}s, TTL: ${CACHE_TTL.fixtures/1000}s)`);
+        return res.json(cacheFixtures);
+    }
+    console.log(`[fifa/fixtures] Cache stale or empty (age: ${Math.round(cacheAge/1000)}s). Fetching from worldcup26.ir...`);
+
+    const fetchSourceLabel = 'https://worldcup26.ir/get/games (primary via fetchJson)';
     try {
-        if (cacheFixtures && (Date.now() - cacheFixturesTime < 30000)) {
-            return res.json(cacheFixtures);
-        }
         const [gamesRes, teamsRes] = await Promise.all([
             fetchJson('https://worldcup26.ir/get/games', 25000),
             fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
         const games = gamesRes && gamesRes.games;
+        console.log(`[fifa/fixtures] Data source: ${fetchSourceLabel} | games count: ${Array.isArray(games) ? games.length : 'invalid'}`);
         if (!Array.isArray(games)) {
+            apiErrorCounts.fixtures++;
             return res.json([]);
         }
 
@@ -1256,18 +1272,24 @@ app.get('/api/fifa/fixtures', async (req, res) => {
 
 // --- API: Fetch FIFA Standings ---
 app.get('/api/fifa/standings', async (req, res) => {
+    apiCallCounts.standings++;
     try {
-        if (cacheStandings && (Date.now() - cacheStandingsTime < 900000)) {
+        const cacheAge = Date.now() - cacheStandingsTime;
+        if (cacheStandings && cacheAge < CACHE_TTL.standings) {
+            console.log(`[fifa/standings] Serving from cache (age: ${Math.round(cacheAge/1000)}s)`);
             return res.json(cacheStandings);
         }
+        console.log(`[fifa/standings] Cache stale. Fetching from worldcup26.ir...`);
         const [groupsRes, teamsRes] = await Promise.all([
             fetchJson('https://worldcup26.ir/get/groups', 25000),
             fetchJson('https://worldcup26.ir/get/teams', 25000)
         ]);
         const groupsData = groupsRes && groupsRes.groups;
         const teamsData = teamsRes && teamsRes.teams;
+        console.log(`[fifa/standings] Data source: worldcup26.ir/get/groups | groups: ${Array.isArray(groupsData) ? groupsData.length : 'invalid'}, teams: ${Array.isArray(teamsData) ? teamsData.length : 'invalid'}`);
         if (!Array.isArray(groupsData) || !Array.isArray(teamsData)) {
-            return res.json([]);
+            apiErrorCounts.standings++;
+            return res.json(cacheStandings || []);
         }
         const teamsMap = {};
         teamsData.forEach(t => {
@@ -1413,6 +1435,28 @@ app.get('/fifa', (req, res) => {
 // Route for /f1
 app.get('/f1', (req, res) => {
   res.sendFile(path.join(__dirname, 'f1.html'));
+});
+
+// --- API: Debug/Source Info (admin only) ---
+app.get('/api/debug', (req, res) => {
+  res.json({
+    sources: {
+      fixtures: { url: 'https://worldcup26.ir/get/games', cache: cacheFixtures ? 'active' : 'empty', ttl: `${CACHE_TTL.fixtures/1000}s`, lastSync: new Date(cacheFixturesTime).toISOString() },
+      standings: { url: 'https://worldcup26.ir/get/groups', cache: cacheStandings ? 'active' : 'empty', ttl: `${CACHE_TTL.standings/1000}s`, lastSync: new Date(cacheStandingsTime).toISOString() },
+      streams: { api: '/api/streams/:matchId → Railway PostgreSQL', provider: 'pushembdz.store (external)', matcher: 'streamed.st/api/matches/all' },
+      stadiumMap: { type: 'STADIUM_MAP_SERVER (hardcoded lookup by stadium_id from worldcup26.ir)', stadiums: Object.keys(STADIUM_MAP_SERVER).length },
+      flags: { type: 'COUNTRY_FLAG_MAP_SERVER + worldcup26.ir /get/teams', countries: Object.keys(COUNTRY_FLAG_MAP_SERVER).length },
+      config: { firestore: 'app_data/live_config (Firebase)', supabase: 'live_config table (fallback)' },
+      fallbackFiles: ['api/fifa/fallback_games.json', 'api/fifa/fallback_teams.json', 'firestore_live_config_utf8.json'],
+    },
+    cacheTimestamps: {
+      fixtures: new Date(cacheFixturesTime).toISOString(),
+      standings: new Date(cacheStandingsTime).toISOString(),
+      now: new Date().toISOString(),
+    },
+    apiCalls: apiCallCounts,
+    apiErrors: apiErrorCounts,
+  });
 });
 
 // --- API: Status ---
