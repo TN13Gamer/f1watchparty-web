@@ -1134,10 +1134,27 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- FIFA Custom Countdown Timer Panel -->
-                <div class="admin-section animate-in" style="margin-bottom: 25px;">
-                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
++
++                <!-- FIFA Manual Synchronization Control Panel -->
++                <div class="admin-section animate-in" style="margin-bottom: 25px;">
++                    <h3><span><i class="fa-solid fa-arrows-rotate" style="color: #00ff55; margin-right: 10px;"></i> FIFA Manual Sync Controls</span></h3>
++                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Manually trigger the sync pipelines to update the remote D1 Database and live feeds.</p>
++                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
++                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncFixtures()" ng-disabled="fifaSyncingFixtures" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
++                            <i class="fa-solid" ng-class="fifaSyncingFixtures ? 'fa-spinner fa-spin' : 'fa-calendar-days'" style="margin-right: 8px;"></i> Sync Fixtures
++                        </button>
++                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncScores()" ng-disabled="fifaSyncingScores" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
++                            <i class="fa-solid" ng-class="fifaSyncingScores ? 'fa-spinner fa-spin' : 'fa-futbol'" style="margin-right: 8px;"></i> Sync Live Scores
++                        </button>
++                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncAll()" ng-disabled="fifaSyncingAll" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
++                            <i class="fa-solid" ng-class="fifaSyncingAll ? 'fa-spinner fa-spin' : 'fa-rotate'" style="margin-right: 8px;"></i> Full Pipeline Sync
++                        </button>
++                    </div>
++                </div>
++
++                <!-- FIFA Custom Countdown Timer Panel -->
++                <div class="admin-section animate-in" style="margin-bottom: 25px;">
++                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
                     <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the match schedule countdown with a custom target kickoff time.</p>
                     
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
@@ -2605,14 +2622,59 @@
                     });
             };
 
+            $scope.fifaSyncingFixtures = false;
+            $scope.triggerFifaSyncFixtures = function() {
+                if ($scope.fifaSyncingFixtures) return;
+                $scope.fifaSyncingFixtures = true;
+                $scope.showToast("Syncing FIFA fixtures & standings from FotMob...", "info");
+                $http.post(apiUrl('/api/fifa/sync-fixtures')).then(function(res) {
+                    $scope.fifaSyncingFixtures = false;
+                    $scope.showToast("Fixtures & Standings synced successfully", "success");
+                }).catch(function(err) {
+                    $scope.fifaSyncingFixtures = false;
+                    $scope.showToast("Fixture sync failed: " + ((err.data && err.data.error) || "Unknown error"), "error");
+                });
+            };
+
+            $scope.fifaSyncingScores = false;
+            $scope.triggerFifaSyncScores = function() {
+                if ($scope.fifaSyncingScores) return;
+                $scope.fifaSyncingScores = true;
+                $scope.showToast("Syncing live scores from Google Sports...", "info");
+                $http.post(apiUrl('/api/fifa/live-scores/sync')).then(function(res) {
+                    $scope.fifaSyncingScores = false;
+                    var data = res.data || {};
+                    $scope.showToast("Live scores synced: " + (data.synced || 0) + " matches updated", "success");
+                }).catch(function(err) {
+                    $scope.fifaSyncingScores = false;
+                    $scope.showToast("Live score sync failed: " + ((err.data && err.data.error) || "Unknown error"), "error");
+                });
+            };
+
+            $scope.fifaSyncingAll = false;
+            $scope.triggerFifaSyncAll = function() {
+                if ($scope.fifaSyncingAll) return;
+                $scope.fifaSyncingAll = true;
+                $scope.showToast("Running full FIFA sync pipeline...", "info");
+                $http.post(apiUrl('/api/fifa/sync-all')).then(function(res) {
+                    $scope.fifaSyncingAll = false;
+                    var data = res.data || {};
+                    var stepsMsg = data.steps ? data.steps.join(", ") : "completed";
+                    $scope.showToast("Full sync complete: " + stepsMsg, "success");
+                }).catch(function(err) {
+                    $scope.fifaSyncingAll = false;
+                    $scope.showToast("Full sync failed: " + ((err.data && err.data.error) || "Unknown error"), "error");
+                });
+            };
+
             $scope.fetchingFifaDetails = false;
             $scope.lastFifaDetailsSync = null;
             $scope.autoFetchFifaDetails = function() {
                 if ($scope.fetchingFifaDetails) return;
                 $scope.fetchingFifaDetails = true;
-                $scope.showToast("Detecting next match from streamed.st...", "info");
+                $scope.showToast("Detecting next match details from D1 database...", "info");
 
-                // Call the dedicated fast details endpoint (uses official streamed.st + FotMob APIs)
+                // Call the dedicated fast details endpoint (uses official D1 + FotMob APIs)
                 $http.get(apiUrl('/api/fifa/details?save=true'), { timeout: 30000 })
                     .then(function(res) {
                         $timeout(function() {
