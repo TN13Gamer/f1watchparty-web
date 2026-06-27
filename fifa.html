@@ -2744,13 +2744,12 @@
 
             function fetchLocalFallback() {
                 $http.get(apiUrl('/api/sync-standings?type=liveconfig')).then(function(res) {
-                    if (res.data && Object.keys(res.data).length > 0) {
-                        console.log('🔄 [fallback] Loaded config from local API');
-                        processData(res.data);
-                        $scope.dataLoaded = true;
-                    }
+                    console.log('🔄 [fallback] Loaded config from local API');
+                    processData(res.data || {});
+                    $scope.dataLoaded = true;
                 }, function(err) {
                     console.error('Failed to fetch local config fallback:', err);
+                    $scope.dataLoaded = true;
                 });
             }
 
@@ -2769,6 +2768,12 @@
                         processData(data);
                         $scope.dataLoaded = true;
                     }, delay);
+                } else {
+                    console.warn("Firestore document does not exist, using local API fallback");
+                    fetchLocalFallback();
+                    if (!localFallbackTimer) {
+                        localFallbackTimer = $interval(fetchLocalFallback, 15000);
+                    }
                 }
             }, (error) => {
                 console.warn("Firestore snapshot listener failed, using local API fallback:", error);
