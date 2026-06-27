@@ -1656,8 +1656,12 @@
                             <td>
                                 <div class="team-name-cell">
                                     <div class="qualification-bar" ng-if="$index < 2"></div>
-                                    <span class="team-flag" style="font-size: 15px;">{{t.flag || '⚽'}}</span>
+                                    <span class="team-flag" style="font-size: 15px;">
+                                        <img ng-if="t.flag.indexOf('http') === 0" ng-src="{{t.flag}}" style="width: 20px; height: 14px; border-radius: 2px; vertical-align: middle; margin-right: 4px; object-fit: cover;">
+                                        <span ng-if="t.flag.indexOf('http') !== 0">{{t.flag || '⚽'}}</span>
+                                    </span>
                                     <span>{{t.name}}</span>
+
                                 </div>
                             </td>
                             <td style="text-align: center; opacity: 0.8;">{{t.mp || '0'}}</td>
@@ -1882,6 +1886,11 @@
             $scope.fixtures = [];
             $scope.standings = {};
             $scope.activeGroup = '';
+
+            $scope.setActiveGroup = function(g) {
+                $scope.activeGroup = g;
+            };
+
 
             // Zoom handlers
             $scope.adjustZoom = function(amount) {
