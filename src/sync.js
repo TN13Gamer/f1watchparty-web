@@ -903,33 +903,67 @@ async function resolveStreamedPkLinks(match) {
   return resolved;
 }
 
+// -------------------------------------------------------------
+// STREAMED.PK API FETCHER (returns objects with .sources[].id for resolveStreamedPkLinks)
+// -------------------------------------------------------------
+async function fetchStreamedPkFromApi() {
+  try {
+    const res = await fetch("https://streamed.pk/api/matches/all", {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    const football = data.filter(m => (m.category || "").toLowerCase() === "football" || (m.category || "").toLowerCase() === "soccer");
+    console.log(`[sync] streamed.pk API: ${data.length} total, ${football.length} football matches`);
+    return football.map(m => ({
+      title: m.title,
+      id: m.id,
+      category: m.category,
+      date: m.date,
+      sources: m.sources || []
+    }));
+  } catch (err) {
+    console.warn("[sync] streamed.pk API failed:", err.message.substring(0, 60));
+    return [];
+  }
+}
+
 export async function syncFifaStreamsAndFeeds(db) {
   try {
     const dbMatches = await db.getMatches();
-    const liveOrToday = dbMatches.filter(m => m.status === "live" || (Date.now() - m.kickoff) < 12 * 60 * 60 * 1000);
+    const liveOrToday = dbMatches.filter(m => m.status === "live" || (m.kickoff && Math.abs(Date.now() - m.kickoff) < 48 * 60 * 60 * 1000));
     if (liveOrToday.length === 0) return;
 
-    console.log(`[sync] Checking streamed.pk feeds for ${liveOrToday.length} today matches...`);
-    const streamMatches = await fetchStreamedPkMatches();
-    if (streamMatches.length === 0) return;
+    console.log(`[sync] Checking stream feeds for ${liveOrToday.length} matches...`);
+    const streamMatches = await fetchStreamedPkFromApi();
+    if (streamMatches.length === 0) {
+      console.log(`[sync] No stream matches found from API`);
+      return;
+    }
+    console.log(`[sync] Stream API returned ${streamMatches.length} matches: ${streamMatches.map(s => s.title).join(", ")}`);
 
     for (const match of liveOrToday) {
+      const matchKey = `${match.homeTeam} vs ${match.awayTeam}`;
       // Find matching streamed.pk match by fuzzy name
       const candidate = streamMatches.find(sm => {
         if (!sm.title) return false;
-        const parts = sm.title.split(/\s+vs\s+/i);
+        const parts = sm.title.split(/\s+(?:vs|–|-)\s+/i);
         const homeCandidate = parts[0] || "";
         const awayCandidate = parts[1] || "";
-        return (
-          (matchesFuzzy(match.homeTeam, homeCandidate) && matchesFuzzy(match.awayTeam, awayCandidate)) ||
-          (matchesFuzzy(match.homeTeam, awayCandidate) && matchesFuzzy(match.awayTeam, homeCandidate))
-        );
+        const match1 = matchesFuzzy(match.homeTeam, homeCandidate) && matchesFuzzy(match.awayTeam, awayCandidate);
+        const match2 = matchesFuzzy(match.homeTeam, awayCandidate) && matchesFuzzy(match.awayTeam, homeCandidate);
+        if (match1 || match2) {
+          console.log(`[sync] MATCH: "${matchKey}" ↔ "${sm.title}" (homeCandidate="${homeCandidate}", awayCandidate="${awayCandidate}")`);
+        }
+        return match1 || match2;
       });
 
       if (candidate) {
+        console.log(`[sync] Resolving links for: ${matchKey} via "${candidate.title}"`);
         const links = await resolveStreamedPkLinks(candidate);
         if (links.length > 0) {
-          // Clear current streams to update priority
+          console.log(`[sync] Found ${links.length} links for ${matchKey}`);
           await db.clearStreamsForMatch(match.id);
           // Sort links: 1080P/HD first
           links.sort((a, b) => b.quality.localeCompare(a.quality));
@@ -946,7 +980,11 @@ export async function syncFifaStreamsAndFeeds(db) {
             });
           }
           console.log(`[sync] Synced ${links.length} streams for: ${match.homeTeam} vs ${match.awayTeam}`);
+        } else {
+          console.log(`[sync] No links resolved for candidate: "${candidate.title}"`);
         }
+      } else {
+        console.log(`[sync] NO match for: ${matchKey}`);
       }
     }
     

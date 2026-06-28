@@ -18,6 +18,58 @@ import { fifaHtml, adminHtml } from "./fifa/embed-html";
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
+const DIAGNOSTIC_SOURCES = [
+  { name: "streamed.pk API", url: "https://streamed.pk/api/matches/all" },
+  { name: "streamed.pk Football", url: "https://streamed.pk/category/football" },
+  { name: "soccerstreams.to", url: "https://soccerstreams.to/" },
+  { name: "footybite.cc", url: "https://footybite.cc/" },
+  { name: "1stream.eu Soccer", url: "https://1stream.eu/soccer" },
+  { name: "livesports.world Football", url: "https://livesports.world/football" },
+  { name: "pushembdz API", url: "https://api.pushembdz.store/v1/streams" }
+];
+
+async function fetchWithTimeout(url, opts = {}, ms = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function testStreamSources() {
+  const results = [];
+  for (const src of DIAGNOSTIC_SOURCES) {
+    const start = Date.now();
+    try {
+      const res = await fetchWithTimeout(src.url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      }, 10000);
+      const text = await res.text();
+      const hasMatch = /[A-Za-z]{3,}\s+vs\s+[A-Za-z]{3,}/i.test(text);
+      results.push({
+        name: src.name,
+        status: res.status,
+        elapsed: Date.now() - start,
+        bytes: text.length,
+        hasMatchTitles: hasMatch,
+        ok: res.ok
+      });
+    } catch (err) {
+      results.push({
+        name: src.name,
+        status: "error",
+        error: err.message.substring(0, 80),
+        elapsed: Date.now() - start,
+        ok: false
+      });
+    }
+  }
+  return results;
+}
+
 function formatIst(ms) {
   if (!ms || !isFinite(ms)) return "";
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -152,7 +204,10 @@ export default {
       if (firestore) {
         try {
           const liveMatches = await db.getMatches("live");
-          const activeMatch = liveMatches[0] || (await db.getMatches("notstarted"))[0] || (await db.getMatches("finished"))[0];
+          const upcomingMatches = (await db.getMatches("notstarted"))
+            .filter(m => m.kickoff && m.kickoff > (Date.now() - 2.5 * 60 * 60 * 1000));
+          const finishedMatches = await db.getMatches("finished");
+          const activeMatch = liveMatches[0] || upcomingMatches[0] || finishedMatches[finishedMatches.length - 1];
           if (activeMatch) {
             const streamsList = await db.getStreams(activeMatch.id);
             const mCircuit = activeMatch?.venue || activeMatch?.stadium || 'Venue to be confirmed';
@@ -176,8 +231,10 @@ export default {
                   label: "KICKOFF COUNTDOWN"
                 },
                 streamLinks: streamsList.map((s, i) => ({
-                  name: `${s.provider.toUpperCase()} EN ${s.quality === "1080P" ? "(HD)" : ""}`.trim(),
-                  id: `stream_${activeMatch.id}_${i}`, url: s.embedUrl
+                  name: s.provider.toUpperCase(),
+                  id: `stream_${activeMatch.id}_${i}`, url: s.embedUrl,
+                  lang: s.language || "EN",
+                  quality: s.quality || "720P"
                 }))
               }
             });
@@ -219,7 +276,10 @@ export default {
 
         if (type === "liveconfig") {
           const liveMatches = await db.getMatches("live");
-          const activeMatch = liveMatches[0] || (await db.getMatches("notstarted"))[0] || (await db.getMatches("finished"))[0];
+          const upcomingMatches = (await db.getMatches("notstarted"))
+            .filter(m => m.kickoff && m.kickoff > (Date.now() - 2.5 * 60 * 60 * 1000));
+          const finishedMatches = await db.getMatches("finished");
+          const activeMatch = liveMatches[0] || upcomingMatches[0] || finishedMatches[finishedMatches.length - 1];
           const matchStreams = activeMatch ? await db.getStreams(activeMatch.id) : [];
           const matchCircuit = activeMatch?.venue || activeMatch?.stadium || 'Venue to be confirmed';
           const matchLocation = activeMatch?.city ? `${activeMatch.city}${activeMatch.country ? ', ' + activeMatch.country : ''}` : matchCircuit;
@@ -378,7 +438,10 @@ export default {
 
       if (path === "/api/fifa/details") {
         const matches = await db.getMatches("live");
-        const match = matches[0] || (await db.getMatches("notstarted"))[0] || null;
+        const upcomingMatches = (await db.getMatches("notstarted"))
+          .filter(m => m.kickoff && m.kickoff > (Date.now() - 2.5 * 60 * 60 * 1000));
+        const finishedMatches = await db.getMatches("finished");
+        const match = matches[0] || upcomingMatches[0] || finishedMatches[finishedMatches.length - 1] || null;
         if (!match) return jsonResponse({ ok: true, raceData: {}, customTimer: {} });
         return jsonResponse({
           ok: true, source: 'Cloudflare D1 (populated by syncFotMobData)',
@@ -519,7 +582,14 @@ export default {
       // ---- Stream endpoints ----
       if (path.startsWith("/api/streams/") && !path.startsWith("/api/admin/")) {
         const matchId = path.split("/").pop();
-        return jsonResponse(await db.getStreams(matchId));
+        let streams = await db.getStreams(matchId);
+        if (streams.length === 0) {
+          try {
+            const fallback = await env.CONFIG_KV.get(`stream_fallback_${matchId}`, "json");
+            if (fallback && Array.isArray(fallback)) streams = fallback;
+          } catch (_) {}
+        }
+        return jsonResponse(streams);
       }
 
       if (path.startsWith("/api/admin/streams/")) {
@@ -709,6 +779,43 @@ export default {
         return jsonResponse({ success });
       }
 
+      // ---- Fallback stream management (KV) ----
+      if (path === "/api/admin/stream/fallback" && method === "POST") {
+        const body = await getBody(request);
+        if (!body.matchId) return jsonResponse({ success: false, error: "Missing matchId" }, 400);
+        const existing = JSON.parse((await env.CONFIG_KV.get(`stream_fallback_${body.matchId}`).catch(() => "[]")) || "[]");
+        if (body.embedUrl) {
+          existing.push({
+            provider: body.provider || "default",
+            quality: body.quality || "720P",
+            embedUrl: body.embedUrl,
+            language: body.language || "EN",
+            mirror: existing.length,
+            isPrimary: existing.length === 0 ? 1 : 0,
+            priority: existing.length
+          });
+        }
+        await env.CONFIG_KV.put(`stream_fallback_${body.matchId}`, JSON.stringify(existing));
+        return jsonResponse({ success: true, streams: existing });
+      }
+      if (path === "/api/admin/stream/fallback" && method === "DELETE") {
+        const body = await getBody(request);
+        if (!body.matchId) return jsonResponse({ success: false, error: "Missing matchId" }, 400);
+        if (body.embedUrl) {
+          const existing = JSON.parse((await env.CONFIG_KV.get(`stream_fallback_${body.matchId}`).catch(() => "[]")) || "[]");
+          const filtered = existing.filter(s => s.embedUrl !== body.embedUrl);
+          await env.CONFIG_KV.put(`stream_fallback_${body.matchId}`, JSON.stringify(filtered));
+          return jsonResponse({ success: true, streams: filtered });
+        }
+        await env.CONFIG_KV.delete(`stream_fallback_${body.matchId}`);
+        return jsonResponse({ success: true });
+      }
+
+      if (path === "/api/debug/stream-sources") {
+        const sources = await testStreamSources();
+        return jsonResponse({ sources });
+      }
+
       if (path === "/api/debug") {
         const matches = await db.getMatches();
         const streamsCount = await db.d1.prepare("SELECT count(*) as c FROM streams").first("c") || 0;
@@ -803,7 +910,10 @@ export default {
 
         if (firestore) {
           const liveMatches = await db.getMatches("live");
-          const activeMatch = liveMatches[0] || (await db.getMatches("notstarted"))[0] || (await db.getMatches("finished"))[0];
+          const upcomingMatches = (await db.getMatches("notstarted"))
+            .filter(m => m.kickoff && m.kickoff > (Date.now() - 2.5 * 60 * 60 * 1000));
+          const finishedMatches = await db.getMatches("finished");
+          const activeMatch = liveMatches[0] || upcomingMatches[0] || finishedMatches[finishedMatches.length - 1];
           if (activeMatch) {
             const streamsList = await db.getStreams(activeMatch.id);
             await firestore.updateConfig({
@@ -822,8 +932,10 @@ export default {
                 },
                 customTimer: { enabled: activeMatch.status === "notstarted", target: new Date(activeMatch.kickoff).toISOString(), label: "KICKOFF COUNTDOWN" },
                 streamLinks: streamsList.map((s, i) => ({
-                  name: `${s.provider.toUpperCase()} EN ${s.quality === "1080P" ? "(HD)" : ""}`.trim(),
-                  id: `stream_${activeMatch.id}_${i}`, url: s.embedUrl
+                  name: s.provider.toUpperCase(),
+                  id: `stream_${activeMatch.id}_${i}`, url: s.embedUrl,
+                  lang: s.language || "EN",
+                  quality: s.quality || "720P"
                 }))
               }
             });

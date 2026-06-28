@@ -218,6 +218,52 @@
             cursor: pointer;
         }
 
+        .nav-btn {
+            background: rgba(0, 255, 102, 0.08);
+            border: 1px solid rgba(0, 255, 102, 0.25);
+            color: var(--neon-green);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.05);
+        }
+
+        .nav-btn:hover {
+            background: var(--neon-green);
+            border-color: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 15px var(--glow-green);
+            transform: translateY(-1px);
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #fff;
+            padding: 20px 20px 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+        }
+        
+        .card-title i {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--glow-green);
+        }
+
         /* --- LAYOUT GRID --- */
         .workspace-grid {
             max-width: 1440px;
@@ -606,6 +652,18 @@
         .today-card.live-active {
             border-color: var(--border-glow);
             box-shadow: 0 0 15px rgba(0, 255, 102, 0.05);
+        }
+
+        .today-card.live-active .today-watch-btn {
+            background: var(--neon-green) !important;
+            border-color: var(--neon-green) !important;
+            color: #000 !important;
+            box-shadow: 0 0 10px var(--glow-green);
+        }
+
+        .today-card.live-active .today-watch-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.03);
         }
 
         .today-card.is-current {
@@ -1356,7 +1414,7 @@
     </header>
 
     <!-- --- MAIN WORKSPACE GRID --- -->
-    <div class="workspace-grid" id="watch">
+    <div class="workspace-grid" id="watch" ng-if="isWatching">
         
         <!-- VIDEO COLUMN -->
         <div class="video-column">
@@ -1447,13 +1505,13 @@
                      ng-click="changeStream(link)">
                      
                      <div class="source-flag-lang">
-                         <span class="source-flag">{{(parseStreamDetails(link.name)).flag}}</span>
-                         <span class="source-lang">{{(parseStreamDetails(link.name)).lang}}</span>
+                         <span class="source-flag">{{(parseStreamDetails(link)).flag}}</span>
+                         <span class="source-lang">{{(parseStreamDetails(link)).lang}}</span>
                      </div>
-                     <div class="source-provider">{{(parseStreamDetails(link.name)).provider}}</div>
+                     <div class="source-provider">{{(parseStreamDetails(link)).provider}}</div>
 
                      <div class="source-meta-row">
-                         <span class="source-quality">{{(parseStreamDetails(link.name)).quality}}</span>
+                         <span class="source-quality">{{(parseStreamDetails(link)).quality}}</span>
                          <span class="source-status">● ONLINE</span>
                      </div>
                 </div>
@@ -1549,11 +1607,11 @@
                          </div>
                          
                          <div class="live-sidebar-team-row">
-                             <span>{{f.homeTeam}}</span>
+                             <span>{{formatTeamName(f.homeTeam)}}</span>
                              <span class="live-sidebar-score">{{f.homeScore != null ? f.homeScore : '0'}}</span>
                          </div>
                          <div class="live-sidebar-team-row">
-                             <span>{{f.awayTeam}}</span>
+                             <span>{{formatTeamName(f.awayTeam)}}</span>
                              <span class="live-sidebar-score">{{f.awayScore != null ? f.awayScore : '0'}}</span>
                          </div>
                     </div>
@@ -2053,6 +2111,7 @@
             $scope.currentStream = {};
             $scope.raceData = {};
             $scope.customTimer = { enabled: false, label: '', target: '' };
+            $scope.isWatching = false;
             $scope.fixtures = [];
             $scope.standings = {};
             $scope.activeGroup = '';
@@ -2256,6 +2315,7 @@
             $scope.selectStream = function(stream) {
                 $scope.showStreamSelector = false;
                 $scope.isSwitchingStream = true;
+                $scope.isWatching = true;
                 
                 $scope.raceData = {
                     name: $scope.selectedMatch.homeTeam + ' vs ' + $scope.selectedMatch.awayTeam,
@@ -2271,15 +2331,19 @@
                 };
                 
                 $scope.currentStream = {
-                    name: stream.provider + ' ' + (stream.language || 'EN') + ' ' + (stream.quality || '720P'),
+                    name: stream.provider.toUpperCase(),
                     url: stream.embedUrl,
-                    id: 'sel_' + stream.mirror
+                    id: 'sel_' + stream.mirror,
+                    lang: stream.language || 'EN',
+                    quality: stream.quality || '720P'
                 };
 
                 $scope.streamLinks = $scope.selectedMatchStreams.map((s, idx) => ({
-                    name: s.provider + ' ' + (s.language || 'EN') + ' ' + (s.quality || '720P'),
+                    name: s.provider.toUpperCase(),
                     url: s.embedUrl,
-                    id: 'sel_' + s.mirror
+                    id: 'sel_' + s.mirror,
+                    lang: s.language || 'EN',
+                    quality: s.quality || '720P'
                 }));
 
                 $scope.customTimerActive = false;
@@ -2298,38 +2362,56 @@
 
 
             // Client-side parser for stream name
-            $scope.parseStreamDetails = function(name) {
-                if (!name) return { flag: '🌐', lang: 'Global', provider: 'Default', quality: '720P', isHd: false };
+            $scope.parseStreamDetails = function(stream) {
+                if (!stream) return { flag: '🌐', lang: 'Global', provider: 'Default', quality: '720P', isHd: false };
+                
+                let name = typeof stream === 'string' ? stream : (stream.name || 'Stream');
+                let langVal = typeof stream === 'object' && stream.lang ? stream.lang : null;
+                let qualityVal = typeof stream === 'object' && stream.quality ? stream.quality : null;
+
                 const lower = name.toLowerCase();
                 let flag = '🌐';
-                let lang = 'Global';
-                if (lower.includes('en') || lower.includes('english')) { flag = '🇬🇧'; lang = 'English'; }
-                else if (lower.includes('es') || lower.includes('spanish') || lower.includes('esp')) { flag = '🇪🇸'; lang = 'Spanish'; }
-                else if (lower.includes('fr') || lower.includes('french')) { flag = '🇫🇷'; lang = 'French'; }
-                else if (lower.includes('pt') || lower.includes('portuguese') || lower.includes('por')) { flag = '🇵🇹'; lang = 'Portuguese'; }
-                else if (lower.includes('ar') || lower.includes('arabic')) { flag = '🇸🇦'; lang = 'Arabic'; }
-                else if (lower.includes('de') || lower.includes('german') || lower.includes('ger')) { flag = '🇩🇪'; lang = 'German'; }
-                else if (lower.includes('it') || lower.includes('italian') || lower.includes('ita')) { flag = '🇮🇹'; lang = 'Italian'; }
-
-                let quality = '720P';
-                let isHd = false;
-                if (lower.includes('hd') || lower.includes('1080p') || lower.includes('1080')) {
-                    quality = '1080P';
-                    isHd = true;
+                let lang = langVal || 'Global';
+                
+                if (!langVal) {
+                    if (lower.includes('en') || lower.includes('english')) { flag = '🇬🇧'; lang = 'English'; }
+                    else if (lower.includes('es') || lower.includes('spanish') || lower.includes('esp')) { flag = '🇪🇸'; lang = 'Spanish'; }
+                    else if (lower.includes('fr') || lower.includes('french')) { flag = '🇫🇷'; lang = 'French'; }
+                    else if (lower.includes('pt') || lower.includes('portuguese') || lower.includes('por')) { flag = '🇵🇹'; lang = 'Portuguese'; }
+                    else if (lower.includes('ar') || lower.includes('arabic')) { flag = '🇸🇦'; lang = 'Arabic'; }
+                    else if (lower.includes('de') || lower.includes('german') || lower.includes('ger')) { flag = '🇩🇪'; lang = 'German'; }
+                    else if (lower.includes('it') || lower.includes('italian') || lower.includes('ita')) { flag = '🇮🇹'; lang = 'Italian'; }
+                } else {
+                    const lLower = langVal.toLowerCase();
+                    if (lLower.includes('en') || lLower.includes('english')) { flag = '🇬🇧'; lang = 'English'; }
+                    else if (lLower.includes('es') || lLower.includes('spanish') || lLower.includes('esp')) { flag = '🇪🇸'; lang = 'Spanish'; }
+                    else if (lLower.includes('fr') || lLower.includes('french')) { flag = '🇫🇷'; lang = 'French'; }
+                    else if (lLower.includes('pt') || lLower.includes('portuguese') || lLower.includes('por')) { flag = '🇵🇹'; lang = 'Portuguese'; }
+                    else if (lLower.includes('ar') || lLower.includes('arabic')) { flag = '🇸🇦'; lang = 'Arabic'; }
+                    else if (lLower.includes('de') || lLower.includes('german') || lLower.includes('ger')) { flag = '🇩🇪'; lang = 'German'; }
+                    else if (lLower.includes('it') || lLower.includes('italian') || lLower.includes('ita')) { flag = '🇮🇹'; lang = 'Italian'; }
                 }
+
+                let quality = qualityVal || '720P';
+                if (!qualityVal) {
+                    if (lower.includes('hd') || lower.includes('1080p') || lower.includes('1080')) {
+                        quality = '1080P';
+                    }
+                }
+                let isHd = quality.toLowerCase().includes('1080') || quality.toLowerCase().includes('hd');
 
                 let provider = name.replace(/\(HD\)/gi, '').replace(/HD/gi, '').replace(/\b(EN|ES|FR|PT|AR|DE|IT|English|Spanish|French|Portuguese|Arabic|German|Italian)\b/gi, '').replace(/\s+/g, ' ').trim();
                 if (!provider) provider = 'Server';
 
                 return { flag, lang, provider, quality, isHd };
             };
-
+ 
             $scope.changeStream = function (stream) {
                 if (stream && stream.url && $scope.currentStream.id !== stream.id) {
                     $scope.isSwitchingStream = true;
                     $timeout(function() {
                         $scope.currentStream = stream;
-                        $scope.parsedInfo = $scope.parseStreamDetails(stream.name);
+                        $scope.parsedInfo = $scope.parseStreamDetails(stream);
                         $scope.isSwitchingStream = false;
                     }, 4000); // 4s Premium connection loader animation
                 }
@@ -2381,9 +2463,26 @@
                 if (!title) return { home: 'TBD', away: 'TBD' };
                 const parts = title.split(/\s+vs\s+/i);
                 return {
-                    home: parts[0] || 'TBD',
-                    away: parts[1] || 'TBD'
+                    home: $scope.formatTeamName(parts[0]) || 'TBD',
+                    away: $scope.formatTeamName(parts[1]) || 'TBD'
                 };
+            };
+
+            $scope.formatTeamName = function(name) {
+                if (!name) return '';
+                const trim = name.trim();
+                // Match 1st or 2nd place placeholders: e.g. 1A, 2B, 1L, 2K
+                const groupMatch = trim.match(/^([12])([A-L])$/);
+                if (groupMatch) {
+                    const place = groupMatch[1] === '1' ? 'Winner' : 'Runner-up';
+                    return place + ' Group ' + groupMatch[2];
+                }
+                // Match 3rd place placeholders: e.g. 3CEFHI, 3AEHIJ
+                const thirdMatch = trim.match(/^3([A-L]{3,6})$/);
+                if (thirdMatch) {
+                    return '3rd Place ' + thirdMatch[1].split('').join('/');
+                }
+                return name;
             };
 
 
@@ -2574,12 +2673,23 @@
 
                 if ((!$scope.currentStream || !$scope.currentStream.url) && $scope.streamLinks.length > 0) {
                     $scope.currentStream = $scope.streamLinks[0];
-                    $scope.parsedInfo = $scope.parseStreamDetails($scope.currentStream.name);
+                    $scope.parsedInfo = $scope.parseStreamDetails($scope.currentStream);
                 } else if ($scope.currentStream && $scope.currentStream.name) {
-                    $scope.parsedInfo = $scope.parseStreamDetails($scope.currentStream.name);
+                    $scope.parsedInfo = $scope.parseStreamDetails($scope.currentStream);
                 }
 
                 updateTimers();
+            }
+
+            var autoTriggerTimer = null;
+            function autoTriggerWatch() {
+                if (autoTriggerTimer) return;
+                autoTriggerTimer = $timeout(function() {
+                    autoTriggerTimer = null;
+                    if ($scope.fixtures && $scope.fixtures.length > 0 && (!$scope.currentStream || !$scope.currentStream.url)) {
+                        $scope.triggerWatchFlow();
+                    }
+                }, 3000);
             }
 
             function updateTimers() {

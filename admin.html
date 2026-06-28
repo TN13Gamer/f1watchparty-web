@@ -1134,27 +1134,27 @@
                         </button>
                     </div>
                 </div>
-+
-+                <!-- FIFA Manual Synchronization Control Panel -->
-+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
-+                    <h3><span><i class="fa-solid fa-arrows-rotate" style="color: #00ff55; margin-right: 10px;"></i> FIFA Manual Sync Controls</span></h3>
-+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Manually trigger the sync pipelines to update the remote D1 Database and live feeds.</p>
-+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncFixtures()" ng-disabled="fifaSyncingFixtures" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
-+                            <i class="fa-solid" ng-class="fifaSyncingFixtures ? 'fa-spinner fa-spin' : 'fa-calendar-days'" style="margin-right: 8px;"></i> Sync Fixtures
-+                        </button>
-+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncScores()" ng-disabled="fifaSyncingScores" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
-+                            <i class="fa-solid" ng-class="fifaSyncingScores ? 'fa-spinner fa-spin' : 'fa-futbol'" style="margin-right: 8px;"></i> Sync Live Scores
-+                        </button>
-+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncAll()" ng-disabled="fifaSyncingAll" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
-+                            <i class="fa-solid" ng-class="fifaSyncingAll ? 'fa-spinner fa-spin' : 'fa-rotate'" style="margin-right: 8px;"></i> Full Pipeline Sync
-+                        </button>
-+                    </div>
-+                </div>
-+
-+                <!-- FIFA Custom Countdown Timer Panel -->
-+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
-+                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
+
+                <!-- FIFA Manual Synchronization Control Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-arrows-rotate" style="color: #00ff55; margin-right: 10px;"></i> FIFA Manual Sync Controls</span></h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Manually trigger the sync pipelines to update the remote D1 Database and live feeds.</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncFixtures()" ng-disabled="fifaSyncingFixtures" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
+                            <i class="fa-solid" ng-class="fifaSyncingFixtures ? 'fa-spinner fa-spin' : 'fa-calendar-days'" style="margin-right: 8px;"></i> Sync Fixtures
+                        </button>
+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncScores()" ng-disabled="fifaSyncingScores" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
+                            <i class="fa-solid" ng-class="fifaSyncingScores ? 'fa-spinner fa-spin' : 'fa-futbol'" style="margin-right: 8px;"></i> Sync Live Scores
+                        </button>
+                        <button type="button" class="tab-btn" ng-click="triggerFifaSyncAll()" ng-disabled="fifaSyncingAll" style="flex: 1; min-width: 180px; height: 44px; font-size: 12px; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">
+                            <i class="fa-solid" ng-class="fifaSyncingAll ? 'fa-spinner fa-spin' : 'fa-rotate'" style="margin-right: 8px;"></i> Full Pipeline Sync
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FIFA Custom Countdown Timer Panel -->
+                <div class="admin-section animate-in" style="margin-bottom: 25px;">
+                    <h3><span><i class="fa-solid fa-stopwatch" style="color: #00ff55; margin-right: 10px;"></i> FIFA Custom Countdown Timer</span></h3>
                     <p style="font-size:11px; color:var(--text-muted); margin-bottom:15px; margin-top:-5px;">Override the match schedule countdown with a custom target kickoff time.</p>
                     
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
@@ -1689,17 +1689,10 @@
 
         app.controller('AdminController', function($scope, $timeout, $interval, $http) {
             function apiUrl(path) {
-                if (window.location.protocol === 'file:') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('local') === 'true') {
-                        return 'http://localhost:3001' + path;
-                    }
-                    return 'https://watchfifa-api.up.railway.app' + path;
-                }
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3001' + path;
                 }
-                return window.location.origin + path;
+                return 'https://watchparty-backend.thejasnirmal944.workers.dev' + path;
             }
 
             $scope.currentView = 'live'; 
