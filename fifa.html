@@ -270,10 +270,11 @@
             margin: 20px auto 40px auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: 1fr 360px;
+            grid-template-columns: 1fr;
             gap: 24px;
             width: 100%;
             flex: 1;
+            transition: all 0.3s ease-in-out;
         }
 
         /* --- VIDEO / HERO COLUMN --- */
@@ -780,11 +781,10 @@
             background: var(--bg-card);
             border: 1px solid rgba(255,255,255,0.04);
             border-radius: 16px;
-            padding: 16px 24px;
-            display: flex;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: 1.2fr 1.5fr 1fr 120px;
             align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
             gap: 20px;
         }
 
@@ -1189,7 +1189,6 @@
             grid-template-columns: 1fr;
         }
 
-        body.theater-active .sidebar,
         body.theater-active .content-section,
         body.theater-active .hero-section {
             display: none !important;
@@ -1392,7 +1391,7 @@
 
     <!-- --- LOADING SCREEN --- -->
     <div class="loader-wrapper" id="loader-screen">
-        <div class="loader-spinner"></div>
+        <div id="lottie-loader"></div>
         <div class="loader-text">FIFA WORLD CUP 2026</div>
     </div>
 
@@ -1435,14 +1434,14 @@
                     </div>
                 </div>
 
-                <div class="video-responsive" ng-if="!customTimerActive">
+                <div class="video-responsive" ng-if="!customTimerActive && !raceData.isFinished">
                     <iframe ng-src="{{trustSrc(currentStream.url)}}" 
                             allow="autoplay; encrypted-media; picture-in-picture" 
                             allowfullscreen></iframe>
                 </div>
 
                 <!-- Upcoming match offline banner -->
-                <div ng-if="customTimerActive" style="
+                <div ng-if="customTimerActive && !raceData.isFinished" style="
                     padding: 80px 40px;
                     text-align: center;
                     display: flex;
@@ -1471,10 +1470,38 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Finished match highlights banner -->
+                <div ng-if="raceData.isFinished" style="
+                    padding: 80px 40px;
+                    text-align: center;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(14, 15, 20, 0.95);
+                ">
+                    <div style="font-size: 10px; font-weight: 800; letter-spacing: 2.5px; color: #ff3b30; text-transform: uppercase; margin-bottom: 15px;">
+                        ● MATCH COMPLETED
+                    </div>
+                    <h2 style="font-size: 32px; font-family: var(--font-display); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #fff; margin-bottom: 12px;">
+                        {{raceData.name || 'Completed Match'}}
+                    </h2>
+                    <p style="font-size: 13px; color: var(--text-muted); max-width: 450px; margin-bottom: 30px; line-height: 1.6;">
+                        This match has ended. You can watch the full match highlights and recap directly on YouTube.
+                    </p>
+                    <a ng-href="https://www.youtube.com/results?search_query={{encodeURIComponent(raceData.name + ' World Cup highlights')}}" 
+                       target="_blank" 
+                       rel="noopener" 
+                       class="action-btn" 
+                       style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-top: 5px; padding: 12px 30px; font-weight: 800; border-radius: 30px; background: #ff0000; color: #fff; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border: none; cursor: pointer; box-shadow: 0 0 15px rgba(255,0,0,0.3); transition: all 0.2s;">
+                        <i class="fa-brands fa-youtube" style="font-size: 16px;"></i> Watch Highlights on YouTube
+                    </a>
+                </div>
             </div>
 
             <!-- Compact Stream Info Card -->
-            <div class="glass-card stream-info-card" ng-if="!customTimerActive">
+            <div class="glass-card stream-info-card" ng-if="!customTimerActive && !raceData.isFinished">
                 <div class="info-item">
                     <span class="info-label">Current Feed</span>
                     <span class="info-val">{{currentStream.name || 'Default Source'}}</span>
@@ -1498,7 +1525,7 @@
             </div>
 
             <!-- Rebuilt Premium Source Selector Grid -->
-            <div class="source-grid" ng-if="!customTimerActive">
+            <div class="source-grid" ng-if="!customTimerActive && !raceData.isFinished">
                 <div ng-repeat="link in streamLinks" 
                      class="source-card" 
                      ng-class="{'active': currentStream.id === link.id}"
@@ -1518,7 +1545,7 @@
             </div>
 
             <!-- Video Player Controls Toolbar -->
-            <div class="video-toolbar" ng-if="!customTimerActive">
+            <div class="video-toolbar" ng-if="!customTimerActive && !raceData.isFinished">
                 <span class="source-label">PLAYER OPTIONS:</span>
                 <button class="stream-btn control-btn" ng-click="toggleTheater()">
                     <i class="fa-solid" ng-class="isTheater ? 'fa-compress' : 'fa-expand'"></i>
@@ -1579,44 +1606,6 @@
                         <i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Kickoff: {{raceData.date || 'Scheduled'}}
                     </div>
                 </div>
-            </div>
-
-        </div>
-
-        <!-- DESKTOP RIGHT SIDEBAR (LIVE MATCHES) -->
-        <div class="sidebar">
-            <div class="glass-card" style="padding-bottom: 20px;">
-                <div class="card-title">
-                    <i class="fa-solid fa-tower-broadcast"></i> LIVE MATCHES
-                </div>
-                <div class="scrollable-list">
-                    <div ng-if="(fixtures | filter:{status: 'live'}).length === 0" style="text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 12px;">
-                        No matches currently live.
-                    </div>
-                    
-                    <div ng-repeat="f in fixtures | filter:{status: 'live'}" 
-                         class="live-sidebar-card"
-                         ng-class="{'active': raceData.name === f.homeTeam + ' vs ' + f.awayTeam}"
-                         ng-click="openMatchStreamsFlow(f)">
-                         
-                         <div class="live-sidebar-top">
-                             <span style="color: var(--text-muted);">{{f.round || 'World Cup'}}</span>
-                             <span class="live-sidebar-time">
-                                 <span></span> {{f.matchTime || 'LIVE'}}
-                             </span>
-                         </div>
-                         
-                         <div class="live-sidebar-team-row">
-                             <span>{{formatTeamName(f.homeTeam)}}</span>
-                             <span class="live-sidebar-score">{{f.homeScore != null ? f.homeScore : '0'}}</span>
-                         </div>
-                         <div class="live-sidebar-team-row">
-                             <span>{{formatTeamName(f.awayTeam)}}</span>
-                             <span class="live-sidebar-score">{{f.awayScore != null ? f.awayScore : '0'}}</span>
-                         </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
     </div>
@@ -1931,7 +1920,7 @@
 
                 <!-- Stadium Image (if available) -->
                 <div ng-if="selectedMatch.stadiumImage" style="margin: 8px auto; max-width: 320px; border-radius: 8px; overflow: hidden;">
-                    <img ng-src="{{selectedMatch.stadiumImage}}" alt="{{selectedMatch.venue}}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
+                    <img ng-src="{{selectedMatch.stadiumImage}}" alt="{{selectedMatch.venue}}" onerror="this.style.display='none'" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
                 </div>
 
                 <!-- Match Detail Grid -->
@@ -1985,8 +1974,8 @@
             <div ng-if="!streamSelectorLoading && !streamSelectorNoStreams" class="overlay-list">
                 <div ng-repeat="s in selectedMatchStreams" class="stream-select-btn" ng-click="selectStream(s)">
                     <div>
-                        <div class="stream-provider-name">▶ Mirror #{{$index + 1}} ({{s.provider}})</div>
-                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">{{s.language || 'EN'}} · {{s.quality || '720P'}} · Mirror {{s.mirror}}</div>
+                        <div class="stream-provider-name">▶ {{getStreamDisplayName(s, $index)}}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Mirror {{s.mirror}}</div>
                     </div>
                     <div class="stream-meta-badges">
                         <span class="stream-badge quality">{{s.quality || '720P'}}</span>
@@ -2095,11 +2084,62 @@
                 return 'https://watchparty-backend.thejasnirmal944.workers.dev' + path;
             }
 
-            $scope.isTheater = false;
-            $scope.toggleTheater = function () { $scope.isTheater = !$scope.isTheater; };
+            $scope.isTheater = localStorage.getItem('fifa_theater_mode') === 'true';
+            $scope.toggleTheater = function () { 
+                $scope.isTheater = !$scope.isTheater; 
+                localStorage.setItem('fifa_theater_mode', $scope.isTheater ? 'true' : 'false');
+            };
             
             $scope.isDrawerOpen = false;
             $scope.toggleMobileDrawer = function () { $scope.isDrawerOpen = !$scope.isDrawerOpen; };
+
+            $scope.encodeURIComponent = window.encodeURIComponent;
+
+            try {
+                lottie.loadAnimation({
+                    container: document.getElementById('lottie-loader'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'fifa-loader.json'
+                });
+            } catch(e) {
+                console.warn('Lottie initialization failed:', e);
+            }
+
+            $scope.getStreamDisplayName = function(s, index) {
+                let title = "Stream " + (index + 1);
+                let providerName = s.provider || s.name || '';
+                providerName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
+                
+                let lang = s.language || s.lang || '';
+                let langText = '';
+                if (lang.toLowerCase() === 'en') langText = 'English';
+                else if (lang.toLowerCase() === 'es') langText = 'Spanish';
+                else if (lang.toLowerCase() === 'fr') langText = 'French';
+                else if (lang) langText = lang.charAt(0).toUpperCase() + lang.slice(1);
+                
+                let qualText = s.quality || '720P';
+                if (qualText.toLowerCase() === '1080p' || qualText.toLowerCase() === 'hd') {
+                    qualText = 'HD';
+                }
+                
+                let parts = [];
+                if (providerName && providerName.toLowerCase() !== 'server' && providerName.toLowerCase() !== 'default') {
+                    parts.push(providerName);
+                }
+                if (langText) {
+                    parts.push(langText);
+                }
+                if (qualText) {
+                    parts.push(qualText);
+                }
+                
+                if (parts.length > 0) {
+                    title += " – " + parts.join(" ");
+                }
+                return title;
+            };
 
             $scope.dataLoaded = false;
             $scope.isSwitchingStream = false;
@@ -2489,6 +2529,14 @@
 
             $scope.liveScoreSource = 'D1';
             $scope.liveScoresRefreshTimer = null;
+            $scope.loadState = { fixtures: false, standings: false, scores: false };
+
+            function checkAllLoaded() {
+                if ($scope.loadState.fixtures && $scope.loadState.standings && $scope.loadState.scores) {
+                    $scope.dataLoaded = true;
+                    hideLoadingScreen();
+                }
+            }
 
             // Fetch Fixtures & Standings
             function fetchFixtures() {
@@ -2498,10 +2546,14 @@
                     const data = res.data || [];
                     $scope.fixtures = data;
                     mergeLiveScoresIntoFixtures();
+                    $scope.loadState.fixtures = true;
+                    checkAllLoaded();
                     try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                 }).catch(function(err) {
                     console.warn('[fixtures fetch failed]', err);
                     $scope.fixturesError = 'Failed to load fixtures. Using cached data.';
+                    $scope.loadState.fixtures = true;
+                    checkAllLoaded();
                 }).finally(function() {
                     $scope.fixturesLoading = false;
                 });
@@ -2541,8 +2593,12 @@
                         }
                         try { localStorage.setItem('fifa_live_scores', JSON.stringify(res.data)); } catch(e) {}
                     }
+                    $scope.loadState.scores = true;
+                    checkAllLoaded();
                 }).catch(function(err) {
                     console.warn('[live scores fetch failed]', err);
+                    $scope.loadState.scores = true;
+                    checkAllLoaded();
                 });
             }
 
@@ -2560,10 +2616,14 @@
                     if (keys.length && !$scope.activeGroup) {
                         $scope.activeGroup = keys[0];
                     }
+                    $scope.loadState.standings = true;
+                    checkAllLoaded();
                     try { localStorage.setItem('fifa_cached_standings', JSON.stringify($scope.standings)); } catch(e) {}
                 }).catch(function(err) {
                     console.warn('[standings fetch failed]', err);
                     $scope.standingsError = 'Failed to load standings. Using cached data.';
+                    $scope.loadState.standings = true;
+                    checkAllLoaded();
                 }).finally(function() {
                     $scope.standingsLoading = false;
                 });
