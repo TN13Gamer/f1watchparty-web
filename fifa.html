@@ -1389,12 +1389,6 @@
     <div class="ambient-glow-bottom"></div>
     <div id="vanta-overlay"></div>
 
-    <!-- --- LOADING SCREEN --- -->
-    <div class="loader-wrapper" id="loader-screen">
-        <div id="lottie-loader"></div>
-        <div class="loader-text">FIFA WORLD CUP 2026</div>
-    </div>
-
 
     <!-- --- STICKY NAVIGATION --- -->
     <header>
@@ -1609,6 +1603,8 @@
         </div>
 
     </div>
+
+</div>
 
     <!-- --- TODAY'S FIXTURES SECTION --- -->
     <section class="content-section" id="fixtures">
@@ -2095,17 +2091,7 @@
 
             $scope.encodeURIComponent = window.encodeURIComponent;
 
-            try {
-                lottie.loadAnimation({
-                    container: document.getElementById('lottie-loader'),
-                    renderer: 'svg',
-                    loop: true,
-                    autoplay: true,
-                    path: 'fifa-loader.json'
-                });
-            } catch(e) {
-                console.warn('Lottie initialization failed:', e);
-            }
+
 
             $scope.getStreamDisplayName = function(s, index) {
                 let title = "Stream " + (index + 1);
@@ -2529,14 +2515,6 @@
 
             $scope.liveScoreSource = 'D1';
             $scope.liveScoresRefreshTimer = null;
-            $scope.loadState = { fixtures: false, standings: false, scores: false };
-
-            function checkAllLoaded() {
-                if ($scope.loadState.fixtures && $scope.loadState.standings && $scope.loadState.scores) {
-                    $scope.dataLoaded = true;
-                    hideLoadingScreen();
-                }
-            }
 
             // Fetch Fixtures & Standings
             function fetchFixtures() {
@@ -2546,14 +2524,10 @@
                     const data = res.data || [];
                     $scope.fixtures = data;
                     mergeLiveScoresIntoFixtures();
-                    $scope.loadState.fixtures = true;
-                    checkAllLoaded();
                     try { localStorage.setItem('fifa_cached_fixtures', JSON.stringify($scope.fixtures)); } catch(e) {}
                 }).catch(function(err) {
-                    console.warn('[fixtures fetch failed]', err);
+                    console.warn('[fixtures fetch failed]', err ? (err.status + ' ' + err.statusText + ': ' + JSON.stringify(err.data)) : err);
                     $scope.fixturesError = 'Failed to load fixtures. Using cached data.';
-                    $scope.loadState.fixtures = true;
-                    checkAllLoaded();
                 }).finally(function() {
                     $scope.fixturesLoading = false;
                 });
@@ -2593,12 +2567,8 @@
                         }
                         try { localStorage.setItem('fifa_live_scores', JSON.stringify(res.data)); } catch(e) {}
                     }
-                    $scope.loadState.scores = true;
-                    checkAllLoaded();
                 }).catch(function(err) {
-                    console.warn('[live scores fetch failed]', err);
-                    $scope.loadState.scores = true;
-                    checkAllLoaded();
+                    console.warn('[live scores fetch failed]', err ? (err.status + ' ' + err.statusText + ': ' + JSON.stringify(err.data)) : err);
                 });
             }
 
@@ -2616,14 +2586,10 @@
                     if (keys.length && !$scope.activeGroup) {
                         $scope.activeGroup = keys[0];
                     }
-                    $scope.loadState.standings = true;
-                    checkAllLoaded();
                     try { localStorage.setItem('fifa_cached_standings', JSON.stringify($scope.standings)); } catch(e) {}
                 }).catch(function(err) {
-                    console.warn('[standings fetch failed]', err);
+                    console.warn('[standings fetch failed]', err ? (err.status + ' ' + err.statusText + ': ' + JSON.stringify(err.data)) : err);
                     $scope.standingsError = 'Failed to load standings. Using cached data.';
-                    $scope.loadState.standings = true;
-                    checkAllLoaded();
                 }).finally(function() {
                     $scope.standingsLoading = false;
                 });
@@ -2679,7 +2645,6 @@
                     if (res.data && Object.keys(res.data).length > 0) {
                         processData(res.data);
                         $scope.dataLoaded = true;
-                        hideLoadingScreen();
                     }
                 });
             }
@@ -2700,7 +2665,6 @@
                     $timeout(function () {
                         processData(doc.data());
                         $scope.dataLoaded = true;
-                        hideLoadingScreen();
                     }, delay);
                 } else {
                     fetchLocalFallback();
@@ -2788,13 +2752,6 @@
                 window.location.href = isLocal ? 'index.html' : '/';
             };
         });
-
-        function hideLoadingScreen() {
-            const screen = document.getElementById('loader-screen');
-            if (screen && !screen.classList.contains('fade-out')) {
-                screen.classList.add('fade-out');
-            }
-        }
 
 
     </script>
