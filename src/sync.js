@@ -499,6 +499,12 @@ function buildFullSchedule(gp) {
 export async function syncF1Schedule(envKV, database) {
   const logs = [];
   try {
+    logs.push("[F1 Schedule] Checking user lock setting...");
+    const config = database && typeof database.getConfig === "function" ? await database.getConfig().catch(() => ({})) : {};
+    if (config && config.lockF1Schedule) {
+      logs.push("[F1 Schedule] Auto-sync is locked by user (lockF1Schedule = true). Skipping schedule overwrite.");
+      return { success: true, logs };
+    }
     logs.push("[F1 Schedule] Starting schedule sync...");
     const gp = getCurrentOrNextRace();
     logs.push(`[F1 Schedule] Current race: ${gp.name} (Round ${gp.round})`);

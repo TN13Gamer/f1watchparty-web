@@ -1068,6 +1068,13 @@
 
             <div class="admin-section" ng-show="adminSportView === 'f1'">
                 <h3><i class="fa-solid fa-stopwatch" style="color: var(--primary); margin-right: 10px;"></i> Weekend Schedule</h3>
+                <div class="switch-container" style="margin-bottom: 15px; max-width: 320px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                    <span class="switch-label" style="font-size: 11px; font-weight: 700; color: var(--text-muted);"><i class="fa-solid fa-lock" style="margin-right: 5px;"></i> LOCK AUTOMATIC SYNC</span>
+                    <label class="switch" style="position: relative; display: inline-block; width: 34px; height: 20px; margin: 0;">
+                        <input type="checkbox" ng-model="config.lockF1Schedule" style="opacity: 0; width: 0; height: 0;">
+                        <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px;"></span>
+                    </label>
+                </div>
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Ensure "Timer ISO" is format: <strong>YYYY-MM-DDTHH:MM:00</strong></p>
                 
                 <div ng-repeat="session in config.schedule" class="session-card" ng-class="{'is-live': session.isLive, 'is-upcoming': session.isUpcoming}">
