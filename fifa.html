@@ -1290,6 +1290,61 @@
             letter-spacing: 0.5px;
         }
 
+        /* --- VIDEO TOOLBAR & CONTROLS --- */
+        .video-toolbar {
+            display: flex;
+            align-items: center;
+            padding: 15px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            gap: 15px;
+        }
+
+        .source-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .control-btn i {
+            font-size: 13px;
+            transition: transform 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--neon-green);
+            border-color: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 15px var(--glow-green);
+            transform: translateY(-1.5px);
+        }
+
+        .control-btn:hover i {
+            transform: scale(1.1);
+        }
+
         /* --- MOBILE LAYOUT MODS --- */
         @media (max-width: 1024px) {
             .workspace-grid {
@@ -1379,6 +1434,57 @@
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
+            }
+
+            /* Upcoming card mobile optimization */
+            .upcoming-card {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 20px;
+                text-align: center;
+            }
+
+            .upcoming-left {
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .upcoming-match-names {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .upcoming-right {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+                width: 100%;
+            }
+
+            .upcoming-watch-btn {
+                width: 100%;
+                padding: 12px 20px;
+            }
+
+            /* Video Toolbar Mobile optimization */
+            .video-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 15px;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .video-toolbar div {
+                margin-left: 0 !important;
+            }
+
+            .control-btn {
+                justify-content: center;
+                width: 100%;
+                padding: 12px 20px;
             }
         }
     </style>
