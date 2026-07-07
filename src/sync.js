@@ -7,29 +7,7 @@
 import * as cheerio from "cheerio";
 import { parseResponse, fixEmbedUrl, scoreStream, API_URL as PUSH_EMB_API_URL } from "../api/providers/pushembdz";
 
-const STADIUM_MAP = {
-  "1":  { name: "Estadio Azteca", city: "Mexico City", country: "Mexico" },
-  "2":  { name: "Estadio Akron", city: "Guadalajara", country: "Mexico" },
-  "3":  { name: "Estadio BBVA", city: "Monterrey", country: "Mexico" },
-  "4":  { name: "AT&T Stadium", city: "Dallas", country: "United States" },
-  "5":  { name: "NRG Stadium", city: "Houston", country: "United States" },
-  "6":  { name: "GEHA Field at Arrowhead Stadium", city: "Kansas City", country: "United States" },
-  "7":  { name: "Mercedes-Benz Stadium", city: "Atlanta", country: "United States" },
-  "8":  { name: "Hard Rock Stadium", city: "Miami", country: "United States" },
-  "9":  { name: "Gillette Stadium", city: "Boston", country: "United States" },
-  "10": { name: "Lincoln Financial Field", city: "Philadelphia", country: "United States" },
-  "11": { name: "MetLife Stadium", city: "New York/New Jersey", country: "United States" },
-  "12": { name: "BMO Field", city: "Toronto", country: "Canada" },
-  "13": { name: "BC Place", city: "Vancouver", country: "Canada" },
-  "14": { name: "Lumen Field", city: "Seattle", country: "United States" },
-  "15": { name: "Levi's Stadium", city: "San Francisco Bay Area", country: "United States" },
-  "16": { name: "SoFi Stadium", city: "Los Angeles", country: "United States" }
-};
 
-const STADIUM_OFFSETS = {
-  "1": -6, "2": -6, "3": -6, "4": -5, "5": -5, "6": -5, "7": -4, "8": -4,
-  "9": -4, "10": -4, "11": -4, "12": -4, "13": -7, "14": -7, "15": -7, "16": -7
-};
 
 const TEAM_ALIASES = {
   "Red Bull Racing": ["red bull", "redbull"],
@@ -135,37 +113,133 @@ export async function syncF1LiveAndWeather(config, database) {
 
 export async function fetchStandings() {
   try {
+    // Do not catch individually inside the try block, so any failure triggers the catch fallback
     const dl = await fetchJson("https://ergast.com/api/f1/current/driverStandings.json", 6000)
-      .then(res => res.MRData.StandingsTable.StandingsLists[0].DriverStandings)
-      .catch(() => null);
+      .then(res => res.MRData.StandingsTable.StandingsLists[0].DriverStandings);
 
     const cl = await fetchJson("https://ergast.com/api/f1/current/constructorStandings.json", 6000)
-      .then(res => res.MRData.StandingsTable.StandingsLists[0].ConstructorStandings)
-      .catch(() => null);
+      .then(res => res.MRData.StandingsTable.StandingsLists[0].ConstructorStandings);
 
     return { dl, cl, source: "ergast.com" };
   } catch (err) {
-    // Fallback scraper
-    const html = await fetchText("https://www.formula1.com/en/results.html/2026/drivers.html", 8000);
-    const $ = cheerio.load(html);
+    console.error("[sync] Ergast failed, using formula1.com fallback:", err.message);
+    
+    // Drivers scraper
+    const dlHtml = await fetchText("https://www.formula1.com/en/results.html/2026/drivers.html", 8000);
+    const $dl = cheerio.load(dlHtml);
     const dl = [];
-    $("table.resultsarchive-table tbody tr").each((i, el) => {
-      const pos = $(el).find("td:nth-child(2)").text().trim();
-      const driverHref = $(el).find("td:nth-child(3) a").attr("href");
-      const fullName = formatDriverNameFromHref(driverHref);
-      const team = $(el).find("td:nth-child(5)").text().trim();
-      const points = $(el).find("td:nth-child(6)").text().trim();
-      if (fullName) {
-        dl.push({
+    $dl("table tbody tr").each((i, el) => {
+      const cells = $dl(el).find("td");
+      if (cells.length >= 5) {
+        const pos = $dl(cells.eq(0)).text().trim();
+        const driverHref = $dl(cells.eq(1)).find("a").attr("href");
+        const fullName = formatDriverNameFromHref(driverHref);
+        
+        let team = $dl(cells.eq(3)).text().trim();
+        let points = $dl(cells.eq(4)).text().trim();
+        
+        if (cells.length >= 6) {
+          team = $dl(cells.eq(4)).text().trim();
+          points = $dl(cells.eq(5)).text().trim();
+        }
+        
+        if (fullName) {
+          dl.push({
+            position: pos,
+            points,
+            Driver: { fullName, familyName: fullName.split(" ").pop() },
+            Constructor: { name: team }
+          });
+        }
+      }
+    });
+
+    // Constructors scraper
+    const clHtml = await fetchText("https://www.formula1.com/en/results.html/2026/team.html", 8000);
+    const $cl = cheerio.load(clHtml);
+    const cl = [];
+    $cl("table tbody tr").each((i, el) => {
+      const cells = $cl(el).find("td");
+      if (cells.length >= 3) {
+        const pos = $cl(cells.eq(0)).text().trim();
+        const teamName = $cl(cells.eq(1)).text().trim();
+        
+        let points = $cl(cells.eq(2)).text().trim();
+        if (cells.length >= 4) {
+          points = $cl(cells.eq(3)).text().trim();
+        }
+        
+        cl.push({
           position: pos,
           points,
-          Driver: { fullName, familyName: fullName.split(" ").pop() },
-          Constructor: { name: team }
+          Constructor: { name: teamName }
         });
       }
     });
-    return { dl, cl: [], source: "formula1.com" };
+
+    return { dl, cl, source: "formula1.com" };
   }
+}
+
+export async function syncF1Standings(config, database) {
+  try {
+    const result = await fetchStandings();
+    if (result.dl && result.dl.length > 0) {
+      const standings = config.standings || [];
+      const constructors = config.constructors || [];
+
+      result.dl.forEach(entry => {
+        const fullName = entry.Driver?.fullName || `${entry.Driver?.givenName} ${entry.Driver?.familyName}`;
+        const lastName = (entry.Driver?.familyName || "").toLowerCase();
+        const pts = parseInt(entry.points || 0, 10);
+        const idx = standings.findIndex(d => d.name && d.name.toLowerCase().includes(lastName));
+        if (idx !== -1) {
+          standings[idx].points = pts;
+        } else {
+          standings.push({
+            name: fullName,
+            team: entry.Constructor?.name || "",
+            points: pts,
+            image: entry.image || ""
+          });
+        }
+      });
+      standings.sort((a, b) => (b.points || 0) - (a.points || 0));
+
+      if (result.cl?.length) {
+        result.cl.forEach(entry => {
+          const name = entry.Constructor?.name || "";
+          const pts = parseInt(entry.points || 0, 10);
+          const aliases = TEAM_ALIASES[name] || [name.toLowerCase()];
+          const idx = constructors.findIndex(c => {
+            if (!c.name) return false;
+            const n = c.name.toLowerCase();
+            return aliases.some(a => n.includes(a));
+          });
+          if (idx !== -1) {
+            constructors[idx].points = pts;
+          } else {
+            constructors.push({ name, points: pts });
+          }
+        });
+        constructors.sort((a, b) => (b.points || 0) - (a.points || 0));
+      }
+
+      const updatePayload = {
+        standings,
+        constructors,
+        lastStandingsSync: new Date().toISOString(),
+        standingsSource: result.source
+      };
+      
+      await database.updateConfig(updatePayload);
+      console.log(`[sync] F1 standings updated successfully from ${result.source}`);
+      return updatePayload;
+    }
+  } catch (err) {
+    console.error("[syncF1Standings] Failed to sync standings:", err.message);
+  }
+  return null;
 }
 
 export async function syncStreamsAutomatically(config, database) {
@@ -551,452 +625,4 @@ function formatDateFromISO(isoStr) {
   const d = new Date(isoStr);
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${d.getDate()} ${months[d.getMonth()]}`;
-}
-
-// -------------------------------------------------------------
-// FUZZY MATCH LOGIC
-// -------------------------------------------------------------
-const NAME_MAP = {
-  "usa": ["united states", "united states of america", "us"],
-  "united states": ["usa", "united states of america", "us"],
-  "korea republic": ["south korea", "korea", "korea rep"],
-  "south korea": ["korea republic", "korea", "korea rep"],
-  "czechia": ["czech republic", "czech"],
-  "england": ["uk", "great britain"],
-  "uae": ["united arab emirates"]
-};
-
-function normalizeTeamName(name) {
-  if (!name) return "";
-  return name.toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function matchesFuzzy(teamA, teamB) {
-  const normA = normalizeTeamName(teamA);
-  const normB = normalizeTeamName(teamB);
-  if (normA === normB) return true;
-  
-  if (NAME_MAP[normA] && NAME_MAP[normA].includes(normB)) return true;
-  if (NAME_MAP[normB] && NAME_MAP[normB].includes(normA)) return true;
-
-  const tokensA = normA.split(" ").filter(t => t.length > 2);
-  const tokensB = normB.split(" ").filter(t => t.length > 2);
-  if (tokensA.length > 0 && tokensB.length > 0) {
-    const matchCount = tokensA.filter(t => tokensB.includes(t)).length;
-    if (matchCount >= Math.min(tokensA.length, tokensB.length)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// -------------------------------------------------------------
-// AUTOMATED FOTMOB SCRAPER (PRIMARY)
-// -------------------------------------------------------------
-export async function syncFotMobData(db) {
-  try {
-    console.log("[sync] Scraping FotMob World Cup Matches & Standings...");
-    const html = await fetchText("https://www.fotmob.com/leagues/77/overview/world-cup", 12000);
-    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-    if (!match) {
-      throw new Error("Could not find __NEXT_DATA__ JSON script block in FotMob HTML");
-    }
-
-    const payload = JSON.parse(match[1]);
-    const pageProps = payload.props?.pageProps;
-    if (!pageProps) {
-      throw new Error("Missing pageProps inside __NEXT_DATA__");
-    }
-
-    // 1. Process Standings
-    if (pageProps.table && pageProps.table[0] && pageProps.table[0].data && Array.isArray(pageProps.table[0].data.tables)) {
-      const tables = pageProps.table[0].data.tables;
-      let count = 0;
-      for (const groupTable of tables) {
-        const groupName = groupTable.leagueName || "Group";
-        if (groupName.includes("3rd") || groupName.toLowerCase().includes("third")) {
-          console.log(`[sync] Skipping 3rd placed standings table: ${groupName}`);
-          continue;
-        }
-
-        if (groupTable.table && Array.isArray(groupTable.table.all)) {
-          count++;
-          for (const row of groupTable.table.all) {
-            const logoUrl = `https://images.fotmob.com/image_resources/logo/teamlogo/${row.id}.png`;
-            const flagEmoji = getFlagByCountry(row.name);
-            
-            // Save standings
-            await db.saveStanding({
-              team: row.name,
-              played: row.played || 0,
-              wins: row.wins || 0,
-              draws: row.draws || 0,
-              losses: row.losses || 0,
-              goalsFor: parseInt(row.scoresStr?.split("-")[0] || 0, 10),
-              goalsAgainst: parseInt(row.scoresStr?.split("-")[1] || 0, 10),
-              goalDifference: row.goalConDiff || 0,
-              points: row.pts || 0,
-              groupName,
-              flag: logoUrl
-            });
-
-            // Save team metadata
-            try {
-              await db.d1
-                .prepare("INSERT OR REPLACE INTO teams (country, flag, fifaCode, groupName, logo) VALUES (?, ?, ?, ?, ?)")
-                .bind(row.name, flagEmoji, row.name.slice(0, 3).toUpperCase(), groupName, logoUrl)
-                .run();
-            } catch (err) {
-              console.error("[sync] Error saving team:", err.message);
-            }
-          }
-        }
-      }
-      console.log(`[sync] Successfully updated standings for ${count} groups`);
-    }
-
-    // 2. Process Matches
-    if (pageProps.fixtures && Array.isArray(pageProps.fixtures.allMatches)) {
-      const fixtures = pageProps.fixtures.allMatches;
-      for (const f of fixtures) {
-        let status = "notstarted";
-        if (f.status?.finished) status = "finished";
-        else if (f.status?.started) status = "live";
-
-        const homeFlag = getFlagByCountry(f.home.name);
-        const awayFlag = getFlagByCountry(f.away.name);
-        const homeLogo = `https://images.fotmob.com/image_resources/logo/teamlogo/${f.home.id}.png`;
-        const awayLogo = `https://images.fotmob.com/image_resources/logo/teamlogo/${f.away.id}.png`;
-        const fotmobPageUrl = f.pageUrl ? `https://www.fotmob.com${f.pageUrl}` : null;
-
-        await db.saveMatch({
-          id: String(f.id),
-          homeTeam: f.home.name,
-          awayTeam: f.away.name,
-          homeLogo,
-          awayLogo,
-          homeFlag,
-          awayFlag,
-          kickoff: new Date(f.status.utcTime).getTime(),
-          status,
-          score: f.status.scoreStr || "0 - 0",
-          venue: null, // Will be populated by syncMatchDetails
-          groupName: f.group ? ("Group " + f.group) : "Knockout",
-          stage: typeof f.roundName === "string" ? f.roundName : ("Round " + f.roundName),
-          competition: "FIFA World Cup",
-          matchday: f.group ? `Matchday ${f.round || "1"}` : (f.roundName || "Knockout"),
-          broadcasters: "Official Broadcaster",
-          description: `FIFA World Cup 2026 fixture between ${f.home.name} and ${f.away.name}.`,
-          thumbnail: "",
-          banner: "",
-          fotmobPageUrl
-        });
-
-        // Ensure teams exist in team database
-        try {
-          await db.d1
-            .prepare("INSERT OR IGNORE INTO teams (country, flag, logo, groupName) VALUES (?, ?, ?, ?)")
-            .bind(f.home.name, homeFlag, homeLogo, f.group ? ("Group " + f.group) : "Knockout")
-            .run();
-          await db.d1
-            .prepare("INSERT OR IGNORE INTO teams (country, flag, logo, groupName) VALUES (?, ?, ?, ?)")
-            .bind(f.away.name, awayFlag, awayLogo, f.group ? ("Group " + f.group) : "Knockout")
-            .run();
-        } catch (err) {}
-      }
-      console.log(`[sync] Successfully updated ${fixtures.length} matches in database`);
-    }
-
-  } catch (err) {
-    console.error("[syncFotMobData] Error:", err.message);
-  }
-}
-
-/**
- * syncMatchDetails - Fetches detailed match facts (stadium, city, country, referee, attendance)
- * from FotMob match pages for upcoming and recently-finished matches.
- * Runs after syncFotMobData as a second pass.
- */
-export async function syncMatchDetails(db) {
-  try {
-    const allMatches = await db.getMatches();
-    const now = Date.now();
-    // Prioritize: live matches, upcoming within 48h, recently finished.
-    // Fall back to batching up to 12 unfetched historical matches so the DB fully populates over time.
-    let needsDetails = allMatches.filter(m => {
-      if (!m.fotmobPageUrl) return false;
-      if (m.detailsFetched === 1) return false;
-      const hoursFromNow = (m.kickoff - now) / (60 * 60 * 1000);
-      const hoursSinceKickoff = (now - m.kickoff) / (60 * 60 * 1000);
-      return m.status === 'live' || hoursFromNow < 48 || (hoursSinceKickoff < 6 && m.status === 'finished');
-    });
-
-    if (needsDetails.length === 0) {
-      needsDetails = allMatches.filter(m => m.fotmobPageUrl && m.detailsFetched !== 1).slice(0, 12);
-    }
-
-    console.log(`[syncMatchDetails] Fetching details for ${needsDetails.length} matches...`);
-    for (const match of needsDetails) {
-      try {
-        const html = await fetchText(match.fotmobPageUrl, 10000);
-        const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (!nextDataMatch) continue;
-
-        const data = JSON.parse(nextDataMatch[1]);
-        const infoBox = data.props?.pageProps?.content?.matchFacts?.infoBox;
-        if (!infoBox) continue;
-
-        const stadium = infoBox["Stadium"];
-        const referee = infoBox["Referee"];
-        const attendance = infoBox["Attendance"];
-
-        await db.updateMatchDetails(match.id, {
-          venue: stadium?.name || 'Venue to be confirmed',
-          city: stadium?.city || null,
-          country: stadium?.country || null,
-          kickoff: match.kickoff,
-          groupName: match.groupName,
-          stage: match.stage,
-          referee: referee?.text || null,
-          attendance: typeof attendance === 'number' ? attendance : null,
-          weather: null, // FotMob doesn't provide weather in this endpoint
-          broadcasters: match.broadcasters,
-          description: match.description,
-          thumbnail: match.thumbnail,
-          banner: match.banner
-        });
-        console.log(`[syncMatchDetails] Updated details for: ${match.homeTeam} vs ${match.awayTeam} | Venue: ${stadium?.name}`);
-      } catch (err) {
-        console.warn(`[syncMatchDetails] Failed for match ${match.id}:`, err.message);
-      }
-    }
-  } catch (err) {
-    console.error("[syncMatchDetails] Error:", err.message);
-  }
-}
-
-function getFlagByCountry(name) {
-  if (!name) return "⚽";
-  const lower = name.toLowerCase();
-  if (lower.includes("germany")) return "🇩🇪";
-  if (lower.includes("france")) return "🇫🇷";
-  if (lower.includes("spain")) return "🇪🇸";
-  if (lower.includes("italy")) return "🇮🇹";
-  if (lower.includes("england")) return "🇬🇧";
-  if (lower.includes("argentina")) return "🇦🇷";
-  if (lower.includes("brazil")) return "🇧🇷";
-  if (lower.includes("portugal")) return "🇵🇹";
-  if (lower.includes("netherlands") || lower.includes("dutch")) return "🇳🇱";
-  if (lower.includes("belgium")) return "🇧🇪";
-  if (lower.includes("croatia")) return "🇭🇷";
-  if (lower.includes("uruguay")) return "🇺🇾";
-  if (lower.includes("mexico")) return "🇲🇽";
-  if (lower.includes("usa") || lower.includes("united states")) return "🇺🇸";
-  if (lower.includes("canada")) return "🇨🇦";
-  if (lower.includes("morocco")) return "🇲🇦";
-  if (lower.includes("japan")) return "🇯🇵";
-  if (lower.includes("korea")) return "🇰🇷";
-  if (lower.includes("denmark")) return "🇩🇰";
-  if (lower.includes("switzerland")) return "🇨🇭";
-  if (lower.includes("turkey")) return "🇹🇷";
-  if (lower.includes("austria")) return "🇦🇹";
-  return "⚽";
-}
-
-// -------------------------------------------------------------
-// AUTOMATED STREAMED.PK SCRAPER
-// -------------------------------------------------------------
-async function fetchStreamedPkMatches() {
-  try {
-    const res = await fetch("https://streamed.pk/api/matches/all", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-      }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data)) return data;
-    }
-  } catch (err) {
-    console.warn("[sync] streamed.pk API failed, trying HTML parse:", err.message);
-  }
-
-  // Fallback: HTML parse
-  try {
-    const res = await fetch("https://streamed.pk/category/football", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-      }
-    });
-    if (res.ok) {
-      const html = await res.text();
-      const $ = cheerio.load(html);
-      const list = [];
-      $('a[href^="/watch/"]').each((i, el) => {
-        const href = $(el).attr("href");
-        const title = $(el).text().trim() || $(el).find("h3, span, p").text().trim();
-        if (href && title) {
-          const id = href.replace("/watch/", "");
-          list.push({
-            title,
-            category: "football",
-            sources: [{ source: "streamed", id }]
-          });
-        }
-      });
-      return list;
-    }
-  } catch (err) {
-    console.error("[sync] streamed.pk HTML scraper failed:", err.message);
-  }
-  return [];
-}
-
-async function resolveStreamedPkLinks(match) {
-  const resolved = [];
-  if (!match || !match.sources) return resolved;
-
-  for (const src of match.sources) {
-    try {
-      const res = await fetch(`https://streamed.pk/api/stream/${src.source}/${src.id}`, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          data.forEach(stream => {
-            if (stream.embedUrl) {
-              resolved.push({
-                provider: src.source,
-                quality: stream.hd ? "1080P" : "720P",
-                embedUrl: stream.embedUrl,
-                mirror: stream.mirror || 0
-              });
-            }
-          });
-          if (resolved.length > 0) return resolved;
-        }
-      }
-    } catch (err) {
-      // Fallback watch page HTML parse
-      try {
-        const htmlRes = await fetch(`https://streamed.pk/watch/${src.id}`, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          }
-        });
-        if (htmlRes.ok) {
-          const html = await htmlRes.text();
-          const $ = cheerio.load(html);
-          const iframeSrc = $("iframe").attr("src");
-          if (iframeSrc) {
-            resolved.push({
-              provider: src.source,
-              quality: "720P",
-              embedUrl: iframeSrc,
-              mirror: 0
-            });
-          }
-        }
-      } catch (e) {}
-    }
-  }
-  return resolved;
-}
-
-// -------------------------------------------------------------
-// STREAMED.PK API FETCHER (returns objects with .sources[].id for resolveStreamedPkLinks)
-// -------------------------------------------------------------
-async function fetchStreamedPkFromApi() {
-  try {
-    const res = await fetch("https://streamed.pk/api/matches/all", {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" }
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    const football = data.filter(m => (m.category || "").toLowerCase() === "football" || (m.category || "").toLowerCase() === "soccer");
-    console.log(`[sync] streamed.pk API: ${data.length} total, ${football.length} football matches`);
-    return football.map(m => ({
-      title: m.title,
-      id: m.id,
-      category: m.category,
-      date: m.date,
-      sources: m.sources || []
-    }));
-  } catch (err) {
-    console.warn("[sync] streamed.pk API failed:", err.message.substring(0, 60));
-    return [];
-  }
-}
-
-export async function syncFifaStreamsAndFeeds(db) {
-  try {
-    const dbMatches = await db.getMatches();
-    const liveOrToday = dbMatches.filter(m => m.status === "live" || (m.kickoff && Math.abs(Date.now() - m.kickoff) < 48 * 60 * 60 * 1000));
-    if (liveOrToday.length === 0) return;
-
-    console.log(`[sync] Checking stream feeds for ${liveOrToday.length} matches...`);
-    const streamMatches = await fetchStreamedPkFromApi();
-    if (streamMatches.length === 0) {
-      console.log(`[sync] No stream matches found from API`);
-      return;
-    }
-    console.log(`[sync] Stream API returned ${streamMatches.length} matches: ${streamMatches.map(s => s.title).join(", ")}`);
-
-    for (const match of liveOrToday) {
-      const matchKey = `${match.homeTeam} vs ${match.awayTeam}`;
-      // Find matching streamed.pk match by fuzzy name
-      const candidate = streamMatches.find(sm => {
-        if (!sm.title) return false;
-        const parts = sm.title.split(/\s+(?:vs|–|-)\s+/i);
-        const homeCandidate = parts[0] || "";
-        const awayCandidate = parts[1] || "";
-        const match1 = matchesFuzzy(match.homeTeam, homeCandidate) && matchesFuzzy(match.awayTeam, awayCandidate);
-        const match2 = matchesFuzzy(match.homeTeam, awayCandidate) && matchesFuzzy(match.awayTeam, homeCandidate);
-        if (match1 || match2) {
-          console.log(`[sync] MATCH: "${matchKey}" ↔ "${sm.title}" (homeCandidate="${homeCandidate}", awayCandidate="${awayCandidate}")`);
-        }
-        return match1 || match2;
-      });
-
-      if (candidate) {
-        console.log(`[sync] Resolving links for: ${matchKey} via "${candidate.title}"`);
-        const links = await resolveStreamedPkLinks(candidate);
-        if (links.length > 0) {
-          console.log(`[sync] Found ${links.length} links for ${matchKey}`);
-          await db.clearStreamsForMatch(match.id);
-          // Sort links: 1080P/HD first
-          links.sort((a, b) => b.quality.localeCompare(a.quality));
-          for (let i = 0; i < links.length; i++) {
-            await db.saveStream({
-              matchId: match.id,
-              provider: links[i].provider,
-              quality: links[i].quality,
-              embedUrl: links[i].embedUrl,
-              mirror: i,
-              isPrimary: i === 0 ? 1 : 0,
-              priority: i,
-              language: links[i].language || "EN"
-            });
-          }
-          console.log(`[sync] Synced ${links.length} streams for: ${match.homeTeam} vs ${match.awayTeam}`);
-        } else {
-          console.log(`[sync] No links resolved for candidate: "${candidate.title}"`);
-        }
-      } else {
-        console.log(`[sync] NO match for: ${matchKey}`);
-      }
-    }
-    
-    // Cleanup expired streams
-    await db.cleanExpiredMatchesAndStreams();
-  } catch (err) {
-    console.error("[syncFifaStreamsAndFeeds] Error:", err.message);
-  }
 }

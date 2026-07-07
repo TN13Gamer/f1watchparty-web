@@ -45,32 +45,32 @@
       "points": 0
     }
   ],
-  "isLiveRaceActive": false,
+  "isLiveRaceActive": true,
   "activeSport": "f1",
   "siteMode": "main",
   "lastStandingsSync": "2026-06-23T19:04:07.757Z",
   "fifa": {
     "twitchChannel": "watchf1olive",
-    "lastDetailsSync": "2026-06-27T05:33:05.336Z",
+    "lastDetailsSync": "2026-07-04T14:12:55.341Z",
     "customTimer": {
       "enabled": true,
       "label": "MATCH KICKS OFF",
-      "target": "2026-06-27T21:00:00.000Z",
+      "target": "2026-07-04T17:00:00.000Z",
       "isManual": false
     },
     "raceData": {
-      "round": "Group L",
+      "round": "Round of 16",
       "isLive": false,
-      "name": "Panama vs England",
+      "name": "Canada vs Morocco",
       "isFinished": false,
       "matchTime": "",
-      "date": "28 Jun 02:30",
+      "date": "4 Jul 22:30",
       "theme": "",
-      "homeScore": "0",
-      "location": "New York/New Jersey, United States",
-      "circuit": "MetLife Stadium",
+      "homeScore": "null",
+      "location": "Houston, United States",
+      "circuit": "NRG Stadium",
       "laps": "",
-      "awayScore": "0"
+      "awayScore": "null"
     },
     "autoSyncStreams": false,
     "autoSyncDetails": true,
@@ -236,7 +236,7 @@
     ],
     "lastStreamsSync": "2026-06-23T18:46:02.659Z"
   },
-  "lastAutoSync": 1782538381649,
+  "lastAutoSync": 1783174367986,
   "nextRace": {
     "name": "Austrian GP",
     "date": "26-28 Jun",
@@ -245,9 +245,9 @@
   },
   "streamKeyword": "F1 - - FP1",
   "weather": {
-    "air": 0,
-    "track": 0,
-    "condition": "sunny"
+    "air": 26,
+    "track": 33,
+    "condition": "cloudy"
   },
   "customTimer": {
     "target": "2026-06-26 17:00",

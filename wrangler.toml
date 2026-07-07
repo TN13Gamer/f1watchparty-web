@@ -1,12 +1,15 @@
 name = "watchparty-backend"
 main = "src/index.js"
 compatibility_date = "2024-06-26"
+account_id = "d337ff296937fafb4b88dfafeb8f7b9d"
 
 [build]
 command = "node scripts/embed-html.mjs"
 
 [vars]
 FIREBASE_PROJECT_ID = "f1-stream-live"
+FIREBASE_CLIENT_EMAIL = "firebase-adminsdk-fbsvc@f1-stream-live.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDDPTCr1j8JUUxC\nJ+TGL0yJq1vb7+HtjM89ueh/z1vdQ3eb8JX2C2ncVZza8gruUib9NU9r7h1BmPWB\nfTrTFEMNVqSbPbWoZJluzgbSsSHJ6ZApTVdxPrJ5jSj5P9/pqD8coF41Ad46o/JL\n44pXmVHj98XeIlVBJjvhWoKSNe9gKcMlPT7aYoyVqOVqCZl5k9wd6KJVb7Ca4n+j\nHWkjHG3HEFPDU32aHfZoeJ7Le+bx12/jf0AGlhaUUUujLJh67kYsrUSQTRKIhsGP\nV/8sFLGjVl+IL1htB0pjPG5neSsmy3IcjCL1A8J5LaimqmTdc/ppH56QwPkHbOLF\n0bpQSwj5AgMBAAECggEAG6c2lhgt7IFt1i71WdbINfWl+KRk8TMRBXKoCjZSEihk\nsBsm+mcKcvFTWrWOs8vCBvo+ihB7Z1elalZU9yG3D5QWk4BtkvDQxJ982unI2eLx\njtAMExeoysuiIo+YBO3WJpVWUpa1pcOj5XjQlvC55xqolXpybdxe/d/Gf7QQ+CMi\nzMlz2m0wx6QLLXHDG6cUGNPEMH6ermxC/g3mt4eY9ZxMskzb1/fIXjoj6dxD1XYN\nEsKWpVSktuf3jwgux5tJqbWQITmGrqzQpATX7sMIDAmwLBeM3xcbQhe86HP/EmXd\nNEcQSkymEVzPZSFT+ct08xAdSdpdhluX9fNWoepP+wKBgQDlkfQgyUk/3P5T7x9y\nG+5f8Qk/XB2cCeEdnNni2GTdQb7PgtN6Uq7wtPH+B3Uj+CUFnTr3IZHXy5R/ycqf\nttqw9DEpQHEbehX3OtKfkPC9OyxFPHA+X3HA2n4RDqNnM0k0YvGTxDBMz66kvNw2\nJpIN2BZISG1JeXGYLGGDhDdIuwKBgQDZt2gnS5QTILLDoemn6a+yNGfG6YXzf5A6\nweKXa5GIoKRQPFIB56YrqcbMyAxJKt+BZ4zDrXN/LeCtX+fC9y2Yldi09YxZArvE\nseOuMFe2KODjmXUU0rC03mO9og8vCuIvUzJEsMB5rKvLzlEmswmBtkekP6YtYGsP\nNQ6fz2bj2wKBgQCZhoYw9uvZnb0n/J6W/T7pQpTgnoXeuGyoFSFRp02s+i7VL7Sl\n9W2w5BGBxRL9vxFjM8cfRn/2RNtGqnirXunZtTS7VbFOotLVx6zbsV6N7mio1MZr\nsACu7G+qkJOOjKnEMvdDzsxOUgWFfhf2zsyWHZCpPmZ34JOrJOMBxQYDyQKBgQDS\n2mTdwb2r9LwM6c+wVotZbJWhOGMJm16k+UepXH17NBFOv8ywmZf+q5Okmo4Dgqkp\n246hqGe2IUl6v+pmkRswrtdNEo6VWidd7ObTuXAJNHfxFZslypNm6AbzDnPkHIdI\nTCvgCMqwTIGphaxkbXrkjBPASAB56+pjtP/v2F8OhwKBgQCB0rKRMG+EuJNKH6VM\nfi3w3MO6iuy7JNfnZnP2RoGzlXtN0RAHFlAR4fyhEkk96uFO1Z5bv+YnC+bcbpOl\nEc62YQzfFzvNZvWHTwHEI5E23R9vfS8/Bci/g8o5cT3LGE8h6hHmzxbViRR7Dega\nr4058fnO2vRN991riXZegOKu+w==\n-----END PRIVATE KEY-----\n"
 
 [[kv_namespaces]]
 binding = "CONFIG_KV"

@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Titillium+Web:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-
     <!-- 3D Library for Premium Visualizer Background -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
@@ -23,7 +22,6 @@
             --text-white: #ffffff;
             --text-gray: #8e8e93;
             --f1-red: #e60000;
-            --fifa-green: #00ff55;
         }
 
         * {
@@ -82,21 +80,9 @@
             animation: float-red 25s infinite alternate ease-in-out;
         }
 
-        .ambient-green {
-            background: var(--fifa-green);
-            bottom: -200px;
-            right: -150px;
-            animation: float-green 25s infinite alternate ease-in-out;
-        }
-
         @keyframes float-red {
             0% { transform: translate(0, 0) scale(1); }
             100% { transform: translate(120px, 80px) scale(1.15); }
-        }
-
-        @keyframes float-green {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(-120px, -80px) scale(1.15); }
         }
 
         .grid-overlay {
@@ -115,7 +101,7 @@
 
         .container {
             width: 100%;
-            max-width: 1050px;
+            max-width: 600px;
             padding: 40px 24px;
             text-align: center;
             z-index: 10;
@@ -165,9 +151,8 @@
 
         /* Cards Layout */
         .cards-wrapper {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 40px;
+            display: flex;
+            justify-content: center;
             margin-top: 20px;
         }
 
@@ -189,24 +174,17 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             opacity: 0;
             animation: fadeInUp 0.8s ease forwards;
+            width: 100%;
+            max-width: 420px;
         }
 
-        .sport-card:nth-child(1) {
+        .sport-card {
             animation-delay: 0.2s;
             --card-glow: var(--f1-red);
             --card-glow-alpha: rgba(230, 0, 0, 0.12);
             --btn-bg: var(--f1-red);
             --btn-hover: #ff1a1a;
             --btn-text: #ffffff;
-        }
-
-        .sport-card:nth-child(2) {
-            animation-delay: 0.4s;
-            --card-glow: var(--fifa-green);
-            --card-glow-alpha: rgba(0, 255, 85, 0.08);
-            --btn-bg: var(--fifa-green);
-            --btn-hover: #1aff66;
-            --btn-text: #050505;
         }
 
         .sport-card::before {
@@ -279,8 +257,6 @@
             min-height: 45px;
         }
 
-
-
         /* Action Buttons */
         .enter-btn {
             width: 100%;
@@ -347,10 +323,6 @@
             .logo {
                 font-size: 2.5rem;
             }
-            .cards-wrapper {
-                grid-template-columns: 1fr;
-                gap: 25px;
-            }
             .sport-card {
                 padding: 35px 25px;
             }
@@ -362,84 +334,9 @@
             transition: background-color 0.6s ease;
         }
 
-        body.transitioning-fifa {
-            background-color: #00020e;
-            transition: background-color 0.6s ease;
-        }
-
         body.transitioning-f1 #vanta-bg {
             opacity: 0.85 !important;
             transition: opacity 0.6s ease;
-        }
-
-        body.transitioning-fifa #vanta-bg {
-            opacity: 0.95 !important;
-            transition: opacity 0.6s ease;
-        }
-
-        body.hover-fifa #vanta-bg {
-            opacity: 0.8 !important;
-            transition: opacity 0.6s ease;
-        }
-
-        /* World Cup 2026 Wavy Background */
-        .fifa-wavy-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -2;
-            overflow: hidden;
-            background: radial-gradient(circle at 50% 50%, #030612 0%, #010206 100%);
-            opacity: 0;
-            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-            pointer-events: none;
-            transform: scale(1.02);
-        }
-
-        body.hover-fifa .fifa-wavy-bg,
-        body.transitioning-fifa .fifa-wavy-bg {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .fifa-gradient-mask {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, transparent 20%, rgba(1, 2, 6, 0.85) 90%);
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .fifa-waves-svg {
-            position: absolute;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            opacity: 0.85;
-            filter: blur(25px);
-        }
-
-        .fifa-waves-svg path {
-            transform-origin: center;
-            animation: wave-float 25s infinite alternate ease-in-out;
-        }
-
-        .fifa-waves-svg path:nth-child(1) { animation-duration: 22s; animation-delay: 0s; }
-        .fifa-waves-svg path:nth-child(2) { animation-duration: 28s; animation-delay: -4s; }
-        .fifa-waves-svg path:nth-child(3) { animation-duration: 32s; animation-delay: -8s; }
-        .fifa-waves-svg path:nth-child(4) { animation-duration: 36s; animation-delay: -12s; }
-        .fifa-waves-svg path:nth-child(5) { animation-duration: 42s; animation-delay: -16s; }
-
-        @keyframes wave-float {
-            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-            50% { transform: translate(2%, 3%) rotate(3deg) scale(1.06); }
-            100% { transform: translate(-2%, -2%) rotate(-3deg) scale(0.97); }
         }
 
         .container {
@@ -466,20 +363,7 @@
 <body class="page-home">
 
     <div id="vanta-bg"></div>
-    <div class="fifa-wavy-bg">
-        <div class="fifa-gradient-mask"></div>
-        <svg class="fifa-waves-svg" viewBox="0 0 1440 1000" preserveAspectRatio="none">
-            <!-- Wavy contour tracks from World Cup 2026 theme -->
-            <path d="M-100,300 C300,100 600,500 1000,200 C1200,80 1400,150 1600,100 L1600,1200 L-100,1200 Z" fill="#2a398d" opacity="0.85"/>
-            <path d="M-100,450 C400,200 700,600 1100,350 C1300,220 1450,280 1600,200 L1600,1200 L-100,1200 Z" fill="#1d70b8" opacity="0.75"/>
-            <path d="M-100,580 C350,400 800,750 1200,500 C1350,380 1500,420 1600,350 L1600,1200 L-100,1200 Z" fill="#3cac3b" opacity="0.7"/>
-            <path d="M-100,700 C450,550 900,850 1300,680 C1420,580 1520,600 1600,520 L1600,1200 L-100,1200 Z" fill="#00ff55" opacity="0.6"/>
-            <path d="M-100,820 C500,700 1000,980 1400,800 L1600,700 L1600,1200 L-100,1200 Z" fill="#ff9900" opacity="0.55"/>
-            <path d="M-100,920 C600,850 1100,1080 1500,900 L1600,820 L1600,1200 L-100,1200 Z" fill="#e61d25" opacity="0.5"/>
-        </svg>
-    </div>
     <div class="ambient-glow ambient-red"></div>
-    <div class="ambient-glow ambient-green"></div>
     <div class="grid-overlay"></div>
 
     <div class="container">
@@ -487,7 +371,7 @@
             <h1 class="logo">
                 <i class="fa-solid fa-play"></i>watchf1<span>.live</span>
             </h1>
-            <p class="tagline">Select your arena. Connect with fans. Enjoy high-performance streaming in real-time.</p>
+            <p class="tagline">Connect with fans. Enjoy high-performance Formula 1 streaming in real-time.</p>
         </header>
 
         <main class="cards-wrapper">
@@ -497,20 +381,7 @@
                     <img src="f1-logo.png" alt="Formula 1 Logo" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <h2 class="sport-title">Formula 1</h2>
-                <p class="sport-desc">Live timing, Grand Prix race streams, schedule countdowns, and championship standings.</p>
-
-                <button class="enter-btn">
-                    Enter Party <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </a>
-
-            <!-- FIFA Football Card -->
-            <a href="fifa.html" class="sport-card" id="card-fifa" onclick="navigateTo(event, 'fifa.html', '/fifa')">
-                <div class="icon-circle" style="border-radius: 50%; width: 110px; height: 110px; overflow: hidden; background: transparent; border: 1px solid rgba(255, 255, 255, 0.08);">
-                    <img src="fifa-logo.png" alt="FIFA Logo" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                <h2 class="sport-title">FIFA 2026</h2>
-                <p class="sport-desc">Live soccer streams, match details, match schedules, and real-time custom fan chat.</p>
+                <p class="sport-desc">Live GP race streams, weekend session schedules, and championship standings.</p>
 
                 <button class="enter-btn">
                     Enter Party <i class="fa-solid fa-arrow-right"></i>
@@ -520,35 +391,24 @@
 
         <footer>
             <p style="font-size: 0.75rem; opacity: 0.6; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-                This website does not create, host, or share any video content. All video streams are from external websites that are freely available online.
+                This website does not create, host, or share any video content. All video streams are external web links.
             </p>
         </footer>
     </div>
-
-
 
     <script>
         // Check if running locally or production to handle direct URL routing
         function navigateTo(event, localHtml, prodRoute) {
             event.preventDefault();
-            const card = event.currentTarget;
-            const isF1 = card.id === 'card-f1';
             
-            // Storing destination
             const isLocal = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1' ||
                             window.location.hostname === 'appassets.androidplatform.net';
             let destination = isLocal ? localHtml : prodRoute;
 
-            if (!isF1) {
-                // Set transition flag to bypass launch screen
-                sessionStorage.setItem('fifa_entered', 'true');
-                destination += (destination.includes('?') ? '&' : '?') + 'enter=true';
-            }
-
             // Apply transition styles
-            document.body.classList.add(isF1 ? 'transitioning-f1' : 'transitioning-fifa');
+            document.body.classList.add('transitioning-f1');
             
             // Scale and fade out container elements
             const container = document.querySelector('.container');
@@ -591,34 +451,15 @@
             }
         }
 
-        function destroyVanta() {
-            if (window.vantaInstance && typeof window.vantaInstance.destroy === 'function') {
-                window.vantaInstance.destroy();
-                window.vantaInstance = null;
-            }
-        }
-
         // Initialize on DOM load
         document.addEventListener("DOMContentLoaded", function () {
             initVanta();
         });
 
-        // Dynamic resize cleanup/re-initialization
-        window.addEventListener("resize", function () {
-            if (isMobileDevice) return;
-            if (window.innerWidth <= 768) {
-                destroyVanta();
-            } else {
-                initVanta();
-            }
-        });
-
-        // Bind interactive mouseenter / mouseleave triggers to sports cards for dynamic transitions
+        // Bind interactive mouseenter / mouseleave triggers to F1 card for dynamic transitions
         document.addEventListener('DOMContentLoaded', () => {
             const cardF1 = document.getElementById('card-f1');
-            const cardFifa = document.getElementById('card-fifa');
             const ambientRed = document.querySelector('.ambient-red');
-            const ambientGreen = document.querySelector('.ambient-green');
 
             if (cardF1) {
                 cardF1.addEventListener('mouseenter', () => {
@@ -635,26 +476,7 @@
                     }
                 });
             }
-
-            if (cardFifa) {
-                cardFifa.addEventListener('mouseenter', () => {
-                    document.body.classList.add('hover-fifa');
-                    if (ambientGreen) {
-                        ambientGreen.style.opacity = '0.35';
-                        ambientGreen.style.transform = 'scale(1.25)';
-                    }
-                });
-
-                cardFifa.addEventListener('mouseleave', () => {
-                    document.body.classList.remove('hover-fifa');
-                    if (ambientGreen) {
-                        ambientGreen.style.opacity = '0.1';
-                        ambientGreen.style.transform = 'none';
-                    }
-                });
-            }
         });
-
     </script>
 </body>
 
